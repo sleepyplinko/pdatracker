@@ -14,10 +14,10 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: true, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ lockedNames: false, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0 }, load(KEY_UI, {}));
   let user     = load(KEY_USER, "");
-  let detail   = null;      // { type: "tool" | "person", id }
+  let detail   = null;      // { type: "tool" | "person" | "doc", id }
   let query    = "";
   let pendingTier = null;   // "catIndex|tier" while its "are you sure?" is showing
   let pendingTimer = 0;
@@ -49,7 +49,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .info, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres, .mtab, .clear-search";
+  const HOVERABLE = ".tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -88,25 +88,34 @@
     });
   });
 
-  // Biography: a "card" is either one person or a group of people (members)
+  // Biography: a "card" is either one person or a group of variants (members).
+  // A card is ONE unlock. Unlocking it lets you view every variant inside it.
+  const people = [];        // every person page (single people + every variant)
   PDA_DATA.biography.forEach((g, gi) => {
     g.cards = g.entries.map((raw, i) => {
       const r = norm(raw);
+      const unknown = r.name === "???";
+      const cardId = `b|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`;
       if (Array.isArray(r.members)) {
-        const card = { kind: "group", name: r.name, img: r.img, members: [] };
-        card.members = r.members.map(m => add({
-          ...norm(m), id: `b|${slug(g.name)}|${slug(r.name)}|${slug(norm(m).name)}`,
-          section: "bio", group: g.name, groupIndex: gi, card
-        }));
+        const card = { kind: "group", name: r.name, img: r.img, desc: r.desc, members: [] };
+        // the tracked entry for the whole card
+        card.entry = add({ name: r.name, id: cardId, section: "bio", group: g.name, groupIndex: gi, card, isCard: true });
+        // the variants: viewable pages that share the card's checkmark
+        card.members = r.members.map(m => {
+          const v = { ...norm(m), id: `${cardId}|${slug(norm(m).name)}`, trackId: cardId,
+                      section: "bio", group: g.name, groupIndex: gi, card };
+          byId.set(v.id, v); people.push(v);
+          return v;
+        });
         return card;
       }
-      const unknown = r.name === "???";
       const card = { kind: "single", name: r.name, img: r.img };
-      card.members = [add({ ...r, id: `b|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`,
-                            section: "bio", group: g.name, groupIndex: gi, unknown, card })];
+      card.entry = add({ ...r, id: cardId, section: "bio", group: g.name, groupIndex: gi, unknown, card });
+      card.members = [card.entry];
+      people.push(card.entry);
       return card;
     });
-    g.items = g.cards.flatMap(c => c.members);
+    g.items = g.cards.map(c => c.entry);
   });
 
   PDA_DATA.documents.forEach((g, gi) => {
@@ -118,8 +127,12 @@
     });
   });
 
-  const isFound   = id => !!found[id];
-  const cardFound = c => c.members.some(m => isFound(m.id));
+  // a variant's checkmark is its card's checkmark
+  const trackOf   = id => { const e = byId.get(id); return (e && e.trackId) || id; };
+  const isFound   = id => !!found[trackOf(id)];
+  const cardFound = c => isFound(c.entry.id);
+  // older saves tracked each variant separately: fold those into their card
+  people.forEach(v => { if (v.trackId) { const old = `${v.trackId.replace(/\|[^|]*$/, "")}|${slug(v.card.name)}|${slug(v.name)}`; if (found[old]) { found[v.trackId] = 1; delete found[old]; } } });
   const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
   const label     = e => e.unknown ? "???" : e.name;
 
@@ -139,6 +152,7 @@
   const sortCards   = list => sortBy(list, cardFound, c => c.name);
 
   function setFound(id, on) {
+    id = trackOf(id);
     if (on) found[id] = 1; else delete found[id];
   }
   function toggle(id) {
@@ -219,7 +233,9 @@
     // loadout
     "Weapon":               { c: "#f3ee30", i: "gun",     u: "",   tip: "The primary or secondary the entity uses. If firearm is specified and no magazine & bullet type specified, then the magazine & ammo are random." },
     "Ammo Loaded":          { c: "#f0a050", i: "ammo",    u: "",   tip: "The bullet type the entity's weapon is loaded with." },
-    "Magazine Loaded":      { c: "#f3ee30", i: "ammo",    u: "",   tip: "The magazine the entity's weapon is loaded with." }
+    "Magazine Loaded":      { c: "#f3ee30", i: "ammo",    u: "",   tip: "The magazine the entity's weapon is loaded with." },
+    "Type":                 { c: "#45e3f0", i: "aim",     u: "",   tip: "" },
+    "Category":             { c: "#f4ee3c", i: "ammo",    u: "",   tip: "" }
   };
   const BASE_ORDER  = ["Health", "Speed", "Defense", "Shield", "Supershield", "Super Armour", "Burn Resistance", "Bleed Resistance", "Explosive Resistance", "Stun Resistance", "Fracture Immunity"];
   const SKILL_ORDER = ["Suppressor", "Pre-Aim", "Strength", "Aim Time Multiplier", "Reload Speed Multiplier", "Aim Slowdown", "Attack Slowdown"];
@@ -297,9 +313,11 @@
      MAIN RENDER
      ===================================================================== */
   function render() {
-    screen.classList.toggle("hide-locked-names", !settings.lockedNames);
+    screen.classList.toggle("show-locked-names", !!settings.lockedNames);
     if (detail && byId.has(detail.id)) {
-      return detail.type === "tool" ? renderToolDetail(byId.get(detail.id)) : renderPersonDetail(byId.get(detail.id));
+      let e = byId.get(detail.id);
+      if (e.isCard) e = e.card.members[0];    // a group card opens on its first variant
+      return detail.type === "tool" ? renderToolDetail(e) : detail.type === "doc" ? renderDocDetail(e) : renderPersonDetail(e);
     }
     detail = null;
     if (query) return renderSearch();
@@ -310,16 +328,29 @@
   /* =====================================================================
      TOOLS
      ===================================================================== */
+  /* the star that appears on hover: the only way to mark/unmark from a list */
+  function hstar(id, name) {
+    const on = isFound(id);
+    return `<span class="hstar${on ? " on" : ""}" data-star="${esc(id)}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${on ? "Unmark" : "Mark"} ${esc(name)} as found" title="${on ? "Found: click to unmark" : "Click to mark as found"}">${I.star(on)}</span>`;
+  }
+  /* font size that fills a tile the way the game does */
+  function tileFont(name) {
+    const n = name.length;
+    if (n <= 5) return "font-size:var(--tf-xl)";
+    if (n <= 8) return "font-size:var(--tf-l)";
+    if (n <= 11) return "font-size:var(--tf-m)";
+    if (n <= 15) return "font-size:var(--tf-s)";
+    return "font-size:var(--tf-xs)";
+  }
   function tileHTML(e) {
     const got = isFound(e.id);
     const l = label(e);
     if (!got) {
-      return `<button class="tile locked" data-id="${esc(e.id)}" title="${esc(l)}: not found (click to mark found)">
-        <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>
-        <span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(l)}">i</span></button>`;
+      return `<button class="tile locked" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
+        <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}</button>`;
     }
-    return `<button class="tile${e.special ? " special" : ""}" data-id="${esc(e.id)}" style="${fit(l)}" title="${esc(l)}: found (click to unmark)">
-      ${esc(l)}<span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(l)}">i</span></button>`;
+    return `<button class="tile${e.special ? " special" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
+      <span class="tname" style="${tileFont(l)}">${esc(l)}</span>${hstar(e.id, l)}</button>`;
   }
 
   function tierHeadHTML(ci, tier, items) {
@@ -341,7 +372,8 @@
     const cat = cats[ui.cat];
     const catBtns = cats.map((c, i) => {
       const [f, t] = countOf(c.items);
-      return `<button class="cat${c.name.length > 12 ? " small" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>` : ""}</button>`;
+      const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
+      return `<button class="cat" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>` : ""}</button>`;
     }).join("");
 
     let body = "";
@@ -414,7 +446,7 @@
   const loadName = s => slug(String(s).replace(/\s*\(Random\)\s*$/i, ""));
   function whoCarries(name) {
     const n = slug(name);
-    return entries.filter(e => e.section === "bio" && (e.loadout || []).some(([k, v]) => k === "Weapon" && loadName(v) === n));
+    return people.filter(e => (e.loadout || []).some(([k, v]) => k === "Weapon" && loadName(v) === n));
   }
 
   /* =====================================================================
@@ -429,7 +461,7 @@
       return `<button class="subtab" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}">${esc(x.name)}<span class="n">${f}/${t}</span></button>`;
     }).join("");
     let cards = sortCards(g.cards);
-    if (settings.hideFound) cards = cards.filter(c => c.members.some(m => !isFound(m.id)));
+    if (settings.hideFound) cards = cards.filter(c => !cardFound(c));
     const html = cards.map(c => cardHTML(c, g)).join("");
     screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${html || '<p class="cat-note">All found.</p>'}</div></div>`;
   }
@@ -441,15 +473,11 @@
     const l = isGroup ? c.name : label(first);
     const pic = got ? (c.img ? `<img src="${esc(c.img)}" alt="" loading="lazy">` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
-    const hasInfo = isGroup || first.base || first.loadout;
-    // a single person toggles on click; a group card opens so each member can be marked
-    const action = isGroup ? `data-open="${esc(first.id)}"` : `data-id="${esc(first.id)}"`;
-    const tip = isGroup ? `${l}: ${f}/${t} found (click to open)` : `${l}: ${got ? "found" : "not found"}`;
-    return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" ${action} style="--c:${g.color}" title="${esc(tip)}">
+    const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
+    return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${g.color}" title="${esc(tip)}">
       <span class="pic">${pic}</span>
-      ${isGroup ? `<span class="count">${f}/${t}</span>` : ""}
-      ${hasInfo ? `<span class="info" data-pinfo="${esc(first.id)}" role="button" aria-label="View ${esc(l)}">i</span>` : ""}
-      <span class="nm" style="${fit(l, 17)}">${esc(l)}</span></button>`;
+      ${isGroup ? `<span class="count" title="${t} variants">×${t}</span>` : ""}${hstar(c.entry.id, l)}
+      <span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
   }
 
   function statRow(key, val) {
@@ -458,6 +486,11 @@
     if (s.u && v !== "true" && !/[a-z%]$/i.test(v)) v += s.u;
     const icon = s.i ? `<svg viewBox="0 0 24 24" fill="currentColor">${SI[s.i]}</svg>` : "";
     return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `title="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
+  }
+
+  /* the people in the current Biography tab, in on-screen order (for the < > arrows) */
+  function bioOrder(gi) {
+    return sortCards(PDA_DATA.biography[gi].cards).flatMap(c => c.members);
   }
 
   function renderPersonDetail(e) {
@@ -481,22 +514,63 @@
     ].join("");
     const empty = !base.length && !skills.length && !load.length;
     const members = card.kind === "group" ? card.members : [];
-    const mtabs = members.length ? `<div class="mtabs">${members.map(m =>
-      `<button class="mtab${m.id === e.id ? " on" : ""}${isFound(m.id) ? " got" : ""}" data-member="${esc(m.id)}" title="${esc(m.name)}: ${isFound(m.id) ? "found" : "not found"}">${isFound(m.id) ? "" : `<span class="ml">${I.lock}</span>`}${esc(m.name)}</button>`
-    ).join("")}</div>` : "";
+    const mtabs = members.length ? `<div class="mtabs" style="--n:${members.length}">${members.map(m => {
+      return `<button class="mtab${m.id === e.id ? " on" : ""}${got ? " got" : ""}" data-member="${esc(m.id)}" title="${esc(m.name)}" style="${fit(m.name, 19)}">${esc(m.name)}</button>`;
+    }).join("")}</div>` : "";
     const pic = e.img || card.img;
+    const order = bioOrder(e.groupIndex);
+    const idx = order.indexOf(e);
+    const prev = order[(idx - 1 + order.length) % order.length], next = order[(idx + 1) % order.length];
+    const desc = e.desc || card.desc;
     screen.innerHTML = `
       <div class="pdetail" style="--c:${g.color}">
-        <div class="dbox pprev"><div class="dhead">${esc(card.kind === "group" ? card.name : g.name)}<button class="return" id="ret">RETURN</button></div>
-          <div class="preview">${pic ? `<img src="${esc(pic)}" alt="">` : `<span class="ph big">${got ? I.person : I.question}</span>`}
-            <button class="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
-          </div>
-          <div class="pstatus ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"} <span>· click the star to ${got ? "unmark" : "mark"}</span></div>
+        <div class="dbox pprev"><div class="dhead">Preview
+            <span class="arrows"><button class="arrow" data-person="${esc(prev.id)}" title="Previous: ${esc(prev.name)}">&#9664;</button><button class="arrow" data-person="${esc(next.id)}" title="Next: ${esc(next.name)}">&#9654;</button></span></div>
+          <div class="preview">${pic ? `<img src="${esc(pic)}" alt="">` : `<span class="ph big">${got ? I.person : I.question}</span>`}</div>
         </div>
-        <div class="dbox edata"><div class="dhead">Enemy Data</div>
+        <div class="dbox edata"><div class="dhead">Enemy Data
+            <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
-          <div class="erows">${empty ? '<div class="esec" style="color:#777">NO DATA ON FILE</div>' : rows}</div>
+          <div class="ebody">
+            <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
+            <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${members.length ? `${got ? "Found" : "Not found"}: this star covers all ${members.length} ${esc(card.name)} variants` : got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
+          </div>
           ${mtabs}
+        </div>
+        <div class="dbox pdesc"><div class="dhead">Description</div>
+          <div class="desc">${desc ? esc(desc).split(/\n\s*\n/).map(p => `<p>${p}</p>`).join("") : '<p class="none">No description on file.</p>'}</div>
+        </div>
+      </div>`;
+  }
+
+  function renderDocDetail(e) {
+    const g = PDA_DATA.documents[e.groupIndex];
+    const got = isFound(e.id);
+    const l = label(e);
+    const icon = { location: I.wifi, note: I.note, misc: I.documents }[e.kind];
+    const order = sortEntries(g.items);
+    const idx = order.indexOf(e);
+    const prev = order[(idx - 1 + order.length) % order.length], next = order[(idx + 1) % order.length];
+    const type = { location: "Location", note: "Note", misc: "Miscellaneous" }[e.kind];
+    screen.innerHTML = `
+      <div class="pdetail doc-detail ${e.kind}">
+        <div class="dbox pprev"><div class="dhead">Preview
+            <span class="arrows"><button class="arrow" data-docnav="${esc(prev.id)}" title="Previous: ${esc(label(prev))}">&#9664;</button><button class="arrow" data-docnav="${esc(next.id)}" title="Next: ${esc(label(next))}">&#9654;</button></span></div>
+          <div class="preview docprev">${got ? `<span class="ph big">${icon}</span>` : `<span class="ph big">${I.lock}</span>`}</div>
+        </div>
+        <div class="dbox edata"><div class="dhead">Document Data
+            <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+          <div class="ename">${esc(l)}</div>
+          <div class="ebody">
+            <div class="erows">
+              ${statRow("Type", type)}
+              ${statRow("Category", g.name)}
+            </div>
+            <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
+          </div>
+        </div>
+        <div class="dbox pdesc"><div class="dhead">Description</div>
+          <div class="desc">${e.desc ? esc(e.desc).split(/\n\s*\n/).map(p => `<p>${p}</p>`).join("") : '<p class="none">No description on file.</p>'}</div>
         </div>
       </div>`;
   }
@@ -510,12 +584,12 @@
     const l = label(e);
     const icon = { location: I.wifi, note: I.note, misc: "" }[e.kind];
     if (!got) {
-      return `<button class="doc ${e.kind} missing" data-id="${esc(e.id)}" title="${esc(l)}: not found">
-        <span class="pic">${I.lock}</span>
+      return `<button class="doc ${e.kind} missing" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
+        <span class="pic">${I.lock}</span>${hstar(e.id, l)}
         <span class="nm"><span class="tag">- MISSING -</span>${settings.lockedNames && !e.unknown ? `<span class="sub">${esc(l)}</span>` : ""}</span></button>`;
     }
-    return `<button class="doc ${e.kind}" data-id="${esc(e.id)}" title="${esc(l)}: found">
-      <span class="pic">${icon}</span><span class="nm" style="${fit(l, 17)}">${esc(l)}</span></button>`;
+    return `<button class="doc ${e.kind}" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
+      <span class="pic">${icon}</span>${hstar(e.id, l)}<span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
   }
   function renderDocs() {
     const groups = PDA_DATA.documents;
@@ -553,15 +627,14 @@
   function renderSearch() {
     const q = slug(query);
     const hits = [];
-    entries.forEach(e => {
+    [...entries, ...people.filter(v => v.trackId)].forEach(e => {
       if (e.unknown) return;
-      let s = score(e.name, q);
-      if (s < 0 && e.card && e.card.kind === "group") s = score(e.card.name, q) >= 0 ? 5 : -1;
+      const s = score(e.name, q);
       if (s >= 0) hits.push([s, e]);
     });
     hits.sort((a, b) => a[0] - b[0] || (isFound(a[1].id) === isFound(b[1].id) ? collator.compare(a[1].name, b[1].name) : isFound(a[1].id) ? -1 : 1));
     // people carrying a weapon whose name matches
-    const carriers = entries.filter(e => e.section === "bio" && (e.loadout || []).some(([k, v]) => k === "Weapon" && score(loadName(v), q) >= 0 && score(loadName(v), q) <= 3))
+    const carriers = people.filter(e => (e.loadout || []).some(([k, v]) => k === "Weapon" && score(loadName(v), q) >= 0 && score(loadName(v), q) <= 3))
                             .filter(e => !hits.some(h => h[1] === e));
     const section = (title, list, note) => list.length ? `<div class="sgroup"><div class="tier-head">${title}<small>${list.length}${note ? " " + note : ""}</small></div>${list.map(resultHTML).join("")}</div>` : "";
     const by = s => hits.filter(h => h[1].section === s).map(h => h[1]);
@@ -571,14 +644,14 @@
   }
   function resultHTML(e) {
     const got = isFound(e.id);
-    const canOpen = e.section === "tools" || e.section === "bio";
+    const open = { tools: "data-open-tool", bio: "data-open", docs: "data-open-doc" }[e.section];
     return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}">
-      <button class="sres-main" data-id="${esc(e.id)}" title="${got ? "Found: click to unmark" : "Not found: click to mark found"}">
+      <button class="sres-main" ${open}="${esc(e.id)}" data-entry="${esc(e.id)}" title="Open ${esc(e.name)}">
         <span class="sres-ic">${got ? I.check : I.lock}</span>
         <span class="sres-name">${esc(e.name)}</span>
         <span class="sres-ctx">${esc(contextOf(e))}</span>
       </button>
-      ${canOpen ? `<button class="sres-open" data-${e.section === "tools" ? "info" : "pinfo"}="${esc(e.id)}" title="Open">VIEW</button>` : ""}
+      <button class="sres-star${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
     </div>`;
   }
 
@@ -659,20 +732,21 @@
       <div class="manual">
         <h3>-=-=- TRACKER GUIDE -=-=-</h3>
         <h4>How do I mark something as found?</h4>
-        <p>Click any locked entry in TOOLS or DOCUMENTS to unlock it, and click it again to lock it. In BIOGRAPHY, click a single person to mark them. Cards holding several people (like Robinson or Rogues) open up so each person can be marked on their own with the star.</p>
+        <p>Hover over any weapon, person or document and a star appears in its corner. Click the star to mark it found, and click it again to unmark it. On a phone the star is always showing. Every stat page also has a star.</p>
+        <h4>How do I see stats?</h4>
+        <p>Just click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock: mark the card and every variant inside it counts, then switch between them with the tabs along the bottom. The arrows next to Preview step through the rest of that tab.</p>
         <h4>Can I unlock a whole tier at once?</h4>
         <p>Click a TIER header in TOOLS. It asks "ARE YOU SURE?" first, so a misclick won't do anything until you press YES. If the tier is already complete, the same button locks it all again.</p>
         <h4>How are entries ordered?</h4>
         <p>Everything you've found comes first in A–Z order, then everything you haven't found, also A–Z.</p>
-        <h4>How do I see stats?</h4>
-        <p>Press the small "i" on a weapon or person (always visible on phones). Hover over a stat name on a person's page to read what it does.</p>
         <h4>Will I lose my progress?</h4>
         <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then.</p>
         <h3>-=-=- QUICK KEYS -=-=-</h3>
         <div class="k">/ - SEARCH</div>
         <div class="k">ESC - BACK / CLEAR SEARCH</div>
         <div class="k">MOUSE WHEEL ON TABS - SCROLL TABS</div>
-        <div class="k">CLICK ENTRY - MARK FOUND / MISSING</div>
+        <div class="k">CLICK ENTRY - OPEN IT</div>
+        <div class="k">HOVER + STAR - MARK FOUND / MISSING</div>
         <div class="k">CLICK TIER HEADER - UNLOCK WHOLE TIER</div>
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
@@ -725,8 +799,17 @@
     if (s2) s2.scrollTop = y;
   }
   function flash(id) {
-    const el = screen.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    const el = screen.querySelector(`[data-entry="${CSS.escape(id)}"]`);
     if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "nearest" }); }
+  }
+  const openDetail = (type, id) => { play("open"); detail = { type, id }; render(); };
+
+  function handleStar(star) {
+    const id = star.dataset.star;
+    toggle(id);
+    if (detail) { render(); return; }
+    keepScroll(render);
+    flash(id);
   }
 
   screen.addEventListener("click", ev => {
@@ -734,20 +817,24 @@
     // anything other than the YES/NO buttons cancels a pending tier prompt
     if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier]")) { cancelTier(); }
 
+    // the star is checked first, so pressing it never also opens the entry under it
+    const star = t.closest("[data-star]");
+    if (star) { ev.preventDefault(); handleStar(star); return; }
+
     const yes = t.closest("[data-tier-yes]");
     if (yes) { applyTier(yes.dataset.tierYes); keepScroll(render); return; }
     if (t.closest("[data-tier-no]")) { play("back"); cancelTier(); keepScroll(render); return; }
     const tierBtn = t.closest("[data-tier]");
     if (tierBtn) { askTier(tierBtn.dataset.tier); keepScroll(render); return; }
 
-    const info = t.closest("[data-info]");
-    if (info) { play("open"); detail = { type: "tool", id: info.dataset.info }; render(); return; }
-    const pinfo = t.closest("[data-pinfo]") || t.closest("[data-open]") || t.closest("[data-person]");
-    if (pinfo) { play("open"); detail = { type: "person", id: pinfo.dataset.pinfo || pinfo.dataset.open || pinfo.dataset.person }; render(); return; }
-    const toolLink = t.closest("[data-tool]");
-    if (toolLink) { play("open"); detail = { type: "tool", id: toolLink.dataset.tool }; render(); return; }
-    const member = t.closest("[data-member]");
-    if (member) { play("click"); detail = { type: "person", id: member.dataset.member }; render(); return; }
+    const tool = t.closest("[data-open-tool]") || t.closest("[data-tool]");
+    if (tool) { openDetail("tool", tool.dataset.openTool || tool.dataset.tool); return; }
+    const doc = t.closest("[data-open-doc]") || t.closest("[data-docnav]");
+    if (doc) { if (doc.dataset.docnav) { play("click"); detail = { type: "doc", id: doc.dataset.docnav }; render(); } else openDetail("doc", doc.dataset.openDoc); return; }
+    const member = t.closest("[data-member]") || t.closest(".arrow[data-person]");
+    if (member) { play("click"); detail = { type: "person", id: member.dataset.member || member.dataset.person }; render(); return; }
+    const person = t.closest("[data-open]") || t.closest("[data-person]");
+    if (person) { openDetail("person", person.dataset.open || person.dataset.person); return; }
 
     const set = t.closest("[data-set]");
     if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
@@ -758,16 +845,11 @@
     const docs = t.closest("[data-docs]");
     if (docs) { play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return; }
     if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
-    const star = t.closest("[data-star]");
-    if (star) { toggle(star.dataset.star); render(); return; }
-
-    const item = t.closest("[data-id]");
-    if (item) {
-      const id = item.dataset.id;
-      toggle(id);
-      keepScroll(render);
-      flash(id);
-    }
+  });
+  // keyboard: Enter / Space on a focused star
+  screen.addEventListener("keydown", ev => {
+    const star = ev.target.closest && ev.target.closest(".hstar");
+    if (star && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); ev.stopPropagation(); handleStar(star); }
   });
 
   /* ---------- go ---------- */
