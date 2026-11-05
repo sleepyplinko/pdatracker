@@ -519,3 +519,47 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   .profile { grid-template-columns: 1fr; }
   .avatar { width: 130px; }
 }
+
+/* =====================================================================
+   HOVER TEXT — the game's small black box with italic text
+   ===================================================================== */
+.tip {
+  position: fixed; z-index: 50; pointer-events: none;
+  max-width: 280px; padding: 4px 7px;
+  background: rgba(0,0,0,.92); border: 1px solid #3a3a3a;
+  color: #f2f2f2; font: italic 600 11.5px/1.25 var(--font);
+  opacity: 0; transition: opacity .08s;
+}
+.tip.on { opacity: 1; }
+[data-tip] { cursor: help; }
+.preview img[data-tip] { cursor: help; }
+.stat[data-tip]:hover i { text-decoration: underline dotted; text-underline-offset: 3px; }
+
+/* image counter + disabled arrows */
+.imgcount { position: absolute; left: 6px; bottom: 6px; padding: 0 5px; border-radius: 3px; background: rgba(0,0,0,.7); color: #eee; font-size: 12px; font-weight: 700; }
+.arrow:disabled { opacity: .3; cursor: default; }
+.arrow:disabled:hover { color: #111; }
+.detail .dhead .arrows { margin-left: auto; }
+
+/* weapon comment uses the same paragraph box as descriptions */
+.comment .desc p { text-indent: 0; text-align: left; }
+
+/* =====================================================================
+   "UNLOCK ENTIRE TAB" bar (Biography / Documents)
+   ===================================================================== */
+.tabbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 3px 8px; flex: 0 0 auto; flex-wrap: wrap;
+  background: rgba(20,20,20,.9); border-bottom: 1px solid #333;
+  font-size: 13px; color: #aaa;
+}
+.tabbtn {
+  height: 24px; padding: 0 12px !important; border: 1px solid #777 !important; border-radius: 4px;
+  background: var(--bar) !important; color: #111 !important; font-size: 12px !important; font-weight: 800 !important; letter-spacing: .04em;
+}
+.tabbtn:hover { filter: brightness(1.08); }
+.tabbar.confirm {
+  background: repeating-linear-gradient(135deg, #ffe15a 0 8px, #f3c822 8px 16px);
+  color: #1a1400; font-weight: 800; animation: pulse 1s ease-in-out infinite alternate;
+}
+.tabbar.confirm b { color: #a10e0e; }

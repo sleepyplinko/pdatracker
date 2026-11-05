@@ -21,3 +21,35 @@ Not affiliated with the game's developers.
 | `index.html`, `style.css`, `app.js` | Page, look and logic |
 
 To replace a sound, put your `.mp3`, `.ogg` or `.wav` in `sounds/` and change its `file` in `sounds.js`. Set a sound's file to `""` to turn it off.
+
+## Adding images
+1. Put the picture in the `images/` folder. `.webp` or `.jpg` keep the site small; screenshots of a few hundred KB are fine.
+2. In `data.js`, add `img` (one picture) or `imgs` (several) to the entry:
+
+```js
+// a weapon
+["Glock 18", { img: "images/glock18.webp", stats: { ... } }]
+
+// a weapon with several pictures, each with its own hover text
+["Glock 18", { imgs: [
+    { src: "images/glock18.webp",      caption: "Default" },
+    { src: "images/glock18-ext.webp",  caption: "With extended mag" }
+  ], stats: { ... } }]
+
+// a person: wrap P(...) with Object.assign
+Object.assign(P("Tony", { ... }, { ... }, [ ... ]), { imgs: ["images/tony1.webp", "images/tony2.webp"] }),
+
+// a whole group card (shown on the card and for any variant without its own)
+Object.assign(G("Robinson", [ ... ]), { img: "images/robinson.webp" }),
+
+// a document
+["Swamp", { img: "images/swamp.webp" }]
+```
+
+The ◀ ▶ arrows next to **Preview** flip between pictures, and hovering a picture shows its `caption`.
+
+## Other files
+| File | What it does |
+|---|---|
+| `descriptions.js` | Every person's Description text |
+| `tooltips.js` | The hover text for every stat (people and weapons) |
