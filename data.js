@@ -97,7 +97,7 @@ const PDA_DATA = {
                  [ W("Weapon"), A("Ammo"), M("Mag") ])   <- LOADOUT
      A card that holds several people (like Robinson) is written as
        G("Card name", [ P(...), P(...) ])
-     and every person inside it is tracked separately.
+     The whole card is one unlock; every person inside it becomes viewable.
      Health is in HP, Speed is the in-game speed number, Defense and
      resistances are percentages. Leave a stat out if it isn't shown. */
   biography: [
