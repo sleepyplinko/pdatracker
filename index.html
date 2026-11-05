@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDA.exe — Once A Normal City Tracker</title>
+  <meta name="description" content="Fan-made tracker for which PDA entries you've found in Once A Normal City.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wdth,wght@50..200,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"></div>
+
+  <main class="pda" id="pda">
+    <header class="titlebar">
+      <span class="title">PDA.exe</span>
+      <span class="hint">&lt; SCROLL TABS FOR MORE OPTIONS &gt;</span>
+      <span class="count" id="titleCount"></span>
+    </header>
+
+    <nav class="tabs" id="tabs" aria-label="PDA sections"></nav>
+
+    <section class="screen" id="screen" aria-live="polite"></section>
+  </main>
+
+  <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
+
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
