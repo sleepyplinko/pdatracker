@@ -49,7 +49,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
+  const HOVERABLE = ".tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -237,12 +237,39 @@
     "Type":                 { c: "#45e3f0", i: "aim",     u: "",   tip: "" },
     "Category":             { c: "#f4ee3c", i: "ammo",    u: "",   tip: "" }
   };
+  const TIPS = (typeof PDA_TIPS === "object" && PDA_TIPS) || { person: {}, weapon: {} };
+  const DESC = (typeof PDA_DESC === "object" && PDA_DESC) || {};
+  Object.keys(STAT).forEach(k => { if (k in (TIPS.person || {})) STAT[k].tip = TIPS.person[k]; });
   const BASE_ORDER  = ["Health", "Speed", "Defense", "Shield", "Supershield", "Super Armour", "Burn Resistance", "Bleed Resistance", "Explosive Resistance", "Stun Resistance", "Fracture Immunity"];
   const SKILL_ORDER = ["Suppressor", "Pre-Aim", "Strength", "Aim Time Multiplier", "Reload Speed Multiplier", "Aim Slowdown", "Attack Slowdown"];
   const orderBy = (obj, order) => Object.keys(obj || {}).sort((a, b) => {
     const ia = order.indexOf(a), ib = order.indexOf(b);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
+
+  /* ---------- images ----------
+     An entry can have  img: "images/a.webp"
+     or several:        imgs: ["images/a.webp", { src: "images/b.webp", caption: "hover text" }]  */
+  function imagesOf(...objs) {
+    for (const o of objs) {
+      if (!o) continue;
+      const list = o.imgs || (o.img ? [o.img] : null);
+      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" });
+    }
+    return [];
+  }
+  let imgIndex = 0;          // which image the open page is showing
+  function previewHTML(imgs, fallback) {
+    if (!imgs.length) return fallback;
+    const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
+    const im = imgs[i];
+    return `<img src="${esc(im.src)}" alt="" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
+           (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "");
+  }
+  function arrowsHTML(imgs) {
+    if (imgs.length < 2) return `<span class="arrows"><button class="arrow" disabled>&#9664;</button><button class="arrow" disabled>&#9654;</button></span>`;
+    return `<span class="arrows"><button class="arrow" data-img="-1" title="Previous image">&#9664;</button><button class="arrow" data-img="1" title="Next image">&#9654;</button></span>`;
+  }
 
   /* ---------- helpers ---------- */
   const $ = s => document.querySelector(s);
@@ -394,6 +421,18 @@
     screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
   }
 
+  /* the "unlock this whole tab" bar under Biography / Documents sub-tabs */
+  function tabBarHTML(kind, idx, items, name) {
+    const [f, t] = countOf(items);
+    const key = `tab:${kind}:${idx}`;
+    const all = f === t;
+    if (pendingTier === key) {
+      return `<div class="tabbar confirm"><span><b>// ARE YOU SURE?</b> ${all ? `LOCK ALL ${t}` : `UNLOCK ALL ${t - f} REMAINING`} IN ${esc(name.toUpperCase())}</span>
+        <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span></div>`;
+    }
+    return `<div class="tabbar"><span class="tb-count">${esc(name)}: ${f} / ${t} found</span><button class="tier-btn tabbtn" data-tier="${key}">${all ? "LOCK ENTIRE TAB" : "UNLOCK ENTIRE TAB"}</button></div>`;
+  }
+
   function cancelTier() { pendingTier = null; clearTimeout(pendingTimer); }
   function askTier(key) {
     pendingTier = key; play("warn");
@@ -401,8 +440,14 @@
     pendingTimer = setTimeout(() => { if (pendingTier === key) { pendingTier = null; keepScroll(render); } }, 7000);
   }
   function applyTier(key) {
-    const [ci, tier] = key.split("|");
-    const items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
+    let items;
+    if (key.startsWith("tab:")) {
+      const [, kind, idx] = key.split(":");
+      items = (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
+    } else {
+      const [ci, tier] = key.split("|");
+      items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
+    }
     const lockAll = items.every(e => isFound(e.id));
     items.forEach(e => setFound(e.id, !lockAll));
     save(KEY_FOUND, found); updateCount();
@@ -410,35 +455,43 @@
     cancelTier();
   }
 
+  /* colours copied from the game's weapon stat page */
   const TOOL_STAT_COLORS = {
-    "CALIBER TYPE": "#ff4a4a", "AUTO": "#9cff6b", "BURST": "#ff9a3c", "STRENGTH": "#ff5fa8",
-    "AIM TIME": "#4fd8ff", "SWITCH TIME": "#ffb347", "RPM": "#ffe14d", "ALERT RADIUS": "#7474ff",
-    "RELOAD MODIFIER": "#3fe0c8", "WEAPON TYPE": "#e86bff"
+    "CALIBER TYPE": "#ff2a2a", "AUTO": "#ff8a3a", "BURST": "#ff8a3a", "BURST DELAY": "#ff8a3a",
+    "BURST AMOUNT": "#ff8a3a", "BURST VOLLEY": "#ff8a3a", "STRENGTH": "#ff4fa0", "AIM TIME": "#35d6ff",
+    "SWITCH TIME": "#ffa82a", "RPM": "#fff04a", "ALERT RADIUS": "#5a5aff", "RELOAD MODIFIER": "#2ae0e0",
+    "WEAPON TYPE": "#d04aff", "MAX SPREAD": "#9a8aff", "MINIMUM SPREAD": "#9a8aff",
+    "SPREAD INCREMENT": "#d8a0ff", "SPREAD DECREASE": "#d8a0ff", "EQUIP TIME": "#e8a070",
+    "WEIGHT": "#2a2a2a", "TIER": "#fff89a"
   };
-  const PALETTE = ["#ff9a3c", "#ff5fa8", "#4fd8ff", "#ffe14d", "#7474ff", "#3fe0c8", "#e86bff"];
+  const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
+  const paras = t => esc(t).split(/\n\s*\n/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
 
   function renderToolDetail(e) {
     const got = isFound(e.id);
     const l = label(e);
     const stats = Object.entries(e.stats || {});
-    const statHTML = stats.length
-      ? stats.map(([k, v], i) => `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || PALETTE[i % PALETTE.length]}">${esc(k)}</i>: ${esc(v)}</div>`).join("")
-      : `<div class="stat" style="color:#777">NO STATISTICS ON FILE</div>`;
+    if (stats.length) stats.push(["TIER", `TIER ${e.tier}`]);
+    else stats.push(["TIER", `TIER ${e.tier}`]);
+    const statHTML = stats.map(([k, v]) => {
+      const tip = (TIPS.weapon || {})[k];
+      const gap = GAP_BEFORE.has(k) || (k === "TIER" && !e.stats) ? " gap" : "";
+      return `<div class="stat${gap}"${tip ? ` data-tip="${esc(tip)}"` : ""}><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}${k === "WEIGHT" ? ";text-shadow:0 0 1px #888" : ""}">${esc(k)}</i>: ${esc(v)}</div>`;
+    }).join("");
     const users = whoCarries(e.name);
+    const imgs = imagesOf(e);
     screen.innerHTML = `
       <div class="detail">
-        <div class="dbox"><div class="dhead">Preview</div>
-          <div class="preview">${e.img ? `<img src="${esc(e.img)}" alt="">` : `<span class="ph">${I.gun}</span>`}
+        <div class="dbox"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
+          <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<button class="return" id="ret">RETURN</button></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
-            <div class="stat gap"><i style="color:#fff">CATEGORY</i>: ${esc(e.group)} · TIER ${e.tier}</div>
-            <div class="stat"><i style="color:#fff">STATUS</i>: <span class="${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span></div>
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
-        <div class="dbox comment"><div class="dhead">Comment</div><p>${e.comment ? esc(e.comment) : '<span style="color:#666">No comment on file.</span>'}</p></div>
+        <div class="dbox comment"><div class="dhead">Comment</div><div class="desc">${e.comment ? paras(e.comment) : '<p class="none">No comment.</p>'}</div></div>
       </div>`;
   }
 
@@ -463,7 +516,7 @@
     let cards = sortCards(g.cards);
     if (settings.hideFound) cards = cards.filter(c => !cardFound(c));
     const html = cards.map(c => cardHTML(c, g)).join("");
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${html || '<p class="cat-note">All found.</p>'}</div></div>`;
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("bio", ui.bio, g.items, g.name)}<div class="cards">${html || '<p class="cat-note">All found.</p>'}</div></div>`;
   }
 
   function cardHTML(c, g) {
@@ -471,7 +524,8 @@
     const isGroup = c.kind === "group";
     const first = c.members[0];
     const l = isGroup ? c.name : label(first);
-    const pic = got ? (c.img ? `<img src="${esc(c.img)}" alt="" loading="lazy">` : (isGroup ? I.people : I.person)) : I.question;
+    const ci = imagesOf(c.entry, c, first);
+    const pic = got ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy">` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
     return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${g.color}" title="${esc(tip)}">
@@ -485,13 +539,10 @@
     let v = String(val);
     if (s.u && v !== "true" && !/[a-z%]$/i.test(v)) v += s.u;
     const icon = s.i ? `<svg viewBox="0 0 24 24" fill="currentColor">${SI[s.i]}</svg>` : "";
-    return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `title="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
+    return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `data-tip="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
   }
 
   /* the people in the current Biography tab, in on-screen order (for the < > arrows) */
-  function bioOrder(gi) {
-    return sortCards(PDA_DATA.biography[gi].cards).flatMap(c => c.members);
-  }
 
   function renderPersonDetail(e) {
     const card = e.card;
@@ -517,16 +568,12 @@
     const mtabs = members.length ? `<div class="mtabs" style="--n:${members.length}">${members.map(m => {
       return `<button class="mtab${m.id === e.id ? " on" : ""}${got ? " got" : ""}" data-member="${esc(m.id)}" title="${esc(m.name)}" style="${fit(m.name, 19)}">${esc(m.name)}</button>`;
     }).join("")}</div>` : "";
-    const pic = e.img || card.img;
-    const order = bioOrder(e.groupIndex);
-    const idx = order.indexOf(e);
-    const prev = order[(idx - 1 + order.length) % order.length], next = order[(idx + 1) % order.length];
-    const desc = e.desc || card.desc;
+    const imgs = imagesOf(e, card.entry, card);
+    const desc = e.desc || DESC[e.name] || card.desc || DESC[card.name];
     screen.innerHTML = `
       <div class="pdetail" style="--c:${g.color}">
-        <div class="dbox pprev"><div class="dhead">Preview
-            <span class="arrows"><button class="arrow" data-person="${esc(prev.id)}" title="Previous: ${esc(prev.name)}">&#9664;</button><button class="arrow" data-person="${esc(next.id)}" title="Next: ${esc(next.name)}">&#9654;</button></span></div>
-          <div class="preview">${pic ? `<img src="${esc(pic)}" alt="">` : `<span class="ph big">${got ? I.person : I.question}</span>`}</div>
+        <div class="dbox pprev"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
+          <div class="preview">${previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
             <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
@@ -538,7 +585,7 @@
           ${mtabs}
         </div>
         <div class="dbox pdesc"><div class="dhead">Description</div>
-          <div class="desc">${desc ? esc(desc).split(/\n\s*\n/).map(p => `<p>${p}</p>`).join("") : '<p class="none">No description on file.</p>'}</div>
+          <div class="desc">${desc ? paras(desc) : '<p class="none">No description on file.</p>'}</div>
         </div>
       </div>`;
   }
@@ -548,15 +595,12 @@
     const got = isFound(e.id);
     const l = label(e);
     const icon = { location: I.wifi, note: I.note, misc: I.documents }[e.kind];
-    const order = sortEntries(g.items);
-    const idx = order.indexOf(e);
-    const prev = order[(idx - 1 + order.length) % order.length], next = order[(idx + 1) % order.length];
+    const imgs = imagesOf(e);
     const type = { location: "Location", note: "Note", misc: "Miscellaneous" }[e.kind];
     screen.innerHTML = `
       <div class="pdetail doc-detail ${e.kind}">
-        <div class="dbox pprev"><div class="dhead">Preview
-            <span class="arrows"><button class="arrow" data-docnav="${esc(prev.id)}" title="Previous: ${esc(label(prev))}">&#9664;</button><button class="arrow" data-docnav="${esc(next.id)}" title="Next: ${esc(label(next))}">&#9654;</button></span></div>
-          <div class="preview docprev">${got ? `<span class="ph big">${icon}</span>` : `<span class="ph big">${I.lock}</span>`}</div>
+        <div class="dbox pprev"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
+          <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
             <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
@@ -570,7 +614,7 @@
           </div>
         </div>
         <div class="dbox pdesc"><div class="dhead">Description</div>
-          <div class="desc">${e.desc ? esc(e.desc).split(/\n\s*\n/).map(p => `<p>${p}</p>`).join("") : '<p class="none">No description on file.</p>'}</div>
+          <div class="desc">${e.desc ? paras(e.desc) : '<p class="none">No description on file.</p>'}</div>
         </div>
       </div>`;
   }
@@ -602,7 +646,7 @@
     }).join("");
     let items = sortEntries(g.items);
     if (settings.hideFound) items = items.filter(e => !isFound(e.id));
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${items.map(docHTML).join("") || '<p class="cat-note">All found.</p>'}</div></div>`;
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("docs", ui.docs, g.items, g.name)}<div class="cards">${items.map(docHTML).join("") || '<p class="cat-note">All found.</p>'}</div></div>`;
   }
 
   /* =====================================================================
@@ -735,6 +779,10 @@
         <p>Hover over any weapon, person or document and a star appears in its corner. Click the star to mark it found, and click it again to unmark it. On a phone the star is always showing. Every stat page also has a star.</p>
         <h4>How do I see stats?</h4>
         <p>Just click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock: mark the card and every variant inside it counts, then switch between them with the tabs along the bottom. The arrows next to Preview step through the rest of that tab.</p>
+        <h4>Can I unlock a whole tab of people or documents?</h4>
+        <p>Use UNLOCK ENTIRE TAB under the sub-tabs in BIOGRAPHY or DOCUMENTS. Like tiers, it asks "ARE YOU SURE?" first.</p>
+        <h4>What do the stats mean?</h4>
+        <p>Hover over any stat name (tap it on a phone) to see what it does. Pictures can have hover text too.</p>
         <h4>Can I unlock a whole tier at once?</h4>
         <p>Click a TIER header in TOOLS. It asks "ARE YOU SURE?" first, so a misclick won't do anything until you press YES. If the tier is already complete, the same button locks it all again.</p>
         <h4>How are entries ordered?</h4>
@@ -802,7 +850,7 @@
     const el = screen.querySelector(`[data-entry="${CSS.escape(id)}"]`);
     if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "nearest" }); }
   }
-  const openDetail = (type, id) => { play("open"); detail = { type, id }; render(); };
+  const openDetail = (type, id) => { play("open"); imgIndex = 0; detail = { type, id }; render(); };
 
   function handleStar(star) {
     const id = star.dataset.star;
@@ -821,6 +869,9 @@
     const star = t.closest("[data-star]");
     if (star) { ev.preventDefault(); handleStar(star); return; }
 
+    const arrow = t.closest("[data-img]");
+    if (arrow) { play("click"); imgIndex += +arrow.dataset.img; render(); return; }
+
     const yes = t.closest("[data-tier-yes]");
     if (yes) { applyTier(yes.dataset.tierYes); keepScroll(render); return; }
     if (t.closest("[data-tier-no]")) { play("back"); cancelTier(); keepScroll(render); return; }
@@ -832,7 +883,7 @@
     const doc = t.closest("[data-open-doc]") || t.closest("[data-docnav]");
     if (doc) { if (doc.dataset.docnav) { play("click"); detail = { type: "doc", id: doc.dataset.docnav }; render(); } else openDetail("doc", doc.dataset.openDoc); return; }
     const member = t.closest("[data-member]") || t.closest(".arrow[data-person]");
-    if (member) { play("click"); detail = { type: "person", id: member.dataset.member || member.dataset.person }; render(); return; }
+    if (member) { play("click"); imgIndex = 0; detail = { type: "person", id: member.dataset.member || member.dataset.person }; render(); return; }
     const person = t.closest("[data-open]") || t.closest("[data-person]");
     if (person) { openDetail("person", person.dataset.open || person.dataset.person); return; }
 
@@ -851,6 +902,39 @@
     const star = ev.target.closest && ev.target.closest(".hstar");
     if (star && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); ev.stopPropagation(); handleStar(star); }
   });
+
+  /* =====================================================================
+     HOVER TEXT (stats + images) — small black box like the game's
+     ===================================================================== */
+  const tipEl = document.createElement("div");
+  tipEl.className = "tip"; tipEl.setAttribute("role", "tooltip");
+  document.body.appendChild(tipEl);
+  let tipFor = null;
+  function placeTip(x, y) {
+    const r = tipEl.getBoundingClientRect();
+    let left = x + 14, top = y + 16;
+    if (left + r.width > innerWidth - 6) left = x - r.width - 10;
+    if (top + r.height > innerHeight - 6) top = y - r.height - 10;
+    tipEl.style.left = Math.max(6, left) + "px"; tipEl.style.top = Math.max(6, top) + "px";
+  }
+  document.addEventListener("pointermove", ev => {
+    const el = ev.target.closest && ev.target.closest("[data-tip]");
+    if (el !== tipFor) {
+      tipFor = el;
+      if (el && el.dataset.tip) { tipEl.textContent = el.dataset.tip; tipEl.classList.add("on"); }
+      else tipEl.classList.remove("on");
+    }
+    if (tipFor) placeTip(ev.clientX, ev.clientY);
+  });
+  document.addEventListener("pointerleave", () => { tipFor = null; tipEl.classList.remove("on"); });
+  // phones: tap a stat to show its text, tap elsewhere to hide
+  document.addEventListener("pointerdown", ev => {
+    if (ev.pointerType === "mouse") return;
+    const el = ev.target.closest && ev.target.closest("[data-tip]");
+    if (el && el.dataset.tip) { tipFor = el; tipEl.textContent = el.dataset.tip; tipEl.classList.add("on"); placeTip(ev.clientX, ev.clientY); }
+    else { tipFor = null; tipEl.classList.remove("on"); }
+  });
+  screen.addEventListener("scroll", () => { tipFor = null; tipEl.classList.remove("on"); }, true);
 
   /* ---------- go ---------- */
   renderTabs();
