@@ -22,12 +22,19 @@
 
     <nav class="tabs" id="tabs" aria-label="PDA sections"></nav>
 
+    <div class="searchbar">
+      <span class="sicon" id="searchIcon" aria-hidden="true"></span>
+      <input id="search" type="search" placeholder="SEARCH WEAPONS, PEOPLE, DOCUMENTS…  ( / )" autocomplete="off" spellcheck="false" aria-label="Search the PDA">
+      <button class="clear-search" id="clearSearch" hidden aria-label="Clear search">CLEAR</button>
+    </div>
+
     <section class="screen" id="screen" aria-live="polite"></section>
   </main>
 
   <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script src="sounds.js"></script>
   <script src="data.js"></script>
   <script src="app.js"></script>
 </body>

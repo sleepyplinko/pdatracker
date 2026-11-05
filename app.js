@@ -1,5 +1,6 @@
 /* =====================================================================
-   PDA.exe tracker — app logic. Entries live in data.js.
+   PDA.exe tracker — app logic.
+   Entries live in data.js, sound files are set in sounds.js.
    ===================================================================== */
 (() => {
   "use strict";
@@ -13,54 +14,145 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: true, hideFound: false }, load(KEY_SET, {}));
+  let settings = Object.assign({ lockedNames: true, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0 }, load(KEY_UI, {}));
   let user     = load(KEY_USER, "");
-  let detailId = null;
+  let detail   = null;      // { type: "tool" | "person", id }
+  let query    = "";
+  let pendingTier = null;   // "catIndex|tier" while its "are you sure?" is showing
+  let pendingTimer = 0;
 
-  /* ---------- flatten data into entries with stable ids ---------- */
+  /* =====================================================================
+     SOUND
+     ===================================================================== */
+  const SFX = (typeof PDA_SOUNDS === "object" && PDA_SOUNDS) || {};
+  const pools = {};
+  function play(name) {
+    if (!settings.sound) return;
+    if (name === "hover" && !settings.hoverSound) return;
+    const def = SFX[name];
+    if (!def || !def.file) return;
+    let pool = pools[name];
+    if (!pool) {
+      pool = pools[name] = { i: 0, list: [] };
+      for (let n = 0; n < (name === "hover" ? 6 : 3); n++) {
+        const a = new Audio(def.file); a.preload = "auto"; pool.list.push(a);
+      }
+    }
+    const a = pool.list[pool.i++ % pool.list.length];
+    try {
+      a.volume = Math.max(0, Math.min(1, (def.volume ?? 1) * settings.volume / 100));
+      a.currentTime = 0;
+      const p = a.play(); if (p && p.catch) p.catch(() => {});
+    } catch { /* browsers block sound until the first click; ignore */ }
+  }
+  // preload the files so the first hover isn't late
+  window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
+
+  const HOVERABLE = ".tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .info, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres, .mtab, .clear-search";
+  let lastHover = null, lastHoverAt = 0;
+  document.addEventListener("pointerover", e => {
+    if (e.pointerType && e.pointerType !== "mouse") return;
+    const el = e.target.closest(HOVERABLE);
+    if (!el || el === lastHover) return;
+    lastHover = el;
+    const now = performance.now();
+    if (now - lastHoverAt < 35) return;
+    lastHoverAt = now;
+    play("hover");
+  });
+  document.addEventListener("pointerout", e => {
+    const el = e.target.closest(HOVERABLE);
+    if (el && !el.contains(e.relatedTarget)) lastHover = null;
+  });
+
+  /* =====================================================================
+     DATA → ENTRIES (each with a stable id)
+     ===================================================================== */
   const slug = s => String(s).toLowerCase().replace(/\s+/g, " ").trim();
   const entries = [];
   const byId = new Map();
   const add = e => { entries.push(e); byId.set(e.id, e); return e; };
-  const norm = raw => Array.isArray(raw) ? { name: raw[0], ...(raw[1] || {}) } : { name: raw };
+  const norm = raw => Array.isArray(raw) ? { name: raw[0], ...(raw[1] || {}) }
+                    : typeof raw === "string" ? { name: raw } : { ...raw };
 
-  PDA_DATA.tools.forEach(cat => {
+  PDA_DATA.tools.forEach((cat, ci) => {
     cat.items = [];
     Object.keys(cat.tiers).sort((a, b) => a - b).forEach(tier => {
       cat.tiers[tier].forEach((raw, i) => {
         const r = norm(raw);
         const unknown = r.name === "???";
         const id = unknown ? `t|${slug(cat.name)}|${tier}|???${i}` : `t|${slug(cat.name)}|${slug(r.name)}`;
-        cat.items.push(add({ ...r, id, section: "tools", group: cat.name, tier: +tier, unknown }));
+        cat.items.push(add({ ...r, id, section: "tools", group: cat.name, catIndex: ci, tier: +tier, unknown }));
       });
     });
   });
-  PDA_DATA.biography.forEach(g => {
+
+  // Biography: a "card" is either one person or a group of people (members)
+  PDA_DATA.biography.forEach((g, gi) => {
+    g.cards = g.entries.map((raw, i) => {
+      const r = norm(raw);
+      if (Array.isArray(r.members)) {
+        const card = { kind: "group", name: r.name, img: r.img, members: [] };
+        card.members = r.members.map(m => add({
+          ...norm(m), id: `b|${slug(g.name)}|${slug(r.name)}|${slug(norm(m).name)}`,
+          section: "bio", group: g.name, groupIndex: gi, card
+        }));
+        return card;
+      }
+      const unknown = r.name === "???";
+      const card = { kind: "single", name: r.name, img: r.img };
+      card.members = [add({ ...r, id: `b|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`,
+                            section: "bio", group: g.name, groupIndex: gi, unknown, card })];
+      return card;
+    });
+    g.items = g.cards.flatMap(c => c.members);
+  });
+
+  PDA_DATA.documents.forEach((g, gi) => {
     g.items = g.entries.map((raw, i) => {
       const r = norm(raw);
       const unknown = r.name === "???";
-      return add({ ...r, id: `b|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`, section: "bio", group: g.name, unknown });
-    });
-  });
-  PDA_DATA.documents.forEach(g => {
-    g.items = g.entries.map((raw, i) => {
-      const r = norm(raw);
-      const unknown = r.name === "???";
-      return add({ ...r, id: `d|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`, section: "docs", group: g.name, kind: g.kind, unknown });
+      return add({ ...r, id: `d|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`,
+                   section: "docs", group: g.name, groupIndex: gi, kind: g.kind, unknown });
     });
   });
 
-  const isFound = id => !!found[id];
-  const countOf = list => [list.filter(e => isFound(e.id)).length, list.length];
+  const isFound   = id => !!found[id];
+  const cardFound = c => c.members.some(m => isFound(m.id));
+  const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
+  const label     = e => e.unknown ? "???" : e.name;
 
+  /* ---------- sorting: found A→Z first, then locked A→Z, ??? last ---------- */
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  function sortBy(list, isOn, nameOf) {
+    return list.slice().sort((a, b) => {
+      const fa = isOn(a), fb = isOn(b);
+      if (fa !== fb) return fa ? -1 : 1;
+      const na = nameOf(a), nb = nameOf(b);
+      const ua = na === "???", ub = nb === "???";
+      if (ua !== ub) return ua ? 1 : -1;
+      return collator.compare(na, nb);
+    });
+  }
+  const sortEntries = list => sortBy(list, e => isFound(e.id), label);
+  const sortCards   = list => sortBy(list, cardFound, c => c.name);
+
+  function setFound(id, on) {
+    if (on) found[id] = 1; else delete found[id];
+  }
   function toggle(id) {
-    if (found[id]) delete found[id]; else found[id] = 1;
+    const on = !isFound(id);
+    setFound(id, on);
     save(KEY_FOUND, found);
+    play(on ? "select" : "deselect");
     updateCount();
+    return on;
   }
 
-  /* ---------- icons ---------- */
+  /* =====================================================================
+     ICONS
+     ===================================================================== */
   const I = {
     profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#111"/><circle cx="12" cy="9.5" r="3.6" fill="#ddd"/><path d="M5.5 18.5c1.4-3 3.8-4.4 6.5-4.4s5.1 1.4 6.5 4.4" fill="#ddd"/></svg>',
     cloud:   '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 7 18z"/><path d="M12 10v6m-2.5-2.5L12 16l2.5-2.5"/></svg>',
@@ -70,15 +162,71 @@
     biography:'<svg viewBox="0 0 24 24" fill="#111"><path d="M2 6h7l2 2h11v13H2z"/><circle cx="12" cy="13" r="2.4" fill="#ccc"/><path d="M7.5 19c.8-2.2 2.5-3.3 4.5-3.3s3.7 1.1 4.5 3.3z" fill="#ccc"/><path d="M4 3h7v2H4z"/></svg>',
     documents:'<svg viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#111"/><path d="M8 11h8M8 14h8M8 17h6" stroke="#ccc" stroke-width="1.6"/></svg>',
     lock:    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5v12h-13V10zm2.5 0h5V7a2.5 2.5 0 0 0-5 0z"/><circle cx="12" cy="15.5" r="1.6" fill="#000"/><rect x="11.3" y="16" width="1.4" height="3" fill="#000"/></svg>',
+    check:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>',
     question:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="44" stroke-width="5"/><path d="M36 38a14 14 0 1 1 20 12.6c-4 2-6 4.6-6 9.4v4" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="76" r="4.5" fill="currentColor" stroke="none"/></svg>',
     person:  '<svg viewBox="0 0 100 100" fill="#e9e9e9"><circle cx="50" cy="34" r="20"/><path d="M12 92c4-22 20-34 38-34s34 12 38 34z"/></svg>',
+    people:  '<svg viewBox="0 0 100 100" fill="#e9e9e9"><circle cx="34" cy="38" r="14"/><circle cx="66" cy="38" r="14"/><path d="M4 88c3-17 15-26 30-26s27 9 30 26z"/><path d="M36 88c3-17 15-26 30-26s27 9 30 26z" opacity=".75"/></svg>',
     wifi:    '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"><path d="M18 74a56 56 0 0 1 56-56"/><path d="M34 74a40 40 0 0 1 40-40"/><path d="M50 74a24 24 0 0 1 24-24"/><circle cx="72" cy="72" r="6" fill="currentColor" stroke="none"/></svg>',
     note:    '<svg viewBox="0 0 100 100"><path d="M18 6h44l22 22v66H18z" fill="currentColor"/><path d="M62 6v22h22" fill="#000" opacity=".25"/><path d="M30 46h40M30 58h40M30 70h40M30 34h24" stroke="#111" stroke-width="7" stroke-linecap="round"/></svg>',
     star:    on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2.5l2.9 6.2 6.6.7-5 4.5 1.4 6.6L12 17.2l-5.9 3.3 1.4-6.6-5-4.5 6.6-.7z"/></svg>`,
     gun:     '<svg viewBox="0 0 100 70" fill="currentColor"><path d="M4 10h82v14H58l-6 8H40l-6 34H14l8-34H4z"/></svg>',
+    search:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/></svg>',
     download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></svg>',
     upload:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M4 20h16"/></svg>'
   };
+  /* small icons for the enemy stat rows */
+  const SI = {
+    heart:  '<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/>',
+    run:    '<circle cx="14" cy="4" r="2.2"/><path d="M11 7l-4 3 1.4 1.6L11 9.8l1 3.4-4 4.8 1.6 1.4 4.6-5 2.4 2.6V22h2v-6l-3-3.4.8-3.4 2 2.2H22v-2h-3.6l-3.2-3.6z"/>',
+    shieldO:'<path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/>',
+    shieldP:'<path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/><path d="M8 12h8M12 8v8" stroke="#111" stroke-width="2.4"/>',
+    flame:  '<path d="M12 22c4.4 0 7-3 7-6.6 0-4-3-6-4-10-1.6 1.6-2 3.6-2 5-1.2-1.4-2-3.6-1.6-6.4C7.6 6.4 5 10.4 5 15.4 5 19 7.6 22 12 22z"/>',
+    drop:   '<path d="M12 2.5C9 7 6 10.4 6 14.4a6 6 0 0 0 12 0c0-4-3-7.4-6-11.9z"/>',
+    blast:  '<path d="M12 1l2 6 5-3-2 6 6 2-6 2 2 6-5-3-2 6-2-6-5 3 2-6-6-2 6-2-2-6 5 3z"/>',
+    bolt:   '<path d="M13 2L4 14h6l-1 8 9-12h-6z"/>',
+    bone:   '<path d="M6 3a3 3 0 0 0-1.5 5.6L15.4 19.5A3 3 0 1 0 19.5 15.4L8.6 4.5A3 3 0 0 0 6 3z"/>',
+    mute:   '<path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15 9l6 6M21 9l-6 6" stroke="currentColor" stroke-width="2.2"/>',
+    aim:    '<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6" stroke="currentColor" stroke-width="2.2"/>',
+    fist:   '<path d="M7 9V5.5a1.5 1.5 0 0 1 3 0V9V4a1.5 1.5 0 0 1 3 0v5V5a1.5 1.5 0 0 1 3 0v5V7.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 8-7.5 8S5 19 5 15v-3.5a1.5 1.5 0 0 1 2-1.4z"/>',
+    eye:    '<path d="M12 5C6.5 5 2.5 9.4 1.5 12c1 2.6 5 7 10.5 7s9.5-4.4 10.5-7C21.5 9.4 17.5 5 12 5z"/><circle cx="12" cy="12" r="3.4" fill="#111"/>',
+    reload: '<path d="M20 12a8 8 0 1 1-2.4-5.7" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M20 3v6h-6z"/>',
+    ff:     '<path d="M2 5l9 7-9 7zM12 5l9 7-9 7z"/>',
+    swing:  '<path d="M4 20A16 16 0 0 1 20 4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 20A12 12 0 0 1 20 8" fill="none" stroke="currentColor" stroke-width="2.4" opacity=".6"/>',
+    gun:    '<path d="M2 6h19v4h-7l-1.5 2H10l-1.5 8H4l2-8H2z"/>',
+    ammo:   '<path d="M6 3h4v18H6z"/><path d="M6 17h12v4H6z"/>'
+  };
+  const STAT = {
+    // base stats
+    "Health":               { c: "#ff4848", i: "heart",   u: "HP", tip: "How much damage the entity can take." },
+    "Speed":                { c: "#8ef0c8", i: "run",     u: "⇅",  tip: "Describes the enemie's speed. (Formula is their walk speed divided by 16)" },
+    "Defense":              { c: "#8a8a8a", i: "shieldO", u: "%",  tip: "Subtracts the damage dealt with the enemy's defense percentage. May be subtract with some bludgeons or ammo types. Mostly bypassed with explosives." },
+    "Shield":               { c: "#4fe3e8", i: "shieldO", u: "∴",  tip: "Subtracts the damage dealt and directs it to the shield health. Will no longer work once it runs out. Bypassed by explosives." },
+    "Supershield":          { c: "#ffd23a", i: "shieldO", u: "⌅",  tip: "Completely negates all incoming damage but negates supershield by one point." },
+    "Super Armour":         { c: "#7dff7d", i: "shieldP", u: "⌅",  tip: "Significantly punishes & reduces high damage count compared to lower damages. Any weapon that fires more than one pellet per blast counts as a single damage blast." },
+    "Burn Resistance":      { c: "#ff8a2a", i: "flame",   u: "%",  tip: "Subtracts incoming fire damage by resistance's percentage." },
+    "Bleed Resistance":     { c: "#ff4aa0", i: "drop",    u: "%",  tip: "Subtracts incoming bleed damage by resistance's percentage." },
+    "Explosive Resistance": { c: "#ff5a3a", i: "blast",   u: "%",  tip: "Subtracts incoming explosive damage by resistance's percentage." },
+    "Stun Resistance":      { c: "#ffd04a", i: "bolt",    u: "%",  tip: "Subtracts incoming stun by resistance's percentage." },
+    "Fracture Immunity":    { c: "#ffe7b0", i: "bone",    u: "",   tip: "Can't have their bones fractured." },
+    // skills
+    "Suppressor":           { c: "#33c9ff", i: "mute",    u: "",   tip: "Entity will not cancel aim regardless of their target going back to cover." },
+    "Pre-Aim":              { c: "#38f0a0", i: "aim",     u: " Range", tip: "How close you need to be before the entity starts aiming early." },
+    "Strength":             { c: "#e01b1b", i: "fist",    u: "",   tip: "The damage multiplier for the entity's weapon." },
+    "Aim Time Multiplier":  { c: "#3ad8ff", i: "eye",     u: "",   tip: "The multiplier for the entity's aim time." },
+    "Reload Speed Multiplier": { c: "#a24dff", i: "reload", u: "", tip: "The multiplier for the entity's reload speed." },
+    "Aim Slowdown":         { c: "#8a7dff", i: "ff",      u: "",   tip: "The multiplier for the entity's speed upon aiming down." },
+    "Attack Slowdown":      { c: "#8a7dff", i: "swing",   u: "",   tip: "The multiplier for the entity's speed while attacking." },
+    // loadout
+    "Weapon":               { c: "#f3ee30", i: "gun",     u: "",   tip: "The primary or secondary the entity uses. If firearm is specified and no magazine & bullet type specified, then the magazine & ammo are random." },
+    "Ammo Loaded":          { c: "#f0a050", i: "ammo",    u: "",   tip: "The bullet type the entity's weapon is loaded with." },
+    "Magazine Loaded":      { c: "#f3ee30", i: "ammo",    u: "",   tip: "The magazine the entity's weapon is loaded with." }
+  };
+  const BASE_ORDER  = ["Health", "Speed", "Defense", "Shield", "Supershield", "Super Armour", "Burn Resistance", "Bleed Resistance", "Explosive Resistance", "Stun Resistance", "Fracture Immunity"];
+  const SKILL_ORDER = ["Suppressor", "Pre-Aim", "Strength", "Aim Time Multiplier", "Reload Speed Multiplier", "Aim Slowdown", "Attack Slowdown"];
+  const orderBy = (obj, order) => Object.keys(obj || {}).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
 
   /* ---------- helpers ---------- */
   const $ = s => document.querySelector(s);
@@ -89,55 +237,108 @@
     return `font-size:${size.toFixed(1)}px`;
   };
   const screen = $("#screen");
+  const persistUI = () => save(KEY_UI, ui);
 
   function updateCount() {
     const [f, t] = countOf(entries);
     $("#titleCount").textContent = `DATABANKS ${f} / ${t}`;
   }
-  const persistUI = () => save(KEY_UI, ui);
 
-  /* ---------- top tabs ---------- */
+  /* =====================================================================
+     TOP TABS + SEARCH
+     ===================================================================== */
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents"];
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(t =>
-      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${ui.tab === t}">${I[t]}<span>${t.toUpperCase()}</span></button>`
+      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${t.toUpperCase()}</span></button>`
     ).join("");
   }
   $("#tabs").addEventListener("click", e => {
     const b = e.target.closest(".tab"); if (!b) return;
-    ui.tab = b.dataset.tab; detailId = null; persistUI(); renderTabs(); render();
+    play("click");
+    ui.tab = b.dataset.tab; detail = null; cancelTier(); persistUI();
+    if (query) clearSearch(false);
+    renderTabs(); render();
   });
-  // "< SCROLL TABS FOR MORE OPTIONS >": mouse wheel scrolls the tab strip sideways
   $("#tabs").addEventListener("wheel", e => {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; e.preventDefault(); }
   }, { passive: false });
 
-  /* ---------- main render ---------- */
+  const searchBox = $("#search");
+  const clearBtn  = $("#clearSearch");
+  $("#searchIcon").innerHTML = I.search;
+  let searchTimer = 0;
+  searchBox.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      const q = searchBox.value.trim();
+      if (q === query) return;
+      query = q; detail = null; cancelTier();
+      clearBtn.hidden = !query;
+      renderTabs(); render();
+    }, 90);
+  });
+  function clearSearch(rerender = true) {
+    searchBox.value = ""; query = ""; clearBtn.hidden = true;
+    if (rerender) { detail = null; renderTabs(); render(); }
+  }
+  clearBtn.addEventListener("click", () => { play("back"); clearSearch(); searchBox.focus(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "/" && document.activeElement !== searchBox && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+      e.preventDefault(); searchBox.focus(); searchBox.select();
+    } else if (e.key === "Escape") {
+      if (pendingTier) { cancelTier(); render(); }
+      else if (detail) { play("back"); detail = null; render(); }
+      else if (query) { play("back"); clearSearch(); }
+    }
+  });
+
+  /* =====================================================================
+     MAIN RENDER
+     ===================================================================== */
   function render() {
     screen.classList.toggle("hide-locked-names", !settings.lockedNames);
+    if (detail && byId.has(detail.id)) {
+      return detail.type === "tool" ? renderToolDetail(byId.get(detail.id)) : renderPersonDetail(byId.get(detail.id));
+    }
+    detail = null;
+    if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
        tools: renderTools, biography: renderBio, documents: renderDocs })[ui.tab]();
   }
 
-  /* ================= TOOLS ================= */
+  /* =====================================================================
+     TOOLS
+     ===================================================================== */
   function tileHTML(e) {
     const got = isFound(e.id);
-    const label = e.unknown ? "???" : e.name;
+    const l = label(e);
     if (!got) {
-      return `<button class="tile locked" data-id="${esc(e.id)}" title="${esc(label)}: not found (click to mark found)">
-        <span class="lock">${I.lock}</span><span class="lname">${esc(label)}</span>
-        <span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(label)}">i</span></button>`;
+      return `<button class="tile locked" data-id="${esc(e.id)}" title="${esc(l)}: not found (click to mark found)">
+        <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>
+        <span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(l)}">i</span></button>`;
     }
-    return `<button class="tile${e.special ? " special" : ""}" data-id="${esc(e.id)}" style="${fit(label)}" title="${esc(label)}: found (click to unmark)">
-      ${esc(label)}<span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(label)}">i</span></button>`;
+    return `<button class="tile${e.special ? " special" : ""}" data-id="${esc(e.id)}" style="${fit(l)}" title="${esc(l)}: found (click to unmark)">
+      ${esc(l)}<span class="info" data-info="${esc(e.id)}" role="button" aria-label="View ${esc(l)}">i</span></button>`;
+  }
+
+  function tierHeadHTML(ci, tier, items) {
+    const [f, t] = countOf(items);
+    const key = `${ci}|${tier}`;
+    const allFound = f === t;
+    if (pendingTier === key) {
+      return `<div class="tier-head confirm" data-tierkey="${key}">
+        <span>TIER ${tier} <b>// ARE YOU SURE?</b> ${allFound ? `LOCK ALL ${t}` : `UNLOCK ALL ${t - f} REMAINING`}</span>
+        <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span>
+      </div>`;
+    }
+    return `<div class="tier-head"><button class="tier-btn" data-tier="${key}" title="${allFound ? "Lock" : "Unlock"} every weapon in this tier">TIER ${tier}<span class="tier-hint">${allFound ? "click to lock all" : "click to unlock all"}</span></button><small>${f}/${t}</small></div>`;
   }
 
   function renderTools() {
-    if (detailId && byId.has(detailId)) return renderDetail(byId.get(detailId));
     const cats = PDA_DATA.tools;
     if (ui.cat >= cats.length) ui.cat = 0;
     const cat = cats[ui.cat];
-
     const catBtns = cats.map((c, i) => {
       const [f, t] = countOf(c.items);
       return `<button class="cat${c.name.length > 12 ? " small" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>` : ""}</button>`;
@@ -150,10 +351,10 @@
     } else {
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
       tiers.forEach(tier => {
-        let items = cat.items.filter(e => e.tier === +tier);
-        const [f, t] = countOf(items);
+        const all = cat.items.filter(e => e.tier === +tier);
+        let items = sortEntries(all);
         if (settings.hideFound) items = items.filter(e => !isFound(e.id));
-        body += `<div class="tier-head">TIER ${tier}<small>${f}/${t}</small></div>`;
+        body += tierHeadHTML(ui.cat, tier, all);
         body += items.length ? `<div class="tier-box">${items.map(tileHTML).join("")}</div>`
                              : `<div class="tier-box"><div class="cat-note" style="grid-column:1/-1">All found.</div></div>`;
       });
@@ -161,39 +362,64 @@
     screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
   }
 
-  const STAT_COLORS = {
+  function cancelTier() { pendingTier = null; clearTimeout(pendingTimer); }
+  function askTier(key) {
+    pendingTier = key; play("warn");
+    clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(() => { if (pendingTier === key) { pendingTier = null; keepScroll(render); } }, 7000);
+  }
+  function applyTier(key) {
+    const [ci, tier] = key.split("|");
+    const items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
+    const lockAll = items.every(e => isFound(e.id));
+    items.forEach(e => setFound(e.id, !lockAll));
+    save(KEY_FOUND, found); updateCount();
+    play(lockAll ? "deselect" : "confirm");
+    cancelTier();
+  }
+
+  const TOOL_STAT_COLORS = {
     "CALIBER TYPE": "#ff4a4a", "AUTO": "#9cff6b", "BURST": "#ff9a3c", "STRENGTH": "#ff5fa8",
     "AIM TIME": "#4fd8ff", "SWITCH TIME": "#ffb347", "RPM": "#ffe14d", "ALERT RADIUS": "#7474ff",
-    "RELOAD MODIFIER": "#3fe0c8", "WEAPON TYPE": "#e86bff", "MAX SPREAD": "#a38cff",
-    "MINIMUM SPREAD": "#a38cff", "SPREAD INCREMENT": "#a38cff", "SPREAD DECREASE": "#a38cff",
-    "EQUIP TIME": "#ffb347", "WEIGHT": "#666"
+    "RELOAD MODIFIER": "#3fe0c8", "WEAPON TYPE": "#e86bff"
   };
   const PALETTE = ["#ff9a3c", "#ff5fa8", "#4fd8ff", "#ffe14d", "#7474ff", "#3fe0c8", "#e86bff"];
 
-  function renderDetail(e) {
+  function renderToolDetail(e) {
     const got = isFound(e.id);
-    const label = e.unknown ? "???" : e.name;
+    const l = label(e);
     const stats = Object.entries(e.stats || {});
     const statHTML = stats.length
-      ? stats.map(([k, v], i) => `<div class="stat"><i style="color:${STAT_COLORS[k] || PALETTE[i % PALETTE.length]}">${esc(k)}</i>: ${esc(v)}</div>`).join("")
+      ? stats.map(([k, v], i) => `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || PALETTE[i % PALETTE.length]}">${esc(k)}</i>: ${esc(v)}</div>`).join("")
       : `<div class="stat" style="color:#777">NO STATISTICS ON FILE</div>`;
+    const users = whoCarries(e.name);
     screen.innerHTML = `
       <div class="detail">
         <div class="dbox"><div class="dhead">Preview</div>
           <div class="preview">${e.img ? `<img src="${esc(e.img)}" alt="">` : `<span class="ph">${I.gun}</span>`}
-            <button class="star" id="star" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
+            <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
         <div class="dbox"><div class="dhead">Statistics<button class="return" id="ret">RETURN</button></div>
-          <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(label.toUpperCase())}</h2>
+          <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
-            <div class="stat gap"><i style="color:#fff">TIER</i>: TIER ${e.tier}</div>
+            <div class="stat gap"><i style="color:#fff">CATEGORY</i>: ${esc(e.group)} · TIER ${e.tier}</div>
             <div class="stat"><i style="color:#fff">STATUS</i>: <span class="${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span></div>
+            ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
         <div class="dbox comment"><div class="dhead">Comment</div><p>${e.comment ? esc(e.comment) : '<span style="color:#666">No comment on file.</span>'}</p></div>
       </div>`;
   }
 
-  /* ================= BIOGRAPHY ================= */
+  /* people whose loadout mentions this weapon name */
+  const loadName = s => slug(String(s).replace(/\s*\(Random\)\s*$/i, ""));
+  function whoCarries(name) {
+    const n = slug(name);
+    return entries.filter(e => e.section === "bio" && (e.loadout || []).some(([k, v]) => k === "Weapon" && loadName(v) === n));
+  }
+
+  /* =====================================================================
+     BIOGRAPHY
+     ===================================================================== */
   function renderBio() {
     const groups = PDA_DATA.biography;
     if (ui.bio >= groups.length) ui.bio = 0;
@@ -202,20 +428,95 @@
       const [f, t] = countOf(x.items);
       return `<button class="subtab" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}">${esc(x.name)}<span class="n">${f}/${t}</span></button>`;
     }).join("");
-    let items = g.items;
-    if (settings.hideFound) items = items.filter(e => !isFound(e.id));
-    const cards = items.map(e => {
-      const got = isFound(e.id);
-      const label = e.unknown ? "???" : e.name;
-      const pic = got ? (e.img ? `<img src="${esc(e.img)}" alt="" loading="lazy">` : I.person) : I.question;
-      return `<button class="card${got ? "" : " missing"}" data-id="${esc(e.id)}" style="--c:${g.color}" title="${esc(label)}: ${got ? "found" : "not found"}">
-        <span class="pic">${pic}</span><span class="nm" style="${fit(label, 17)}">${esc(label)}</span></button>`;
-    }).join("");
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${cards || '<p class="cat-note">All found.</p>'}</div></div>`;
+    let cards = sortCards(g.cards);
+    if (settings.hideFound) cards = cards.filter(c => c.members.some(m => !isFound(m.id)));
+    const html = cards.map(c => cardHTML(c, g)).join("");
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${html || '<p class="cat-note">All found.</p>'}</div></div>`;
   }
 
-  /* ================= DOCUMENTS ================= */
+  function cardHTML(c, g) {
+    const got = cardFound(c);
+    const isGroup = c.kind === "group";
+    const first = c.members[0];
+    const l = isGroup ? c.name : label(first);
+    const pic = got ? (c.img ? `<img src="${esc(c.img)}" alt="" loading="lazy">` : (isGroup ? I.people : I.person)) : I.question;
+    const [f, t] = countOf(c.members);
+    const hasInfo = isGroup || first.base || first.loadout;
+    // a single person toggles on click; a group card opens so each member can be marked
+    const action = isGroup ? `data-open="${esc(first.id)}"` : `data-id="${esc(first.id)}"`;
+    const tip = isGroup ? `${l}: ${f}/${t} found (click to open)` : `${l}: ${got ? "found" : "not found"}`;
+    return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" ${action} style="--c:${g.color}" title="${esc(tip)}">
+      <span class="pic">${pic}</span>
+      ${isGroup ? `<span class="count">${f}/${t}</span>` : ""}
+      ${hasInfo ? `<span class="info" data-pinfo="${esc(first.id)}" role="button" aria-label="View ${esc(l)}">i</span>` : ""}
+      <span class="nm" style="${fit(l, 17)}">${esc(l)}</span></button>`;
+  }
+
+  function statRow(key, val) {
+    const s = STAT[key] || { c: "#ddd", i: "", u: "", tip: "" };
+    let v = String(val);
+    if (s.u && v !== "true" && !/[a-z%]$/i.test(v)) v += s.u;
+    const icon = s.i ? `<svg viewBox="0 0 24 24" fill="currentColor">${SI[s.i]}</svg>` : "";
+    return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `title="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
+  }
+
+  function renderPersonDetail(e) {
+    const card = e.card;
+    const g = PDA_DATA.biography[e.groupIndex];
+    const got = isFound(e.id);
+    const l = label(e);
+    const base = orderBy(e.base, BASE_ORDER);
+    const skills = orderBy(e.skills, SKILL_ORDER);
+    const load = e.loadout || [];
+    const rows = [
+      ...base.map(k => statRow(k, e.base[k])),
+      skills.length ? `<div class="esec">- SKILLS -</div>` : "",
+      ...skills.map(k => statRow(k, e.skills[k])),
+      load.length ? `<div class="esec">- LOADOUT -</div>` : "",
+      ...load.map(([k, v]) => {
+        if (k !== "Weapon") return statRow(k, v);
+        const tool = entries.find(t => t.section === "tools" && slug(t.name) === loadName(v));
+        return tool ? statRow(k, v).replace(/<span class="ev">(.*?)<\/span>/, `<button class="ev linkish" data-tool="${esc(tool.id)}" title="Open ${esc(tool.name)}">$1</button>`) : statRow(k, v);
+      })
+    ].join("");
+    const empty = !base.length && !skills.length && !load.length;
+    const members = card.kind === "group" ? card.members : [];
+    const mtabs = members.length ? `<div class="mtabs">${members.map(m =>
+      `<button class="mtab${m.id === e.id ? " on" : ""}${isFound(m.id) ? " got" : ""}" data-member="${esc(m.id)}" title="${esc(m.name)}: ${isFound(m.id) ? "found" : "not found"}">${isFound(m.id) ? "" : `<span class="ml">${I.lock}</span>`}${esc(m.name)}</button>`
+    ).join("")}</div>` : "";
+    const pic = e.img || card.img;
+    screen.innerHTML = `
+      <div class="pdetail" style="--c:${g.color}">
+        <div class="dbox pprev"><div class="dhead">${esc(card.kind === "group" ? card.name : g.name)}<button class="return" id="ret">RETURN</button></div>
+          <div class="preview">${pic ? `<img src="${esc(pic)}" alt="">` : `<span class="ph big">${got ? I.person : I.question}</span>`}
+            <button class="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
+          </div>
+          <div class="pstatus ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"} <span>· click the star to ${got ? "unmark" : "mark"}</span></div>
+        </div>
+        <div class="dbox edata"><div class="dhead">Enemy Data</div>
+          <div class="ename">${esc(l)}</div>
+          <div class="erows">${empty ? '<div class="esec" style="color:#777">NO DATA ON FILE</div>' : rows}</div>
+          ${mtabs}
+        </div>
+      </div>`;
+  }
+
+  /* =====================================================================
+     DOCUMENTS
+     ===================================================================== */
   const DOC_TAB = { location: ["var(--cyan)", "#0a2a2e"], note: ["var(--doc-yellow)", "#24230a"], misc: ["#fff", "#1c1c1c"] };
+  function docHTML(e) {
+    const got = isFound(e.id);
+    const l = label(e);
+    const icon = { location: I.wifi, note: I.note, misc: "" }[e.kind];
+    if (!got) {
+      return `<button class="doc ${e.kind} missing" data-id="${esc(e.id)}" title="${esc(l)}: not found">
+        <span class="pic">${I.lock}</span>
+        <span class="nm"><span class="tag">- MISSING -</span>${settings.lockedNames && !e.unknown ? `<span class="sub">${esc(l)}</span>` : ""}</span></button>`;
+    }
+    return `<button class="doc ${e.kind}" data-id="${esc(e.id)}" title="${esc(l)}: found">
+      <span class="pic">${icon}</span><span class="nm" style="${fit(l, 17)}">${esc(l)}</span></button>`;
+  }
   function renderDocs() {
     const groups = PDA_DATA.documents;
     if (ui.docs >= groups.length) ui.docs = 0;
@@ -225,24 +526,65 @@
       const [c, bg] = DOC_TAB[x.kind];
       return `<button class="subtab striped" data-docs="${i}" aria-selected="${i === ui.docs}" style="--sc:${c};--sbg:${bg}">${esc(x.name)}<span class="n">${f}/${t}</span></button>`;
     }).join("");
-    let items = g.items;
+    let items = sortEntries(g.items);
     if (settings.hideFound) items = items.filter(e => !isFound(e.id));
-    const icon = { location: I.wifi, note: I.note, misc: "" }[g.kind];
-    const tiles = items.map(e => {
-      const got = isFound(e.id);
-      const label = e.unknown ? "???" : e.name;
-      if (!got) {
-        return `<button class="doc ${g.kind} missing" data-id="${esc(e.id)}" title="${esc(label)}: not found">
-          <span class="pic" style="width:100%">${I.lock.replace("<svg", '<svg style="width:46%"')}</span>
-          <span class="nm"><span class="tag">- MISSING -</span>${settings.lockedNames && !e.unknown ? `<span class="sub">${esc(label)}</span>` : ""}</span></button>`;
-      }
-      return `<button class="doc ${g.kind}" data-id="${esc(e.id)}" title="${esc(label)}: found">
-        <span class="pic">${icon}</span><span class="nm" style="${fit(label, 17)}">${esc(label)}</span></button>`;
-    }).join("");
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${tiles || '<p class="cat-note">All found.</p>'}</div></div>`;
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div><div class="cards">${items.map(docHTML).join("") || '<p class="cat-note">All found.</p>'}</div></div>`;
   }
 
-  /* ================= PROFILE ================= */
+  /* =====================================================================
+     SEARCH
+     ===================================================================== */
+  function contextOf(e) {
+    if (e.section === "tools") return `TOOLS › ${e.group} › TIER ${e.tier}`;
+    if (e.section === "bio") return `BIOGRAPHY › ${e.group}${e.card && e.card.kind === "group" ? " › " + e.card.name : ""}`;
+    return `DOCUMENTS › ${e.group}`;
+  }
+  function score(name, q) {
+    const n = slug(name);
+    if (n === q) return 0;
+    if (n.startsWith(q)) return 1;
+    if (n.split(/[\s\-.'&]+/).some(w => w.startsWith(q))) return 2;
+    if (n.includes(q)) return 3;
+    // loose match: letters in order ("mp5k" finds "H&K MP5K", "bfc" finds "DEVILSPAWN-BFC")
+    const compact = n.replace(/[^a-z0-9]/g, ""), cq = q.replace(/[^a-z0-9]/g, "");
+    if (cq && compact.includes(cq)) return 4;
+    return -1;
+  }
+  function renderSearch() {
+    const q = slug(query);
+    const hits = [];
+    entries.forEach(e => {
+      if (e.unknown) return;
+      let s = score(e.name, q);
+      if (s < 0 && e.card && e.card.kind === "group") s = score(e.card.name, q) >= 0 ? 5 : -1;
+      if (s >= 0) hits.push([s, e]);
+    });
+    hits.sort((a, b) => a[0] - b[0] || (isFound(a[1].id) === isFound(b[1].id) ? collator.compare(a[1].name, b[1].name) : isFound(a[1].id) ? -1 : 1));
+    // people carrying a weapon whose name matches
+    const carriers = entries.filter(e => e.section === "bio" && (e.loadout || []).some(([k, v]) => k === "Weapon" && score(loadName(v), q) >= 0 && score(loadName(v), q) <= 3))
+                            .filter(e => !hits.some(h => h[1] === e));
+    const section = (title, list, note) => list.length ? `<div class="sgroup"><div class="tier-head">${title}<small>${list.length}${note ? " " + note : ""}</small></div>${list.map(resultHTML).join("")}</div>` : "";
+    const by = s => hits.filter(h => h[1].section === s).map(h => h[1]);
+    const html = section("TOOLS", by("tools")) + section("PEOPLE", by("bio")) + section("DOCUMENTS", by("docs")) +
+                 section("CARRIES A MATCHING WEAPON", carriers);
+    screen.innerHTML = `<div class="results">${html || `<div class="empty-cat"><b>NO MATCHES</b>Nothing in the PDA is called “${esc(query)}”.</div>`}</div>`;
+  }
+  function resultHTML(e) {
+    const got = isFound(e.id);
+    const canOpen = e.section === "tools" || e.section === "bio";
+    return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}">
+      <button class="sres-main" data-id="${esc(e.id)}" title="${got ? "Found: click to unmark" : "Not found: click to mark found"}">
+        <span class="sres-ic">${got ? I.check : I.lock}</span>
+        <span class="sres-name">${esc(e.name)}</span>
+        <span class="sres-ctx">${esc(contextOf(e))}</span>
+      </button>
+      ${canOpen ? `<button class="sres-open" data-${e.section === "tools" ? "info" : "pinfo"}="${esc(e.id)}" title="Open">VIEW</button>` : ""}
+    </div>`;
+  }
+
+  /* =====================================================================
+     PROFILE / CLOUD / MANUAL / SETTINGS
+     ===================================================================== */
   function renderProfile() {
     const [f, t] = countOf(entries);
     const pct = t ? Math.round(f / t * 100) : 0;
@@ -273,8 +615,7 @@
     });
   }
 
-  /* ================= CLOUD (backup) ================= */
-  function renderCloud(msg = "") {
+  function renderCloud(msg = "", bad = false) {
     screen.innerHTML = `
       <div class="cloud">
         <div class="dhead">Download Entries<span style="display:flex;width:18px">${I.download}</span></div>
@@ -282,10 +623,11 @@
           <p>Your checkmarks are saved in this browser only. Download a backup file to keep them safe or to move them to another device or browser, then upload it there.</p>
           <button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button>
-          <div class="msg" id="cmsg">${esc(msg)}</div>
+          <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
         </div>
       </div>`;
     $("#exp").onclick = () => {
+      play("click");
       const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", v: 1, user, found }, null, 1)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
@@ -294,7 +636,7 @@
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       $("#cmsg").textContent = "Backup downloaded.";
     };
-    $("#imp").onclick = () => $("#importFile").click();
+    $("#imp").onclick = () => { play("click"); $("#importFile").click(); };
   }
   $("#importFile").addEventListener("change", async ev => {
     const file = ev.target.files[0]; ev.target.value = "";
@@ -304,88 +646,127 @@
       if (!data || typeof data.found !== "object") throw new Error();
       found = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) found[k] = 1; });
       if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
-      save(KEY_FOUND, found); updateCount();
+      save(KEY_FOUND, found); updateCount(); play("confirm");
       renderCloud(`Restored ${Object.keys(found).length} entries.`);
     } catch {
-      renderCloud("That file isn't a PDA backup.");
-      $("#cmsg").style.color = "#ff7a7a";
+      play("warn");
+      renderCloud("That file isn't a PDA backup.", true);
     }
   });
 
-  /* ================= MANUAL ================= */
   function renderManual() {
     screen.innerHTML = `
       <div class="manual">
         <h3>-=-=- TRACKER GUIDE -=-=-</h3>
         <h4>How do I mark something as found?</h4>
-        <p>Click any locked entry in TOOLS, BIOGRAPHY or DOCUMENTS to unlock it. Click it again to lock it back up.</p>
-        <h4>How do I see a weapon's stats?</h4>
-        <p>Hover over a weapon and press the small "i" in its corner (always visible on phones). The star on the stat page also marks it found.</p>
+        <p>Click any locked entry in TOOLS or DOCUMENTS to unlock it, and click it again to lock it. In BIOGRAPHY, click a single person to mark them. Cards holding several people (like Robinson or Rogues) open up so each person can be marked on their own with the star.</p>
+        <h4>Can I unlock a whole tier at once?</h4>
+        <p>Click a TIER header in TOOLS. It asks "ARE YOU SURE?" first, so a misclick won't do anything until you press YES. If the tier is already complete, the same button locks it all again.</p>
+        <h4>How are entries ordered?</h4>
+        <p>Everything you've found comes first in A–Z order, then everything you haven't found, also A–Z.</p>
+        <h4>How do I see stats?</h4>
+        <p>Press the small "i" on a weapon or person (always visible on phones). Hover over a stat name on a person's page to read what it does.</p>
         <h4>Will I lose my progress?</h4>
         <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then.</p>
         <h3>-=-=- QUICK KEYS -=-=-</h3>
+        <div class="k">/ - SEARCH</div>
+        <div class="k">ESC - BACK / CLEAR SEARCH</div>
         <div class="k">MOUSE WHEEL ON TABS - SCROLL TABS</div>
         <div class="k">CLICK ENTRY - MARK FOUND / MISSING</div>
-        <div class="k">"i" BUTTON - OPEN STAT PAGE</div>
-        <div class="k">RETURN - BACK TO LIST</div>
+        <div class="k">CLICK TIER HEADER - UNLOCK WHOLE TIER</div>
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
       </div>`;
   }
 
-  /* ================= SETTINGS ================= */
   function renderSettings() {
-    const sw = (key, label) => `
+    const sw = (key, text) => `
       <div class="srow"><div class="onoff">
         <button class="on" data-set="${key}" data-val="1" aria-pressed="${!!settings[key]}">ON</button>
         <button class="off" data-set="${key}" data-val="0" aria-pressed="${!settings[key]}">OFF</button>
-      </div>${label}</div>`;
+      </div>${text}</div>`;
     screen.innerHTML = `
       <div class="settings">
+        <h3>Sound</h3>
+        ${sw("sound", "Sound effects?")}
+        ${sw("hoverSound", "Play a sound when hovering over things?")}
+        <div class="srow"><input type="range" id="vol" min="0" max="100" step="5" value="${settings.volume}" aria-label="Volume"><span>Volume: <b id="volv">${settings.volume}</b>%</span></div>
         <h3>User Preference</h3>
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("hideFound", "Hide entries you've already found?")}
         <h3>Data</h3>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
+    const vol = $("#vol");
+    vol.addEventListener("input", () => { settings.volume = +vol.value; $("#volv").textContent = vol.value; save(KEY_SET, settings); });
+    vol.addEventListener("change", () => play("select"));
     $("#reset").onclick = ev => {
       const b = ev.currentTarget;
       if (b.dataset.armed) {
-        found = {}; save(KEY_FOUND, found); updateCount();
+        found = {}; save(KEY_FOUND, found); updateCount(); play("deselect");
         b.textContent = "RESET ALL PROGRESS"; delete b.dataset.armed;
         $("#rmsg").textContent = "Progress cleared.";
       } else {
+        play("warn");
         b.dataset.armed = "1"; b.textContent = "CLICK AGAIN TO CONFIRM";
         $("#rmsg").textContent = "This clears every checkmark. Download a backup first if you want one.";
       }
     };
   }
 
-  /* ---------- one click handler for the whole screen ---------- */
+  /* =====================================================================
+     CLICKS
+     ===================================================================== */
+  function keepScroll(fn) {
+    const sc = screen.querySelector("#grid, .cards, .results, .erows");
+    const y = sc ? sc.scrollTop : 0;
+    fn();
+    const s2 = screen.querySelector("#grid, .cards, .results, .erows");
+    if (s2) s2.scrollTop = y;
+  }
+  function flash(id) {
+    const el = screen.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "nearest" }); }
+  }
+
   screen.addEventListener("click", ev => {
     const t = ev.target;
+    // anything other than the YES/NO buttons cancels a pending tier prompt
+    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier]")) { cancelTier(); }
+
+    const yes = t.closest("[data-tier-yes]");
+    if (yes) { applyTier(yes.dataset.tierYes); keepScroll(render); return; }
+    if (t.closest("[data-tier-no]")) { play("back"); cancelTier(); keepScroll(render); return; }
+    const tierBtn = t.closest("[data-tier]");
+    if (tierBtn) { askTier(tierBtn.dataset.tier); keepScroll(render); return; }
+
     const info = t.closest("[data-info]");
-    if (info) { detailId = info.dataset.info; render(); return; }
+    if (info) { play("open"); detail = { type: "tool", id: info.dataset.info }; render(); return; }
+    const pinfo = t.closest("[data-pinfo]") || t.closest("[data-open]") || t.closest("[data-person]");
+    if (pinfo) { play("open"); detail = { type: "person", id: pinfo.dataset.pinfo || pinfo.dataset.open || pinfo.dataset.person }; render(); return; }
+    const toolLink = t.closest("[data-tool]");
+    if (toolLink) { play("open"); detail = { type: "tool", id: toolLink.dataset.tool }; render(); return; }
+    const member = t.closest("[data-member]");
+    if (member) { play("click"); detail = { type: "person", id: member.dataset.member }; render(); return; }
+
     const set = t.closest("[data-set]");
-    if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); return; }
+    if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
     const cat = t.closest("[data-cat]");
-    if (cat) { ui.cat = +cat.dataset.cat; persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
+    if (cat) { play("click"); ui.cat = +cat.dataset.cat; persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
     const bio = t.closest("[data-bio]");
-    if (bio) { ui.bio = +bio.dataset.bio; persistUI(); render(); return; }
+    if (bio) { play("click"); ui.bio = +bio.dataset.bio; persistUI(); render(); return; }
     const docs = t.closest("[data-docs]");
-    if (docs) { ui.docs = +docs.dataset.docs; persistUI(); render(); return; }
-    if (t.closest("#ret")) { detailId = null; render(); return; }
-    if (t.closest("#star")) { toggle(detailId); render(); return; }
+    if (docs) { play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return; }
+    if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
+    const star = t.closest("[data-star]");
+    if (star) { toggle(star.dataset.star); render(); return; }
+
     const item = t.closest("[data-id]");
     if (item) {
       const id = item.dataset.id;
-      const scroller = screen.querySelector("#grid, .cards");
-      const y = scroller ? scroller.scrollTop : 0;
-      toggle(id); render();
-      const s2 = screen.querySelector("#grid, .cards");
-      if (s2) s2.scrollTop = y;
-      const el = screen.querySelector(`[data-id="${CSS.escape(id)}"]`);
-      if (el) el.classList.add("flash");
+      toggle(id);
+      keepScroll(render);
+      flash(id);
     }
   });
 
