@@ -5,11 +5,11 @@ A fan-made site for tracking which PDA entries (weapons, people and documents) y
 Not affiliated with the game's developers.
 
 ## Using it
-- Click an entry to mark it found, and click it again to unmark it. Found entries go to the front, A–Z, followed by the ones you haven't found, also A–Z.
+- **Click** a weapon, person or document to open its page.
+- **Hover** over it and press the **star** that appears in the corner to mark it found (press again to unmark). On phones the star is always visible. Found entries go to the front, A–Z, followed by the ones you haven't found, also A–Z.
 - **Tiers:** click a TIER header to unlock (or lock) the whole tier. It asks "ARE YOU SURE?" first.
-- **People:** cards that hold several people (Robinson, Rogues, Miners…) open into a page with a tab for each person. Each person is tracked separately with the star.
+- **People:** cards that hold several variants (Robinson, Rogues, Miners…) are one unlock. Mark the card and you can view every variant through the tabs along the bottom of its page.
 - **Search:** type in the search bar, or press `/`. It finds weapons, people and documents, and also lists people who carry a matching weapon.
-- Press the small **i** to open a weapon's or person's stat page.
 - Progress is saved in your browser. Use the **CLOUD** tab to back it up or move it to another device.
 
 ## Editing
