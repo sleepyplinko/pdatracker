@@ -426,6 +426,23 @@
       renderTabs(); render();
     }, 90);
   });
+  /* quick-mark: Enter in the search box marks the best missing match as found */
+  searchBox.addEventListener("keydown", e => {
+    if (e.key !== "Enter" || e.isComposing) return;
+    e.preventDefault();
+    clearTimeout(searchTimer);
+    const q = slug(searchBox.value.trim()); if (!q) return;
+    const pool = [...entries, ...people.filter(v => v.trackId)].filter(x => !x.unknown && !x.isCard);
+    const best = pool.map(x => [score(x.name, q), x]).filter(([sc]) => sc >= 0)
+      .sort((a, b) => (isFound(a[1].id) - isFound(b[1].id)) || a[0] - b[0] || collator.compare(a[1].name, b[1].name))[0];
+    if (!best) { play("warn"); toast("Nothing matches that."); return; }
+    const x = best[1];
+    if (e.shiftKey) { play("click"); clearSearch(false); openEntry(x); return; }
+    if (isFound(x.id)) { play("warn"); toast(`${x.name} is already found.`); return; }
+    if (change([x.id], true)) play("confirm");
+    searchBox.select();                      // ready for the next name
+    query = searchBox.value.trim(); renderTabs(); render();
+  });
   function clearSearch(rerender = true) {
     searchBox.value = ""; query = ""; clearBtn.hidden = true;
     if (rerender) { detail = null; renderTabs(); render(); }
@@ -1137,6 +1154,12 @@
     return `PDA CHECKLIST — ${t - f} left (${f}/${t} found)${user ? " — " + user : ""}\n\n` +
       missingGroups().map(([n, l]) => `${n} (${l.length})\n` + l.map(e => `  [ ] ${e.name}${e.tier ? "  (tier " + e.tier + ")" : ""}`).join("\n")).join("\n\n");
   }
+  function openEntry(x) {
+    const e = byId.get(x.id) || byId.get(trackOf(x.id)); if (!e) return;
+    ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section] || ui.tab;
+    if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else if (e.section === "docs") ui.docs = e.groupIndex;
+    renderTabs(); openDetail(typeOf(e), e.id);
+  }
   function goNext(x) {
     if (!x) return;
     play("open"); imgIndex = 0;
@@ -1260,11 +1283,40 @@
     });
   }
 
+  /* bulk paste: match pasted lines to entry names */
+  const bulkKey = n => String(n).toLowerCase().replace(/[^a-z0-9$+]/g, "");
+  function bulkMark(text) {
+    const lines = String(text).split(/\r?\n/).map(l => l
+      .replace(/^\s*(?:[-*•★☆✓✔]|\d+[.)])\s*/, "")       // bullets / numbering
+      .replace(/^\d+\s*x\s+/i, "")                          // "2x AK74"
+      .replace(/\s*\((?:t|tier)\s*\d+[^)]*\)\s*$/i, "")     // "(T3)" / "(Tier 3)"
+      .trim()).filter(l => l && !/^(tools|biography|documents|pda)\b.*[›:]/i.test(l));
+    if (!lines.length) { play("warn"); toast("Paste some names first."); return null; }
+    const idx = new Map();
+    [...entries, ...people.filter(v => v.trackId)].forEach(x => { if (!x.unknown) { const k = bulkKey(x.name); if (!idx.has(k)) idx.set(k, []); idx.get(k).push(x.id); } });
+    const ids = [], miss = []; let already = 0;
+    lines.forEach(l => { const hit = idx.get(bulkKey(l)); if (!hit) { miss.push(l); return; } hit.forEach(id => { if (isFound(id)) already++; else ids.push(id); }); });
+    const uniq = [...new Set(ids)];
+    if (uniq.length) { change(uniq, true, "a pasted list"); play("confirm"); } else play(miss.length ? "warn" : "click");
+    return { marked: uniq.length, already, miss };
+  }
+  /* everything checked off since the site was opened in this tab */
+  function sessionFinds() {
+    const before = new Set((sessionStart && sessionStart.ids) || []);
+    return Object.keys(found).filter(id => !before.has(id) && byId.has(id)).map(id => byId.get(id));
+  }
+  function sessionText() {
+    const got = sessionFinds();
+    const groups = new Map();
+    got.forEach(e => { const g = { tools: "TOOLS", bio: "BIOGRAPHY", docs: "DOCUMENTS" }[e.section] + " › " + e.group; if (!groups.has(g)) groups.set(g, []); groups.get(g).push(e.isCard ? e.name : e.name); });
+    return `PDA — found this run${user ? " by " + user : ""}: ${got.length}\n` + [...groups].map(([g, l]) => `\n${g}\n` + l.sort(collator.compare).map(n => "- " + n).join("\n")).join("\n");
+  }
   function sessionRow() {
-    const [f] = countOf(entries);
-    const d = f - (sessionStart ? sessionStart.f : f);
+    const got = sessionFinds();
     const mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart.t) / 60000)) : 0;
-    return `<div class="row"><b style="color:#6cff6c">FOUND THIS SESSION:</b> ${d >= 0 ? "+" : ""}${d} <span class="dim">· ${mins} min since you opened the site</span></div>`;
+    return `<div class="row"><b style="color:#6cff6c">FOUND THIS RUN:</b> ${got.length} <span class="dim">· since you opened the site ${mins} min ago</span>
+      ${got.length ? '<button class="mini-btn" data-copyrun title="Copy everything you found this run as a list">COPY LIST</button> <button class="mini-btn" data-newrun title="Start counting a new run from now">NEW RUN</button>' : ""}</div>
+      ${got.length ? `<div class="runlist">${sortEntries(got).map(e => `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`).join(", ")}</div>` : ""}`;
   }
   function favRows() {
     const ids = Object.keys(favs).filter(id => byId.has(id));
@@ -1336,6 +1388,11 @@
           <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
+          <h4>MARK A LIST AS FOUND</h4>
+          <p>Paste names, one per line (from your notes, a friend, or a COPY AS TEXT list). Anything that matches an entry gets marked found. You can undo it with Ctrl+Z.</p>
+          <textarea id="bulkIn" class="bulkin" rows="6" placeholder="AK74&#10;Plate Carrier Vest&#10;10rnd ADV Mag&#10;..."></textarea>
+          <div class="btnrow"><button class="pbtn" id="bulkGo">MARK FOUND</button></div>
+          <div class="msg" id="bulkMsg"></div>
           <h4>SHARE YOUR PDA</h4>
           <p>A link that shows your checklist to anyone, read-only. It doesn't change as you find more, so send a new one later.</p>
           <div class="btnrow"><input id="shareOut" readonly value="${esc(shareLink())}"><button class="pbtn" id="copyShare">${I.share} COPY LINK</button></div>
@@ -1346,6 +1403,11 @@
         </div>
       </div>`;
     $("#exp").onclick = () => { play("click"); doExport(); $("#cmsg").textContent = "Backup downloaded."; };
+    $("#bulkGo").onclick = () => {
+      const r = bulkMark($("#bulkIn").value);
+      if (!r) return;
+      $("#bulkMsg").innerHTML = `Marked <b>${r.marked}</b> new${r.already ? ` · ${r.already} were already found` : ""}${r.miss.length ? `<br><span style="color:#ff9a7a">No match for ${r.miss.length}:</span> ${r.miss.slice(0, 40).map(esc).join(", ")}${r.miss.length > 40 ? "…" : ""}` : ""}`;
+    };
     $("#imp").onclick = () => { play("click"); $("#importFile").click(); };
     $("#copyShare").onclick = async () => {
       play("click");
@@ -1676,6 +1738,8 @@
         else if (b.dataset.lminus != null && it[1] > 1) { it[1]--; play("deselect"); }
         else { loadout.items.splice(i, 1); play("deselect"); }
         saveLoad(); keepScroll(render); return; } }
+    if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
+    if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
     if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
     if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
@@ -1997,7 +2061,7 @@
   }).observe(screen, { childList: true });
 
   /* ---------- go ---------- */
-  if (!sessionStart) { sessionStart = { f: countOf(entries)[0], t: Date.now() }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
+  if (!sessionStart || !Array.isArray(sessionStart.ids)) { sessionStart = { f: countOf(entries)[0], t: (sessionStart && sessionStart.t) || Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
   if (Object.keys(found).length && !progress[today()]) snapProgress();
   if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
   else if (/^#e=/.test(location.hash)) {

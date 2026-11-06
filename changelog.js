@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "Quick-mark: type a name in search and press ENTER to mark it found",
+    "Paste a list of names in CLOUD to mark them all found",
+    "Profile shows everything you found this run, with COPY LIST and NEW RUN",
     "17 more ammo and magazines; no locked ammo slots left",
     "New: Warne Eclipse II, HK SMG-II Prototype, Military Striker-12, RSh-12, WC Rocket Launcher, Blue Mask",
     "New: H&K MP7A1+, Military Kriss Vector, PP-19-01 Vityaz, Salient Arms GRY, Dragunov SVD-M, AK74M, SIG MCX-SPEAR, H&K HK416A5, RPK-74M (stats to come)",

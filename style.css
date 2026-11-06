@@ -866,3 +866,6 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .lfacts i { font-style: italic; }
 .lfound { font-size: 12px; display: inline-flex; gap: 4px; align-items: center; cursor: pointer; margin-right: 6px; }
 @media (max-width: 560px) { .litem { grid-template-columns: 1fr auto auto; } .lmeta { grid-column: 1 / -1; order: 9; } }
+
+.bulkin { width: 100%; box-sizing: border-box; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 8px; font: inherit; font-size: 14px; resize: vertical; }
+.runlist { padding: 4px 0 8px; font-size: 13px; line-height: 1.6; }
