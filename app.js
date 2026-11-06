@@ -527,8 +527,8 @@
   }
 
   /* ---------- weapon stats as numbers ---------- */
-  const NUM_STATS = ["STRENGTH", "AIM TIME", "SWITCH TIME", "RPM", "ALERT RADIUS", "RELOAD MODIFIER", "MAX SPREAD", "MINIMUM SPREAD", "SPREAD INCREMENT", "SPREAD DECREASE", "EQUIP TIME", "WEIGHT"];
-  const HIGHER_BETTER = new Set(["STRENGTH", "RPM", "SPREAD DECREASE"]);
+  const NUM_STATS = ["DAMAGE", "DEFENSE BYPASS", "STRENGTH", "AIM TIME", "SWITCH TIME", "SWING TIME", "RPM", "ALERT RADIUS", "RANGE", "RELOAD MODIFIER", "MAX SPREAD", "MINIMUM SPREAD", "SPREAD INCREMENT", "SPREAD DECREASE", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "EQUIP TIME", "SHIELD DURABILITY", "DEFENSE INCREASE", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "SUPER SHIELD INCREASE", "WEIGHT"];
+  const HIGHER_BETTER = new Set(["DAMAGE", "DEFENSE BYPASS", "STRENGTH", "RPM", "RANGE", "SPREAD DECREASE", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "SHIELD DURABILITY", "DEFENSE INCREASE", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "SUPER SHIELD INCREASE"]);
   const statNum = (e, k) => {
     const v = e.stats && e.stats[k]; if (v == null) return null;
     const m = String(v).match(/^\s*([\d.]+)\s*\/\s*([\d.]+)/);          // "1.5/0.1s" → amount per second
@@ -542,9 +542,10 @@
     const cals = [...new Set(cat.items.flatMap(calibersOf))].sort(collator.compare);
     const hasStats = cat.items.some(e => e.stats);
     if (!hasStats) return "";
+    const keys = NUM_STATS.filter(k => k === ui.tsort || cat.items.some(e => statNum(e, k) != null));
     return `<div class="statbar">
-      <label>SORT BY <select data-tsort>${["", ...NUM_STATS].map(k => `<option value="${k}"${ui.tsort === k ? " selected" : ""}>${k ? k + (HIGHER_BETTER.has(k) ? " (high first)" : " (low first)") : "TIER (default)"}</option>`).join("")}</select></label>
-      <label>CALIBER <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+      <label>SORT BY <select data-tsort>${["", ...keys].map(k => `<option value="${k}"${ui.tsort === k ? " selected" : ""}>${k ? k + (HIGHER_BETTER.has(k) ? " (high first)" : " (low first)") : "TIER (default)"}</option>`).join("")}</select></label>
+      ${cals.length ? `<label>CALIBER <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : ""}
       <label>TIER <select data-tiermin><option value="">ALL</option>${Object.keys(cat.tiers).sort((a, b) => a - b).map(t => `<option value="${t}"${String(ui.tierMin) === t ? " selected" : ""}>${t}+</option>`).join("")}</select></label>
       ${ui.tsort ? `<label>${esc(ui.tsort)} FROM <input data-tmin type="number" step="any" value="${esc(ui.tmin)}" placeholder="min"> TO <input data-tmax type="number" step="any" value="${esc(ui.tmax)}" placeholder="max"></label>` : ""}
       ${ui.tsort || ui.cal || ui.tierMin ? '<button class="mini-btn" data-tclear>RESET</button>' : ""}
@@ -658,9 +659,17 @@
     "SWITCH TIME": "#ffa82a", "RPM": "#fff04a", "ALERT RADIUS": "#5a5aff", "RELOAD MODIFIER": "#2ae0e0",
     "WEAPON TYPE": "#d04aff", "MAX SPREAD": "#9a8aff", "MINIMUM SPREAD": "#9a8aff",
     "SPREAD INCREMENT": "#d8a0ff", "SPREAD DECREASE": "#d8a0ff", "EQUIP TIME": "#e8a070",
-    "WEIGHT": "#2a2a2a", "TIER": "#fff89a"
+    "WEIGHT": "#2a2a2a", "TIER": "#fff89a",
+    "MODE": "#8de08d", "DAMAGE": "#ff2a2a", "DEFENSE BYPASS": "#ff7a3a", "SWING TIME": "#ffa82a",
+    "RANGE": "#a070ff", "AIM SLOWDOWN": "#d09a6a", "ATTACK SLOWDOWN": "#9a8a7a",
+    "GEAR TYPE": "#8a8aff", "DEFENSE INCREASE": "#ff9a40", "SHIELD DURABILITY": "#35d6ff",
+    "CARRY WEIGHT INCREASE": "#7ae07a", "QUICK SLOT INCREASE": "#ff4a5a", "SUPER SHIELD INCREASE": "#ff3a3a"
   };
-  const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
+  /* blank lines between stat groups, laid out like each kind of page in the game */
+  const gapsFor = s => s["GEAR TYPE"] ? new Set(["TIER"])
+    : s["DAMAGE"] ? new Set(["WEIGHT"])
+    : s["CALIBER TYPE"] ? new Set(["MAX SPREAD", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "EQUIP TIME", "WEIGHT"])
+    : new Set();
   /* the next entry you haven't found, after this one, in the same category / tab */
   function siblingsOf(e) {
     if (e.section === "tools") return PDA_DATA.tools[e.catIndex].items.slice().sort((a, b) => a.tier - b.tier || collator.compare(label(a), label(b)));
@@ -697,14 +706,19 @@
   function renderToolDetail(e) {
     const got = isFound(e.id);
     const l = label(e);
-    const stats = Object.entries(e.stats || {});
-    if (stats.length) stats.push(["TIER", `TIER ${e.tier}`]);
-    else stats.push(["TIER", `TIER ${e.tier}`]);
-    const statHTML = stats.map(([k, v]) => {
+    const st = e.stats || {};
+    const gaps = gapsFor(st);
+    const line = (k, v, gap) => {
       const tip = (TIPS.weapon || {})[k];
-      const gap = GAP_BEFORE.has(k) || (k === "TIER" && !e.stats) ? " gap" : "";
-      return `<div class="stat${gap}"${tip ? ` data-tip="${esc(tip)}"` : ""}><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}${k === "WEIGHT" ? ";text-shadow:0 0 1px #888" : ""}">${esc(k)}</i>: ${esc(v)}</div>`;
-    }).join("");
+      return `<div class="stat${gap ? " gap" : ""}"${tip ? ` data-tip="${esc(tip)}"` : ""}><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}${k === "WEIGHT" ? ";text-shadow:0 0 1px #888" : ""}">${esc(k)}</i>: ${esc(v)}</div>`;
+    };
+    const block = s => Object.entries(s).filter(([k]) => k !== "WEIGHT").map(([k, v]) => line(k, v, gaps.has(k))).join("");
+    const dash = '<div class="stat">--------</div>';
+    let statHTML = block(st);
+    /* weapons with more than one firing mode list each mode, split by dashes like the game */
+    if (e.modes && e.modes.length) statHTML += dash + e.modes.map(block).join(dash) + dash;
+    if (st.WEIGHT != null) statHTML += line("WEIGHT", st.WEIGHT, gaps.has("WEIGHT"));
+    statHTML += line("TIER", `TIER ${e.tier}`, gaps.has("TIER") || !e.stats);
     const users = whoCarries(e.name);
     const imgs = imagesOf(e);
     screen.innerHTML = `

@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "Stats and comments for every SMG, rifle, machine gun, shotgun, heavy pistol, heavy rifle, bludgeon, sharp, utility and gear shown in the PDA",
+    "Every tier filled in from the in-game grid, including locked slots",
+    "Weapons with an underslung mode show both modes",
     "FOUND + NEXT and NEXT MISSING on every page, HIDE DONE, sticky tier headers",
     "Checklist tabs on top, the rest along the bottom; scroll positions stay put",
     "SUBMIT tab: send info without an account",
