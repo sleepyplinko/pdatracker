@@ -807,3 +807,16 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 @keyframes crtflicker { 0%,100% { opacity: .95; } 50% { opacity: 1; } 51% { opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { body.crt .window::after { animation: none; } }
 @media (max-width: 700px) { .leftbtns { float: none; display: flex; margin-top: 6px; } }
+
+/* SUBMIT tab */
+.community { text-align: left; }
+.community h3 { text-align: center; }
+.contrib label { display: flex; flex-direction: column; gap: 4px; font: 700 12px var(--font); letter-spacing: .04em; color: #c8cbff; font-style: normal; }
+.contrib label small { font-weight: 500; color: #8a8fd0; letter-spacing: 0; }
+.contrib .frow { display: flex; flex-wrap: wrap; gap: 10px; }
+.contrib .frow .grow { flex: 1; min-width: 220px; }
+.contrib select { margin-left: 0; height: 30px; }
+.contrib input { height: 30px; }
+.contrib .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.fmsg { font: 700 13px var(--font); }
+.fmsg.ok { color: #8fef8f; } .fmsg.bad { color: #ff7a7a; }
