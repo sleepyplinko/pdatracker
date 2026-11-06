@@ -1333,7 +1333,9 @@
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "PDA Tracker",
-        allowed_mentions: { parse: [] },          // never ping anyone, whatever people type
+        // ping only the site owner; anything visitors type can't ping anyone
+        content: /^\d{5,25}$/.test(FORM.pingUserId || "") ? `<@${FORM.pingUserId}> new submission` : undefined,
+        allowed_mentions: { parse: [], users: /^\d{5,25}$/.test(FORM.pingUserId || "") ? [FORM.pingUserId] : [] },
         embeds: [{ title: clip(`${d.kind}${d.entry ? ": " + d.entry : ""}`, 250), description: clip(d.text || "(no details)", 4000),
           color: KIND_COLOR[d.kind] || 0xe6e18a, fields, footer: { text: "PDA tracker submission" }, timestamp: new Date().toISOString() }]
       })
