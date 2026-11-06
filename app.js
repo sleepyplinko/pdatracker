@@ -23,7 +23,8 @@
   const KEY_SEEN  = "pda-seen-v1";
   const KEY_FRIEND= pk("pda-friend-v1");
   const KEY_SINCE = pk("pda-since-backup-v1");
-  const KEY_PROG  = pk("pda-progress-v1");      // { "2026-11-06": 42, ... } found count per day
+  const KEY_PROG  = pk("pda-progress-v1");
+  const KEY_LOAD  = pk("pda-loadout-v1");      // { slot: entry id }      // { "2026-11-06": 42, ... } found count per day
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
@@ -40,6 +41,7 @@
   let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
   let sinceBackup = load(KEY_SINCE, 0);
   let progress = load(KEY_PROG, {});
+  let loadout  = load(KEY_LOAD, {});
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   // this browser tab's session: what you had when you opened the site
   let sessionStart = null;
@@ -241,6 +243,7 @@
     manual:  '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#111"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#ddd" stroke-width="2.6"/></svg>',
     settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
     community: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M3 5h18v11H9l-5 4v-4H3z"/><path d="M8 10.5h8" stroke-linecap="round"/></svg>',
+    loadout: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M8 4h8l1 3h3v13H4V7h3z"/><path d="M9 12h6M12 9v6"/></svg>',
     missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
     heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
@@ -364,10 +367,10 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "community"];
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "community"];
   const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT" };
   /* the checklist tabs sit on top, everything else along the bottom */
-  const TOP_TABS = ["tools", "biography", "documents", "missing"];
+  const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout"];
   const BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
   const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
   function renderTabs() {
@@ -472,7 +475,7 @@
     detail = null;
     if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, community: renderCommunity })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, community: renderCommunity })[ui.tab]();
   }
 
   /* =====================================================================
@@ -509,7 +512,7 @@
       return `<button class="tile locked" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
         <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
     }
-    return `<button class="tile${e.special ? " special" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
+    return `<button class="tile${e.special ? " special" : ""}${e.gold ? " gold" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
       <span class="tname" style="${tileFont(l)}">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
   }
 
@@ -537,15 +540,18 @@
   };
   const calibersOf = e => String((e.stats && e.stats["CALIBER TYPE"]) || "").split("|").map(x => x.trim()).filter(Boolean);
   const allTools = () => entries.filter(e => e.section === "tools");
+  /* the "type" filter: caliber for guns, gear type for gear */
+  const typesOf = e => { const c = calibersOf(e); return c.length ? c : (e.stats && e.stats["GEAR TYPE"] ? [e.stats["GEAR TYPE"]] : []); };
 
   function statBarHTML(cat) {
-    const cals = [...new Set(cat.items.flatMap(calibersOf))].sort(collator.compare);
+    const cals = [...new Set(cat.items.flatMap(typesOf))].sort(collator.compare);
+    const typeLabel = cat.items.some(e => e.stats && e.stats["GEAR TYPE"]) ? "GEAR TYPE" : "CALIBER";
     const hasStats = cat.items.some(e => e.stats);
     if (!hasStats) return "";
     const keys = NUM_STATS.filter(k => k === ui.tsort || cat.items.some(e => statNum(e, k) != null));
     return `<div class="statbar">
       <label>SORT BY <select data-tsort>${["", ...keys].map(k => `<option value="${k}"${ui.tsort === k ? " selected" : ""}>${k ? k + (HIGHER_BETTER.has(k) ? " (high first)" : " (low first)") : "TIER (default)"}</option>`).join("")}</select></label>
-      ${cals.length ? `<label>CALIBER <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : ""}
+      ${cals.length ? `<label>${typeLabel} <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>` : ""}
       <label>TIER <select data-tiermin><option value="">ALL</option>${Object.keys(cat.tiers).sort((a, b) => a - b).map(t => `<option value="${t}"${String(ui.tierMin) === t ? " selected" : ""}>${t}+</option>`).join("")}</select></label>
       ${ui.tsort ? `<label>${esc(ui.tsort)} FROM <input data-tmin type="number" step="any" value="${esc(ui.tmin)}" placeholder="min"> TO <input data-tmax type="number" step="any" value="${esc(ui.tmax)}" placeholder="max"></label>` : ""}
       ${ui.tsort || ui.cal || ui.tierMin ? '<button class="mini-btn" data-tclear>RESET</button>' : ""}
@@ -579,7 +585,7 @@
     if (tiers.length && (ui.tsort || ui.cal)) {
       // stat sort / caliber filter: one flat list
       let list = cat.items.filter(e => !e.unknown && passFilter(isFound(e.id)));
-      if (ui.cal) list = list.filter(e => calibersOf(e).includes(ui.cal));
+      if (ui.cal) list = list.filter(e => typesOf(e).includes(ui.cal));
       if (ui.tierMin) list = list.filter(e => e.tier >= +ui.tierMin);
       if (ui.tsort && (ui.tmin !== "" || ui.tmax !== "")) list = list.filter(e => { const n = statNum(e, ui.tsort); if (n == null) return false;
         return (ui.tmin === "" || n >= +ui.tmin) && (ui.tmax === "" || n <= +ui.tmax); });
@@ -589,7 +595,7 @@
           if (x == null && y == null) return collator.compare(a.name, b.name); if (x == null) return 1; if (y == null) return -1;
           return (x - y) * dir || collator.compare(a.name, b.name); });
       } else list = sortEntries(list);
-      body = statBarHTML(cat) + `<div class="list">${list.map(e => resultHTML(e, ui.tsort ? `${ui.tsort}: ${(e.stats && e.stats[ui.tsort]) || "—"}` : `TIER ${e.tier} · ${(e.stats && e.stats["CALIBER TYPE"]) || ""}`)).join("") || '<p class="cat-note">Nothing matches.</p>'}</div>`;
+      body = statBarHTML(cat) + `<div class="list">${list.map(e => resultHTML(e, ui.tsort ? `${ui.tsort}: ${(e.stats && e.stats[ui.tsort]) || "—"}` : `TIER ${e.tier} · ${typesOf(e).join(" | ")}`)).join("") || '<p class="cat-note">Nothing matches.</p>'}</div>`;
     } else if (!tiers.length) {
       body = `<div class="empty-cat"><b>NO ENTRIES ON FILE</b>Add this category's weapons to data.js to track them.</div>`;
     } else {
@@ -728,7 +734,7 @@
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
-          <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
+          <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
@@ -1015,7 +1021,7 @@
   function resultHTML(e, ctx) {
     const got = isFound(e.id);
     const open = { tools: "data-open-tool", bio: "data-open", docs: "data-open-doc" }[e.section];
-    return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}">
+    return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}${e.gold ? " gold" : ""}">
       <button class="sres-main" ${open}="${esc(e.id)}" data-entry="${esc(e.id)}" title="Open ${esc(label(e))}">
         <span class="sres-ic" data-star="${esc(e.id)}" role="checkbox" aria-checked="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${got ? I.check : '<span class="box"></span>'}</span>
         <span class="sres-name">${esc(label(e))}${badges(e)}</span>
@@ -1028,6 +1034,63 @@
   /* =====================================================================
      WHAT'S LEFT — every missing entry in one place
      ===================================================================== */
+  /* =====================================================================
+     LOADOUT PLANNER: pick what you carry, see the PDA numbers added up
+     ===================================================================== */
+  const GUN_CATS = ["PISTOLS", "SUBMACHINE GUNS", "RIFLES", "MACHINE GUNS", "SHOTGUNS", "HEAVY PISTOL", "HEAVY RIFLES"];
+  const gearOf = t => e => e.stats && e.stats["GEAR TYPE"] === t;
+  const inCats = names => e => names.includes(e.group);
+  const LOAD_SLOTS = [
+    ["primary", "PRIMARY", inCats(GUN_CATS)], ["secondary", "SECONDARY", inCats(GUN_CATS)],
+    ["melee", "MELEE", inCats(["BLUDGEON", "SHARP", "ETHEREAL"])],
+    ["util1", "UTILITY 1", inCats(["UTILITY"])], ["util2", "UTILITY 2", inCats(["UTILITY"])], ["util3", "UTILITY 3", inCats(["UTILITY"])],
+    ["helmet", "HELMET", gearOf("HELMET")], ["face", "FACE WEAR", gearOf("FACE WEAR")], ["torso", "TORSO WEAR", gearOf("TORSO WEAR")],
+    ["legs", "LEG WEAR", gearOf("LEG WEAR")], ["back", "BACKPACK", gearOf("BACKPACK")], ["neck", "NECKGEAR", gearOf("NeckGear")]
+  ];
+  const LOAD_SUMS = ["WEIGHT", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "DEFENSE INCREASE", "SHIELD DURABILITY", "SUPER SHIELD INCREASE"];
+  const KEY_STATS = ["CALIBER TYPE", "DAMAGE", "STRENGTH", "RPM", "GEAR TYPE", "DEFENSE INCREASE", "SHIELD DURABILITY", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "WEIGHT"];
+  const num = v => { const n = parseFloat(String(v)); return isNaN(n) ? 0 : n; };
+  const fmtN = n => String(Math.round(n * 1000) / 1000);
+  function loadoutPicks() {
+    return LOAD_SLOTS.map(([k, label]) => [k, label, loadout[k] && byId.get(loadout[k])]).filter(x => x[2]);
+  }
+  function loadoutSums() {
+    const out = {};
+    loadoutPicks().forEach(([, , e]) => LOAD_SUMS.forEach(k => { const v = e.stats && e.stats[k]; if (v != null) out[k] = (out[k] || 0) + num(v); }));
+    return out;
+  }
+  function renderLoadout() {
+    const onlyFound = !!ui.loadFound;
+    const rows = LOAD_SLOTS.map(([k, label, test]) => {
+      const pool = allTools().filter(e => !e.unknown && test(e) && (!onlyFound || isFound(e.id) || loadout[k] === e.id));
+      const groups = [...new Set(pool.map(e => e.group))];
+      const cur = loadout[k] && byId.get(loadout[k]);
+      const opts = groups.map(g => `<optgroup label="${esc(g)}">${sortEntries(pool.filter(e => e.group === g)).map(e =>
+        `<option value="${esc(e.id)}"${cur === e ? " selected" : ""}>${isFound(e.id) ? "★ " : ""}${esc(e.name)} (T${e.tier})</option>`).join("")}</optgroup>`).join("");
+      const facts = cur ? KEY_STATS.filter(s => cur.stats && cur.stats[s] != null).map(s =>
+        `<span><i style="color:${TOOL_STAT_COLORS[s] || "#ddd"}">${esc(s)}</i>: ${esc(cur.stats[s])}</span>`).join("") : "";
+      return `<div class="lslot"><label>${label}</label>
+        <select data-lslot="${k}"><option value="">— none —</option>${opts}</select>
+        ${cur ? `<button class="mini-btn" data-open-tool="${esc(cur.id)}" title="Open its PDA page">OPEN</button>` : "<span></span>"}
+        <div class="lfacts">${facts}</div></div>`;
+    }).join("");
+    const sums = loadoutSums();
+    const sumHTML = LOAD_SUMS.filter(k => sums[k] != null).map(k =>
+      `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}${k === "WEIGHT" ? ";text-shadow:0 0 1px #888" : ""}">${k === "WEIGHT" ? "TOTAL WEIGHT" : "TOTAL " + esc(k)}</i>: ${fmtN(sums[k])}${k.includes("DEFENSE") || k.includes("SHIELD") ? "%" : ""}</div>`).join("");
+    screen.innerHTML = `<div class="results loadout">
+      <div class="leftsum"><b>LOADOUT</b> · pick what you carry and see the PDA numbers added up
+        <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
+      <div class="lgrid">${rows}</div>
+      <div class="dbox ltotal"><div class="dhead">Totals</div><div class="stats">${sumHTML || '<p class="none">Pick something to see totals.</p>'}
+        <p class="cat-note">These are the PDA's own numbers added together. The game may combine some of them differently (for example, whether defence from two pieces of gear stacks).</p></div></div>
+    </div>`;
+  }
+  function loadoutText() {
+    const picks = loadoutPicks(), sums = loadoutSums();
+    return `PDA LOADOUT${user ? " — " + user : ""}\n` + picks.map(([, label, e]) => `${label}: ${e.name} (Tier ${e.tier})`).join("\n") +
+      (Object.keys(sums).length ? "\n\n" + LOAD_SUMS.filter(k => sums[k] != null).map(k => `TOTAL ${k}: ${fmtN(sums[k])}`).join("\n") : "");
+  }
+
   function renderMissing() {
     const [f, t] = countOf(entries);
     const groups = [];
@@ -1583,6 +1646,8 @@
     if (nxb) { goNext(byId.get(nxb.dataset.next)); return; }
     const mn = t.closest("[data-marknext]");
     if (mn) { markAndNext(mn.dataset.marknext); return; }
+    if (t.closest("[data-lclear]")) { if (Object.keys(loadout).length) { loadout = {}; save(KEY_LOAD, loadout); play("deselect"); render(); toast("Loadout cleared."); } return; }
+    if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
     if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
     const cmpb = t.closest("[data-cmp]");
@@ -1642,7 +1707,8 @@
     const set = t.closest("[data-set]");
     if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
     const cat = t.closest("[data-cat]");
-    if (cat) { play("click"); ui.cat = +cat.dataset.cat; persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
+    if (cat) { play("click"); if (ui.cat !== +cat.dataset.cat) ui.cal = ""; ui.cat = +cat.dataset.cat;
+      { const nc = PDA_DATA.tools[ui.cat]; if (nc && ui.tsort && !nc.items.some(e => statNum(e, ui.tsort) != null)) { ui.tsort = ""; ui.tmin = ""; ui.tmax = ""; } } persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
     // clicking the sub-tab that's already open asks to unlock (or lock) the whole tab
     const bio = t.closest("[data-bio]");
     if (bio) {
@@ -1663,6 +1729,8 @@
     else if (sel.matches("[data-tmin]")) ui.tmin = sel.value.trim();
     else if (sel.matches("[data-tmax]")) ui.tmax = sel.value.trim();
     else if (sel.matches("[data-cal]")) ui.cal = sel.value;
+    else if (sel.matches("[data-lslot]")) { if (sel.value) loadout[sel.dataset.lslot] = sel.value; else delete loadout[sel.dataset.lslot]; save(KEY_LOAD, loadout); play("select"); keepScroll(render); return; }
+    else if (sel.matches("[data-lfound]")) { ui.loadFound = sel.checked; play("click"); persistUI(); keepScroll(render); return; }
     else return;
     play("click"); persistUI(); render();
   });
