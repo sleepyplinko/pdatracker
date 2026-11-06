@@ -30,7 +30,7 @@
   let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc",
-                                sort: "found", compact: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
+                                sort: "found", compact: false, hideDone: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
   if (!Array.isArray(ui.cmp)) ui.cmp = [];
   if (!ui.scroll || typeof ui.scroll !== "object") ui.scroll = {};
   if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
@@ -80,7 +80,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".pg-hit, .hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
+  const HOVERABLE = "[data-hidedone], .pg-hit, .hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -573,7 +573,7 @@
     const cat = cats[ui.cat];
     const catBtns = catButtons(cats);
 
-    let body = "";
+    let body = "", hiddenDone = 0;
     const tiers = Object.keys(cat.tiers).sort((a, b) => a - b);
     if (tiers.length && (ui.tsort || ui.cal)) {
       // stat sort / caliber filter: one flat list
@@ -596,6 +596,7 @@
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
       tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin).forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
+        if (ui.hideDone && all.length && all.every(e => isFound(e.id))) { hiddenDone++; return; }
         const items = sortEntries(all).filter(e => passFilter(isFound(e.id)));
         body += tierHeadHTML(ui.cat, tier, all);
         const none = `<div class="cat-note" style="grid-column:1/-1">${ui.filter === "found" ? "Nothing found here yet." : "All found."}</div>`;
@@ -604,12 +605,14 @@
           : `<div class="tier-box">${items.map(tileHTML).join("") || none}</div>`;
       });
     }
+    if (hiddenDone) body += `<p class="cat-note">${hiddenDone} finished tier${hiddenDone > 1 ? "s" : ""} hidden (turn off HIDE DONE to see ${hiddenDone > 1 ? "them" : "it"}).</p>`;
     screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
   }
 
   function catButtons(cats) {
     return cats.map((c, i) => {
       const [f, t] = countOf(c.items);
+      if (ui.hideDone && t && f === t && i !== ui.cat) return "";
       const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
       return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
     }).join("") + `<button class="cat calcat" data-cat="-1" aria-selected="${ui.cat === -1}" style="--cf:27px">CALIBERS</button>`;
@@ -658,6 +661,27 @@
     "WEIGHT": "#2a2a2a", "TIER": "#fff89a"
   };
   const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
+  /* the next entry you haven't found, after this one, in the same category / tab */
+  function siblingsOf(e) {
+    if (e.section === "tools") return PDA_DATA.tools[e.catIndex].items.slice().sort((a, b) => a.tier - b.tier || collator.compare(label(a), label(b)));
+    if (e.section === "bio") return PDA_DATA.biography[e.groupIndex].cards.map(c => c.entry).sort((a, b) => collator.compare(a.name, b.name));
+    return PDA_DATA.documents[e.groupIndex].items.slice().sort((a, b) => collator.compare(label(a), label(b)));
+  }
+  function nextMissing(e) {
+    const base = e.card && e.card.entry ? e.card.entry : e;
+    const list = siblingsOf(base), i = list.indexOf(base);
+    for (let k = 1; k <= list.length; k++) {
+      const x = list[(i + k) % list.length];
+      if (x !== base && !x.unknown && !isFound(x.id)) return x;
+    }
+    return null;
+  }
+  const typeOf = x => ({ tools: "tool", bio: "person", docs: "doc" }[x.section]);
+  const flowBtns = e => {
+    const base = e.card && e.card.entry ? e.card.entry : e;
+    const got = isFound(base.id), nx = nextMissing(base);
+    return `<span class="flow">${!got && !viewOnly ? `<button class="hbtn go" data-marknext="${esc(base.id)}" title="Mark this as found and open the next missing one (N)">&#9733; FOUND + NEXT</button>` : ""}${nx ? `<button class="hbtn" data-next="${esc(nx.id)}" title="Next missing: ${esc(nx.name)} (M)">NEXT MISSING &#9654;</button>` : '<span class="flowdone">ALL FOUND HERE</span>'}</span>`;
+  };
   const linkBtn = id => `<button class="hbtn" data-link="${esc(id)}" title="Copy a link straight to this page">LINK</button>`;
   const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Send a fix or missing info for this entry (no account needed)">FIX?</button>`;
   const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
@@ -689,7 +713,7 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<span class="hright"><button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
@@ -767,6 +791,7 @@
     const allTab = `<button class="subtab${af === at ? " complete" : ""}" data-bio="-1" aria-selected="${isAll}" style="--sc:#fff;--sbg:#1a1a1a" title="Everyone, A–Z${isAll ? " · click again to unlock everyone" : ""}">ALL<span class="n">${af}/${at}</span>${pbar(af, at)}</button>`;
     const tabs = allTab + groups.map((x, i) => {
       const [f, t] = countOf(x.items);
+      if (ui.hideDone && f === t && i !== ui.bio) return "";
       return `<button class="subtab${f === t ? " complete" : ""}" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}" title="${i === ui.bio ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
     const cards = sortCards(g.cards).filter(c => passFilter(cardFound(c)));
@@ -834,7 +859,7 @@
           <div class="preview">${got || settings.missingPics ? previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`) : `<span class="ph big">${I.question}</span>`}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
-            <span class="hright">${linkBtn(card.entry.id)}${suggestBtn(card.entry.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${flowBtns(e)}${linkBtn(card.entry.id)}${suggestBtn(card.entry.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
@@ -859,7 +884,7 @@
           <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
-            <span class="hright">${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${flowBtns(e)}${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">
@@ -895,6 +920,7 @@
     const g = groups[ui.docs];
     const tabs = groups.map((x, i) => {
       const [f, t] = countOf(x.items);
+      if (ui.hideDone && f === t && i !== ui.docs) return "";
       const [c, bg] = DOC_TAB[x.kind];
       return `<button class="subtab striped${f === t ? " complete" : ""}" data-docs="${i}" aria-selected="${i === ui.docs}" style="--sc:${c};--sbg:${bg}" title="${i === ui.docs ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
@@ -1016,6 +1042,17 @@
     const [f, t] = countOf(entries);
     return `PDA CHECKLIST — ${t - f} left (${f}/${t} found)${user ? " — " + user : ""}\n\n` +
       missingGroups().map(([n, l]) => `${n} (${l.length})\n` + l.map(e => `  [ ] ${e.name}${e.tier ? "  (tier " + e.tier + ")" : ""}`).join("\n")).join("\n\n");
+  }
+  function goNext(x) {
+    if (!x) return;
+    play("open"); imgIndex = 0;
+    detail = { type: typeOf(x), id: x.id }; render();
+  }
+  function markAndNext(id) {
+    const e = byId.get(id); if (!e) return;
+    if (!isFound(id) && change([id], true)) play("select");
+    const nx = nextMissing(e);
+    if (nx) goNext(nx); else { toast("That was the last one missing here!"); render(); }
   }
   function randomMissing() {
     const pool = entries.filter(e => !isFound(e.id) && !e.unknown);
@@ -1281,7 +1318,37 @@
      SUBMIT tab: contribution form + changelog
      ===================================================================== */
   const FORM = (typeof PDA_FORM === "object" && PDA_FORM) || {};
-  const formLive = () => !!(FORM.web3formsKey && FORM.web3formsKey.trim());
+  const hasDiscord = () => /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(FORM.discordWebhook || "");
+  const hasW3F = () => !!(FORM.web3formsKey && FORM.web3formsKey.trim());
+  const formLive = () => hasDiscord() || hasW3F();
+  const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
+  const clip = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+  async function sendDiscord(d) {
+    const e = d.entry && entries.find(x => x.name.toLowerCase() === d.entry.toLowerCase());
+    const fields = [{ name: "Type", value: d.kind, inline: true }, { name: "Entry", value: clip(d.entry || "-", 200), inline: true }];
+    if (e) fields.push({ name: "Where", value: clip(contextOf(e), 200), inline: true });
+    if (d.link) fields.push({ name: "Link", value: clip(d.link, 1000) });
+    fields.push({ name: "From", value: clip(d.name || "anonymous", 100), inline: true });
+    const res = await fetch(FORM.discordWebhook, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "PDA Tracker",
+        allowed_mentions: { parse: [] },          // never ping anyone, whatever people type
+        embeds: [{ title: clip(`${d.kind}${d.entry ? ": " + d.entry : ""}`, 250), description: clip(d.text || "(no details)", 4000),
+          color: KIND_COLOR[d.kind] || 0xe6e18a, fields, footer: { text: "PDA tracker submission" }, timestamp: new Date().toISOString() }]
+      })
+    });
+    if (!res.ok) throw new Error("discord " + res.status);
+  }
+  async function sendW3F(d) {
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ access_key: FORM.web3formsKey.trim(), subject: `${FORM.subject || "PDA submission"}: ${d.kind}${d.entry ? " — " + d.entry : ""}`,
+        from_name: d.name || "PDA tracker visitor", type: d.kind, entry: d.entry || "-", details: d.text || "-", link: d.link || "-", botcheck: false })
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || j.success === false) throw new Error(j.message || res.status);
+  }
   let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
   let formMsg = null;   // { ok, text }
   function contribHTML() {
@@ -1320,16 +1387,14 @@
       return;
     }
     if (sending) return;
+    if (Date.now() - (window.__pdaLastSend || 0) < 15000) { formMsg = { ok: false, text: "Just sent one! Wait a few seconds before sending another." }; play("warn"); return keepScroll(render); }
     if (f.botcheck.checked) return;               // spam bot filled the hidden box
     sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
-        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ access_key: FORM.web3formsKey.trim(), subject: `${FORM.subject || "PDA submission"}: ${d.kind}${d.entry ? " — " + d.entry : ""}`,
-          from_name: d.name || "PDA tracker visitor", type: d.kind, entry: d.entry || "-", details: d.text || "-", link: d.link || "-", botcheck: false })
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || j.success === false) throw new Error(j.message || res.status);
+      let sent = false;
+      if (hasDiscord()) { try { await sendDiscord(d); sent = true; } catch (err) { if (!hasW3F()) throw err; } }
+      if (!sent) await sendW3F(d);
+      window.__pdaLastSend = Date.now();
       formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
       draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name };
       play("confirm");
@@ -1360,6 +1425,8 @@
         <p>Press the &#9829; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
         <h4>Sharing and comparing</h4>
         <p>CLOUD gives you a link anyone can open to see your PDA (read-only). Paste a friend's link there to see what they have that you don't.</p>
+        <h4>Logging a lot at once</h4>
+        <p>On any page, ★ FOUND + NEXT (or N) marks it and opens the next one you're missing in that category. NEXT MISSING (or M) skips ahead without marking. HIDE DONE next to the search bar hides tiers, tabs and categories you've finished.</p>
         <h4>Comparing weapons</h4>
         <p>Press COMPARE + on up to 3 weapon pages, then VIEW on the bar in the corner. The best value in each row is green and the worst is red.</p>
         <h4>Sorting by stats and calibers</h4>
@@ -1496,6 +1563,10 @@
 
     if (t.closest(".zoomable")) { openLightbox(); return; }
     if (t.closest("[data-random]")) { randomMissing(); return; }
+    const nxb = t.closest("[data-next]");
+    if (nxb) { goNext(byId.get(nxb.dataset.next)); return; }
+    const mn = t.closest("[data-marknext]");
+    if (mn) { markAndNext(mn.dataset.marknext); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
     if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
     const cmpb = t.closest("[data-cmp]");
@@ -1624,6 +1695,8 @@
     if (typing) return;
     if (e.key === "?") { e.preventDefault(); toggleKeys(); return; }
     if ((e.key === "r" || e.key === "R") && !e.ctrlKey && !e.metaKey) { e.preventDefault(); randomMissing(); return; }
+    if (detail && !e.ctrlKey && !e.metaKey && (e.key === "n" || e.key === "N")) { const b = screen.querySelector("[data-marknext]"); if (b) { e.preventDefault(); markAndNext(b.dataset.marknext); } return; }
+    if (detail && !e.ctrlKey && !e.metaKey && (e.key === "m" || e.key === "M")) { const b = screen.querySelector("[data-next]"); if (b) { e.preventDefault(); goNext(byId.get(b.dataset.next)); } return; }
     if (e.key.startsWith("Arrow")) {
       if (detail && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         const imgs = screen.querySelectorAll("[data-img]");
@@ -1664,12 +1737,14 @@
   function syncToolbar() {
     const ss = $("#sortSel"); if (ss) ss.value = ui.sort;
     document.querySelectorAll("[data-compact]").forEach(b => b.setAttribute("aria-pressed", !!ui.compact));
+    document.querySelectorAll("[data-hidedone]").forEach(b => b.setAttribute("aria-pressed", !!ui.hideDone));
     document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", ui.view === b.dataset.view));
     document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", ui.filter === b.dataset.filter));
   }
   document.querySelector(".viewtools").addEventListener("click", e => {
     const v = e.target.closest("[data-view]"), f = e.target.closest("[data-filter]");
     if (e.target.closest("[data-compact]")) { ui.compact = !ui.compact; }
+    else if (e.target.closest("[data-hidedone]")) { ui.hideDone = !ui.hideDone; toast(ui.hideDone ? "Finished tiers, tabs and categories are hidden." : "Showing finished ones again."); }
     else if (v) { ui.view = v.dataset.view; }
     else if (f) { ui.filter = f.dataset.filter; }
     else return;
@@ -1680,7 +1755,7 @@
 
   /* ---------- "?" keyboard shortcut list ---------- */
   const KEYS = [["← ↑ → ↓", "Move between entries"], ["SPACE", "Mark found / missing"], ["ENTER", "Open"], ["SHIFT + STAR", "Mark a range"],
-    ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["?", "This list"]];
+    ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["N  on a page", "Mark found + open next missing"], ["M  on a page", "Next missing"], ["?", "This list"]];
   const keysEl = document.createElement("div"); keysEl.className = "lightbox keysbox"; keysEl.hidden = true; document.body.appendChild(keysEl);
   function toggleKeys() {
     if (!keysEl.hidden) { keysEl.hidden = true; return; }

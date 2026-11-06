@@ -1,8 +1,14 @@
 /* =====================================================================
    PDA TRACKER — SUBMISSION FORM SETTINGS
    ---------------------------------------------------------------------
-   The SUBMIT tab sends forms to your email through Web3Forms, so
-   visitors don't need any account.
+   The SUBMIT tab posts each submission to your Discord channel through
+   a webhook, so visitors don't need any account. If Discord fails, it
+   falls back to emailing you through Web3Forms.
+
+   The webhook link is visible to anyone who reads the site's code, so
+   use it for a channel where only you read submissions. If it ever
+   gets spammed: delete the webhook in Discord, make a new one, and
+   paste the new link below.
 
    To turn it on:
      1. Go to https://web3forms.com and enter your email under
@@ -14,6 +20,7 @@
    ===================================================================== */
 
 const PDA_FORM = {
+  discordWebhook: "",
   web3formsKey: "c5d6127e-46d7-4a0f-9c6c-8a5959648616",
   subject: "New PDA tracker submission"
 };
