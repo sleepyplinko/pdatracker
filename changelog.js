@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "FOUND + NEXT and NEXT MISSING on every page, HIDE DONE, sticky tier headers",
+    "Checklist tabs on top, the rest along the bottom; scroll positions stay put",
+    "SUBMIT tab: send info without an account",
     "Random missing entry, copy or print your missing list, progress graph",
     "ALL tab in Biography, stat range and tier filters, CRT effect",
     "Pictures for 40 people across every Biography tab",
