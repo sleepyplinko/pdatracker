@@ -729,6 +729,34 @@
   }
   const paras = t => esc(t).split(/\n\s*\n/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
 
+  /* magazine <-> gun links: from ammo-links.js (names) and from people's loadouts (seen in the PDA) */
+  let ammoCache = null;
+  const ammoLinks = () => ammoCache || (ammoCache = (() => {
+    const byName = new Map(entries.filter(x => x.section === "tools" && !x.unknown).map(x => [slug(x.name), x]));
+    const magsOf = new Map(), gunsOf = new Map();
+    const link = (mag, gun, how) => {
+      if (!mag || !gun) return;
+      if (!magsOf.has(gun.id)) magsOf.set(gun.id, new Map()); if (!gunsOf.has(mag.id)) gunsOf.set(mag.id, new Map());
+      const a = magsOf.get(gun.id), b = gunsOf.get(mag.id);
+      a.set(mag, a.get(mag) === "seen" ? "seen" : how); b.set(gun, b.get(gun) === "seen" ? "seen" : how);
+    };
+    Object.entries(typeof PDA_AMMO_LINKS === "object" ? PDA_AMMO_LINKS : {}).forEach(([m, gs]) => gs.forEach(g => link(byName.get(slug(m)), byName.get(slug(g)), "named")));
+    people.forEach(p => {
+      const l = p.loadout || [];
+      const ws = l.filter(([k]) => k === "Weapon"), ms = l.filter(([k]) => k === "Magazine Loaded");
+      if (ws.length === 1) ms.forEach(([, m]) => link(byName.get(loadName(m)), byName.get(loadName(ws[0][1])), "seen"));
+    });
+    return { magsOf, gunsOf };
+  })());
+  function ammoLinkHTML(e) {
+    const L = ammoLinks(), m = L.magsOf.get(e.id) || L.gunsOf.get(e.id);
+    if (!m || !m.size) return "";
+    const isMag = L.gunsOf.has(e.id);
+    const list = [...m].sort((a, b) => collator.compare(a[0].name, b[0].name)).map(([x, how]) =>
+      `<button class="linkish" data-tool="${esc(x.id)}" title="${how === "seen" ? "Seen together in a person's loadout" : "Going by the name"}">${esc(x.name)}</button>${isFound(x.id) ? '<span class="egot"> ✓</span>' : ""}${how === "seen" ? "<sup>*</sup>" : ""}`).join(", ");
+    const seen = [...m.values()].includes("seen");
+    return `<div class="stat gap"><i style="color:#c8a0ff">${isMag ? "FOR" : "MAGAZINES"}</i>: ${list}</div><div class="ammonote">Going by the names${seen ? "; * = seen loaded together in someone's loadout" : ""}.</div>`;
+  }
   function renderToolDetail(e) {
     const got = isFound(e.id);
     const l = label(e);
@@ -756,6 +784,7 @@
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
+            ${ammoLinkHTML(e)}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
         <div class="dbox comment">${bottomBox("Comment", e.comment ? paras(e.comment) : '<p class="none">No comment.</p>', e.id)}</div>
@@ -867,6 +896,29 @@
 
   /* the people in the current Biography tab, in on-screen order (for the < > arrows) */
 
+  /* the PDA tool entry a loadout line points at (weapons and magazines) */
+  const loadTool = (k, v) => (k === "Weapon" || k === "Magazine Loaded")
+    ? entries.find(t => t.section === "tools" && !t.unknown && slug(t.name) === loadName(v)) : null;
+  let loadPick = null;                         // person id whose "which random one?" picker is open
+  function loadoutParts(e) {
+    const fixed = [], random = [];
+    (e.loadout || []).forEach(([k, v]) => { const t = loadTool(k, v); if (!t) return;
+      (/\(Random\)\s*$/i.test(v) ? random : fixed).push(t); });
+    return { fixed: [...new Set(fixed)], random: [...new Set(random)].filter(t => !fixed.includes(t)) };
+  }
+  function loadoutMarkHTML(e) {
+    const { fixed, random } = loadoutParts(e);
+    if (!fixed.length && !random.length) return "";
+    const left = fixed.filter(t => !isFound(t.id));
+    if (loadPick === e.id && random.length) {
+      return `<div class="lmark"><div class="lmark-h">WHICH RANDOM ONES DID YOU GET?</div>
+        ${random.map(t => `<label><input type="checkbox" data-lpickid="${esc(t.id)}"${isFound(t.id) ? " checked disabled" : ""}> ${esc(t.name)}${isFound(t.id) ? " (already found)" : ""}</label>`).join("")}
+        ${fixed.length ? `<div class="dim">Also marks: ${fixed.map(t => esc(t.name)).join(", ")}</div>` : ""}
+        <div class="lmark-b"><button class="mini-btn go" data-lmarkgo="${esc(e.id)}">MARK FOUND</button><button class="mini-btn" data-lmarkcancel>CANCEL</button></div></div>`;
+    }
+    const all = left.length === 0 && random.every(t => isFound(t.id));
+    return `<div class="lmark"><button class="mini-btn${all ? "" : " go"}" data-lmark="${esc(e.id)}"${all ? " disabled" : ""} title="Mark the weapons and magazines this person carries as found">${all ? "✓ ALL THEIR GEAR IS FOUND" : `★ MARK THEIR GEAR FOUND${random.length ? " …" : ` (${left.length})`}`}</button></div>`;
+  }
   function renderPersonDetail(e) {
     const card = e.card;
     const g = PDA_DATA.biography[e.groupIndex];
@@ -881,10 +933,11 @@
       ...skills.map(k => statRow(k, e.skills[k])),
       load.length ? `<div class="esec">- LOADOUT -</div>` : "",
       ...load.map(([k, v]) => {
-        if (k !== "Weapon") return statRow(k, v);
-        const tool = entries.find(t => t.section === "tools" && slug(t.name) === loadName(v));
-        return tool ? statRow(k, v).replace(/<span class="ev">(.*?)<\/span>/, `<button class="ev linkish" data-tool="${esc(tool.id)}" title="Open ${esc(tool.name)}">$1</button>`) : statRow(k, v);
-      })
+        const tool = loadTool(k, v);
+        if (!tool) return statRow(k, v);
+        return statRow(k, v).replace(/<span class="ev">(.*?)<\/span>/, `<button class="ev linkish" data-tool="${esc(tool.id)}" title="Open ${esc(tool.name)}">$1</button>${isFound(tool.id) ? ' <span class="egot" title="Found">✓</span>' : ""}`);
+      }),
+      loadoutMarkHTML(e)
     ].join("");
     const empty = !base.length && !skills.length && !load.length;
     const members = card.kind === "group" ? card.members : [];
@@ -1530,11 +1583,31 @@
         ${formMsg ? `<span class="fmsg ${formMsg.ok ? "ok" : "bad"}">${esc(formMsg.text)}</span>` : ""}</div>
     </form>`;
   }
+  /* entries the site has no info for yet, so visitors know what to send */
+  function helpWanted() {
+    const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && !e.stats && e.comment === undefined);
+    const bios = entries.filter(e => e.section === "bio" && !e.unknown);
+    const mem = e => (e.card && e.card.members && e.card.members.length) ? e.card.members : [e];
+    const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
+    const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
+    const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
+    return [["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment"], ["PEOPLE WITH NO DESCRIPTION", noDesc, "description"],
+            ["PEOPLE WITH NO PICTURE", noPic, "picture"], ["PEOPLE WITH NO STATS", noStats, "stats"]].filter(([, l]) => l.length);
+  }
+  function helpHTML() {
+    const groups = helpWanted();
+    if (!groups.length) return "";
+    return `<h3>-=-=- HELP WANTED -=-=-</h3>
+      <p class="cat-note">The site doesn't have this info yet. If you have one of these in your PDA, press SEND next to it (screenshots or a video link are perfect).</p>
+      ${groups.map(([title, list, what]) => `<details class="helpw"><summary>${esc(title)} <small>${list.length}</small></summary><div class="helplist">${sortEntries(list).map(e =>
+        `<div class="helprow"><button class="linkish" data-${e.section === "tools" ? "open-tool" : "open"}="${esc(e.id)}">${esc(e.name)}</button><span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><button class="mini-btn" data-suggest="${esc(e.id)}" title="Send the ${esc(what)} for ${esc(e.name)}">SEND</button></div>`).join("")}</div></details>`).join("")}`;
+  }
   function renderCommunity() {
     const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
     screen.innerHTML = `<div class="manual community">
       <h3>-=-=- SEND IN INFO -=-=-</h3>
       ${contribHTML()}
+      ${helpHTML()}
       ${log.length ? `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
     </div>`;
   }
@@ -1738,6 +1811,19 @@
         else if (b.dataset.lminus != null && it[1] > 1) { it[1]--; play("deselect"); }
         else { loadout.items.splice(i, 1); play("deselect"); }
         saveLoad(); keepScroll(render); return; } }
+    { const b = t.closest("[data-lmark]");
+      if (b) { const p = byId.get(b.dataset.lmark) || people.find(x => x.id === b.dataset.lmark); if (!p) return;
+        const { fixed, random } = loadoutParts(p);
+        if (random.length) { loadPick = p.id; play("click"); keepScroll(render); return; }
+        if (change(fixed.map(x => x.id), true, `${p.name}'s gear`)) play("confirm"); keepScroll(render); return; } }
+    if (t.closest("[data-lmarkcancel]")) { loadPick = null; play("back"); keepScroll(render); return; }
+    { const b = t.closest("[data-lmarkgo]");
+      if (b) { const p = byId.get(b.dataset.lmarkgo) || people.find(x => x.id === b.dataset.lmarkgo); if (!p) return;
+        const { fixed } = loadoutParts(p);
+        const picked = [...screen.querySelectorAll("[data-lpickid]:checked:not(:disabled)")].map(c => c.dataset.lpickid);
+        loadPick = null;
+        if (change([...fixed.map(x => x.id), ...picked], true, `${p.name}'s gear`)) play("confirm"); else { play("click"); toast("Nothing new to mark."); }
+        keepScroll(render); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
     if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
