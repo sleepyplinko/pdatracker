@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wdth,wght@50..200,400..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
   <div class="sky" aria-hidden="true"></div>
@@ -31,6 +35,12 @@
       <div class="viewtools" role="toolbar" aria-label="View options">
         <button data-view="grid" title="Grid view (like the game)">&#9638;</button>
         <button data-view="list" title="Checklist view">&#9776;</button>
+        <button data-compact title="Compact grid (fit more on screen)">&#9641;</button>
+        <select id="sortSel" title="Sort order" aria-label="Sort order">
+          <option value="found">FOUND FIRST</option>
+          <option value="az">A&ndash;Z</option>
+          <option value="recent">RECENTLY FOUND</option>
+        </select>
         <span class="vsep"></span>
         <button data-filter="all" title="Show everything">ALL</button>
         <button data-filter="missing" title="Show only what you haven't found">MISSING</button>
@@ -50,5 +60,9 @@
   <script src="descriptions.js"></script>
   <script src="tooltips.js"></script>
   <script src="app.js"></script>
+  <script>
+    // installable app + offline: only on the real site (https), not when opened as a file
+    if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  </script>
 </body>
 </html>
