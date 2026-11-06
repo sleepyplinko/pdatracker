@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "New: H&K MP7A1+, Military Kriss Vector, PP-19-01 Vityaz, Salient Arms GRY, Dragunov SVD-M, AK74M, SIG MCX-SPEAR, H&K HK416A5, RPK-74M (stats to come)",
     "LOADOUT tab: carry anything (duplicates too), see used space against your carry weight, even when you go over",
     "Every ammo and magazine name (160 slots across 5 tiers)",
     "Gear can be filtered by gear type and sorted by defence, shield or carry weight",

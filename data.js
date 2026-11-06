@@ -825,7 +825,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "???"
+        "H&K MP7A1+"
         ],
         5: [
         ["CZ Skorpion EVO 3", { stats: {
@@ -846,8 +846,8 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "--" }],
-        "???",
-        "???"
+        "Military Kriss Vector",
+        "PP-19-01 Vityaz"
         ]
       }
     },
@@ -1788,7 +1788,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "???"
+        "Salient Arms GRY"
         ],
         5: [
         ["PLATINUM-C.S.I.R.O DEVICE", { special: true, stats: {
@@ -1979,10 +1979,11 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "???",
-        "???",
-        "???",
-        "???"
+        "Dragunov SVD-M",
+        "AK74M",
+        "SIG MCX-SPEAR",
+        "H&K HK416A5",
+        "RPK-74M"
         ]
       }
     },
