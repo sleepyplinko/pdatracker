@@ -820,3 +820,13 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .contrib .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .fmsg { font: 700 13px var(--font); }
 .fmsg.ok { color: #8fef8f; } .fmsg.bad { color: #ff7a7a; }
+
+/* two tab rows: checklist on top, the rest along the bottom, no sideways scrolling on wide screens */
+.tabs .tab { flex: 1 1 0; min-width: 150px; }
+.tabs.bottom { border-bottom: 0; border-top: 1px solid #e6e6e6; }
+.tabs.bottom .tab { height: 44px; font-size: 18px; }
+.tabs.bottom .tab svg { width: 26px; height: 26px; }
+@media (max-width: 700px) {
+  .tabs .tab { min-width: 118px; }
+  .tabs.bottom .tab { height: 40px; font-size: 15px; }
+}

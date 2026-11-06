@@ -366,21 +366,45 @@
      ===================================================================== */
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "community"];
   const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT" };
+  /* the checklist tabs sit on top, everything else along the bottom */
+  const TOP_TABS = ["tools", "biography", "documents", "missing"];
+  const BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
+  const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
   function renderTabs() {
-    $("#tabs").innerHTML = TABS.map(t =>
-      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`
-    ).join("");
+    [["#tabs", TOP_TABS], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
+      const el = $(sel), x = el.scrollLeft;
+      el.innerHTML = list.map(tabBtn).join("");
+      el.scrollLeft = x;                       // don't jump back to the start
+      const a = el.querySelector('[aria-selected="true"]'); if (a) revealInStrip(a);
+    });
   }
-  $("#tabs").addEventListener("click", e => {
-    const b = e.target.closest(".tab"); if (!b) return;
-    play("click");
-    ui.tab = b.dataset.tab; detail = null; cancelTier(); persistUI();
-    if (query) clearSearch(false);
-    renderTabs(); render();
+  /* scroll a sideways strip just enough to show el, without moving the page */
+  function revealInStrip(el) {
+    const s = el.parentElement; if (!s || s.scrollWidth <= s.clientWidth) return;
+    const l = el.offsetLeft - s.offsetLeft, r = l + el.offsetWidth;
+    if (l < s.scrollLeft) s.scrollLeft = l - 8;
+    else if (r > s.scrollLeft + s.clientWidth) s.scrollLeft = r - s.clientWidth + 8;
+  }
+  /* scroll a list just enough to show el, without moving the page */
+  function revealInList(el) {
+    const s = el.closest(SCROLLERS); if (!s) return;
+    const er = el.getBoundingClientRect(), sr = s.getBoundingClientRect();
+    if (er.top < sr.top) s.scrollTop -= sr.top - er.top + 6;
+    else if (er.bottom > sr.bottom) s.scrollTop += er.bottom - sr.bottom + 6;
+  }
+  ["#tabs", "#tabs2"].forEach(sel => {
+    $(sel).addEventListener("click", e => {
+      const b = e.target.closest(".tab"); if (!b) return;
+      play("click");
+      ui.tab = b.dataset.tab; detail = null; cancelTier(); persistUI();
+      if (query) clearSearch(false);
+      renderTabs(); render();
+    });
+    $(sel).addEventListener("wheel", e => {
+      const el = e.currentTarget; if (el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; e.preventDefault(); }
+    }, { passive: false });
   });
-  $("#tabs").addEventListener("wheel", e => {
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.currentTarget.scrollLeft += e.deltaY; e.preventDefault(); }
-  }, { passive: false });
 
   const searchBox = $("#search");
   const clearBtn  = $("#clearSearch");
@@ -416,13 +440,22 @@
      ===================================================================== */
   const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : ui.tab === "documents" ? ui.docs : ""}`;
   let keeping = false;
+  let lastVk = null;
   function render() {
+    // re-drawing the same page (marking, favouriting, switching notes...) keeps every scroll position
+    const vkBefore = lastVk, wy = window.scrollY;
+    const same = vkBefore !== null && vkBefore === viewKey();
+    const before = same ? [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop) : null;
     renderInner();
     ui.detail = detail && !viewOnly ? detail : null; persistUI();
     renderCmpBar();
-    if (!keeping) {
-      const vk = viewKey(), sc = screen.querySelector(SCROLLERS);
-      if (sc && vk && ui.scroll[vk]) sc.scrollTop = ui.scroll[vk];
+    lastVk = viewKey();
+    if (same) {
+      [...screen.querySelectorAll(SCROLLERS)].forEach((el, i) => { if (before[i] != null) el.scrollTop = before[i]; });
+      window.scrollTo(0, wy);
+    } else if (!keeping) {
+      const sc = screen.querySelector(SCROLLERS);
+      if (sc && lastVk && ui.scroll[lastVk]) sc.scrollTop = ui.scroll[lastVk];
     }
   }
   function renderInner() {
@@ -1418,7 +1451,7 @@
   }, true);
   function flash(id) {
     const el = screen.querySelector(`[data-entry="${CSS.escape(id)}"]`);
-    if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "nearest" }); }
+    if (el) el.classList.add("flash");     // stay where you are; don't chase the entry if it moved
   }
   const openDetail = (type, id) => { play("open"); imgIndex = 0; detail = { type, id }; render(); };
 
@@ -1546,6 +1579,8 @@
     else return;
     play("click"); persistUI(); render();
   });
+  // clicking a star shouldn't focus it (focusing scrolls the list to it)
+  screen.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest(".hstar, .sres-star, .sres-ic, .tile, .card, .doc, .subtab, .cat")) ev.preventDefault(); });
   screen.addEventListener("submit", ev => { ev.preventDefault(); submitForm(ev.target); });
   // keep the form's text if you switch tabs
   screen.addEventListener("input", ev => { const f = ev.target.closest && ev.target.closest("form.contrib"); if (f) readForm(f); });
@@ -1565,7 +1600,7 @@
     const els = [...screen.querySelectorAll("[data-entry]")].filter(el => el.offsetParent);
     if (!els.length) return;
     const cur = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-entry]");
-    if (!cur || !els.includes(cur)) { els[0].focus(); return; }
+    if (!cur || !els.includes(cur)) { els[0].focus({ preventScroll: true }); revealInList(els[0]); return; }
     let next;
     if (key === "ArrowRight") next = els[els.indexOf(cur) + 1];
     else if (key === "ArrowLeft") next = els[els.indexOf(cur) - 1];
@@ -1580,7 +1615,7 @@
         if (d < best) { best = d; next = el; }
       });
     }
-    if (next) { next.focus(); next.scrollIntoView({ block: "nearest" }); }
+    if (next) { next.focus({ preventScroll: true }); revealInList(next); }
   }
   document.addEventListener("keydown", e => {
     const tag = document.activeElement && document.activeElement.tagName;
@@ -1759,8 +1794,17 @@
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strip.scrollLeft += e.deltaY; e.preventDefault(); }
   }, { passive: false });
   // keep the open sub-tab in view
-  const showActiveSubtab = () => { const a = screen.querySelector('.subtab[aria-selected="true"]'); if (a) a.scrollIntoView({ inline: "nearest", block: "nearest" }); };
-  new MutationObserver(() => { if (!screen.dataset.keepx) showActiveSubtab(); }).observe(screen, { childList: true });
+  // keep sideways strips (character tabs, categories on phones) where they were, and the open one in view
+  let stripX = { sub: 0, cats: 0 };
+  screen.addEventListener("scroll", e => {
+    if (e.target.classList && e.target.classList.contains("subtabs")) stripX.sub = e.target.scrollLeft;
+    if (e.target.classList && e.target.classList.contains("cats")) stripX.cats = e.target.scrollLeft;
+  }, true);
+  new MutationObserver(() => {
+    const st = screen.querySelector(".subtabs"), ct = screen.querySelector(".cats");
+    if (st) { st.scrollLeft = stripX.sub; const a = st.querySelector('[aria-selected="true"]'); if (a) revealInStrip(a); }
+    if (ct && ct.scrollWidth > ct.clientWidth) { ct.scrollLeft = stripX.cats; const a = ct.querySelector('[aria-selected="true"]'); if (a) revealInStrip(a); }
+  }).observe(screen, { childList: true });
 
   /* ---------- go ---------- */
   if (!sessionStart) { sessionStart = { f: countOf(entries)[0], t: Date.now() }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
@@ -1781,6 +1825,5 @@
   renderTabs();
   updateCount();
   render();
-  const active = document.querySelector('.tab[aria-selected="true"]');
-  if (active) active.scrollIntoView({ inline: "nearest", block: "nearest" });
+
 })();
