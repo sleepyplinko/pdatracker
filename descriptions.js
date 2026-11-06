@@ -5,8 +5,8 @@
    (or a single person's name). A variant with its own entry here uses
    that; otherwise it uses its card's.
 
-   Leave a blank line between paragraphs. "[…]" marks a part that
-   couldn't be read from the recording; fix it if you have the text.
+   Leave a blank line between paragraphs. A card with no entry
+   shows "No description on file."
    Use a backtick ` string so quotes and apostrophes don't need escaping.
    ===================================================================== */
 
@@ -28,13 +28,6 @@ he goes around districts, competing in golfing contests. though only at the midd
 
 he is trying to make a name for himself in the golfing industry, using his trusty golf club given to him by his father. not bad at all i'd say, jealous of him even.`,
 
-"Scavengers": `Life had drastically changed for each civilian once the rebellion had taken place. Several areas were destroyed beyond ruin, incapable of ever housing another person ever again. Their, once, beloved and appreciated state had been brought to something irreparable, and the people have to deal with it by themselves. Trust and love was abandoned, families torn apart and friendships fading away; it is truly a miserable side-effect of the rebellion and, perhaps, it wasn't necessary for this to happen. Despite so much positive belief, it mattered none, as, in the end, the less fortunate districts have gone under complete anarchy, such as Peric and next up, Frieden, which is inevitably approaching this fate as well.
-
-Tagging along companions is a concept barely kept done anymore, as many civilians opt to fight for themselves. However, that doesn't mean that they'll outright fire at all of their fellow citizens. Many have made pacts in the areas they live in, albeit not entirely for cooperation, merely acting as a truce. Despite this, this alliance may still lead to friendships being formed, so it's not a hopeless situation entirely. Because of this, newcomers aren't welcomed, as they are scared away and blasted by the ones who've taken residence there, ensuring their own safety through egotistical means. Safe cities are a rare sight, but the higher class districts are significantly more well controlled by the government than the poor areas. Relocation is no longer a reliable option for many, as some are, instead, out for blood, disrespecting any wishes of others and simply want to show Tofuu what his decisions have led to. In the end, it is a free for all.
-
-Any moral compass is gone by now, as several have resorted to, unrightfully, taking useful utilities or, maybe, even weaponry to themselves. They pick up anything they can get their hands on, but they keep their eyes out for the real deal: firearms. These range from weak handguns to automatic rifles, but, at times, they'll decide on brawling with objects such as a regular kitchen knife. Beside this fact, these scavengers don't have the right capabilities to properly utilize a gun, so most of them aren't intimidating. However, even so, they may still get lucky and take advantageous opportunities that let them dispose of a foe, so it's not as if they're no danger entirely. They tend to prefer close quarters combat, usually staying inside buildings and unwilling to go out, unless provoked.
-
-These scavengers have a wide range of variety and are mostly found within the substandard districts, in which the process of breaking any sort of lawful structure, that would be enforced by the local […] civilians that have no ties to other factions formed after the rebellion. Opposed to Rogues, they've no assistance and must fend off for themselves, but, at the same time, it means that they've no obligations, so they may act however they wish. Sadly, many abandoned the idea of a peaceful life, so they've resorted to staying inside their residence, or other living quarters whose owners have left. In uncommon cases, they'll turn to joining an available nearby clan, usually being the Citizen faction or the Beige Box Clan.`,
 
 "Robinson": `the robinson family is very known for their services done all over the city. rarely do they appear in the news headlines of doing something memorable but if you stuck long enough in the city, like me, you'd know them. they're a nice bunch.
 
@@ -66,17 +59,7 @@ Takes a lot of pride in his rank, making quite a hassle out of small situations 
 
 Although all of the members give him all the loot found, it's never something really great. Especially since it's in the city that has been looted by everyone. He usually tells them to find better loot. They never do.`,
 
-"Loner": `[…] gangsters had started putting graffiti on it, marking it as their territory. it was believed that this residence would never find a new owner.
 
-[…] raven was the one who took initiative of the cheap deal this house had and bought it, […] crumbling state. he found it his 'beloved', as he said, and would never let go of it afterwards. […] civilians had tried to start conversations with him, but he was not very interested, instead […] off. therefore, people left him alone, as, clearly, he didn't wish to be bothered. over time, […] started taking shape, being restored to its former glory. alas, a few aspects of the building […] to fit his style, as the radiating colors turned into a tiring grey. i wouldn't assume it's any […] his.
-
-numerous tales were told during this period of maintenance, as countless reckless teenagers attempted to mess with john by spray painting his exterior walls. the majority would report mister raven threatening them with a firearm, a Colt M4A1, to get off of his property and to be left alone. this is the motive as to […]`,
-
-"Plant Man": `[…] costs.
-
-This phenomenon of a plant has yet to be explained or any method of its existence being discovered. It has gone through several experiments, all mostly taking place in its apartment. Several have confirmed that it is literally just a plant, no human with a potted plant on his head hiding. Some have tried making it listen to music or go under sunlight to see if it does the same actions as a normal plant. It does. So yet again, no conclusion has been found.
-
-Due to it being a plant, it doesn't actually have any rights. This is both a good thing and a bad thing. It can legally steal from other people, but it illegally lives here due to the apartment not being its property. Despite this, it is still here due to the interest of several others in it. It's basically a celebrity, except it doesn't speak proper sentences. Or exit its apartment. How is this plant treated better than I am??`,
 
 "G.O.A.T": `[ One search result found on a BookedMyFace page under WC's official account ]
 
@@ -91,19 +74,7 @@ CHECK BIO FOR FREE E3K FURNITURES WIN FREE FURNITURE PRODUCTS TODAY
 
 DONT MISS OUT!`,
 
-"Flower Woman": `Despite the spooky stories about the lone cottage itself, many people have tried to explore and scout the place, someday they'll see flashing lights from inside of the place.. and some have seen- this thing. Whatever it is, it looks like a flower with humanoid body wearing a pink hoodie. Maybe some of those stories about the witch has some merits to it after all.. because why does she own a walking flower?
 
-From the looks of it, it seems to be a servant or companion of the witch itself, we were able to see it water plants, pick up vegetables and plants from the surrounding area. When one of the people who saw it tried to walk toward the flower, it instantly went on to pick up a garden gnome from the side of the house and rushed at us. It did not go well as the guy would then get his head smacked, losing consciousness instantly from concussion. We ran away and got away successfully.. safe to say it isn't very good with people.
-
-I'd advise that you try and avoid it as much as possible, frankly just leave them alone at this point.. since most of the aggressiveness you see here are solely from people invading their house.
-
-[…] mysterious flower woman.. perhaps they're related or perhaps the witch has created them by sheer dark magic? who knows..`,
-
-"Witch": `Nobody really knows her real name.. but she lives in the swamp alone. A lot of people died walking near the […] apparently she owns a sniper rifle that shoots poison darts.. so there's that. There's a lot of rumors […] about her being scary and psychotic killer, but maybe she really just wants some peace and quiet […] wild.. which people refuses to respect that.
-
-[…] photos of a walking plant around her area aswell which people has connected to plant man
-
-A lot of us would love to get clear answer from the witch herself.. too bad she doesn't like […] much`,
 
 "Howard Carter": `Designer and gunsmith of a niche company by the name of "Carter's leads". He no longer owns it since he's grown too old to make guns, and the position was instead given to his daughter. Not alot is known about him, since he isn't a very outgoing person..`,
 
@@ -140,13 +111,6 @@ Many concerns were raised about this idea, numerous thinking that this type of p
 
 However, despite its massive success in Outposts, it is still a relatively underproduced troop, as too many of them could cause a great decline in rifle ammo. In the case of this ever happening, a prevention was thought of: the technique needing them to fire in bursts instead of the whole magazine at once. Regardless of the favorability within this change, it was not realized. With their ability to push forward, they make an excellent choice to be brought alongside expeditions, permitting clear, aggressive rushes. Though, a better variant accomplishes this role much better.`,
 
-"Citizen Rogue": `As promising as a gun can be, it comes with several drawbacks. Needing to load the right ammo type, requiring a magazine for it to fire more than a shot, demanding recoil control and the competence to aim. Everything previously mentioned brings a certain complexity to this weaponry, one that many dislike. Due to this, the Citizen Scouts that struggle with these aspects, or the Rogues that have displayed their power in battle, may opt to become a Citizen Rogue, employing a much more straightforward method of combat.
-
-Wielding a typical hammer used for construction and provided with a reliable vest, they exchange their ranged firepower for a more aggressive, close quarters strength. They provide the opportunity for their allies to push in, as they rush into the frontlines, distracting the adversary from the incoming threats. Due to this, their training requires plenty of building up their speed and brawn, as with the right expertise, they can be just as deadly as ranged threats.
-
-Because of how difficult their training can get at times, they think of themselves higher than others. Their ego is further bloated by the fact that they don a vest while utilizing a melee, compared to the Scouts who don't have one while possessing Glocks. However, they still understand the idea that they must work as a team with their allies, otherwise they'd be worthless going alone. Their attitude is unappreciated […] nicknaming themselves 'Alphas'. Not to get confused with a higher rank, they usually say that to sound cooler.
-
-Many believe that whoever becomes a Citizen Rogue wastes their opportunity, turning into a weak troop that falters alone. On top of this, their role clashes with the Citizen Assaults, further confusing their purpose. These many concerns were brought up to the overseers, but as there weren't any reported incidents of this troop bringing no value on the field, they were kept. Though, it was strange as their original iteration was already on the verge of being considered unnecessary, as ranged troops showed superiority.`,
 
 "Citizen Sniper": `Contrary to popular belief, despite the Citizen faction taking itself very seriously, they do have their own methods to enjoy themselves. One of the most known is their monthly aim contest. In this competition, many Citizens can battle with each other from the same rank to see who has the more superior aim. The winners within each group are congratulated and may receive rewards, such as an improved arsenal, and the most important gift: respect from Citizens. However, in other cases, they may be promoted to Snipers. It's not necessary to win a contest to become a sniper, but this feat of marksmanship boosts your chances.
 
@@ -156,15 +120,6 @@ During the day, they don't do much work, as most of it is handled on the field b
 
 Make no mistake, though, just because they sit in their tower the whole day definitely does not mean they cannot still be deadly if you're unprepared for them. After all, the feeling of a sniper scope watching you at all times isn't pleasant.`,
 
-"Citizen Scout": `As the state of the world worsens, many decided to join factions for their own safety. The most known is the Citizen Faction, as their ever growing expansion dominates a lot of other clans. Despite this success, their quantity was increasing too much, many being unable to receive proper training or be trusted with advanced gear. Therefore, many were given all different types of orders at Outposts to help out, eventually them turning into Citizen Scouts.
-
-This troop is a poor jack of all trades, unable to truly accomplish any of its roles. However, they may still be of use at times, whether it be as a distraction or fetch quests. Wielding a dinky Glock, they take great honor in their one and only gun, as it's too early for them to receive vests or a more improved firearm. Many Scouts wish for their situation to get better, so they feel more confident with superior gear, but it will most likely never. They are sent alongside scouting missions with Citizen Escorts, or expeditions to inferior zones, as to not risk any harm. Alternatively, they simply guard Outposts with Guards and Assaults, but usually treated differently as they aren't as interesting as them.
-
-[…] faction. Nonetheless, their cooperation with other allies in combat is helpful, providing fire and pushing forwards to make sure the coast is clear. Their mere Glock is still a dangerous firearm, even if they are unproperly trained or it's less preferable than other guns. In the case that a Scout has connections with a more advanced troop, they may rarely receive a better magazine and better ammo.
-
-When finding loot during exploration, they aren't allowed to keep it for themselves, only to secure it, guard it and bring it later to their designated Outpost for storage. Much of the credit of all the Citizen's treasury goes to the Scouts, as they have a keen eye on searching for items, since it's what they're most appreciated for. Apart from that, they're laughed at a lot, either it be due to their inexperience or inability to speak correctly. It's unfortunate that this is their fate.
-
-They admire the day they get promoted, impatiently waiting for it.`,
 
 "Citizen Bodyguard": `A more recent division of the Citizens created after many noticed a common flaw in attacks: rushing in alone. Many Citizens believe they're armed and trained well enough to take out any foe, but that isn't always the case. Therefore to prevent less casualties and losses of equipment, it was decided to create an alternative variant of the Scout, henceforth: the Bodyguard.
 
@@ -174,13 +129,6 @@ You won't typically see them in missions or outside of Citizen Outposts, as they
 
 Many Citizens think that these troops are unnecessary, as they prove no use outside of combat, unlike other ranks. Their only purpose is to assist people and, unlike a more developed tactic such as a combat medic, they only fire a pesky Beretta. Despite stating so, they continue to occasionally prove use, which is what leads to them still being kept around. Hilariously, when no ally is nearby, they will sprint to the nearest Citizen controlled site.`,
 
-"Citizen Charger": `Due to how distant the Citizen Faction is split across regions, it's hard to maintain a resilient, trustworthy leader for each outpost. Without proper order, unruly scouts have, in the past, let their ego get to their head and attempted usurpations to gain control of negligent bases. It never went well. So, it was ultimately decided to simply create a side-grade to the Citizen Rusher that possessed managerial competence: […]
-
-Armed with superior equipment to flaunt their value and rank, they take care of the outpost with an iron fist. Very serious about their job, they make sure everything's efficient and clean, enforcing a no-nonsense way-of-life to avoid mistakes and damages. They handle most of the logistics relating to their assigned outpost: material transport, orders from higher-ups, communication with other outposts, etc.
-
-For intruders, they have been trained to avoid action unless necessary, but when they do, it is quick and ruthless. Similar to Citizen Rushers, they rush at you, sprinting at full speed to catch you. Once they catch sight of you, even if you go behind cover, they will fire relentlessly until they are out of ammo or […] heavy-duty helmet, the Charger is certainly no squishy, low-class Civilian; prioritize taking out those puny meat-shields before facing this rigged-out chief, if you truly want to stand a chance.
-
-Due to their suppressive strategy, Chargers chew through shotgun munitions, which is why you rarely see other Civilians equipped with shotguns. […] actually do anything about it.`,
 
 "Citizen Bat": `Despite the idea of the Citizen Rogue already being rather pointless, as you exchange a formidable, long-ranged firearm for a limited bludgeon, a more developed iteration of existed prior to it. Strange enough, it was originally meant to be scrapped entirely, as the investments in time and training were considered far too much for its lackluster potential, but it seemed to have held enough merit in some overseer's heart that the idea was ultimately implemented.
 
@@ -216,21 +164,7 @@ He was last seen on a scouting run around Frieden and it's areas, carrying a rad
 
 Rats are typically distinguished from mice by their size. Usually the common name of a large muroid rodent will include the word "rat", while a smaller muroid's name will include "mouse". The common terms rat and mouse are not taxonomically specific. There are 56 known species of rats in the world.`,
 
-"Ratman": `Ratman, the urban legend where its origin was lost to time. Perhaps it existed due to people's fears […] dark and claustrophobic sewer.. or maybe he was real after all.
 
-Nonetheless, some pictures have surfaced online. It's expectedly in the worst photo quality ever, so at this point.. do I even want to try and convince you this is an actual thing? This is quite literally just the equivalent of a boogeyman or UFO sightings, like come on!`,
-
-"Wyrmling": `The Wyrmlings, a nickname agreed upon by many internet users surrounding the viral story "I Hear Something Outside My Tent" where the original poster, joshhiking04 documented his experience over his travels in Frieden into the wilderness just beyond swamp_fever. While the walk and climb above the mountains seems to have gone well for the early part of his time here, as the sun starts to dawn.. Josh has decided to set up a small tent somewhere in the forest. He also decided to set up a trail cam just by the tents, so that he'd know if there are any animals nearby.
-
-As the night went by, Josh was awoken up by strange sounds of an animal around his tent. The recorded video was sent as well by Josh himself; publishing onto his own page. The video itself captured a lot of really creepy noises outside his tent, completely alien to any known animals today. Most people theorized it was some kind of bird due to the chirping, but it sounded too big, too low pitch to be a bird. Not to mention, its large footsteps against the grass. Josh waited there in silence for a bit, and eventually.. the sound went away.
-
-[…] trail camera.
-
-There was in fact something outside his tent, but it was not recognizable to be any animals ever documented. It had strange antlers coming out of what seems to be its back, alongside rocky oval head. The weirdest part […] an adult grizzly bear. It moves around on its hind legs and it seems to also have tusks around its head.
-
-The video would go viral from this footage, alongside Josh even managing to talk about his story on a TV Show. It was such a wild discovery that many other brave hikers have decided to set their foot onto the swamp_fever in hopes of finding this never-before-seen animal as well. It was nicknamed as "Wyrmlings" or simply referred to as "Dragons" by internet users around the globe.
-
-Despite many explorations taking place afterwards, no one was able to capture a footage that shows the Wyrmling in its full glory as Josh did, and while some people actually managed to record a footage of the noises in the surrounding area, those noises don't seem to match the one that could be heard in Josh's video, which makes a lot of people question afterwards.. was Josh's original video even real? or was it just a really fantastic work of 3D rendering?..`,
 
 "Martin": `An outlaw merchant found across multiple districts. Famous for selling firearms, items and goods illegally across districts under the name "Martin's 101 Rads" as a code name, most of their profits come from transferring and selling foreign items to their non-native districts. Although they go under the name "Martin", it is unknown whether or not if Martin is a nickname or an alias.
 
@@ -238,21 +172,6 @@ On May 21st 2018, Martin was caught in the metrostation of Bayak for illegally e
 
 However upon further investigation, it was discovered that the two officers suspiciously obtained **15,000T$** each. Upon questioning them about where they had obtained the money from, they stayed silent. The officers were then found guilty of accepting bribery and thus were transported to S13's prison where they will be taking their 5 year sentence as well as additional debt for letting Martin free.`,
 
-"Doe": `despite the many celebrities within the city, such as nick the dummy, ms. doe is probably the most known one. known for her perfected shooting antics, no other could hold comeptition to her.
-
-most of her life previous to the military is unknown and she prefers keeping it that way. many have questioned her about it but she refuses to properly say anything, giving vague answers to them. many have their theories about her, most popular being that she was surrounded by an environment that included a lot of firearms. easy to believe this but too convenient.
-
-she got into the military around the time she finished college. at the start, many were skeptical as her documents didn't prove much and she didn't look the most intimidating either. although she didn't care about such aspects, focusing on her training the most. she really wanted to use guns though. constantly asking other cadets when they will receive firearms training.
-
-finally, when that day came, she was pretty excited. like, a lot. impatiently waiting for her turn. then it came. after a few shots, she proved good accuracy, though at the time, the conditions were in a way that didn't fully show her skills. it was only after the settings were being configured to see the cadets' full potential that she was quickly noticed by the higher ups.
-
-amazed by her skills, they recommended her to compete in a firearms contest. this part of the story you all know. she competed, outdid everyone and won, being deemed the best at the time. though this isn't where she got her title of the best sharpshooter. that came from a list of her achievements. most popular being: hitting a target from very far away with a sniper, hitting a target from far away with a rifle and hitting a target from a high distance with a pistol. all with insane accuracy.
-
-of course, such feats were never before seen, beating the previous records by quite the margin. these distances weren't easy to cover either, so it was a surprise. she quickly becaame the role model for a lot people, encouraging many to improve their aim. this strengthed the military of the city, so she had a pretty big impact on the city itself or just ordinary civilians that wished to know how to properly utilize a gun. congratulated by higher ups, of course.
-
-around three years after finishing her training, she decided that, despite all these beaten records, she was growing tired of this and wished to depart. now, many here say that it was actually because she was […] that she disliked her winning every competition but it didn't mean she wasn't having fun. and so, she made her exit.
-
-now living quietly in some suburbans in a yellow house, fitting her. for the more new citizens of the city, they confuse her with someone else, even though the name doe is rather rare. after her retirement, most information is unknown. saying most, because a lot of people know about her friendship with tony. […]`,
 "Factory King": `DO YOU KNOW WHO I AM? DO I HAVE TO SAY IT TWICE? I'LLLLL HAVE YOU KNOOOWW! THAT I WAS THE ONE RUNNING THE FAKE E3K ACCOUNT. I WAS THE ONE WHO SLANDERED THIS COMPANY. AND MADE A FOOL OF ALL OF YOU!!! I'LL HAVE YOU KNOW, THAT I HATE THIS COMPANY WITH EVERY GRAIN OF GUNPOWDER THAT I HAVE EVER HAD.
 
 YOU MADE ONE BIG MISTAKE. BIG BIG MISTAKE. AND I KNOW. I KNOW THE PERSON WHO FIRED ME. IS READING THIS. I KNOW YOU ARE. AND I'LL HAVE YOU KNOW. EVER SINCE YOU SENT THAT LETTER STRAIGHT TO MY MAIL. OH.. THE LETTER. OH HOW YOU HAD FOUND A MORE EFFICIENT METHOD WITH THOSE, EMOTIONLESS **AUTOMATIC** DROPPERS.
@@ -267,21 +186,6 @@ Post Code: 92871`,
 
 "Forest Dwellers": `None available`,
 
-"Hellbender": `A NEW STAGE OF EVOLUTION HAS BEEN MADE
-
-A FAST, GRADUAL CHANGE OF THE WORLD.
-
-THIS CHANGE HAS NOT BEEN DOCUMENTED YET, THUS YOU MAY NOT FIND ANY WRITTEN TALES OF THIS CHILD.
-
-WHAT I WILL COMMENT HOWEVER, IS THE FACT THAT THIS CHILD WAS ONE OF THE FIRST TO ADAPT.
-
-BEFORE MEN, THERE WERE REPTILES.
-
-GIANT HULKING BEASTS THAT WALKED THE LANDS OF YOUR WORLD.
-
-YET IN PRESENT, THEY WERE NO LONGER SEEN WALKING.
-
-[…]`,
 
 "Monolithic Guardian": `[INFORMATION MISSING]`,
 
