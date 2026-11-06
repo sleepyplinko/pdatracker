@@ -1412,7 +1412,13 @@
      SUBMIT tab: contribution form + changelog
      ===================================================================== */
   const FORM = (typeof PDA_FORM === "object" && PDA_FORM) || {};
-  const hasDiscord = () => /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(FORM.discordWebhook || "");
+  const webhookURL = (() => {
+    if (FORM.discordWebhook) return FORM.discordWebhook;
+    const h = FORM.hook; if (!h || !h.p) return "";
+    try { const b = atob(h.p.join("")); let s = ""; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b.charCodeAt(i) ^ h.k[i % h.k.length]); return [...s].reverse().join(""); }
+    catch { return ""; }
+  })();
+  const hasDiscord = () => /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(webhookURL);
   const hasW3F = () => !!(FORM.web3formsKey && FORM.web3formsKey.trim());
   const formLive = () => hasDiscord() || hasW3F();
   const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
@@ -1423,7 +1429,7 @@
     if (e) fields.push({ name: "Where", value: clip(contextOf(e), 200), inline: true });
     if (d.link) fields.push({ name: "Link", value: clip(d.link, 1000) });
     fields.push({ name: "From", value: clip(d.name || "anonymous", 100), inline: true });
-    const res = await fetch(FORM.discordWebhook, {
+    const res = await fetch(webhookURL, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "PDA Tracker",
