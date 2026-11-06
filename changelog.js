@@ -11,7 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
-    "LOADOUT tab: pick your weapons, utility and gear and see total weight, carry weight, defence and shield",
+    "LOADOUT tab: carry anything (duplicates too), see used space against your carry weight, even when you go over",
     "Every ammo and magazine name (160 slots across 5 tiers)",
     "Gear can be filtered by gear type and sorted by defence, shield or carry weight",
     "Stats and comments for every SMG, rifle, machine gun, shotgun, heavy pistol, heavy rifle, bludgeon, sharp, utility and gear shown in the PDA",
