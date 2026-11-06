@@ -246,7 +246,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        "???"
+        "Warne Eclipse II"
         ],
         3: [
         ["FN Five-Seven", { stats: {
@@ -616,7 +616,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.75"
         }, comment: "Beloved submachine gun, it's has a really modular handguard except you can't really find the mods for it sadly, well maybe somewhere in the future." }],
-        "???"
+        "HK SMG-II Prototype"
         ],
         3: [
         ["B&T MP9", { stats: {
@@ -2504,7 +2504,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, modes: [{"MODE": "Base", "CALIBER TYPE": "12/70", "AUTO": "YES", "BURST": "NO", "STRENGTH": "1.2x", "AIM TIME": "0.75", "SWITCH TIME": "0.08s", "RPM": "200", "ALERT RADIUS": "500", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Magazine-fed", "MAX SPREAD": "7", "MINIMUM SPREAD": "7", "SPREAD INCREMENT": "0", "SPREAD DECREASE": "0/0s", "EQUIP TIME": "1s"}], comment: "" }],
-        "???"
+        "Military Striker-12"
         ]
       }
     },
@@ -2808,7 +2808,7 @@ const PDA_DATA = {
         }, comment: "The .50 AE Home Defense Companion is an absurd, questionable variant of the STRIKER-12 that was rechambered to fire .50 AE. It was built on the STRIKER-12's frame, reusing almost of its parts with the exception of having rifled barrel and lacking a foregrip. The lack of a foregrip was done in order for the firearm to be legally classified as a \"pistol\", though at the cost of ergonomics and handling.\n\n..With a name like \"Home Defense Companion\", its rather misleading." }]
         ],
         5: [
-        "???"
+        "RSh-12"
         ]
       }
     },
@@ -2836,7 +2836,7 @@ const PDA_DATA = {
         }, comment: "Menace.. I wouldn't want to be on the other side of that grenade launcher." }]
         ],
         6: [
-        "???"
+        "WC Rocket Launcher"
         ]
       }
     },
@@ -3623,7 +3623,9 @@ const PDA_DATA = {
           "SHIELD DURABILITY": "10%",
           "DEFENSE INCREASE": "9%"
         }, comment: "" }],
-        "???"
+        ["Blue Mask", { stats: {
+          "GEAR TYPE": "FACE WEAR"
+        }, comment: "" }]
         ],
         4: [
         ["Zone Special Mask", { stats: {
