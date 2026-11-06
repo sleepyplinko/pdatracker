@@ -688,3 +688,5 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .toast { width: max-content; }
 .toast span { flex: 1; }
 @media (max-width: 700px) { .toast { width: calc(100vw - 24px); } }
+
+.card .pic img.dimpic { filter: grayscale(.6) brightness(.55); }

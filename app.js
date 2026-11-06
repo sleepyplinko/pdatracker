@@ -593,7 +593,8 @@
     const first = c.members[0];
     const l = isGroup ? c.name : label(first);
     const ci = imagesOf(c.entry, c, first);
-    const pic = got ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy">` : (isGroup ? I.people : I.person)) : I.question;
+    const showPic = got || (settings.missingPics && ci.length);
+    const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${got ? "" : ' class="dimpic"'}>` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
     return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${g.color}" title="${esc(tip)}">
@@ -641,7 +642,7 @@
     screen.innerHTML = `
       <div class="pdetail" style="--c:${g.color}">
         <div class="dbox pprev"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
-          <div class="preview">${previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`)}</div>
+          <div class="preview">${got || settings.missingPics ? previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`) : `<span class="ph big">${I.question}</span>`}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
             <span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
@@ -1032,6 +1033,7 @@
         <div class="srow"><input type="range" id="vol" min="0" max="100" step="5" value="${settings.volume}" aria-label="Volume"><span>Volume: <b id="volv">${settings.volume}</b>%</span></div>
         <h3>User Preference</h3>
         ${sw("lockedNames", "Show names on locked entries?")}
+        ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Data</h3>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
