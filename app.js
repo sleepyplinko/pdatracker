@@ -430,7 +430,7 @@
       return `<div class="tabbar confirm"><span><b>// ARE YOU SURE?</b> ${all ? `LOCK ALL ${t}` : `UNLOCK ALL ${t - f} REMAINING`} IN ${esc(name.toUpperCase())}</span>
         <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span></div>`;
     }
-    return `<div class="tabbar"><span class="tb-count">${esc(name)}: ${f} / ${t} found</span><button class="tier-btn tabbtn" data-tier="${key}">${all ? "LOCK ENTIRE TAB" : "UNLOCK ENTIRE TAB"}</button></div>`;
+    return "";
   }
 
   function cancelTier() { pendingTier = null; clearTimeout(pendingTimer); }
@@ -780,9 +780,9 @@
         <h4>How do I see stats?</h4>
         <p>Just click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock: mark the card and every variant inside it counts, then switch between them with the tabs along the bottom. The arrows next to Preview step through the rest of that tab.</p>
         <h4>Can I unlock a whole tab of people or documents?</h4>
-        <p>Use UNLOCK ENTIRE TAB under the sub-tabs in BIOGRAPHY or DOCUMENTS. Like tiers, it asks "ARE YOU SURE?" first.</p>
+        <p>Click the tab you're already on (like Scavengers or Locations) a second time. Like tiers, it asks "ARE YOU SURE?" first.</p>
         <h4>What do the stats mean?</h4>
-        <p>Hover over any stat name (tap it on a phone) to see what it does. Pictures can have hover text too.</p>
+        <p>Hover over a stat name (tap it on a phone) to see the game's explanation, where one is on file. Pictures can have hover text too.</p>
         <h4>Can I unlock a whole tier at once?</h4>
         <p>Click a TIER header in TOOLS. It asks "ARE YOU SURE?" first, so a misclick won't do anything until you press YES. If the tier is already complete, the same button locks it all again.</p>
         <h4>How are entries ordered?</h4>
@@ -842,7 +842,9 @@
   function keepScroll(fn) {
     const sc = screen.querySelector("#grid, .cards, .results, .erows");
     const y = sc ? sc.scrollTop : 0;
+    const st = screen.querySelector(".subtabs"); const sx = st ? st.scrollLeft : 0;
     fn();
+    const st2 = screen.querySelector(".subtabs"); if (st2) st2.scrollLeft = sx;
     const s2 = screen.querySelector("#grid, .cards, .results, .erows");
     if (s2) s2.scrollTop = y;
   }
@@ -863,7 +865,7 @@
   screen.addEventListener("click", ev => {
     const t = ev.target;
     // anything other than the YES/NO buttons cancels a pending tier prompt
-    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier]")) { cancelTier(); }
+    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs]")) { cancelTier(); }
 
     // the star is checked first, so pressing it never also opens the entry under it
     const star = t.closest("[data-star]");
@@ -891,10 +893,17 @@
     if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
     const cat = t.closest("[data-cat]");
     if (cat) { play("click"); ui.cat = +cat.dataset.cat; persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
+    // clicking the sub-tab that's already open asks to unlock (or lock) the whole tab
     const bio = t.closest("[data-bio]");
-    if (bio) { play("click"); ui.bio = +bio.dataset.bio; persistUI(); render(); return; }
+    if (bio) {
+      if (+bio.dataset.bio === ui.bio) { askTier(`tab:bio:${ui.bio}`); keepScroll(render); return; }
+      play("click"); ui.bio = +bio.dataset.bio; persistUI(); render(); return;
+    }
     const docs = t.closest("[data-docs]");
-    if (docs) { play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return; }
+    if (docs) {
+      if (+docs.dataset.docs === ui.docs) { askTier(`tab:docs:${ui.docs}`); keepScroll(render); return; }
+      play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return;
+    }
     if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
   });
   // keyboard: Enter / Space on a focused star
@@ -935,6 +944,16 @@
     else { tipFor = null; tipEl.classList.remove("on"); }
   });
   screen.addEventListener("scroll", () => { tipFor = null; tipEl.classList.remove("on"); }, true);
+
+  /* mouse wheel scrolls the sideways strips (character tabs, variant tabs, phone categories) */
+  screen.addEventListener("wheel", e => {
+    const strip = e.target.closest(".subtabs, .mtabs, .cats");
+    if (!strip || strip.scrollWidth <= strip.clientWidth + 1) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strip.scrollLeft += e.deltaY; e.preventDefault(); }
+  }, { passive: false });
+  // keep the open sub-tab in view
+  const showActiveSubtab = () => { const a = screen.querySelector('.subtab[aria-selected="true"]'); if (a) a.scrollIntoView({ inline: "nearest", block: "nearest" }); };
+  new MutationObserver(() => { if (!screen.dataset.keepx) showActiveSubtab(); }).observe(screen, { childList: true });
 
   /* ---------- go ---------- */
   renderTabs();

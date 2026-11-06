@@ -252,6 +252,47 @@ of course, such feats were never before seen, beating the previous records by qu
 
 around three years after finishing her training, she decided that, despite all these beaten records, she was growing tired of this and wished to depart. now, many here say that it was actually because she was […] that she disliked her winning every competition but it didn't mean she wasn't having fun. and so, she made her exit.
 
-now living quietly in some suburbans in a yellow house, fitting her. for the more new citizens of the city, they confuse her with someone else, even though the name doe is rather rare. after her retirement, most information is unknown. saying most, because a lot of people know about her friendship with tony. […]`
+now living quietly in some suburbans in a yellow house, fitting her. for the more new citizens of the city, they confuse her with someone else, even though the name doe is rather rare. after her retirement, most information is unknown. saying most, because a lot of people know about her friendship with tony. […]`,
+"Factory King": `DO YOU KNOW WHO I AM? DO I HAVE TO SAY IT TWICE? I'LLLLL HAVE YOU KNOOOWW! THAT I WAS THE ONE RUNNING THE FAKE E3K ACCOUNT. I WAS THE ONE WHO SLANDERED THIS COMPANY. AND MADE A FOOL OF ALL OF YOU!!! I'LL HAVE YOU KNOW, THAT I HATE THIS COMPANY WITH EVERY GRAIN OF GUNPOWDER THAT I HAVE EVER HAD.
+
+YOU MADE ONE BIG MISTAKE. BIG BIG MISTAKE. AND I KNOW. I KNOW THE PERSON WHO FIRED ME. IS READING THIS. I KNOW YOU ARE. AND I'LL HAVE YOU KNOW. EVER SINCE YOU SENT THAT LETTER STRAIGHT TO MY MAIL. OH.. THE LETTER. OH HOW YOU HAD FOUND A MORE EFFICIENT METHOD WITH THOSE, EMOTIONLESS **AUTOMATIC** DROPPERS.
+
+SO, YOU ALWAYS WANTED SPEED. YOU ALWAYS WANTED SOMEONE WHO'S ON SCHEDULE.
+OH I'LL GIVE YOU. I'LL GIVE YOU SOMETHING QUICK. I'LL BE THERE ON SCHEDULE.
+
+Address: St. Dahlia, Q-Mart Complex, Press Mark Road
+State: East Tulip
+City: Harnicia
+Post Code: 92871`,
+
+"Forest Dwellers": `None available`,
+
+"Hellbender": `A NEW STAGE OF EVOLUTION HAS BEEN MADE
+
+A FAST, GRADUAL CHANGE OF THE WORLD.
+
+THIS CHANGE HAS NOT BEEN DOCUMENTED YET, THUS YOU MAY NOT FIND ANY WRITTEN TALES OF THIS CHILD.
+
+WHAT I WILL COMMENT HOWEVER, IS THE FACT THAT THIS CHILD WAS ONE OF THE FIRST TO ADAPT.
+
+BEFORE MEN, THERE WERE REPTILES.
+
+GIANT HULKING BEASTS THAT WALKED THE LANDS OF YOUR WORLD.
+
+YET IN PRESENT, THEY WERE NO LONGER SEEN WALKING.
+
+[…]`,
+
+"Monolithic Guardian": `[INFORMATION MISSING]`,
+
+"WC Emissary": `OUTSIDE OF COMBAT, THESE AGENTS ENFORCE RULES UPON THE WORKERS AND HANDLE BUSINESS.
+
+HOWEVER, DESPITE THE FACT THAT THEY MAY SEEM WEAK, THEY PACK A PUNCH. JUST LIKE ALL THE REST.
+
+DON'T TAKE WHAT I'M SAYING AS TRUTH. PLEASE.`,
+
+"Monolithic Psycho": `[INFORMATION MISSING]`,
+
+"Monolithic Soldier": `[INFORMATION MISSING]`
 
 };
