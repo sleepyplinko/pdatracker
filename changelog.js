@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "17 more ammo and magazines; no locked ammo slots left",
     "New: Warne Eclipse II, HK SMG-II Prototype, Military Striker-12, RSh-12, WC Rocket Launcher, Blue Mask",
     "New: H&K MP7A1+, Military Kriss Vector, PP-19-01 Vityaz, Salient Arms GRY, Dragunov SVD-M, AK74M, SIG MCX-SPEAR, H&K HK416A5, RPK-74M (stats to come)",
     "LOADOUT tab: carry anything (duplicates too), see used space against your carry weight, even when you go over",

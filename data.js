@@ -3680,7 +3680,7 @@ const PDA_DATA = {
     },
     {
       name: "AMMO",
-      note: "Names only. Ammo stats weren't recorded.",
+      note: "Names only.",
       tiers: {
         1: [
           "20rnd TEC-9 Mag",
@@ -3768,9 +3768,9 @@ const PDA_DATA = {
           "30rnd G36C Mag",
           "30rnd MP7A1 Mag",
           "30rnd AUG Mag",
-          "???",
-          "???",
-          "???"
+          "100rnd KEVIN Mag",
+          "20rnd SVD Mag",
+          "72rnd TEC-9 Drum Mag"
         ],
         3: [
           "14rnd AMT Mag",
@@ -3806,12 +3806,12 @@ const PDA_DATA = {
           "30rnd CX4 Storm Mag",
           ["15rnd ADV Fast-Mag", {"gold": true}],
           "40rnd MP7A1 Mag",
-          "???",
-          "???",
-          "???",
-          "???",
-          "???",
-          "???"
+          "45rnd MP9 Mag",
+          "40rnd AR10 GEN M3 Mag",
+          "40rnd MICRO UZI Mag",
+          "65rnd P90 Mag",
+          "25rnd Kriss Mag",
+          "20rnd Deagle Mag"
         ],
         4: [
           "100rnd PKM Mag",
@@ -3830,12 +3830,13 @@ const PDA_DATA = {
           "20rnd AA12 Mag",
           "20rnd Saiga-12 ProMag",
           "100rnd Beta C-Mag",
-          "???",
-          "???",
-          "???",
-          "???",
-          "???",
-          "???"
+          "50rnd MP5 Mag",
+          "100rnd PKP Mag",
+          "82rnd ZiP Mag",
+          "92rnd CX4 Storm Mag",
+          "73rnd M14 EBR Mag",
+          "32rnd AA12 Mag",
+          "73rnd ProMag Drum"
         ],
         5: [
           "12rnd AW Mag",
@@ -3850,7 +3851,8 @@ const PDA_DATA = {
           "80rnd CZ SKORPION Mag",
           "30rnd FN FAL Mag",
           "20rnd PSG-1 Mag",
-          "10rnd M82A1 .50 BMG Mag"
+          "10rnd M82A1 .50 BMG Mag",
+          "200rnd M134 Mag"
         ]
       }
     }
