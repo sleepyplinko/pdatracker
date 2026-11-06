@@ -498,7 +498,7 @@ const PDA_DATA = {
      resistances are percentages. Leave a stat out if it isn't shown. */
   biography: [
     { name: "Scavengers", color: "#f3c98b", bg: "#2a1d0e", entries: [
-      G("Miners", [
+      Object.assign(G("Miners", [
         P("Drill Gal", { Health: 145, Speed: 0.9, Defense: 15 },
           { "Pre-Aim": 150, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "2.5x" },
           [W("Power Drill")]),
@@ -508,11 +508,11 @@ const PDA_DATA = {
         P("Miner", { Health: 90, Speed: 0.9 },
           { "Pre-Aim": 90, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "2.5x" },
           [W("Pickaxe")])
-      ]),
+      ]), { img: "images/people/miners.webp" }),
       P("Tony", { Health: 220, Speed: 1.2, Defense: 40, "Super Armour": 12 },
         { "Aim Time Multiplier": "1.25x", "Aim Slowdown": "1.25x" },
         [W("Golf Club")]),
-      G("Scavengers", [
+      Object.assign(G("Scavengers", [
         P("Artist",      { Health: 100, Speed: 1.3 }, STD, [WR("Electric Guitar")]),
         P("Chilly",      { Health: 100, Speed: 0.9 }, STD, WR("H&K MP5K", "MP-412 REX", "SKORPION", "SERBU SUPER SHORTY")),
         P("Sigmund",     { Health: 90,  Speed: 1 },   STD, WR("Kitchen Knife", "M45A1")),
@@ -522,8 +522,8 @@ const PDA_DATA = {
         P("Cool",        { Health: 90,  Speed: 1.1 }, STD, WR("Hammer", "COLT 1883 SAWN OFF")),
         P("Swagger",     { Health: 100, Speed: 0.8 }, { Suppressor: "true", ...STD }, WR("Z-M LR-300", "OTS-33 PERNACH", "COLT 9MM SMG", "BENELLI NOVA")),
         P("Average",     { Health: 90,  Speed: 1 },   STD, WR("BERETTA M9A3", "GLOCK 18", "Frying Pan"))
-      ]),
-      G("Robinson", [
+      ]), { img: "images/people/scavengers.webp" }),
+      Object.assign(G("Robinson", [
         P("Michael", { Health: 110, Speed: 1.6, Defense: 10 }, STD,
           [W("MICRO UZI"), A("9x19mm Green Tracer")]),
         P("Alex", { Health: 150, Speed: 1, Defense: 40 },
@@ -535,10 +535,10 @@ const PDA_DATA = {
         P("Raffy", { Health: 150, Speed: 1.2, Defense: 25 },
           { Strength: "0.9x", "Aim Time Multiplier": "1.5x", "Reload Speed Multiplier": "1x", "Aim Slowdown": "0.3x" },
           [W("MP-412 REX"), A(".357 SP")])
-      ]),
-      P("Rogue Sig Boy", { Health: 130, Speed: 1.1, Defense: 15, Supershield: 1 }, STD,
-        [W("SIG SAUER P250"), A(".357 SIG FMJTC")]),
-      G("Rogues", [
+      ]), { img: "images/people/robinson.webp" }),
+      Object.assign(P("Rogue Sig Boy", { Health: 130, Speed: 1.1, Defense: 15, Supershield: 1 }, STD,
+        [W("SIG SAUER P250"), A(".357 SIG FMJTC")]), { img: "images/people/rogue-sig-boy.webp" }),
+      Object.assign(G("Rogues", [
         P("Lavender Rogue",           { Health: 90,  Speed: 1 },   ROGUE, ROGUE_LOADOUT),
         P("Green Guy",                { Health: 90,  Speed: 0.9 }, ROGUE, ROGUE_LOADOUT),
         P("Scarlet's Maroon",         { Health: 100, Speed: 1 },   ROGUE, ROGUE_LOADOUT),
@@ -547,31 +547,31 @@ const PDA_DATA = {
         P("Distrustful Swag",         { Health: 90,  Speed: 0.9 }, ROGUE, ROGUE_LOADOUT),
         P("Navy Blue of Nonchalant",  { Health: 90,  Speed: 0.9 }, ROGUE, ROGUE_LOADOUT),
         P("Sky-Blue Chump",           { Health: 90,  Speed: 0.9 }, ROGUE, ROGUE_LOADOUT)
-      ]),
-      P("Factory King", { Health: 325, Speed: 1.1, Defense: 70, Supershield: 2, "Super Armour": 25 },
+      ]), { img: "images/people/rogues.webp" }),
+      Object.assign(P("Factory King", { Health: 325, Speed: 1.1, Defense: 70, Supershield: 2, "Super Armour": 25 },
         { "Pre-Aim": 40, Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
-        [W("H&K G11"), A("4.73x33mm SP"), M("30rnd G11 Mag")]),
-      P("Sapling", { Health: 90, Speed: 1.3, Defense: 10, "Burn Resistance": -200, "Bleed Resistance": 100 },
-        ROGUE, [WR("Machete")]),
-      P("Rogue Lead", { Health: 122, Speed: 1.1 }, STD,
-        [W("BERETTA M9A3"), A(".45ACP Hydra-Shok"), M("17rnd Beretta Mag")]),
-      P("Loner", { Health: 450, Speed: 1.4, Defense: 90, Shield: 300, Supershield: 2, "Super Armour": 9, "Bleed Resistance": 80, "Explosive Resistance": 25 },
+        [W("H&K G11"), A("4.73x33mm SP"), M("30rnd G11 Mag")]), { img: "images/people/factory-king.webp" }),
+      Object.assign(P("Sapling", { Health: 90, Speed: 1.3, Defense: 10, "Burn Resistance": -200, "Bleed Resistance": 100 },
+        ROGUE, [WR("Machete")]), { img: "images/people/sapling.webp" }),
+      Object.assign(P("Rogue Lead", { Health: 122, Speed: 1.1 }, STD,
+        [W("BERETTA M9A3"), A(".45ACP Hydra-Shok"), M("17rnd Beretta Mag")]), { img: "images/people/rogue-lead.webp" }),
+      Object.assign(P("Loner", { Health: 450, Speed: 1.4, Defense: 90, Shield: 300, Supershield: 2, "Super Armour": 9, "Bleed Resistance": 80, "Explosive Resistance": 25 },
         { Suppressor: "true", Strength: "0.6x", "Aim Time Multiplier": "1.7x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "0.425x" },
-        [W("COLT M4A1"), A("5.56x45mm M855"), M("30rnd AR15 Mag")]),
-      P("Plant Man", { Health: 110, Speed: 1.2, Defense: 5, Supershield: 2, "Super Armour": 35, "Burn Resistance": -200, "Bleed Resistance": 100 },
+        [W("COLT M4A1"), A("5.56x45mm M855"), M("30rnd AR15 Mag")]), { img: "images/people/loner.webp" }),
+      Object.assign(P("Plant Man", { Health: 110, Speed: 1.2, Defense: 5, Supershield: 2, "Super Armour": 35, "Burn Resistance": -200, "Bleed Resistance": 100 },
         { Suppressor: "true", "Aim Time Multiplier": "1.5x" },
-        [WR("Garden Gnome")]),
-      P("Flower Woman", { Health: 175, Speed: 1.5, Defense: 10, Shield: 150, "Super Armour": 32, "Burn Resistance": -200, "Bleed Resistance": 100 },
+        [WR("Garden Gnome")]), { img: "images/people/plant-man.webp" }),
+      Object.assign(P("Flower Woman", { Health: 175, Speed: 1.5, Defense: 10, Shield: 150, "Super Armour": 32, "Burn Resistance": -200, "Bleed Resistance": 100 },
         { Suppressor: "true", "Aim Time Multiplier": "1.25x" },
-        [WR("Garden Gnome")]),
-      P("Jeremia Carter", { Health: 500, Speed: 1.2, Defense: 40, Shield: 300, Supershield: 1, "Super Armour": 20, "Burn Resistance": 75, "Bleed Resistance": 100, "Explosive Resistance": 70 },
+        [WR("Garden Gnome")]), { img: "images/people/flower-woman.webp" }),
+      Object.assign(P("Jeremia Carter", { Health: 500, Speed: 1.2, Defense: 40, Shield: 300, Supershield: 1, "Super Armour": 20, "Burn Resistance": 75, "Bleed Resistance": 100, "Explosive Resistance": 70 },
         { Suppressor: "true", "Pre-Aim": 30, Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Aim Slowdown": "0.7x", "Attack Slowdown": "1.5x" },
-        WR("COLT M4A1+", "CZ SKORPION EVO 3", "MILITARY KRISS VECTOR", "PP-19-01 VITYAZ")),
-      P("Howard Carter", { Health: 80, Speed: 0.9 }, STD, []),
+        WR("COLT M4A1+", "CZ SKORPION EVO 3", "MILITARY KRISS VECTOR", "PP-19-01 VITYAZ")), { img: "images/people/jeremia-carter.webp" }),
+      Object.assign(P("Howard Carter", { Health: 80, Speed: 0.9 }, STD, []), { img: "images/people/howard-carter.webp" }),
       P("Forest Dwellers", { Health: 100, Speed: 0.9, Defense: 20 },
         { Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "2.5x" },
         WR("Atuned Skewer", "Shovel", "Pipe", "Sledgehammer", "Runes Saber", "Claymore", "Bearded Axe")),
-      G("Advanced Scavengers", [
+      Object.assign(G("Advanced Scavengers", [
         P("Piercer", { Health: 150, Speed: 0.9, Defense: 35, Supershield: 1, "Super Armour": 8, "Explosive Resistance": 50 },
           { "Pre-Aim": 30, Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Reload Speed Multiplier": "1.5x", "Attack Slowdown": "0.8x" },
           [WR("H&K G11"), A("4.73x33mm FMJ"), WR("P90"), A("5.7x28mm SB193"), WR("SIG MPX")]),
@@ -584,76 +584,76 @@ const PDA_DATA = {
         P("Master", { Health: 150, Speed: 0.9, Defense: 35, Supershield: 1, "Super Armour": 12, "Explosive Resistance": 50 },
           { "Pre-Aim": 30, Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Attack Slowdown": "0.8x" },
           [WR("FAMAS G2"), A("5.56x45mm FMJ"), WR("OTS-14 GROZA"), A("9x39mm BP"), WR("AK103"), A("7.62x39mm FMJ"), WR("SIG SAUER MCX VIRTUS"), A(".300 Blackout CBJ")])
-      ]),
-      P("Witch", { Health: 400, Speed: 1.2, Defense: 50, Shield: 200, "Super Armour": 14 },
+      ]), { img: "images/people/advanced-scavengers.webp" }),
+      Object.assign(P("Witch", { Health: 400, Speed: 1.2, Defense: 50, Shield: 200, "Super Armour": 14 },
         { "Pre-Aim": 40, Strength: "0.7x", "Aim Time Multiplier": "0.5x", "Aim Slowdown": "1.4x" },
-        [W("H&K MP5K"), W("SAVAGE ARMS AXIS II")]),
-      P("Trash Gang", { Health: 100, Speed: 1.1, Defense: 30, Shield: 100, "Bleed Resistance": 45, "Explosive Resistance": 50 },
+        [W("H&K MP5K"), W("SAVAGE ARMS AXIS II")]), { img: "images/people/witch.webp" }),
+      Object.assign(P("Trash Gang", { Health: 100, Speed: 1.1, Defense: 30, Shield: 100, "Bleed Resistance": 45, "Explosive Resistance": 50 },
         { "Pre-Aim": 20, Strength: "0.4x", "Aim Time Multiplier": "1.8x", "Aim Slowdown": "1.5x", "Attack Slowdown": "0.25x" },
-        WR(".44 AUTO MAG PISTOL", "SAIGA-12", "STEN MK II", "GLOCK 19 ROLAND SPECIAL")),
-      P("G.O.A.T", { Health: 100, Speed: 0.8, Shield: 85, Supershield: 20, "Super Armour": 30 },
+        WR(".44 AUTO MAG PISTOL", "SAIGA-12", "STEN MK II", "GLOCK 19 ROLAND SPECIAL")), { img: "images/people/trash-gang.webp" }),
+      Object.assign(P("G.O.A.T", { Health: 100, Speed: 0.8, Shield: 85, Supershield: 20, "Super Armour": 30 },
         { Suppressor: "true", "Pre-Aim": 35, Strength: "0.5x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "1.4x", "Attack Slowdown": "0.3x" },
-        [W("MARE'S LEG"), A(".44 JSP")])
+        [W("MARE'S LEG"), A(".44 JSP")]), { img: "images/people/g-o-a-t.webp" })
     ]},
     { name: "Civilian", color: "#a6e38f", bg: "#132611", entries: [
-      P("Maria Hatty Kirsten", { Health: 1000, Speed: 1.4, Defense: 75, Supershield: 30, "Super Armour": 35, "Explosive Resistance": 70, "Fracture Immunity": "true" },
+      Object.assign(P("Maria Hatty Kirsten", { Health: 1000, Speed: 1.4, Defense: 75, Supershield: 30, "Super Armour": 35, "Explosive Resistance": 70, "Fracture Immunity": "true" },
         { "Aim Time Multiplier": "0x" },
-        [W("Chainsaw")]),
-      P("Citizen Assault", { Health: 150, Speed: 1.3 },
+        [W("Chainsaw")]), { img: "images/people/maria-hatty-kirsten.webp" }),
+      Object.assign(P("Citizen Assault", { Health: 150, Speed: 1.3 },
         { Suppressor: "true", Strength: "0.3x", "Aim Time Multiplier": "1.5x", "Aim Slowdown": "1.3x" },
-        [W("DAEWOO K1"), A("5.56x45mm FMJ"), M("K1 Mag")]),
-      P("Citizen Rogue", { Health: 100, Speed: 1.2, Defense: 25, Shield: 20 },
+        [W("DAEWOO K1"), A("5.56x45mm FMJ"), M("K1 Mag")]), { img: "images/people/citizen-assault.webp" }),
+      Object.assign(P("Citizen Rogue", { Health: 100, Speed: 1.2, Defense: 25, Shield: 20 },
         { "Pre-Aim": 25, "Aim Time Multiplier": "1.5x", "Aim Slowdown": "1.1x" },
-        [W("Hammer")]),
-      P("Citizen Sniper", { Health: 175, Speed: 0, Defense: 20 },
+        [W("Hammer")]), { img: "images/people/citizen-rogue.webp" }),
+      Object.assign(P("Citizen Sniper", { Health: 175, Speed: 0, Defense: 20 },
         { Suppressor: "true", Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
-        [W("REMINGTON 700"), A(".308 M105 AP"), M("11rnd R700 Mag")]),
-      P("Citizen Scout", { Health: 80, Speed: 1.1 },
+        [W("REMINGTON 700"), A(".308 M105 AP"), M("11rnd R700 Mag")]), { img: "images/people/citizen-sniper.webp" }),
+      Object.assign(P("Citizen Scout", { Health: 80, Speed: 1.1 },
         { Strength: "0.2x", "Aim Time Multiplier": "2.5x", "Aim Slowdown": "1.35x" },
-        [W("GLOCK 18"), A("9x19mm PSO gzh"), M("17rnd Glock Mag")]),
-      P("Citizen Bodyguard", { Health: 115, Speed: 1.1, Defense: 15, Shield: 30 },
+        [W("GLOCK 18"), A("9x19mm PSO gzh"), M("17rnd Glock Mag")]), { img: "images/people/citizen-scout.webp" }),
+      Object.assign(P("Citizen Bodyguard", { Health: 115, Speed: 1.1, Defense: 15, Shield: 30 },
         { Strength: "0.2x", "Aim Time Multiplier": "2.5x", "Aim Slowdown": "1.35x" },
-        [W("BERETTA M9A3")]),
-      P("Citizen Charger", { Health: 350, Speed: 1.7, Defense: 90, Shield: 25, Supershield: 2, "Super Armour": 8, "Explosive Resistance": 66 },
+        [W("BERETTA M9A3")]), { img: "images/people/citizen-bodyguard.webp" }),
+      Object.assign(P("Citizen Charger", { Health: 350, Speed: 1.7, Defense: 90, Shield: 25, Supershield: 2, "Super Armour": 8, "Explosive Resistance": 66 },
         { Suppressor: "true", Strength: "0.5x", "Aim Time Multiplier": "1.6x", "Aim Slowdown": "0.65x" },
-        [W("FRANCHI SPAS-12")]),
-      P("Citizen Bat", { Health: 125, Speed: 1.6, Defense: 5, Shield: 50, "Super Armour": 3, "Explosive Resistance": 70 },
+        [W("FRANCHI SPAS-12")]), { img: "images/people/citizen-charger.webp" }),
+      Object.assign(P("Citizen Bat", { Health: 125, Speed: 1.6, Defense: 5, Shield: 50, "Super Armour": 3, "Explosive Resistance": 70 },
         { "Aim Time Multiplier": "1.25x", "Aim Slowdown": "0.5x" },
-        [W("Baseball Bat")]),
-      P("Citizen Guard", { Health: 100, Speed: 1, Defense: 40, Shield: 60, "Explosive Resistance": 25 },
+        [W("Baseball Bat")]), { img: "images/people/citizen-bat.webp" }),
+      Object.assign(P("Citizen Guard", { Health: 100, Speed: 1, Defense: 40, Shield: 60, "Explosive Resistance": 25 },
         { "Pre-Aim": 25, Strength: "0.3x", "Aim Time Multiplier": "1.5x", "Aim Slowdown": "1.3x" },
-        [W("H&K G36C"), A("5.56x45mm HP"), M("30rnd G36C Mag")]),
-      P("Citizen Escort", { Health: 120, Speed: 1, Defense: 20 },
+        [W("H&K G36C"), A("5.56x45mm HP"), M("30rnd G36C Mag")]), { img: "images/people/citizen-guard.webp" }),
+      Object.assign(P("Citizen Escort", { Health: 120, Speed: 1, Defense: 20 },
         { Strength: "0.3x", "Aim Time Multiplier": "1.5x", "Aim Slowdown": "1.5x" },
-        [W("H&K MP5 RIS"), M("30rnd MP5 Mag")])
+        [W("H&K MP5 RIS"), M("30rnd MP5 Mag")]), { img: "images/people/citizen-escort.webp" })
     ]},
     { name: "Volya", color: "#86e0b8", bg: "#0e241c", entries: [
-      P("Benjamin Tarkovsky", { Health: 300, Speed: 0.5, Defense: 95, Shield: 150, Supershield: 5, "Super Armour": 32, "Burn Resistance": 85 },
+      Object.assign(P("Benjamin Tarkovsky", { Health: 300, Speed: 0.5, Defense: 95, Shield: 150, Supershield: 5, "Super Armour": 32, "Burn Resistance": 85 },
         { Suppressor: "true", Strength: "0.35x", "Aim Time Multiplier": "1.5x", "Aim Slowdown": "3.5x", "Attack Slowdown": "0.35x" },
-        [W("KONSTANTINOV"), A("7.62x39mm MAI AP"), M("73rnd ProMag Drum")])
+        [W("KONSTANTINOV"), A("7.62x39mm MAI AP"), M("73rnd ProMag Drum")]), { img: "images/people/benjamin-tarkovsky.webp" })
     ]},
     { name: "Robot", color: "#4a63ff", bg: "#0b0f2a", entries: [
-      "Security Bot A", "Security Bot B", "Security Bot C", "Security Bot D",
-      "Security Bot E", "VLTS Attendant", "Fabricated Dummy"
+      ["Security Bot A", { img: "images/people/security-bot-a.webp" }], ["Security Bot B", { img: "images/people/security-bot-b.webp" }], ["Security Bot C", { img: "images/people/security-bot-c.webp" }], ["Security Bot D", { img: "images/people/security-bot-d.webp" }],
+      ["Security Bot E", { img: "images/people/security-bot-e.webp" }], ["VLTS Attendant", { img: "images/people/vlts-attendant.webp" }], "Fabricated Dummy"
     ]},
     { name: "Animals", color: "#d6ef5a", bg: "#1e2509", entries: [
-      P("Rat", { Health: 5, Speed: 3.1 },
+      Object.assign(P("Rat", { Health: 5, Speed: 3.1 },
         { "Aim Time Multiplier": "1.25x" },
-        [W("InfectedRapidBite")]),
-      P("Ratman", { Health: 600, Speed: 1.2, Shield: 50, "Super Armour": 20 },
+        [W("InfectedRapidBite")]), { img: "images/people/rat.webp" }),
+      Object.assign(P("Ratman", { Health: 600, Speed: 1.2, Shield: 50, "Super Armour": 20 },
         { Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
-        [W("Baseball Bat")])
+        [W("Baseball Bat")]), { img: "images/people/ratman.webp" })
     ]},
     { name: "Hellion", color: "#ff3030", bg: "#2a0808", entries: [
-      P("Wyrmling", { Health: 200, Speed: 2.8, Defense: 30, "Burn Resistance": -100, "Bleed Resistance": 100 },
+      Object.assign(P("Wyrmling", { Health: 200, Speed: 2.8, Defense: 30, "Burn Resistance": -100, "Bleed Resistance": 100 },
         { Suppressor: "true", Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
-        [W("WyrmlingBite")]),
+        [W("WyrmlingBite")]), { img: "images/people/wyrmling.webp" }),
       P("Hellbender", { Health: 150, Speed: 0.5, "Super Armour": -30, "Burn Resistance": -10 },
         { Strength: "0.5x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "1.4x", "Attack Slowdown": "0.3x" },
         [W("Spinal-lance")])
     ]},
     { name: "Velris", color: "#e08a8a", bg: "#241010", entries: [
-      "Velris Family"
+      ["Velris Family", { img: "images/people/velris-family.webp" }]
     ]},
     { name: "Miscellaneous", color: "#ffffff", bg: "#141414", entries: [
       P("Monolithic Guardian", { Health: 140, Speed: 0.9, Defense: 27, "Explosive Resistance": 50 },

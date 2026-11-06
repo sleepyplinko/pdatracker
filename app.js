@@ -20,7 +20,7 @@
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: false, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc" }, savedUI);
   if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
