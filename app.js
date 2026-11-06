@@ -6,23 +6,32 @@
   "use strict";
 
   /* ---------- storage (wrapped: private windows can throw) ---------- */
-  const KEY_FOUND = "pda-found-v1";
-  const KEY_SET   = "pda-settings-v1";
-  const KEY_UI    = "pda-ui-v1";
-  const KEY_USER  = "pda-user-v1";
-  const KEY_FAV   = "pda-fav-v1";
-  const KEY_NOTES = "pda-notes-v1";
-  const KEY_LOG   = "pda-log-v1";
-  const KEY_SEEN  = "pda-seen-v1";
-  const KEY_FRIEND= "pda-friend-v1";
-  const KEY_SINCE = "pda-since-backup-v1";
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
+  /* save profiles: "Main" uses the original keys, others get "@Name" on the end */
+  const KEY_PROF  = "pda-profiles-v1";
+  const PROF = Object.assign({ active: "Main", list: ["Main"] }, load(KEY_PROF, {}));
+  if (!PROF.list.includes(PROF.active)) PROF.active = "Main";
+  const pk = k => PROF.active === "Main" ? k : `${k}@${PROF.active}`;
+  const KEY_FOUND = pk("pda-found-v1");
+  const KEY_SET   = "pda-settings-v1";
+  const KEY_UI    = "pda-ui-v1";
+  const KEY_USER  = pk("pda-user-v1");
+  const KEY_FAV   = pk("pda-fav-v1");
+  const KEY_NOTES = pk("pda-notes-v1");
+  const KEY_LOG   = pk("pda-log-v1");
+  const KEY_SEEN  = "pda-seen-v1";
+  const KEY_FRIEND= pk("pda-friend-v1");
+  const KEY_SINCE = pk("pda-since-backup-v1");
+  const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
-  let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc" }, savedUI);
+  let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc",
+                                sort: "found", compact: false, tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
+  if (!Array.isArray(ui.cmp)) ui.cmp = [];
+  if (!ui.scroll || typeof ui.scroll !== "object") ui.scroll = {};
   if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
   let favs     = load(KEY_FAV, {});
   let notes    = load(KEY_NOTES, {});
@@ -65,7 +74,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
+  const HOVERABLE = ".hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -160,18 +169,30 @@
 
   /* ---------- sorting: found A→Z first, then locked A→Z, ??? last ---------- */
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-  function sortBy(list, isOn, nameOf) {
+  /* when something was last marked found (for "recently found" sorting) */
+  function foundAt(id) {
+    if (!isFound(id)) return 0;
+    const t = trackOf(id);
+    const h = history_.find(x => x.id === t);
+    return h && h.on ? h.t : 1;
+  }
+  function sortBy(list, isOn, nameOf, idOf) {
     return list.slice().sort((a, b) => {
-      const fa = isOn(a), fb = isOn(b);
-      if (fa !== fb) return fa ? -1 : 1;
+      if (ui.sort === "recent" && idOf) {
+        const ta = foundAt(idOf(a)), tb = foundAt(idOf(b));
+        if (ta !== tb) return tb - ta;
+      } else if (ui.sort !== "az") {
+        const fa = isOn(a), fb = isOn(b);
+        if (fa !== fb) return fa ? -1 : 1;
+      }
       const na = nameOf(a), nb = nameOf(b);
       const ua = na === "???", ub = nb === "???";
       if (ua !== ub) return ua ? 1 : -1;
       return collator.compare(na, nb);
     });
   }
-  const sortEntries = list => sortBy(list, e => isFound(e.id), label);
-  const sortCards   = list => sortBy(list, cardFound, c => c.name);
+  const sortEntries = list => sortBy(list, e => isFound(e.id), label, e => e.id);
+  const sortCards   = list => sortBy(list, cardFound, c => c.name, c => c.entry.id);
 
   const passFilter = on => ui.filter === "all" || (ui.filter === "missing" ? !on : on);
 
@@ -306,11 +327,13 @@
     return [];
   }
   let imgIndex = 0;          // which image the open page is showing
+  let curImgs = [];
   function previewHTML(imgs, fallback) {
+    curImgs = imgs;
     if (!imgs.length) return fallback;
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
-    return `<img src="${esc(im.src)}" alt="" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
+    return `<img src="${esc(im.src)}" alt="" class="zoomable" title="Click to enlarge" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
            (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "");
   }
   function arrowsHTML(imgs) {
@@ -387,9 +410,22 @@
   /* =====================================================================
      MAIN RENDER
      ===================================================================== */
+  const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : ui.tab === "documents" ? ui.docs : ""}`;
+  let keeping = false;
   function render() {
+    renderInner();
+    ui.detail = detail && !viewOnly ? detail : null; persistUI();
+    renderCmpBar();
+    if (!keeping) {
+      const vk = viewKey(), sc = screen.querySelector(SCROLLERS);
+      if (sc && vk && ui.scroll[vk]) sc.scrollTop = ui.scroll[vk];
+    }
+  }
+  function renderInner() {
     screen.classList.toggle("show-locked-names", !!settings.lockedNames);
+    screen.classList.toggle("compact", !!ui.compact);
     syncToolbar(); renderBanner();
+    if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
       let e = byId.get(detail.id);
       if (e.isCard) e = e.card.members[0];    // a group card opens on its first variant
@@ -453,21 +489,68 @@
     return `<div class="tier-head${allFound ? " complete" : ""}"><button class="tier-btn" data-tier="${key}" title="${allFound ? "Lock" : "Unlock"} every weapon in this tier">TIER ${tier}<span class="tier-hint">${allFound ? "click to lock all" : "click to unlock all"}</span></button><small>${f}/${t}</small>${pbar(f, t)}</div>`;
   }
 
+  /* ---------- weapon stats as numbers ---------- */
+  const NUM_STATS = ["STRENGTH", "AIM TIME", "SWITCH TIME", "RPM", "ALERT RADIUS", "RELOAD MODIFIER", "MAX SPREAD", "MINIMUM SPREAD", "SPREAD INCREMENT", "SPREAD DECREASE", "EQUIP TIME", "WEIGHT"];
+  const HIGHER_BETTER = new Set(["STRENGTH", "RPM", "SPREAD DECREASE"]);
+  const statNum = (e, k) => {
+    const v = e.stats && e.stats[k]; if (v == null) return null;
+    const m = String(v).match(/^\s*([\d.]+)\s*\/\s*([\d.]+)/);          // "1.5/0.1s" → amount per second
+    if (m) return parseFloat(m[1]) / parseFloat(m[2]);
+    const n = parseFloat(String(v)); return isNaN(n) ? null : n;
+  };
+  const calibersOf = e => String((e.stats && e.stats["CALIBER TYPE"]) || "").split("|").map(x => x.trim()).filter(Boolean);
+  const allTools = () => entries.filter(e => e.section === "tools");
+
+  function statBarHTML(cat) {
+    const cals = [...new Set(cat.items.flatMap(calibersOf))].sort(collator.compare);
+    const hasStats = cat.items.some(e => e.stats);
+    if (!hasStats) return "";
+    return `<div class="statbar">
+      <label>SORT BY <select data-tsort>${["", ...NUM_STATS].map(k => `<option value="${k}"${ui.tsort === k ? " selected" : ""}>${k ? k + (HIGHER_BETTER.has(k) ? " (high first)" : " (low first)") : "TIER (default)"}</option>`).join("")}</select></label>
+      <label>CALIBER <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+      ${ui.tsort || ui.cal ? '<button class="mini-btn" data-tclear>RESET</button>' : ""}
+    </div>`;
+  }
+
+  function renderCaliberIndex() {
+    const map = new Map();
+    allTools().forEach(e => calibersOf(e).forEach(c => { if (!map.has(c)) map.set(c, []); map.get(c).push(e); }));
+    const keys = [...map.keys()].sort(collator.compare);
+    return `<p class="cat-note">Every caliber, and the weapons that fire it. Built from the weapon stats, so it fills in as more weapons get stats.</p>` +
+      (keys.map(c => {
+        const list = sortEntries(map.get(c)).filter(e => passFilter(isFound(e.id)));
+        const [f, t] = countOf(map.get(c));
+        return `<div class="tier-head"><span>${esc(c)}</span><small>${f}/${t}</small>${pbar(f, t)}</div><div class="list">${list.map(e => resultHTML(e, `${e.group} · TIER ${e.tier}`)).join("") || '<p class="cat-note">None match the filter.</p>'}</div>`;
+      }).join("") || '<div class="empty-cat"><b>NO CALIBERS YET</b>Add CALIBER TYPE to weapon stats in data.js.</div>');
+  }
+
   function renderTools() {
     const cats = PDA_DATA.tools;
     if (ui.cat >= cats.length) ui.cat = 0;
+    if (ui.cat === -1) {
+      screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catButtons(cats)}</div><div class="grid-wrap" id="grid">${renderCaliberIndex()}</div></div>`;
+      return;
+    }
     const cat = cats[ui.cat];
-    const catBtns = cats.map((c, i) => {
-      const [f, t] = countOf(c.items);
-      const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
-      return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
-    }).join("");
+    const catBtns = catButtons(cats);
 
     let body = "";
     const tiers = Object.keys(cat.tiers).sort((a, b) => a - b);
-    if (!tiers.length) {
+    if (tiers.length && (ui.tsort || ui.cal)) {
+      // stat sort / caliber filter: one flat list
+      let list = cat.items.filter(e => !e.unknown && passFilter(isFound(e.id)));
+      if (ui.cal) list = list.filter(e => calibersOf(e).includes(ui.cal));
+      if (ui.tsort) {
+        const dir = HIGHER_BETTER.has(ui.tsort) ? -1 : 1;
+        list.sort((a, b) => { const x = statNum(a, ui.tsort), y = statNum(b, ui.tsort);
+          if (x == null && y == null) return collator.compare(a.name, b.name); if (x == null) return 1; if (y == null) return -1;
+          return (x - y) * dir || collator.compare(a.name, b.name); });
+      } else list = sortEntries(list);
+      body = statBarHTML(cat) + `<div class="list">${list.map(e => resultHTML(e, ui.tsort ? `${ui.tsort}: ${(e.stats && e.stats[ui.tsort]) || "—"}` : `TIER ${e.tier} · ${(e.stats && e.stats["CALIBER TYPE"]) || ""}`)).join("") || '<p class="cat-note">Nothing matches.</p>'}</div>`;
+    } else if (!tiers.length) {
       body = `<div class="empty-cat"><b>NO ENTRIES ON FILE</b>Add this category's weapons to data.js to track them.</div>`;
     } else {
+      body += statBarHTML(cat);
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
       tiers.forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
@@ -480,6 +563,14 @@
       });
     }
     screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
+  }
+
+  function catButtons(cats) {
+    return cats.map((c, i) => {
+      const [f, t] = countOf(c.items);
+      const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
+      return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
+    }).join("") + `<button class="cat calcat" data-cat="-1" aria-selected="${ui.cat === -1}" style="--cf:27px">CALIBERS</button>`;
   }
 
   /* the "unlock this whole tab" bar under Biography / Documents sub-tabs */
@@ -525,6 +616,8 @@
     "WEIGHT": "#2a2a2a", "TIER": "#fff89a"
   };
   const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
+  const linkBtn = id => `<button class="hbtn" data-link="${esc(id)}" title="Copy a link straight to this page">LINK</button>`;
+  const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Suggest a fix or missing info for this entry">FIX?</button>`;
   const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
   /* bottom box with two tabs: the game's text, and your own notes */
   function bottomBox(first, textHTML, noteId) {
@@ -554,7 +647,7 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright"><button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
@@ -562,6 +655,54 @@
         <div class="dbox comment">${bottomBox("Comment", e.comment ? paras(e.comment) : '<p class="none">No comment.</p>', e.id)}</div>
       </div>`;
   }
+
+  /* =====================================================================
+     WEAPON COMPARISON
+     ===================================================================== */
+  function renderCompare() {
+    const list = ui.cmp.map(id => byId.get(id)).filter(Boolean);
+    if (!list.length) { detail = null; return render(); }
+    const keys = [];
+    list.forEach(e => Object.keys(e.stats || {}).forEach(k => { if (!keys.includes(k)) keys.push(k); }));
+    keys.push("TIER");
+    const val = (e, k) => k === "TIER" ? `TIER ${e.tier}` : ((e.stats || {})[k] ?? "—");
+    const rows = keys.map(k => {
+      let best = null, worst = null;
+      if (NUM_STATS.includes(k) && list.length > 1) {
+        const nums = list.map(e => statNum(e, k)).filter(n => n != null);
+        if (nums.length > 1 && Math.max(...nums) !== Math.min(...nums)) {
+          const hi = HIGHER_BETTER.has(k);
+          best = hi ? Math.max(...nums) : Math.min(...nums);
+          worst = hi ? Math.min(...nums) : Math.max(...nums);
+        }
+      }
+      return `<tr><th style="color:${TOOL_STAT_COLORS[k] || "#ddd"}"${(TIPS.weapon || {})[k] ? ` data-tip="${esc(TIPS.weapon[k])}"` : ""}>${esc(k)}</th>${list.map(e => {
+        const n = statNum(e, k);
+        const cls = best != null && n === best ? "best" : worst != null && n === worst ? "worst" : "";
+        return `<td class="${cls}">${esc(val(e, k))}</td>`;
+      }).join("")}</tr>`;
+    }).join("");
+    screen.innerHTML = `
+      <div class="dbox cmpwrap"><div class="dhead">Weapon Comparison<span class="hright"><button class="hbtn" data-cmpclear>CLEAR ALL</button><button class="return" id="ret">RETURN</button></span></div>
+        <div class="cmpscroll"><table class="cmp">
+          <thead><tr><th></th>${list.map(e => `<th><button class="linkish" data-tool="${esc(e.id)}">${esc(label(e).toUpperCase())}</button> <button class="xbtn" data-cmprm="${esc(e.id)}" title="Remove">×</button><div class="cmpstat ${isFound(e.id) ? "status-found" : "status-missing"}">${isFound(e.id) ? "FOUND" : "MISSING"}</div></th>`).join("")}</tr></thead>
+          <tbody>${rows}</tbody></table>
+          <p class="cat-note">Green = best of the group, red = worst. Add up to 3 weapons with COMPARE + on their pages.</p>
+        </div></div>`;
+  }
+  const cmpBar = document.createElement("div"); cmpBar.className = "cmpbar"; document.body.appendChild(cmpBar);
+  function renderCmpBar() {
+    if (!ui.cmp.length || (detail && detail.type === "compare")) { cmpBar.classList.remove("on"); return; }
+    cmpBar.innerHTML = `<span>COMPARING ${ui.cmp.length}/3: ${ui.cmp.map(id => esc((byId.get(id) || {}).name || "?")).join(", ")}</span><button data-cb="view">VIEW</button><button data-cb="clear">×</button>`;
+    cmpBar.classList.add("on");
+  }
+  cmpBar.addEventListener("click", e => {
+    const b = e.target.closest("[data-cb]"); if (!b) return;
+    play("click");
+    if (b.dataset.cb === "view") { if (query) clearSearch(false); detail = { type: "compare", id: "" }; }
+    else { ui.cmp = []; persistUI(); }
+    render();
+  });
 
   /* people whose loadout mentions this weapon name */
   const loadName = s => slug(String(s).replace(/\s*\(Random\)\s*$/i, ""));
@@ -645,7 +786,7 @@
           <div class="preview">${got || settings.missingPics ? previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`) : `<span class="ph big">${I.question}</span>`}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
-            <span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${linkBtn(card.entry.id)}${suggestBtn(card.entry.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
@@ -670,7 +811,7 @@
           <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
-            <span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">
@@ -837,6 +978,16 @@
           <div class="row bar"><span class="fill" style="width:${pct}%"></span><span><b style="color:#c8d0ff">DATABANKS FOUND:</b> ${f} / ${t}</span></div>
         </div>
         <div class="rows wide">
+          <h3>SAVE PROFILES //</h3>
+          <div class="row profrow">
+            <select id="profSel">${PROF.list.map(n => `<option${n === PROF.active ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>
+            <input id="profNew" maxlength="24" placeholder="new profile name">
+            <button class="mini-btn" id="profAdd">CREATE</button>
+            ${PROF.active !== "Main" ? '<button class="mini-btn danger" id="profDel">DELETE THIS PROFILE</button>' : ""}
+            <span class="dim">Separate checklists, e.g. for an alt account. Each has its own marks, notes and favourites.</span>
+          </div>
+        </div>
+        <div class="rows wide">
           <h3>DATABANK PROGRESS //</h3>
           ${rows}
         </div>
@@ -849,6 +1000,19 @@
           ${recentRows()}
         </div>
       </div>`;
+    $("#profSel").onchange = ev => { PROF.active = ev.target.value; save(KEY_PROF, PROF); ui.detail = null; persistUI(); location.reload(); };
+    $("#profAdd").onclick = () => {
+      const n = $("#profNew").value.trim().replace(/[@|]/g, "");
+      if (!n) { toast("Type a name for the new profile."); return; }
+      if (PROF.list.includes(n)) { toast("A profile with that name already exists."); return; }
+      PROF.list.push(n); PROF.active = n; save(KEY_PROF, PROF); location.reload();
+    };
+    const del = $("#profDel");
+    if (del) del.onclick = () => {
+      if (!del.dataset.armed) { del.dataset.armed = 1; del.textContent = "CLICK AGAIN TO DELETE"; play("warn"); return; }
+      ["pda-found-v1", "pda-user-v1", "pda-fav-v1", "pda-notes-v1", "pda-log-v1", "pda-friend-v1", "pda-since-backup-v1"].forEach(k => { try { localStorage.removeItem(`${k}@${PROF.active}`); } catch { /* ignore */ } });
+      PROF.list = PROF.list.filter(x => x !== PROF.active); PROF.active = "Main"; save(KEY_PROF, PROF); location.reload();
+    };
     $("#uname").addEventListener("input", ev => {
       user = ev.target.value; save(KEY_USER, user);
       $(".uname").textContent = user || "player";
@@ -983,6 +1147,26 @@
     </div>`;
   }
 
+  function openIssue(title, body) {
+    const url = `${REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body + "\n\n_Sent from the PDA tracker._")}`;
+    window.open(url, "_blank", "noopener");
+  }
+  function openSuggest(e) {
+    if (!e) return;
+    const where = contextOf(e);
+    openIssue(`[Fix] ${e.name}`, `**Entry:** ${e.name}\n**Where:** ${where}\n\n**What's wrong or missing?** (description, stats, picture, name...)\n\n`);
+  }
+  function contribHTML() {
+    const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
+    return `<div class="contrib">
+      <p>Know a description, a stat, a missing weapon or a better picture? Send it here. It opens a pre-filled page on GitHub (you'll need a free GitHub account); the site owner reviews it and adds it.</p>
+      <div class="btnrow"><select name="ckind"><option>Description</option><option>Stats</option><option>Picture</option><option>Missing entry</option><option>Wrong info</option><option>Site bug</option><option>Idea</option></select>
+      <input name="centry" list="centries" placeholder="which entry? (optional)"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></div>
+      <textarea name="ctext" rows="4" placeholder="Paste the text, the stats, or describe the problem. For pictures, you can drag an image into the GitHub page after it opens."></textarea>
+      <div class="btnrow"><button class="pbtn" data-contrib>OPEN ON GITHUB</button></div>
+    </div>`;
+  }
+
   function renderManual() {
     screen.innerHTML = `
       <div class="manual">
@@ -1003,6 +1187,14 @@
         <p>Press the &#9829; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
         <h4>Sharing and comparing</h4>
         <p>CLOUD gives you a link anyone can open to see your PDA (read-only). Paste a friend's link there to see what they have that you don't.</p>
+        <h4>Comparing weapons</h4>
+        <p>Press COMPARE + on up to 3 weapon pages, then VIEW on the bar in the corner. The best value in each row is green and the worst is red.</p>
+        <h4>Sorting by stats and calibers</h4>
+        <p>In TOOLS, use SORT BY and CALIBER above the weapons. The blue CALIBERS button at the bottom of the categories lists every caliber and what fires it.</p>
+        <h4>Links, pictures and profiles</h4>
+        <p>LINK on any page copies a link straight to it. Click a picture to see it full size. SAVE PROFILES on the Profile tab keep separate checklists (for an alt account, say).</p>
+        <h4>Install it like an app</h4>
+        <p>On a phone, use your browser's "Add to Home Screen". On a computer, look for the install icon in the address bar. It then works offline too.</p>
         <h4>Will I lose my progress?</h4>
         <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then. The site reminds you after 25 new marks.</p>
         <h3>-=-=- QUICK KEYS -=-=-</h3>
@@ -1014,6 +1206,8 @@
         <div class="k">/ - SEARCH</div>
         <div class="k">ESC - BACK / CLEAR SEARCH</div>
         <div class="k">&#8592; &#8594; ON A PAGE - NEXT / PREVIOUS PICTURE</div>
+        <h3>-=-=- CONTRIBUTE -=-=-</h3>
+        ${contribHTML()}
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
       </div>`;
@@ -1034,6 +1228,7 @@
         <h3>User Preference</h3>
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
+        ${sw("confirmUnmark", "Ask before unmarking something?")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Data</h3>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
@@ -1058,15 +1253,28 @@
   /* =====================================================================
      CLICKS
      ===================================================================== */
+  const SCROLLERS = "#grid, .cards, .results, .erows, .manual, .settings, .profile, .cloud-body";
   function keepScroll(fn) {
-    const sc = screen.querySelector("#grid, .cards, .results, .erows");
+    const sc = screen.querySelector(SCROLLERS);
     const y = sc ? sc.scrollTop : 0;
     const st = screen.querySelector(".subtabs"); const sx = st ? st.scrollLeft : 0;
-    fn();
+    keeping = true; try { fn(); } finally { keeping = false; }
     const st2 = screen.querySelector(".subtabs"); if (st2) st2.scrollLeft = sx;
-    const s2 = screen.querySelector("#grid, .cards, .results, .erows");
+    const s2 = screen.querySelector(SCROLLERS);
     if (s2) s2.scrollTop = y;
   }
+  // remember scroll position per page
+  let scrollTimer = 0;
+  screen.addEventListener("scroll", ev => {
+    const t = ev.target; if (!t.matches || !t.matches(SCROLLERS)) return;
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      const vk = viewKey(); if (!vk) return;
+      if (t.scrollTop > 0) ui.scroll[vk] = Math.round(t.scrollTop); else delete ui.scroll[vk];
+      const ks = Object.keys(ui.scroll); if (ks.length > 40) delete ui.scroll[ks[0]];
+      persistUI();
+    }, 200);
+  }, true);
   function flash(id) {
     const el = screen.querySelector(`[data-entry="${CSS.escape(id)}"]`);
     if (el) { el.classList.add("flash"); el.scrollIntoView({ block: "nearest" }); }
@@ -1075,6 +1283,15 @@
 
   function handleStar(star, shift) {
     const id = star.dataset.star;
+    if (settings.confirmUnmark && !shift && isFound(id) && !viewOnly) {
+      const nm = (byId.get(trackOf(id)) || byId.get(id) || {}).name || "this";
+      play("warn");
+      toast(`Unmark ${nm}?`, { action: () => doStar(id, false), actionLabel: "UNMARK", ms: 6000 });
+      return;
+    }
+    doStar(id, shift);
+  }
+  function doStar(id, shift) {
     // shift-click: give everything between the last star and this one the same state
     if (shift && lastStar && !detail) {
       const order = [...screen.querySelectorAll("[data-entry]")].map(el => trackOf(el.dataset.entry));
@@ -1102,6 +1319,36 @@
     // the star is checked first, so pressing it never also opens the entry under it
     const star = t.closest("[data-star]");
     if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
+
+    if (t.closest(".zoomable")) { openLightbox(); return; }
+    const cmpb = t.closest("[data-cmp]");
+    if (cmpb) {
+      const id = cmpb.dataset.cmp, i = ui.cmp.indexOf(id);
+      if (i >= 0) ui.cmp.splice(i, 1);
+      else { if (ui.cmp.length >= 3) { toast("You can compare up to 3 weapons. Remove one first."); play("warn"); return; } ui.cmp.push(id); }
+      play("click"); persistUI(); render(); return;
+    }
+    const rm = t.closest("[data-cmprm]");
+    if (rm) { ui.cmp = ui.cmp.filter(x => x !== rm.dataset.cmprm); play("back"); persistUI(); render(); return; }
+    if (t.closest("[data-cmpclear]")) { ui.cmp = []; detail = null; play("back"); persistUI(); render(); return; }
+    const lk = t.closest("[data-link]");
+    if (lk) {
+      const url = `${location.origin}${location.pathname}#e=${h5(lk.dataset.link)}`;
+      play("click");
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this page copied.")).catch(() => toast(url, { ms: 12000 }));
+      return;
+    }
+    const sg = t.closest("[data-suggest]");
+    if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest)); return; }
+    if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; play("back"); persistUI(); render(); return; }
+    const ct = t.closest("[data-contrib]");
+    if (ct) {
+      const f = ct.closest(".contrib");
+      const kind = f.querySelector("[name=ckind]").value, entry = f.querySelector("[name=centry]").value.trim(), text = f.querySelector("[name=ctext]").value.trim();
+      if (!text) { toast("Write what should be added or fixed first."); play("warn"); return; }
+      openIssue(`[${kind}] ${entry || "General"}`, `**What:** ${kind}\n**Entry:** ${entry || "-"}\n\n${text}`);
+      return;
+    }
 
     const fav = t.closest("[data-fav]");
     if (fav) {
@@ -1150,6 +1397,13 @@
       play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return;
     }
     if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
+  });
+  screen.addEventListener("change", ev => {
+    const sel = ev.target;
+    if (sel.matches("[data-tsort]")) ui.tsort = sel.value;
+    else if (sel.matches("[data-cal]")) ui.cal = sel.value;
+    else return;
+    play("click"); persistUI(); render();
   });
   // notes save as you type
   screen.addEventListener("input", ev => {
@@ -1227,16 +1481,43 @@
      TOOLBAR (grid/list + all/missing/found), TOASTS, SHARED-LINK BANNER
      ===================================================================== */
   function syncToolbar() {
+    const ss = $("#sortSel"); if (ss) ss.value = ui.sort;
+    document.querySelectorAll("[data-compact]").forEach(b => b.setAttribute("aria-pressed", !!ui.compact));
     document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", ui.view === b.dataset.view));
     document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", ui.filter === b.dataset.filter));
   }
   document.querySelector(".viewtools").addEventListener("click", e => {
     const v = e.target.closest("[data-view]"), f = e.target.closest("[data-filter]");
-    if (v) { ui.view = v.dataset.view; }
+    if (e.target.closest("[data-compact]")) { ui.compact = !ui.compact; }
+    else if (v) { ui.view = v.dataset.view; }
     else if (f) { ui.filter = f.dataset.filter; }
     else return;
     play("click"); persistUI(); detail = null; render();
   });
+
+  $("#sortSel").addEventListener("change", e => { ui.sort = e.target.value; play("click"); persistUI(); keepScroll(render); });
+
+  /* ---------- picture lightbox ---------- */
+  const lb = document.createElement("div"); lb.className = "lightbox"; lb.hidden = true; document.body.appendChild(lb);
+  function drawLightbox() {
+    const n = curImgs.length; if (!n) return closeLightbox();
+    const i = ((imgIndex % n) + n) % n, im = curImgs[i];
+    lb.innerHTML = `<figure><img src="${esc(im.src)}" alt="">${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ""}</figure>
+      ${n > 1 ? `<button class="lbnav prev" data-lb="-1">&#9664;</button><button class="lbnav next" data-lb="1">&#9654;</button><span class="lbcount">${i + 1} / ${n}</span>` : ""}
+      <button class="lbclose" data-lb="x">×</button>`;
+  }
+  function openLightbox() { if (!curImgs.length) return; play("open"); drawLightbox(); lb.hidden = false; }
+  function closeLightbox() { lb.hidden = true; lb.innerHTML = ""; }
+  lb.addEventListener("click", e => {
+    const b = e.target.closest("[data-lb]");
+    if (b && b.dataset.lb !== "x") { imgIndex += +b.dataset.lb; play("click"); render(); drawLightbox(); return; }
+    if (b || !e.target.closest("figure img")) { play("back"); closeLightbox(); }
+  });
+  document.addEventListener("keydown", e => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") { e.stopImmediatePropagation(); closeLightbox(); }
+    else if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.stopImmediatePropagation(); e.preventDefault(); imgIndex += e.key === "ArrowRight" ? 1 : -1; render(); drawLightbox(); }
+  }, true);
 
   const toastEl = document.createElement("div"); toastEl.className = "toast"; toastEl.setAttribute("role", "status");
   const nagEl = document.createElement("div"); nagEl.className = "toast nag"; nagEl.setAttribute("role", "status");
@@ -1324,6 +1605,17 @@
 
   /* ---------- go ---------- */
   if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
+  else if (/^#e=/.test(location.hash)) {
+    const id = byHash.get(location.hash.slice(3, 8));
+    const e = id && byId.get(id);
+    if (e) {
+      detail = { type: { tools: "tool", bio: "person", docs: "doc" }[e.section], id };
+      ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section];
+      if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else ui.docs = e.groupIndex;
+    }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
+  } else if (ui.detail && (ui.detail.type === "compare" || byId.has(ui.detail.id))) detail = ui.detail;   // reopen where you left off
+  if (PROF.active !== "Main") setTimeout(() => toast(`Using save profile "${PROF.active}". Switch it on the Profile tab.`), 300);
   if (newIds.size) setTimeout(() => toast(`${newIds.size} new entr${newIds.size > 1 ? "ies were" : "y was"} added since your last visit.`, {
     action: () => { searchBox.value = ":new"; query = ":new"; clearBtn.hidden = false; renderTabs(); render(); }, actionLabel: "SHOW THEM", ms: 10000 }), 400);
   renderTabs();
