@@ -20,6 +20,7 @@
    ===================================================================== */
 
 const PDA_FORM = {
+  pingUserId: "1025830147103936624",   // this Discord user gets pinged on every submission ("" = no ping)
   discordWebhook: "",
   web3formsKey: "c5d6127e-46d7-4a0f-9c6c-8a5959648616",
   subject: "New PDA tracker submission"
