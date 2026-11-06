@@ -240,6 +240,7 @@
     cloud:   '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 7 18z"/><path d="M12 10v6m-2.5-2.5L12 16l2.5-2.5"/></svg>',
     manual:  '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#111"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#ddd" stroke-width="2.6"/></svg>',
     settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
+    community: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M3 5h18v11H9l-5 4v-4H3z"/><path d="M8 10.5h8" stroke-linecap="round"/></svg>',
     missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
     heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
@@ -363,8 +364,8 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing"];
-  const TAB_LABEL = { missing: "WHAT'S LEFT" };
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "community"];
+  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT" };
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(t =>
       `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`
@@ -438,7 +439,7 @@
     detail = null;
     if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, community: renderCommunity })[ui.tab]();
   }
 
   /* =====================================================================
@@ -625,7 +626,7 @@
   };
   const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
   const linkBtn = id => `<button class="hbtn" data-link="${esc(id)}" title="Copy a link straight to this page">LINK</button>`;
-  const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Suggest a fix or missing info for this entry">FIX?</button>`;
+  const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Send a fix or missing info for this entry (no account needed)">FIX?</button>`;
   const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
   /* bottom box with two tabs: the game's text, and your own notes */
   function bottomBox(first, textHTML, noteId) {
@@ -1234,23 +1235,76 @@
   }
   function openSuggest(e) {
     if (!e) return;
-    const where = contextOf(e);
-    openIssue(`[Fix] ${e.name}`, `**Entry:** ${e.name}\n**Where:** ${where}\n\n**What's wrong or missing?** (description, stats, picture, name...)\n\n`);
+    draft = Object.assign({}, draft, { entry: e.name, kind: "Wrong info", text: draft.entry === e.name ? draft.text : "" });
+    formMsg = null; detail = null; ui.tab = "community"; persistUI(); renderTabs(); render();
+    const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus();
   }
   function changelogHTML() {
     const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
     if (!log.length) return "";
     return `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>`;
   }
+  /* =====================================================================
+     SUBMIT tab: contribution form + changelog
+     ===================================================================== */
+  const FORM = (typeof PDA_FORM === "object" && PDA_FORM) || {};
+  const formLive = () => !!(FORM.web3formsKey && FORM.web3formsKey.trim());
+  let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
+  let formMsg = null;   // { ok, text }
   function contribHTML() {
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
-    return `<div class="contrib">
-      <p>Know a description, a stat, a missing weapon or a better picture? Send it here. It opens a pre-filled page on GitHub (you'll need a free GitHub account); the site owner reviews it and adds it.</p>
-      <div class="btnrow"><select name="ckind"><option>Description</option><option>Stats</option><option>Picture</option><option>Missing entry</option><option>Wrong info</option><option>Site bug</option><option>Idea</option></select>
-      <input name="centry" list="centries" placeholder="which entry? (optional)"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></div>
-      <textarea name="ctext" rows="4" placeholder="Paste the text, the stats, or describe the problem. For pictures, you can drag an image into the GitHub page after it opens."></textarea>
-      <div class="btnrow"><button class="pbtn" data-contrib>OPEN ON GITHUB</button></div>
+    const kinds = ["Description", "Stats", "Picture", "Missing entry", "Wrong info", "Site bug", "Idea"];
+    return `<form class="contrib" autocomplete="off" novalidate>
+      <p>Know a description, some stats, a missing weapon, or have a better picture? Send it here${formLive() ? " — no account needed. It goes straight to the site owner, who reviews it and adds it." : ". (This currently opens GitHub, which needs a free account.)"}</p>
+      <div class="frow"><label>WHAT IS IT?<select name="ckind">${kinds.map(k => `<option${k === draft.kind ? " selected" : ""}>${k}</option>`).join("")}</select></label>
+        <label class="grow">WHICH ENTRY? <small>(optional)</small><input name="centry" list="centries" value="${esc(draft.entry)}" placeholder="start typing a name"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label></div>
+      <label>DETAILS<textarea name="ctext" rows="6" placeholder="Paste the description or stats, or describe what's wrong.">${esc(draft.text)}</textarea></label>
+      <div class="frow"><label class="grow">PICTURE OR VIDEO LINK <small>(optional: Imgur, Discord, YouTube, Google Drive…)</small><input name="clink" type="url" value="${esc(draft.link)}" placeholder="https://"></label>
+        <label>YOUR NAME <small>(optional, for credit)</small><input name="cname" maxlength="40" value="${esc(draft.name || user || "")}" placeholder="Roblox name"></label></div>
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="btnrow"><button class="pbtn" type="submit" data-contrib>${formLive() ? "SEND" : "OPEN ON GITHUB"}</button>
+        ${formMsg ? `<span class="fmsg ${formMsg.ok ? "ok" : "bad"}">${esc(formMsg.text)}</span>` : ""}</div>
+    </form>`;
+  }
+  function renderCommunity() {
+    const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
+    screen.innerHTML = `<div class="manual community">
+      <h3>-=-=- SEND IN INFO -=-=-</h3>
+      ${contribHTML()}
+      ${log.length ? `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
     </div>`;
+  }
+  function readForm(f) {
+    draft = { kind: f.ckind.value, entry: f.centry.value.trim(), text: f.ctext.value.trim(), link: f.clink.value.trim(), name: f.cname.value.trim() };
+    return draft;
+  }
+  let sending = false;
+  async function submitForm(f) {
+    const d = readForm(f);
+    if (!d.text && !d.link) { formMsg = { ok: false, text: "Write some details or add a link first." }; play("warn"); return keepScroll(render); }
+    if (!formLive()) {
+      openIssue(`[${d.kind}] ${d.entry || "General"}`, `**What:** ${d.kind}\n**Entry:** ${d.entry || "-"}\n${d.link ? `**Link:** ${d.link}\n` : ""}${d.name ? `**From:** ${d.name}\n` : ""}\n${d.text}`);
+      return;
+    }
+    if (sending) return;
+    if (f.botcheck.checked) return;               // spam bot filled the hidden box
+    sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ access_key: FORM.web3formsKey.trim(), subject: `${FORM.subject || "PDA submission"}: ${d.kind}${d.entry ? " — " + d.entry : ""}`,
+          from_name: d.name || "PDA tracker visitor", type: d.kind, entry: d.entry || "-", details: d.text || "-", link: d.link || "-", botcheck: false })
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || j.success === false) throw new Error(j.message || res.status);
+      formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
+      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name };
+      play("confirm");
+    } catch (err) {
+      formMsg = { ok: false, text: "Couldn't send right now. Check your connection and try again." };
+      play("warn");
+    }
+    sending = false; keepScroll(render);
   }
 
   function renderManual() {
@@ -1292,9 +1346,8 @@
         <div class="k">/ - SEARCH</div>
         <div class="k">ESC - BACK / CLEAR SEARCH</div>
         <div class="k">&#8592; &#8594; ON A PAGE - NEXT / PREVIOUS PICTURE</div>
-        ${changelogHTML()}
-        <h3>-=-=- CONTRIBUTE -=-=-</h3>
-        ${contribHTML()}
+        <h4>Sending in info</h4>
+        <p>Use the SUBMIT tab (or FIX? on any page) to send descriptions, stats, pictures or bug reports. No account needed. The changelog is on that tab too.</p>
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
       </div>`;
@@ -1433,13 +1486,7 @@
     if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest)); return; }
     if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }
     const ct = t.closest("[data-contrib]");
-    if (ct) {
-      const f = ct.closest(".contrib");
-      const kind = f.querySelector("[name=ckind]").value, entry = f.querySelector("[name=centry]").value.trim(), text = f.querySelector("[name=ctext]").value.trim();
-      if (!text) { toast("Write what should be added or fixed first."); play("warn"); return; }
-      openIssue(`[${kind}] ${entry || "General"}`, `**What:** ${kind}\n**Entry:** ${entry || "-"}\n\n${text}`);
-      return;
-    }
+    if (ct) { ev.preventDefault(); submitForm(ct.closest("form")); return; }
 
     const fav = t.closest("[data-fav]");
     if (fav) {
@@ -1499,6 +1546,9 @@
     else return;
     play("click"); persistUI(); render();
   });
+  screen.addEventListener("submit", ev => { ev.preventDefault(); submitForm(ev.target); });
+  // keep the form's text if you switch tabs
+  screen.addEventListener("input", ev => { const f = ev.target.closest && ev.target.closest("form.contrib"); if (f) readForm(f); });
   // notes save as you type
   screen.addEventListener("input", ev => {
     const ta = ev.target.closest && ev.target.closest("[data-note]");
