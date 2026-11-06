@@ -11,6 +11,10 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-06", items: [
+    "People pages: MARK THEIR GEAR FOUND marks their weapon and magazine (you pick which random weapon you got)",
+    "Gun pages list their magazines, magazine pages list their guns",
+    "HELP WANTED list in SUBMIT: everything still missing info, with a SEND button",
+    "Better layout on phones",
     "Quick-mark: type a name in search and press ENTER to mark it found",
     "Paste a list of names in CLOUD to mark them all found",
     "Profile shows everything you found this run, with COPY LIST and NEW RUN",

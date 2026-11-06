@@ -715,6 +715,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .statbar select, .contrib select, .profrow select { height: 26px; margin-left: 6px; background: #111; color: #eee; border: 1px solid #555; border-radius: 4px; font: 700 12px var(--font); }
 .mini-btn { height: 26px; padding: 0 10px; border: 1px solid #888; border-radius: 4px; background: var(--bar); color: #111; font: 800 11px var(--font); }
 .mini-btn.danger { background: linear-gradient(#e24a4a, #a51414); color: #fff; border-color: #ff8080; }
+.mini-btn.go { background: linear-gradient(#36c436, #1c8f1c); color: #fff; border-color: #0a5a0a; }
+.mini-btn:disabled { opacity: .6; cursor: default; }
 .cat.calcat { background: repeating-linear-gradient(180deg, #7ad8ff 0 3px, #5ac0ea 3px 6px); border-color: #3a8ab0; text-shadow: -2px -2px 0 #1a4a6a, 2px -2px 0 #1a4a6a, -2px 2px 0 #1a4a6a, 2px 2px 0 #1a4a6a; }
 
 /* header buttons on pages */
@@ -869,3 +871,38 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 
 .bulkin { width: 100%; box-sizing: border-box; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 8px; font: inherit; font-size: 14px; resize: vertical; }
 .runlist { padding: 4px 0 8px; font-size: 13px; line-height: 1.6; }
+
+.lmark { padding: 8px 12px 4px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 14px; }
+.lmark-h { font-weight: 800; color: #f3ee30; }
+.lmark label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.lmark-b { display: flex; gap: 6px; margin-top: 4px; }
+.lmark .dim { color: #999; font-size: 12px; }
+.egot { color: #6cff6c; font-weight: 800; }
+
+.ammonote { font-size: 12px; color: #888; font-style: italic; }
+
+.helpw { margin: 6px 0; border: 1px solid #333; border-radius: 6px; background: #151515; }
+.helpw summary { cursor: pointer; padding: 8px 10px; font-weight: 800; color: #f3ee30; }
+.helpw summary small { color: #aaa; margin-left: 6px; }
+.helplist { padding: 0 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+.helprow { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; font-size: 14px; }
+.helprow .linkish { text-align: left; }
+.helprow .dim { color: #999; font-size: 12px; }
+
+/* ---------- phone fixes ---------- */
+@media (max-width: 700px) {
+  .searchbar { flex-wrap: wrap; }
+  .searchbar #search { flex: 1 1 200px; min-width: 0; }
+  .viewtools { flex: 1 1 100%; flex-wrap: wrap; gap: 4px; }
+  .viewtools .vsep { display: none; }
+  .viewtools button[data-filter] { flex: 1 1 0; }
+  .viewtools button[data-hidedone] { white-space: nowrap; }
+  #sortSel { flex: 1 1 120px; }
+  .dhead { gap: 4px 6px; padding: 3px 6px; }
+  .hright { flex-wrap: wrap; justify-content: flex-end; gap: 4px 6px; min-width: 0; }
+  .flow { flex-wrap: wrap; }
+  .dbox, .edata, .pdetail, .detail { min-width: 0; max-width: 100%; }
+  .estar { right: 8px; }
+  .ename { height: auto; min-height: 26px; }
+  .stats h2 { font-size: 22px; overflow-wrap: anywhere; }
+}
