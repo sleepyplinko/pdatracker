@@ -23,13 +23,14 @@
   const KEY_SEEN  = "pda-seen-v1";
   const KEY_FRIEND= pk("pda-friend-v1");
   const KEY_SINCE = pk("pda-since-backup-v1");
+  const KEY_PROG  = pk("pda-progress-v1");      // { "2026-11-06": 42, ... } found count per day
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc",
-                                sort: "found", compact: false, tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
+                                sort: "found", compact: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
   if (!Array.isArray(ui.cmp)) ui.cmp = [];
   if (!ui.scroll || typeof ui.scroll !== "object") ui.scroll = {};
   if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
@@ -38,6 +39,11 @@
   let history_ = load(KEY_LOG, []);
   let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
   let sinceBackup = load(KEY_SINCE, 0);
+  let progress = load(KEY_PROG, {});
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  // this browser tab's session: what you had when you opened the site
+  let sessionStart = null;
+  try { sessionStart = JSON.parse(sessionStorage.getItem("pda-session-" + PROF.active)); } catch { /* ignore */ }
   let viewOnly = null;                        // { name, set } while looking at someone's share link
   const undoStack = [];
   let lastStar = null;                        // { id, on } for shift-click ranges
@@ -74,7 +80,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
+  const HOVERABLE = ".pg-hit, .hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -161,11 +167,7 @@
   const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
   const label     = e => e.unknown ? "???" : e.name;
 
-  /* NEW badges: anything not in the list saved on your last visit */
-  const allTracked = entries.map(e => e.id);
-  const seenPrev = load(KEY_SEEN, null);
-  const newIds = new Set(Array.isArray(seenPrev) ? allTracked.filter(id => !seenPrev.includes(id)) : []);
-  save(KEY_SEEN, allTracked);
+
 
   /* ---------- sorting: found A→Z first, then locked A→Z, ??? last ---------- */
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
@@ -210,6 +212,7 @@
     else history_.unshift({ bulk: what || "several entries", n: changed.length, on, t: now });
     history_ = history_.slice(0, 60); save(KEY_LOG, history_);
     sinceBackup += changed.length; save(KEY_SINCE, sinceBackup);
+    snapProgress();
     const nm = changed.length === 1 ? (byId.get(changed[0]) || {}).name : `${changed.length} entries`;
     toast(`${on ? "Marked" : "Unmarked"} ${nm}${on ? " as found" : ""}`, { undo: true });
     backupNag();
@@ -424,6 +427,7 @@
   function renderInner() {
     screen.classList.toggle("show-locked-names", !!settings.lockedNames);
     screen.classList.toggle("compact", !!ui.compact);
+    document.body.classList.toggle("crt", !!settings.crt);
     syncToolbar(); renderBanner();
     if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
@@ -444,7 +448,6 @@
   function badges(e) {
     const t = trackOf(e.id);
     const out = [];
-    if (newIds.has(t)) out.push('<b class="bnew" title="Added since your last visit">NEW</b>');
     if (friend && !viewOnly && friend.set[t] && !found[t]) out.push(`<b class="bfr" title="${esc(friend.name || "Your friend")} has this and you don't">${esc((friend.name || "F").charAt(0).toUpperCase())}✓</b>`);
     if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥</b>');
     return out.length ? `<span class="badges">${out.join("")}</span>` : "";
@@ -508,7 +511,9 @@
     return `<div class="statbar">
       <label>SORT BY <select data-tsort>${["", ...NUM_STATS].map(k => `<option value="${k}"${ui.tsort === k ? " selected" : ""}>${k ? k + (HIGHER_BETTER.has(k) ? " (high first)" : " (low first)") : "TIER (default)"}</option>`).join("")}</select></label>
       <label>CALIBER <select data-cal><option value="">ANY</option>${cals.map(c => `<option${ui.cal === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
-      ${ui.tsort || ui.cal ? '<button class="mini-btn" data-tclear>RESET</button>' : ""}
+      <label>TIER <select data-tiermin><option value="">ALL</option>${Object.keys(cat.tiers).sort((a, b) => a - b).map(t => `<option value="${t}"${String(ui.tierMin) === t ? " selected" : ""}>${t}+</option>`).join("")}</select></label>
+      ${ui.tsort ? `<label>${esc(ui.tsort)} FROM <input data-tmin type="number" step="any" value="${esc(ui.tmin)}" placeholder="min"> TO <input data-tmax type="number" step="any" value="${esc(ui.tmax)}" placeholder="max"></label>` : ""}
+      ${ui.tsort || ui.cal || ui.tierMin ? '<button class="mini-btn" data-tclear>RESET</button>' : ""}
     </div>`;
   }
 
@@ -540,6 +545,9 @@
       // stat sort / caliber filter: one flat list
       let list = cat.items.filter(e => !e.unknown && passFilter(isFound(e.id)));
       if (ui.cal) list = list.filter(e => calibersOf(e).includes(ui.cal));
+      if (ui.tierMin) list = list.filter(e => e.tier >= +ui.tierMin);
+      if (ui.tsort && (ui.tmin !== "" || ui.tmax !== "")) list = list.filter(e => { const n = statNum(e, ui.tsort); if (n == null) return false;
+        return (ui.tmin === "" || n >= +ui.tmin) && (ui.tmax === "" || n <= +ui.tmax); });
       if (ui.tsort) {
         const dir = HIGHER_BETTER.has(ui.tsort) ? -1 : 1;
         list.sort((a, b) => { const x = statNum(a, ui.tsort), y = statNum(b, ui.tsort);
@@ -552,7 +560,7 @@
     } else {
       body += statBarHTML(cat);
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
-      tiers.forEach(tier => {
+      tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin).forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
         const items = sortEntries(all).filter(e => passFilter(isFound(e.id)));
         body += tierHeadHTML(ui.cat, tier, all);
@@ -579,7 +587,7 @@
     const key = `tab:${kind}:${idx}`;
     const all = f === t;
     if (pendingTier === key) {
-      return `<div class="tabbar confirm"><span><b>// ARE YOU SURE?</b> ${all ? `LOCK ALL ${t}` : `UNLOCK ALL ${t - f} REMAINING`} IN ${esc(name.toUpperCase())}</span>
+      return `<div class="tabbar confirm"><span><b>// ARE YOU SURE?</b> ${all ? `LOCK ALL ${t}` : `UNLOCK ALL ${t - f} REMAINING`} IN ${esc(String(name).toUpperCase())}</span>
         <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span></div>`;
     }
     return "";
@@ -595,7 +603,7 @@
     let items;
     if (key.startsWith("tab:")) {
       const [, kind, idx] = key.split(":");
-      items = (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
+      items = kind === "bio" && +idx === -1 ? PDA_DATA.biography.flatMap(x => x.items) : (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
     } else {
       const [ci, tier] = key.split("|");
       items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
@@ -686,7 +694,8 @@
       <div class="dbox cmpwrap"><div class="dhead">Weapon Comparison<span class="hright"><button class="hbtn" data-cmpclear>CLEAR ALL</button><button class="return" id="ret">RETURN</button></span></div>
         <div class="cmpscroll"><table class="cmp">
           <thead><tr><th></th>${list.map(e => `<th><button class="linkish" data-tool="${esc(e.id)}">${esc(label(e).toUpperCase())}</button> <button class="xbtn" data-cmprm="${esc(e.id)}" title="Remove">×</button><div class="cmpstat ${isFound(e.id) ? "status-found" : "status-missing"}">${isFound(e.id) ? "FOUND" : "MISSING"}</div></th>`).join("")}</tr></thead>
-          <tbody>${rows}</tbody></table>
+          <tbody>${rows}<tr><th style="color:#f3ee30">CARRIED BY</th>${list.map(e => { const u = whoCarries(e.name);
+            return `<td class="carried">${u.length ? u.map(p => `<button class="linkish" data-person="${esc(p.id)}">${esc(p.name)}</button>`).join(", ") : "—"}</td>`; }).join("")}</tr></tbody></table>
           <p class="cat-note">Green = best of the group, red = worst. Add up to 3 weapons with COMPARE + on their pages.</p>
         </div></div>`;
   }
@@ -714,16 +723,21 @@
   /* =====================================================================
      BIOGRAPHY
      ===================================================================== */
+  const ALL_BIO = { name: "Everyone", color: "#ffffff", bg: "#1a1a1a" };
   function renderBio() {
     const groups = PDA_DATA.biography;
     if (ui.bio >= groups.length) ui.bio = 0;
-    const g = groups[ui.bio];
-    const tabs = groups.map((x, i) => {
+    const isAll = ui.bio === -1;
+    const g = isAll ? Object.assign({}, ALL_BIO, { items: groups.flatMap(x => x.items), cards: groups.flatMap(x => x.cards) }) : groups[ui.bio];
+    const [af, at] = countOf(groups.flatMap(x => x.items));
+    const allTab = `<button class="subtab${af === at ? " complete" : ""}" data-bio="-1" aria-selected="${isAll}" style="--sc:#fff;--sbg:#1a1a1a" title="Everyone, A–Z${isAll ? " · click again to unlock everyone" : ""}">ALL<span class="n">${af}/${at}</span>${pbar(af, at)}</button>`;
+    const tabs = allTab + groups.map((x, i) => {
       const [f, t] = countOf(x.items);
       return `<button class="subtab${f === t ? " complete" : ""}" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}" title="${i === ui.bio ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
     const cards = sortCards(g.cards).filter(c => passFilter(cardFound(c)));
-    const html = ui.view === "list" ? cards.map(c => resultHTML(c.entry)).join("") : cards.map(c => cardHTML(c, g)).join("");
+    const grpOf = c => groups[c.entry.groupIndex];
+    const html = ui.view === "list" ? cards.map(c => resultHTML(c.entry)).join("") : cards.map(c => cardHTML(c, isAll ? grpOf(c) : g)).join("");
     const none = `<p class="cat-note">${ui.filter === "found" ? "Nothing found here yet." : "All found."}</p>`;
     screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("bio", ui.bio, g.items, g.name)}<div class="cards${ui.view === "list" ? " aslist" : ""}">${html || none}</div></div>`;
   }
@@ -895,7 +909,7 @@
   }
   const STYPE = { all: "ALL", tools: "WEAPONS", bio: "PEOPLE", docs: "DOCUMENTS" };
   function renderSearch() {
-    const special = query.trim().toLowerCase() === ":new";
+    const special = false;
     const q = slug(query);
     const okType = e => ui.stype === "all" || e.section === ui.stype;
     const okFound = e => passFilter(isFound(e.id));
@@ -952,8 +966,64 @@
       return `<div class="sgroup"><div class="tier-head">${esc(name)}<small>${left.length} left</small>${pbar(items.length - left.length, items.length)}</div>${left.map(e => resultHTML(e)).join("")}</div>`;
     }).join("");
     screen.innerHTML = `<div class="results">
-      <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}</div>
+      <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}
+        <span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#127922; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
       ${body || '<div class="empty-cat"><b>EVERYTHING FOUND</b>Nice work.</div>'}</div>`;
+  }
+
+  function missingGroups() {
+    const out = [];
+    PDA_DATA.tools.forEach(c => out.push(["TOOLS › " + c.name, c.items]));
+    PDA_DATA.biography.forEach(g => out.push(["BIOGRAPHY › " + g.name, g.items]));
+    PDA_DATA.documents.forEach(g => out.push(["DOCUMENTS › " + g.name, g.items]));
+    return out.map(([n, items]) => [n, sortEntries(items.filter(e => !isFound(e.id) && !e.unknown))]).filter(([, l]) => l.length);
+  }
+  function missingText() {
+    const [f, t] = countOf(entries);
+    return `PDA CHECKLIST — ${t - f} left (${f}/${t} found)${user ? " — " + user : ""}\n\n` +
+      missingGroups().map(([n, l]) => `${n} (${l.length})\n` + l.map(e => `  [ ] ${e.name}${e.tier ? "  (tier " + e.tier + ")" : ""}`).join("\n")).join("\n\n");
+  }
+  function randomMissing() {
+    const pool = entries.filter(e => !isFound(e.id) && !e.unknown);
+    if (!pool.length) { toast("You've found everything!"); return; }
+    const e = pool[Math.floor(Math.random() * pool.length)];
+    if (query) clearSearch(false);
+    ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section];
+    if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else ui.docs = e.groupIndex;
+    toast(`Go find: ${e.name}`);
+    renderTabs(); openDetail({ tools: "tool", bio: "person", docs: "doc" }[e.section], e.id);
+  }
+  function printList() {
+    const w = window.open("", "_blank");
+    if (!w) { toast("Your browser blocked the print window. Allow pop-ups for this site."); return; }
+    const body = missingGroups().map(([n, l]) => `<h2>${esc(n)} <small>(${l.length})</small></h2><ul>${l.map(e => `<li>&#9744; ${esc(e.name)}${e.tier ? ` <small>tier ${e.tier}</small>` : ""}</li>`).join("")}</ul>`).join("");
+    const [f, t] = countOf(entries);
+    w.document.write(`<!doctype html><meta charset="utf-8"><title>PDA checklist</title><style>body{font:14px/1.4 monospace;margin:24px;color:#000;background:#fff}h1{font-size:20px}h2{font-size:15px;margin:16px 0 4px;border-bottom:1px solid #999}ul{list-style:none;padding:0;columns:3}li{break-inside:avoid}small{color:#666}</style><h1>PDA checklist — ${t - f} left (${f}/${t} found)</h1>${body}<script>onload=()=>print()<\/script>`);
+    w.document.close();
+  }
+
+  /* ---------- progress over time ---------- */
+  function snapProgress() {
+    const [f] = countOf(entries);
+    progress[today()] = f;
+    const ks = Object.keys(progress).sort(); while (ks.length > 120) delete progress[ks.shift()];
+    save(KEY_PROG, progress);
+  }
+  function progressChart() {
+    const [, total] = countOf(entries);
+    const days = Object.keys(progress).sort();
+    if (days.length < 2) return '<div class="row dim">A graph of your progress shows up here once you\'ve marked things on two different days.</div>';
+    const W = 640, H = 150, L = 34, R = 10, T = 10, B = 22;
+    const t0 = Date.parse(days[0]), t1 = Date.parse(days[days.length - 1]) || t0 + 1;
+    const x = d => L + (W - L - R) * ((Date.parse(d) - t0) / Math.max(1, t1 - t0));
+    const y = v => T + (H - T - B) * (1 - v / Math.max(1, total));
+    let path = "";
+    days.forEach((d, i) => { path += i ? ` H${x(d).toFixed(1)} V${y(progress[d]).toFixed(1)}` : `M${x(d).toFixed(1)} ${y(progress[d]).toFixed(1)}`; });
+    const grid = [0, .5, 1].map(r => `<line x1="${L}" x2="${W - R}" y1="${y(total * r)}" y2="${y(total * r)}" class="pg-grid"/><text x="${L - 6}" y="${y(total * r) + 4}" class="pg-ax" text-anchor="end">${Math.round(total * r)}</text>`).join("");
+    const pts = days.map(d => `<circle cx="${x(d)}" cy="${y(progress[d])}" r="4" class="pg-pt"/><circle cx="${x(d)}" cy="${y(progress[d])}" r="12" class="pg-hit" data-tip="${d}: ${progress[d]} / ${total} found"/>`).join("");
+    return `<div class="row pgwrap"><svg viewBox="0 0 ${W} ${H}" class="pgchart" role="img" aria-label="Databanks found over time">${grid}
+      <path d="${path}" class="pg-line"/>${pts}
+      <text x="${L}" y="${H - 5}" class="pg-ax">${days[0]}</text><text x="${W - R}" y="${H - 5}" class="pg-ax" text-anchor="end">${days[days.length - 1]}</text></svg></div>`;
   }
 
   /* =====================================================================
@@ -996,6 +1066,11 @@
           ${favRows()}
         </div>
         <div class="rows wide">
+          <h3>THIS SESSION //</h3>
+          ${sessionRow()}
+          ${progressChart()}
+        </div>
+        <div class="rows wide">
           <h3>RECENTLY FOUND //</h3>
           ${recentRows()}
         </div>
@@ -1020,6 +1095,12 @@
     });
   }
 
+  function sessionRow() {
+    const [f] = countOf(entries);
+    const d = f - (sessionStart ? sessionStart.f : f);
+    const mins = sessionStart ? Math.max(1, Math.round((Date.now() - sessionStart.t) / 60000)) : 0;
+    return `<div class="row"><b style="color:#6cff6c">FOUND THIS SESSION:</b> ${d >= 0 ? "+" : ""}${d} <span class="dim">· ${mins} min since you opened the site</span></div>`;
+  }
   function favRows() {
     const ids = Object.keys(favs).filter(id => byId.has(id));
     if (!ids.length) return '<div class="row dim">Press the ♥ on any weapon, person or document page to add it here.</div>';
@@ -1156,6 +1237,11 @@
     const where = contextOf(e);
     openIssue(`[Fix] ${e.name}`, `**Entry:** ${e.name}\n**Where:** ${where}\n\n**What's wrong or missing?** (description, stats, picture, name...)\n\n`);
   }
+  function changelogHTML() {
+    const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
+    if (!log.length) return "";
+    return `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+  }
   function contribHTML() {
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
     return `<div class="contrib">
@@ -1206,6 +1292,7 @@
         <div class="k">/ - SEARCH</div>
         <div class="k">ESC - BACK / CLEAR SEARCH</div>
         <div class="k">&#8592; &#8594; ON A PAGE - NEXT / PREVIOUS PICTURE</div>
+        ${changelogHTML()}
         <h3>-=-=- CONTRIBUTE -=-=-</h3>
         ${contribHTML()}
         <h3>-=-=- ABOUT -=-=-</h3>
@@ -1229,6 +1316,7 @@
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
+        ${sw("crt", "Old monitor (CRT) effect?")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Data</h3>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
@@ -1321,6 +1409,9 @@
     if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
 
     if (t.closest(".zoomable")) { openLightbox(); return; }
+    if (t.closest("[data-random]")) { randomMissing(); return; }
+    if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
+    if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
     const cmpb = t.closest("[data-cmp]");
     if (cmpb) {
       const id = cmpb.dataset.cmp, i = ui.cmp.indexOf(id);
@@ -1340,7 +1431,7 @@
     }
     const sg = t.closest("[data-suggest]");
     if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest)); return; }
-    if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; play("back"); persistUI(); render(); return; }
+    if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }
     const ct = t.closest("[data-contrib]");
     if (ct) {
       const f = ct.closest(".contrib");
@@ -1400,7 +1491,10 @@
   });
   screen.addEventListener("change", ev => {
     const sel = ev.target;
-    if (sel.matches("[data-tsort]")) ui.tsort = sel.value;
+    if (sel.matches("[data-tsort]")) { ui.tsort = sel.value; ui.tmin = ""; ui.tmax = ""; }
+    else if (sel.matches("[data-tiermin]")) ui.tierMin = sel.value;
+    else if (sel.matches("[data-tmin]")) ui.tmin = sel.value.trim();
+    else if (sel.matches("[data-tmax]")) ui.tmax = sel.value.trim();
     else if (sel.matches("[data-cal]")) ui.cal = sel.value;
     else return;
     play("click"); persistUI(); render();
@@ -1443,6 +1537,8 @@
     const typing = /INPUT|TEXTAREA|SELECT/.test(tag);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing) { e.preventDefault(); undo(); return; }
     if (typing) return;
+    if (e.key === "?") { e.preventDefault(); toggleKeys(); return; }
+    if ((e.key === "r" || e.key === "R") && !e.ctrlKey && !e.metaKey) { e.preventDefault(); randomMissing(); return; }
     if (e.key.startsWith("Arrow")) {
       if (detail && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
         const imgs = screen.querySelectorAll("[data-img]");
@@ -1496,6 +1592,19 @@
   });
 
   $("#sortSel").addEventListener("change", e => { ui.sort = e.target.value; play("click"); persistUI(); keepScroll(render); });
+
+  /* ---------- "?" keyboard shortcut list ---------- */
+  const KEYS = [["← ↑ → ↓", "Move between entries"], ["SPACE", "Mark found / missing"], ["ENTER", "Open"], ["SHIFT + STAR", "Mark a range"],
+    ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["?", "This list"]];
+  const keysEl = document.createElement("div"); keysEl.className = "lightbox keysbox"; keysEl.hidden = true; document.body.appendChild(keysEl);
+  function toggleKeys() {
+    if (!keysEl.hidden) { keysEl.hidden = true; return; }
+    play("open");
+    keysEl.innerHTML = `<div class="keys"><div class="dhead">Keyboard Shortcuts<button class="return" data-kclose>CLOSE</button></div><table>${KEYS.map(([k, d]) => `<tr><th>${k}</th><td>${d}</td></tr>`).join("")}</table></div>`;
+    keysEl.hidden = false;
+  }
+  keysEl.addEventListener("click", e => { if (e.target.closest("[data-kclose]") || !e.target.closest(".keys")) { keysEl.hidden = true; play("back"); } });
+  document.addEventListener("keydown", e => { if (!keysEl.hidden && e.key === "Escape") { e.stopImmediatePropagation(); keysEl.hidden = true; } }, true);
 
   /* ---------- picture lightbox ---------- */
   const lb = document.createElement("div"); lb.className = "lightbox"; lb.hidden = true; document.body.appendChild(lb);
@@ -1604,6 +1713,8 @@
   new MutationObserver(() => { if (!screen.dataset.keepx) showActiveSubtab(); }).observe(screen, { childList: true });
 
   /* ---------- go ---------- */
+  if (!sessionStart) { sessionStart = { f: countOf(entries)[0], t: Date.now() }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
+  if (Object.keys(found).length && !progress[today()]) snapProgress();
   if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
   else if (/^#e=/.test(location.hash)) {
     const id = byHash.get(location.hash.slice(3, 8));
@@ -1616,8 +1727,7 @@
     try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
   } else if (ui.detail && (ui.detail.type === "compare" || byId.has(ui.detail.id))) detail = ui.detail;   // reopen where you left off
   if (PROF.active !== "Main") setTimeout(() => toast(`Using save profile "${PROF.active}". Switch it on the Profile tab.`), 300);
-  if (newIds.size) setTimeout(() => toast(`${newIds.size} new entr${newIds.size > 1 ? "ies were" : "y was"} added since your last visit.`, {
-    action: () => { searchBox.value = ":new"; query = ":new"; clearBtn.hidden = false; renderTabs(); render(); }, actionLabel: "SHOW THEM", ms: 10000 }), 400);
+
   renderTabs();
   updateCount();
   render();
