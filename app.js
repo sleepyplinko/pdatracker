@@ -43,6 +43,8 @@
   let progress = load(KEY_PROG, {});
   let loadout  = load(KEY_LOAD, null);
   if (!loadout || !Array.isArray(loadout.items)) loadout = { items: [], base: "" };
+  const BASE_CARRY = 5;                          // everyone starts with 5 carry weight
+  const baseCarry = () => { const n = parseFloat(loadout.base); return isNaN(n) ? BASE_CARRY : n; };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   // this browser tab's session: what you had when you opened the site
   let sessionStart = null;
@@ -1061,8 +1063,7 @@
     }).join("");
     const items = loadItems();
     const sums = loadoutSums();
-    const hasBase = String(loadout.base).trim() !== "" && !isNaN(parseFloat(loadout.base));
-    const cap = hasBase ? parseFloat(loadout.base) + (sums["CARRY WEIGHT INCREASE"] || 0) : null;
+    const cap = baseCarry() + (sums["CARRY WEIGHT INCREASE"] || 0);
     const used = sums.WEIGHT, over = cap != null && used > cap;
     const pct = cap ? Math.min(100, used / cap * 100) : 0;
     const rows = items.map(([e, n], i) => {
@@ -1084,10 +1085,10 @@
         <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
       <div class="ladd"><select data-lpick><option value="">— pick a weapon, utility or gear —</option>${opts}</select><button class="mini-btn go" data-ladd>ADD</button></div>
       <div class="dbox lspace${over ? " over" : ""}"><div class="dhead">Space</div><div class="stats">
-        <label class="lbase">YOUR BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(loadout.base)}" placeholder="type it in"></label>
+        <label class="lbase">BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(fmtN(baseCarry()))}" title="Everyone starts with ${BASE_CARRY}"></label>
         <div class="lbar"><div style="width:${pct}%"></div></div>
         <div class="stat"><i style="color:#bbb">USED</i>: ${fmtN(used)}${cap != null ? ` / ${fmtN(cap)}` : ""}${cap != null ? (over ? ` <b class="lover">OVER BY ${fmtN(used - cap)}</b>` : ` <span class="lfree">(${fmtN(cap - used)} free)</span>`) : ""}</div>
-        ${cap == null ? '<p class="cat-note">Type in your base carry weight to see how much space you have. Backpacks and vests with CARRY WEIGHT INCREASE add to it.</p>' : `<p class="cat-note">Space = base ${fmtN(parseFloat(loadout.base))} + ${fmtN(sums["CARRY WEIGHT INCREASE"] || 0)} from gear. You can go over; it just shows how far.</p>`}
+        <p class="cat-note">Space = base ${fmtN(baseCarry())}${baseCarry() === BASE_CARRY ? " (what everyone starts with)" : ""} + ${fmtN(sums["CARRY WEIGHT INCREASE"] || 0)} from gear. You can go over; it just shows how far.</p>
         ${sumHTML}
       </div></div>
       <div class="llist">${rows || '<p class="none">Nothing yet. Pick something above and press ADD.</p>'}</div>
@@ -1101,8 +1102,7 @@
     saveLoad(); play("select"); keepScroll(render);
   }
   function loadoutText() {
-    const sums = loadoutSums(), hasBase = String(loadout.base).trim() !== "";
-    const cap = hasBase ? parseFloat(loadout.base) + (sums["CARRY WEIGHT INCREASE"] || 0) : null;
+    const sums = loadoutSums(), cap = baseCarry() + (sums["CARRY WEIGHT INCREASE"] || 0);
     return `PDA LOADOUT${user ? " — " + user : ""}\n` + loadItems().map(([e, n]) => `${n > 1 ? n + "x " : ""}${e.name} (Tier ${e.tier})`).join("\n") +
       `\n\nWEIGHT: ${fmtN(sums.WEIGHT)}${cap != null ? " / " + fmtN(cap) : ""}` +
       LOAD_SUMS.filter(k => sums[k] != null).map(k => `\nTOTAL ${k}: ${fmtN(sums[k])}`).join("");
