@@ -20,6 +20,7 @@
       <span class="count" id="titleCount"></span>
     </header>
 
+    <div class="banner" id="banner" hidden></div>
     <div class="window">
     <nav class="tabs" id="tabs" aria-label="PDA sections"></nav>
 
@@ -27,6 +28,14 @@
       <span class="sicon" id="searchIcon" aria-hidden="true"></span>
       <input id="search" type="search" placeholder="SEARCH WEAPONS, PEOPLE, DOCUMENTS…  ( / )" autocomplete="off" spellcheck="false" aria-label="Search the PDA">
       <button class="clear-search" id="clearSearch" hidden aria-label="Clear search">CLEAR</button>
+      <div class="viewtools" role="toolbar" aria-label="View options">
+        <button data-view="grid" title="Grid view (like the game)">&#9638;</button>
+        <button data-view="list" title="Checklist view">&#9776;</button>
+        <span class="vsep"></span>
+        <button data-filter="all" title="Show everything">ALL</button>
+        <button data-filter="missing" title="Show only what you haven't found">MISSING</button>
+        <button data-filter="found" title="Show only what you've found">FOUND</button>
+      </div>
     </div>
 
     <section class="screen" id="screen" aria-live="polite"></section>

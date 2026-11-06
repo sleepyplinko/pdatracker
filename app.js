@@ -10,12 +10,28 @@
   const KEY_SET   = "pda-settings-v1";
   const KEY_UI    = "pda-ui-v1";
   const KEY_USER  = "pda-user-v1";
+  const KEY_FAV   = "pda-fav-v1";
+  const KEY_NOTES = "pda-notes-v1";
+  const KEY_LOG   = "pda-log-v1";
+  const KEY_SEEN  = "pda-seen-v1";
+  const KEY_FRIEND= "pda-friend-v1";
+  const KEY_SINCE = "pda-since-backup-v1";
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
   let found    = load(KEY_FOUND, {});
   let settings = Object.assign({ lockedNames: false, hideFound: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
-  let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0 }, load(KEY_UI, {}));
+  const savedUI = load(KEY_UI, {});
+  let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc" }, savedUI);
+  if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
+  let favs     = load(KEY_FAV, {});
+  let notes    = load(KEY_NOTES, {});
+  let history_ = load(KEY_LOG, []);
+  let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
+  let sinceBackup = load(KEY_SINCE, 0);
+  let viewOnly = null;                        // { name, set } while looking at someone's share link
+  const undoStack = [];
+  let lastStar = null;                        // { id, on } for shift-click ranges
   let user     = load(KEY_USER, "");
   let detail   = null;      // { type: "tool" | "person" | "doc", id }
   let query    = "";
@@ -49,7 +65,7 @@
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
-  const HOVERABLE = ".tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
+  const HOVERABLE = ".favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
@@ -129,12 +145,18 @@
 
   // a variant's checkmark is its card's checkmark
   const trackOf   = id => { const e = byId.get(id); return (e && e.trackId) || id; };
-  const isFound   = id => !!found[trackOf(id)];
+  const isFound   = id => !!(viewOnly ? viewOnly.set : found)[trackOf(id)];
   const cardFound = c => isFound(c.entry.id);
   // older saves tracked each variant separately: fold those into their card
   people.forEach(v => { if (v.trackId) { const old = `${v.trackId.replace(/\|[^|]*$/, "")}|${slug(v.card.name)}|${slug(v.name)}`; if (found[old]) { found[v.trackId] = 1; delete found[old]; } } });
   const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
   const label     = e => e.unknown ? "???" : e.name;
+
+  /* NEW badges: anything not in the list saved on your last visit */
+  const allTracked = entries.map(e => e.id);
+  const seenPrev = load(KEY_SEEN, null);
+  const newIds = new Set(Array.isArray(seenPrev) ? allTracked.filter(id => !seenPrev.includes(id)) : []);
+  save(KEY_SEEN, allTracked);
 
   /* ---------- sorting: found A→Z first, then locked A→Z, ??? last ---------- */
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
@@ -151,16 +173,38 @@
   const sortEntries = list => sortBy(list, e => isFound(e.id), label);
   const sortCards   = list => sortBy(list, cardFound, c => c.name);
 
-  function setFound(id, on) {
-    id = trackOf(id);
-    if (on) found[id] = 1; else delete found[id];
+  const passFilter = on => ui.filter === "all" || (ui.filter === "missing" ? !on : on);
+
+  /* every mark/unmark goes through here: saves, logs, offers undo */
+  function change(ids, on, what) {
+    if (viewOnly) { play("warn"); toast("This is someone else's PDA. Press EXIT at the top to go back to yours."); return false; }
+    const before = { ...found };
+    const changed = [];
+    ids.forEach(id => { const t = trackOf(id); if (!!found[t] !== on) { if (on) found[t] = 1; else delete found[t]; changed.push(t); } });
+    if (!changed.length) return false;
+    save(KEY_FOUND, found); updateCount();
+    undoStack.push(before); if (undoStack.length > 30) undoStack.shift();
+    const now = Date.now();
+    if (changed.length <= 3) changed.forEach(id => history_.unshift({ id, on, t: now }));
+    else history_.unshift({ bulk: what || "several entries", n: changed.length, on, t: now });
+    history_ = history_.slice(0, 60); save(KEY_LOG, history_);
+    sinceBackup += changed.length; save(KEY_SINCE, sinceBackup);
+    const nm = changed.length === 1 ? (byId.get(changed[0]) || {}).name : `${changed.length} entries`;
+    toast(`${on ? "Marked" : "Unmarked"} ${nm}${on ? " as found" : ""}`, { undo: true });
+    backupNag();
+    return true;
+  }
+  function undo() {
+    if (viewOnly || !undoStack.length) { toast("Nothing to undo."); return; }
+    found = undoStack.pop();
+    save(KEY_FOUND, found); updateCount();
+    history_.unshift({ undo: true, t: Date.now() }); save(KEY_LOG, history_.slice(0, 60));
+    play("back"); toast("Undone.");
+    keepScroll(render); renderTabs();
   }
   function toggle(id) {
     const on = !isFound(id);
-    setFound(id, on);
-    save(KEY_FOUND, found);
-    play(on ? "select" : "deselect");
-    updateCount();
+    if (change([id], on)) play(on ? "select" : "deselect");
     return on;
   }
 
@@ -172,7 +216,10 @@
     cloud:   '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 7 18z"/><path d="M12 10v6m-2.5-2.5L12 16l2.5-2.5"/></svg>',
     manual:  '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#111"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#ddd" stroke-width="2.6"/></svg>',
     settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
-    tools:   '<svg viewBox="0 0 24 24" fill="#111"><path d="M3 5.5 7.5 1l5 4-2 2 9.5 13-2 2L5 12.5l-2 2-1-5z"/></svg>',
+    missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
+    heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="#111"><path d="M3 5.5 7.5 1l5 4-2 2 9.5 13-2 2L5 12.5l-2 2-1-5z"/></svg>',
     biography:'<svg viewBox="0 0 24 24" fill="#111"><path d="M2 6h7l2 2h11v13H2z"/><circle cx="12" cy="13" r="2.4" fill="#ccc"/><path d="M7.5 19c.8-2.2 2.5-3.3 4.5-3.3s3.7 1.1 4.5 3.3z" fill="#ccc"/><path d="M4 3h7v2H4z"/></svg>',
     documents:'<svg viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#111"/><path d="M8 11h8M8 14h8M8 17h6" stroke="#ccc" stroke-width="1.6"/></svg>',
     lock:    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5v12h-13V10zm2.5 0h5V7a2.5 2.5 0 0 0-5 0z"/><circle cx="12" cy="15.5" r="1.6" fill="#000"/><rect x="11.3" y="16" width="1.4" height="3" fill="#000"/></svg>',
@@ -290,10 +337,11 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents"];
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing"];
+  const TAB_LABEL = { missing: "WHAT'S LEFT" };
   function renderTabs() {
     $("#tabs").innerHTML = TABS.map(t =>
-      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${t.toUpperCase()}</span></button>`
+      `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`
     ).join("");
   }
   $("#tabs").addEventListener("click", e => {
@@ -341,6 +389,7 @@
      ===================================================================== */
   function render() {
     screen.classList.toggle("show-locked-names", !!settings.lockedNames);
+    syncToolbar(); renderBanner();
     if (detail && byId.has(detail.id)) {
       let e = byId.get(detail.id);
       if (e.isCard) e = e.card.members[0];    // a group card opens on its first variant
@@ -349,12 +398,23 @@
     detail = null;
     if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing })[ui.tab]();
   }
 
   /* =====================================================================
      TOOLS
      ===================================================================== */
+  /* little tags on tiles/cards: NEW, friend has it, favourite */
+  function badges(e) {
+    const t = trackOf(e.id);
+    const out = [];
+    if (newIds.has(t)) out.push('<b class="bnew" title="Added since your last visit">NEW</b>');
+    if (friend && !viewOnly && friend.set[t] && !found[t]) out.push(`<b class="bfr" title="${esc(friend.name || "Your friend")} has this and you don't">${esc((friend.name || "F").charAt(0).toUpperCase())}✓</b>`);
+    if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥</b>');
+    return out.length ? `<span class="badges">${out.join("")}</span>` : "";
+  }
+  const pbar = (f, t) => `<span class="pbar"><i style="width:${t ? Math.round(f / t * 100) : 0}%"></i></span>`;
+
   /* the star that appears on hover: the only way to mark/unmark from a list */
   function hstar(id, name) {
     const on = isFound(id);
@@ -374,10 +434,10 @@
     const l = label(e);
     if (!got) {
       return `<button class="tile locked" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
-        <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}</button>`;
+        <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
     }
     return `<button class="tile${e.special ? " special" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
-      <span class="tname" style="${tileFont(l)}">${esc(l)}</span>${hstar(e.id, l)}</button>`;
+      <span class="tname" style="${tileFont(l)}">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
   }
 
   function tierHeadHTML(ci, tier, items) {
@@ -390,7 +450,7 @@
         <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span>
       </div>`;
     }
-    return `<div class="tier-head"><button class="tier-btn" data-tier="${key}" title="${allFound ? "Lock" : "Unlock"} every weapon in this tier">TIER ${tier}<span class="tier-hint">${allFound ? "click to lock all" : "click to unlock all"}</span></button><small>${f}/${t}</small></div>`;
+    return `<div class="tier-head${allFound ? " complete" : ""}"><button class="tier-btn" data-tier="${key}" title="${allFound ? "Lock" : "Unlock"} every weapon in this tier">TIER ${tier}<span class="tier-hint">${allFound ? "click to lock all" : "click to unlock all"}</span></button><small>${f}/${t}</small>${pbar(f, t)}</div>`;
   }
 
   function renderTools() {
@@ -400,7 +460,7 @@
     const catBtns = cats.map((c, i) => {
       const [f, t] = countOf(c.items);
       const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
-      return `<button class="cat" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>` : ""}</button>`;
+      return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
     }).join("");
 
     let body = "";
@@ -411,11 +471,12 @@
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
       tiers.forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
-        let items = sortEntries(all);
-        if (settings.hideFound) items = items.filter(e => !isFound(e.id));
+        const items = sortEntries(all).filter(e => passFilter(isFound(e.id)));
         body += tierHeadHTML(ui.cat, tier, all);
-        body += items.length ? `<div class="tier-box">${items.map(tileHTML).join("")}</div>`
-                             : `<div class="tier-box"><div class="cat-note" style="grid-column:1/-1">All found.</div></div>`;
+        const none = `<div class="cat-note" style="grid-column:1/-1">${ui.filter === "found" ? "Nothing found here yet." : "All found."}</div>`;
+        body += ui.view === "list"
+          ? `<div class="list">${items.map(e => resultHTML(e)).join("") || none}</div>`
+          : `<div class="tier-box">${items.map(tileHTML).join("") || none}</div>`;
       });
     }
     screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
@@ -449,9 +510,8 @@
       items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
     }
     const lockAll = items.every(e => isFound(e.id));
-    items.forEach(e => setFound(e.id, !lockAll));
-    save(KEY_FOUND, found); updateCount();
-    play(lockAll ? "deselect" : "confirm");
+    const what = key.startsWith("tab:") ? "a whole tab" : "a whole tier";
+    if (change(items.map(e => e.id), !lockAll, what)) play(lockAll ? "deselect" : "confirm");
     cancelTier();
   }
 
@@ -465,6 +525,14 @@
     "WEIGHT": "#2a2a2a", "TIER": "#fff89a"
   };
   const GAP_BEFORE = new Set(["MAX SPREAD", "EQUIP TIME", "WEIGHT"]);
+  const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
+  /* bottom box with two tabs: the game's text, and your own notes */
+  function bottomBox(first, textHTML, noteId) {
+    const nt = ui.btab === "notes";
+    const has = !!(notes[noteId] || "").trim();
+    return `<div class="dhead btabs"><button class="btab${nt ? "" : " on"}" data-btab="desc">${first}</button><button class="btab${nt ? " on" : ""}" data-btab="notes">My Notes${has ? " •" : ""}</button></div>
+      ${nt ? `<textarea class="notes" data-note="${esc(noteId)}" placeholder="Your own notes, saved in this browser (where you found it, what it needs...)">${esc(notes[noteId] || "")}</textarea>` : `<div class="desc">${textHTML}</div>`}`;
+  }
   const paras = t => esc(t).split(/\n\s*\n/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
 
   function renderToolDetail(e) {
@@ -486,12 +554,12 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
-        <div class="dbox comment"><div class="dhead">Comment</div><div class="desc">${e.comment ? paras(e.comment) : '<p class="none">No comment.</p>'}</div></div>
+        <div class="dbox comment">${bottomBox("Comment", e.comment ? paras(e.comment) : '<p class="none">No comment.</p>', e.id)}</div>
       </div>`;
   }
 
@@ -511,12 +579,12 @@
     const g = groups[ui.bio];
     const tabs = groups.map((x, i) => {
       const [f, t] = countOf(x.items);
-      return `<button class="subtab" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}">${esc(x.name)}<span class="n">${f}/${t}</span></button>`;
+      return `<button class="subtab${f === t ? " complete" : ""}" data-bio="${i}" aria-selected="${i === ui.bio}" style="--sc:${x.color};--sbg:${x.bg}" title="${i === ui.bio ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
-    let cards = sortCards(g.cards);
-    if (settings.hideFound) cards = cards.filter(c => !cardFound(c));
-    const html = cards.map(c => cardHTML(c, g)).join("");
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("bio", ui.bio, g.items, g.name)}<div class="cards">${html || '<p class="cat-note">All found.</p>'}</div></div>`;
+    const cards = sortCards(g.cards).filter(c => passFilter(cardFound(c)));
+    const html = ui.view === "list" ? cards.map(c => resultHTML(c.entry)).join("") : cards.map(c => cardHTML(c, g)).join("");
+    const none = `<p class="cat-note">${ui.filter === "found" ? "Nothing found here yet." : "All found."}</p>`;
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("bio", ui.bio, g.items, g.name)}<div class="cards${ui.view === "list" ? " aslist" : ""}">${html || none}</div></div>`;
   }
 
   function cardHTML(c, g) {
@@ -530,7 +598,7 @@
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
     return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${g.color}" title="${esc(tip)}">
       <span class="pic">${pic}</span>
-      ${isGroup ? `<span class="count" title="${t} variants">×${t}</span>` : ""}${hstar(c.entry.id, l)}
+      ${isGroup ? `<span class="count" title="${t} variants">×${t}</span>` : ""}${hstar(c.entry.id, l)}${badges(c.entry)}
       <span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
   }
 
@@ -576,7 +644,7 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
-            <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
@@ -584,9 +652,7 @@
           </div>
           ${mtabs}
         </div>
-        <div class="dbox pdesc"><div class="dhead">Description</div>
-          <div class="desc">${desc ? paras(desc) : '<p class="none">No description on file.</p>'}</div>
-        </div>
+        <div class="dbox pdesc">${bottomBox("Description", desc ? paras(desc) : '<p class="none">No description on file.</p>', e.id)}</div>
       </div>`;
   }
 
@@ -603,7 +669,7 @@
           <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
-            <span class="hright"><span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">
@@ -613,9 +679,7 @@
             <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
           </div>
         </div>
-        <div class="dbox pdesc"><div class="dhead">Description</div>
-          <div class="desc">${e.desc ? paras(e.desc) : '<p class="none">No description on file.</p>'}</div>
-        </div>
+        <div class="dbox pdesc">${bottomBox("Description", e.desc ? paras(e.desc) : '<p class="none">No description on file.</p>', e.id)}</div>
       </div>`;
   }
 
@@ -629,11 +693,11 @@
     const icon = { location: I.wifi, note: I.note, misc: "" }[e.kind];
     if (!got) {
       return `<button class="doc ${e.kind} missing" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
-        <span class="pic">${I.lock}</span>${hstar(e.id, l)}
+        <span class="pic">${I.lock}</span>${hstar(e.id, l)}${badges(e)}
         <span class="nm"><span class="tag">- MISSING -</span>${settings.lockedNames && !e.unknown ? `<span class="sub">${esc(l)}</span>` : ""}</span></button>`;
     }
     return `<button class="doc ${e.kind}" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
-      <span class="pic">${icon}</span>${hstar(e.id, l)}<span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
+      <span class="pic">${icon}</span>${hstar(e.id, l)}${badges(e)}<span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
   }
   function renderDocs() {
     const groups = PDA_DATA.documents;
@@ -642,11 +706,12 @@
     const tabs = groups.map((x, i) => {
       const [f, t] = countOf(x.items);
       const [c, bg] = DOC_TAB[x.kind];
-      return `<button class="subtab striped" data-docs="${i}" aria-selected="${i === ui.docs}" style="--sc:${c};--sbg:${bg}">${esc(x.name)}<span class="n">${f}/${t}</span></button>`;
+      return `<button class="subtab striped${f === t ? " complete" : ""}" data-docs="${i}" aria-selected="${i === ui.docs}" style="--sc:${c};--sbg:${bg}" title="${i === ui.docs ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
-    let items = sortEntries(g.items);
-    if (settings.hideFound) items = items.filter(e => !isFound(e.id));
-    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("docs", ui.docs, g.items, g.name)}<div class="cards">${items.map(docHTML).join("") || '<p class="cat-note">All found.</p>'}</div></div>`;
+    const items = sortEntries(g.items).filter(e => passFilter(isFound(e.id)));
+    const none = `<p class="cat-note">${ui.filter === "found" ? "Nothing found here yet." : "All found."}</p>`;
+    const html = ui.view === "list" ? items.map(e => resultHTML(e)).join("") : items.map(docHTML).join("");
+    screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("docs", ui.docs, g.items, g.name)}<div class="cards${ui.view === "list" ? " aslist" : ""}">${html || none}</div></div>`;
   }
 
   /* =====================================================================
@@ -668,35 +733,85 @@
     if (cq && compact.includes(cq)) return 4;
     return -1;
   }
+  /* stat text each entry can be found by ("9x19mm", "tier 5", "health: 90hp") */
+  function haystack(e) {
+    if (e._hay) return e._hay;
+    const out = [];
+    if (e.section === "tools") {
+      Object.entries(e.stats || {}).forEach(([k, v]) => out.push(`${k}: ${v}`));
+      out.push(`TIER ${e.tier}`, e.group);
+    } else if (e.section === "bio") {
+      const src = e.isCard ? e.card.members : [e];
+      src.forEach(m => {
+        Object.entries(m.base || {}).forEach(([k, v]) => out.push(`${k}: ${v}`));
+        Object.entries(m.skills || {}).forEach(([k, v]) => out.push(`${k}: ${v}`));
+        (m.loadout || []).forEach(([k, v]) => out.push(`${k}: ${v}`));
+      });
+      out.push(e.group);
+    } else out.push(e.group);
+    return (e._hay = out);
+  }
+  const STYPE = { all: "ALL", tools: "WEAPONS", bio: "PEOPLE", docs: "DOCUMENTS" };
   function renderSearch() {
+    const special = query.trim().toLowerCase() === ":new";
     const q = slug(query);
-    const hits = [];
-    [...entries, ...people.filter(v => v.trackId)].forEach(e => {
+    const okType = e => ui.stype === "all" || e.section === ui.stype;
+    const okFound = e => passFilter(isFound(e.id));
+    const hits = [], statHits = [];
+    const pool = [...entries, ...people.filter(v => v.trackId)];
+    pool.forEach(e => {
+      if (!okType(e) || !okFound(e)) return;
+      if (special) { if (newIds.has(trackOf(e.id)) && !e.trackId) hits.push([0, e]); return; }
       if (e.unknown) return;
-      const s = score(e.name, q);
-      if (s >= 0) hits.push([s, e]);
+      const sc = score(e.name, q);
+      if (sc >= 0) { hits.push([sc, e]); return; }
+      if (q.length >= 2 && !e.trackId) {
+        const m = haystack(e).find(h => h.toLowerCase().includes(q));
+        if (m) statHits.push([e, m]);
+      }
     });
     hits.sort((a, b) => a[0] - b[0] || (isFound(a[1].id) === isFound(b[1].id) ? collator.compare(a[1].name, b[1].name) : isFound(a[1].id) ? -1 : 1));
-    // people carrying a weapon whose name matches
-    const carriers = people.filter(e => (e.loadout || []).some(([k, v]) => k === "Weapon" && score(loadName(v), q) >= 0 && score(loadName(v), q) <= 3))
-                            .filter(e => !hits.some(h => h[1] === e));
-    const section = (title, list, note) => list.length ? `<div class="sgroup"><div class="tier-head">${title}<small>${list.length}${note ? " " + note : ""}</small></div>${list.map(resultHTML).join("")}</div>` : "";
-    const by = s => hits.filter(h => h[1].section === s).map(h => h[1]);
-    const html = section("TOOLS", by("tools")) + section("PEOPLE", by("bio")) + section("DOCUMENTS", by("docs")) +
-                 section("CARRIES A MATCHING WEAPON", carriers);
-    screen.innerHTML = `<div class="results">${html || `<div class="empty-cat"><b>NO MATCHES</b>Nothing in the PDA is called “${esc(query)}”.</div>`}</div>`;
+    const section = (title, rows, n) => n ? `<div class="sgroup"><div class="tier-head">${title}<small>${n}</small></div>${rows}</div>` : "";
+    const by = sec => hits.filter(h => h[1].section === sec).map(h => h[1]);
+    const chips = `<div class="chips">${Object.entries(STYPE).map(([k, v]) => `<button class="chip-btn" data-stype="${k}" aria-pressed="${ui.stype === k}">${v}</button>`).join("")}
+      <span class="chips-note">${special ? "Entries added since your last visit" : `Showing ${ui.filter === "all" ? "found + missing" : ui.filter} · change with the buttons above`}</span></div>`;
+    const html =
+      section("TOOLS", by("tools").map(e => resultHTML(e)).join(""), by("tools").length) +
+      section("PEOPLE", by("bio").map(e => resultHTML(e)).join(""), by("bio").length) +
+      section("DOCUMENTS", by("docs").map(e => resultHTML(e)).join(""), by("docs").length) +
+      section("MATCHING STATS", statHits.map(([e, m]) => resultHTML(e, m)).join(""), statHits.length);
+    screen.innerHTML = `<div class="results">${chips}${html || `<div class="empty-cat"><b>NO MATCHES</b>${special ? "Nothing new since your last visit." : `Nothing in the PDA matches “${esc(query)}”.`}</div>`}</div>`;
   }
-  function resultHTML(e) {
+  function resultHTML(e, ctx) {
     const got = isFound(e.id);
     const open = { tools: "data-open-tool", bio: "data-open", docs: "data-open-doc" }[e.section];
     return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}">
-      <button class="sres-main" ${open}="${esc(e.id)}" data-entry="${esc(e.id)}" title="Open ${esc(e.name)}">
-        <span class="sres-ic">${got ? I.check : I.lock}</span>
-        <span class="sres-name">${esc(e.name)}</span>
-        <span class="sres-ctx">${esc(contextOf(e))}</span>
+      <button class="sres-main" ${open}="${esc(e.id)}" data-entry="${esc(e.id)}" title="Open ${esc(label(e))}">
+        <span class="sres-ic" data-star="${esc(e.id)}" role="checkbox" aria-checked="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${got ? I.check : '<span class="box"></span>'}</span>
+        <span class="sres-name">${esc(label(e))}${badges(e)}</span>
+        <span class="sres-ctx">${esc(ctx || contextOf(e))}</span>
       </button>
       <button class="sres-star${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
     </div>`;
+  }
+
+  /* =====================================================================
+     WHAT'S LEFT — every missing entry in one place
+     ===================================================================== */
+  function renderMissing() {
+    const [f, t] = countOf(entries);
+    const groups = [];
+    PDA_DATA.tools.forEach(c => groups.push(["TOOLS › " + c.name, c.items]));
+    PDA_DATA.biography.forEach(g => groups.push(["BIOGRAPHY › " + g.name, g.items]));
+    PDA_DATA.documents.forEach(g => groups.push(["DOCUMENTS › " + g.name, g.items]));
+    const body = groups.map(([name, items]) => {
+      const left = sortEntries(items.filter(e => !isFound(e.id)));
+      if (!left.length) return "";
+      return `<div class="sgroup"><div class="tier-head">${esc(name)}<small>${left.length} left</small>${pbar(items.length - left.length, items.length)}</div>${left.map(e => resultHTML(e)).join("")}</div>`;
+    }).join("");
+    screen.innerHTML = `<div class="results">
+      <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}</div>
+      ${body || '<div class="empty-cat"><b>EVERYTHING FOUND</b>Nice work.</div>'}</div>`;
   }
 
   /* =====================================================================
@@ -724,6 +839,14 @@
           <h3>DATABANK PROGRESS //</h3>
           ${rows}
         </div>
+        <div class="rows wide">
+          <h3>USER FAVOURITES //</h3>
+          ${favRows()}
+        </div>
+        <div class="rows wide">
+          <h3>RECENTLY FOUND //</h3>
+          ${recentRows()}
+        </div>
       </div>`;
     $("#uname").addEventListener("input", ev => {
       user = ev.target.value; save(KEY_USER, user);
@@ -732,28 +855,99 @@
     });
   }
 
+  function favRows() {
+    const ids = Object.keys(favs).filter(id => byId.has(id));
+    if (!ids.length) return '<div class="row dim">Press the ♥ on any weapon, person or document page to add it here.</div>';
+    const groupsOf = [["FAVOURITE GUNS", "#9cff6b", "tools"], ["FAVOURITE PERSON ENTRIES", "#4fd8ff", "bio"], ["FAVOURITE DOCUMENTS", "#ff79e0", "docs"]];
+    return groupsOf.map(([title, c, sec]) => {
+      const list = ids.map(id => byId.get(id)).filter(e => e.section === sec);
+      if (!list.length) return "";
+      const open = { tools: "data-tool", bio: "data-person", docs: "data-open-doc" }[sec];
+      return `<div class="row"><b style="color:${c}">${title}:</b> ${list.map(e => `<button class="linkish" ${open}="${esc(e.id)}">${esc(e.name)}</button>`).join(", ")}</div>`;
+    }).join("");
+  }
+  function ago(t) {
+    const s = Math.max(1, Math.round((Date.now() - t) / 1000));
+    if (s < 60) return "just now";
+    const m = Math.round(s / 60); if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60); if (h < 24) return `${h} hr ago`;
+    const d = Math.round(h / 24); return `${d} day${d > 1 ? "s" : ""} ago`;
+  }
+  function recentRows() {
+    const list = history_.slice(0, 15);
+    if (!list.length) return '<div class="row dim">Nothing yet. Things you mark show up here.</div>';
+    return list.map(h => {
+      const when = `<span class="when">${ago(h.t)}</span>`;
+      if (h.undo) return `<div class="row dim">${when}Undid a change</div>`;
+      if (h.bulk) return `<div class="row">${when}<b style="color:${h.on ? "#6cff6c" : "#ff6a6a"}">${h.on ? "FOUND" : "UNMARKED"}</b> ${h.n} entries <span class="dim">(${esc(h.bulk)})</span></div>`;
+      const e = byId.get(h.id); if (!e) return "";
+      return `<div class="row">${when}<b style="color:${h.on ? "#6cff6c" : "#ff6a6a"}">${h.on ? "FOUND" : "UNMARKED"}</b> <button class="linkish" ${{ tools: "data-tool", bio: "data-person", docs: "data-open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button></div>`;
+    }).join("");
+  }
+
+  /* ---------- share links: #v=<name>.<5-char code per found entry> ---------- */
+  const h5 = id => { let h = 0x811c9dc5; for (const ch of id) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36).padStart(7, "0").slice(-5); };
+  const byHash = new Map(entries.map(e => [h5(e.id), e.id]));
+  function shareLink() {
+    const codes = Object.keys(found).filter(id => byId.has(id)).map(h5).join("");
+    return `${location.origin}${location.pathname}#v=${encodeURIComponent(user || "")}.${codes}`;
+  }
+  function parseShare(str) {
+    const m = String(str).match(/#v=([^.]*)\.([0-9a-z]*)/);
+    if (!m) return null;
+    const set = {};
+    for (let i = 0; i + 5 <= m[2].length; i += 5) { const id = byHash.get(m[2].slice(i, i + 5)); if (id) set[id] = 1; }
+    let name = ""; try { name = decodeURIComponent(m[1]); } catch { /* ignore */ }
+    return { name, set };
+  }
+  function doExport() {
+    const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", v: 2, user, found, favs, notes, log: history_ }, null, 1)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `pda-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    sinceBackup = 0; save(KEY_SINCE, 0);
+  }
+  let nagged = false;
+  function backupNag() {
+    if (nagged || sinceBackup < 25) return;
+    nagged = true;
+    setTimeout(() => toast(`You've marked ${sinceBackup} things since your last backup.`, { action: () => { doExport(); toast("Backup downloaded."); }, actionLabel: "DOWNLOAD BACKUP", ms: 12000, nag: true }), 600);
+  }
+
   function renderCloud(msg = "", bad = false) {
     screen.innerHTML = `
       <div class="cloud">
         <div class="dhead">Download Entries<span style="display:flex;width:18px">${I.download}</span></div>
         <div class="cloud-body">
           <p>Your checkmarks are saved in this browser only. Download a backup file to keep them safe or to move them to another device or browser, then upload it there.</p>
-          <button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
-          <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button>
+          <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
+          <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
+          <h4>SHARE YOUR PDA</h4>
+          <p>A link that shows your checklist to anyone, read-only. It doesn't change as you find more, so send a new one later.</p>
+          <div class="btnrow"><input id="shareOut" readonly value="${esc(shareLink())}"><button class="pbtn" id="copyShare">${I.share} COPY LINK</button></div>
+          <h4>COMPARE WITH A FRIEND</h4>
+          <p>Paste a friend's share link to see what they have that you don't. Their entries get a small badge on your tiles.</p>
+          <div class="btnrow"><input id="friendIn" placeholder="paste their link here" value=""><button class="pbtn" id="doCompare">COMPARE</button>${friend ? '<button class="pbtn danger" id="stopCompare">STOP COMPARING</button>' : ""}</div>
+          ${compareHTML()}
         </div>
       </div>`;
-    $("#exp").onclick = () => {
-      play("click");
-      const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", v: 1, user, found }, null, 1)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `pda-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      $("#cmsg").textContent = "Backup downloaded.";
-    };
+    $("#exp").onclick = () => { play("click"); doExport(); $("#cmsg").textContent = "Backup downloaded."; };
     $("#imp").onclick = () => { play("click"); $("#importFile").click(); };
+    $("#copyShare").onclick = async () => {
+      play("click");
+      const inp = $("#shareOut");
+      try { await navigator.clipboard.writeText(inp.value); toast("Share link copied."); }
+      catch { inp.select(); try { document.execCommand("copy"); } catch { /* ignore */ } toast("Link selected. Press Ctrl+C to copy."); }
+    };
+    $("#doCompare").onclick = () => {
+      const f = parseShare($("#friendIn").value);
+      if (!f) { play("warn"); toast("That doesn't look like a PDA share link."); return; }
+      friend = f; save(KEY_FRIEND, friend); play("confirm"); render();
+    };
+    const stop = $("#stopCompare"); if (stop) stop.onclick = () => { friend = null; save(KEY_FRIEND, null); play("back"); render(); };
   }
   $("#importFile").addEventListener("change", async ev => {
     const file = ev.target.files[0]; ev.target.value = "";
@@ -763,6 +957,10 @@
       if (!data || typeof data.found !== "object") throw new Error();
       found = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) found[k] = 1; });
       if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
+      if (data.favs && typeof data.favs === "object") { favs = data.favs; save(KEY_FAV, favs); }
+      if (data.notes && typeof data.notes === "object") { notes = data.notes; save(KEY_NOTES, notes); }
+      if (Array.isArray(data.log)) { history_ = data.log.slice(0, 60); save(KEY_LOG, history_); }
+      undoStack.length = 0; sinceBackup = 0; save(KEY_SINCE, 0);
       save(KEY_FOUND, found); updateCount(); play("confirm");
       renderCloud(`Restored ${Object.keys(found).length} entries.`);
     } catch {
@@ -771,31 +969,50 @@
     }
   });
 
+  function compareHTML() {
+    if (!friend) return "";
+    const nm = friend.name || "Your friend";
+    const theyHave = sortEntries(entries.filter(e => friend.set[e.id] && !found[e.id]));
+    const youHave = sortEntries(entries.filter(e => found[e.id] && !friend.set[e.id]));
+    const both = entries.filter(e => found[e.id] && friend.set[e.id]).length;
+    return `<div class="compare">
+      <div class="leftsum">Comparing with <b>${esc(nm)}</b>: you both have ${both} · ${esc(nm)} has ${Object.keys(friend.set).length} / ${entries.length}</div>
+      <div class="sgroup"><div class="tier-head">${esc(nm.toUpperCase())} HAS, YOU DON'T<small>${theyHave.length}</small></div>${theyHave.map(e => resultHTML(e)).join("") || '<p class="cat-note">Nothing. You have everything they do.</p>'}</div>
+      <div class="sgroup"><div class="tier-head">YOU HAVE, ${esc(nm.toUpperCase())} DOESN'T<small>${youHave.length}</small></div>${youHave.map(e => resultHTML(e)).join("") || '<p class="cat-note">Nothing.</p>'}</div>
+    </div>`;
+  }
+
   function renderManual() {
     screen.innerHTML = `
       <div class="manual">
         <h3>-=-=- TRACKER GUIDE -=-=-</h3>
         <h4>How do I mark something as found?</h4>
-        <p>Hover over any weapon, person or document and a star appears in its corner. Click the star to mark it found, and click it again to unmark it. On a phone the star is always showing. Every stat page also has a star.</p>
+        <p>Hover over a weapon, person or document and press the star in its corner (on a phone it's always showing). Or switch to the checklist view (&#9776; next to the search bar) and tick the boxes. Every stat page has a star too.</p>
+        <h4>I marked the wrong thing!</h4>
+        <p>Press UNDO on the message at the bottom of the screen, or Ctrl+Z. It works for whole tiers and tabs too.</p>
+        <h4>Can I mark lots at once?</h4>
+        <p>Mark one entry, then hold Shift and press the star on another: everything between them gets the same state. You can also click a TIER header, or click the Biography/Documents tab you're already on, to unlock the whole thing (it asks "ARE YOU SURE?" first).</p>
+        <h4>How do I see only what I'm missing?</h4>
+        <p>Use ALL / MISSING / FOUND next to the search bar. The WHAT'S LEFT tab lists every missing entry in the whole PDA in one place.</p>
         <h4>How do I see stats?</h4>
-        <p>Just click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock: mark the card and every variant inside it counts, then switch between them with the tabs along the bottom. The arrows next to Preview step through the rest of that tab.</p>
-        <h4>Can I unlock a whole tab of people or documents?</h4>
-        <p>Click the tab you're already on (like Scavengers or Locations) a second time. Like tiers, it asks "ARE YOU SURE?" first.</p>
-        <h4>What do the stats mean?</h4>
-        <p>Hover over a stat name (tap it on a phone) to see the game's explanation, where one is on file. Pictures can have hover text too.</p>
-        <h4>Can I unlock a whole tier at once?</h4>
-        <p>Click a TIER header in TOOLS. It asks "ARE YOU SURE?" first, so a misclick won't do anything until you press YES. If the tier is already complete, the same button locks it all again.</p>
-        <h4>How are entries ordered?</h4>
-        <p>Everything you've found comes first in A–Z order, then everything you haven't found, also A–Z.</p>
+        <p>Click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock; switch between variants with the tabs along the bottom. The arrows next to Preview flip through pictures.</p>
+        <h4>Searching</h4>
+        <p>Search finds names, and also stats: try "9x19mm", "tier 5" or "suppressor". Narrow it with the WEAPONS / PEOPLE / DOCUMENTS buttons.</p>
+        <h4>Favourites and notes</h4>
+        <p>Press the &#9829; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
+        <h4>Sharing and comparing</h4>
+        <p>CLOUD gives you a link anyone can open to see your PDA (read-only). Paste a friend's link there to see what they have that you don't.</p>
         <h4>Will I lose my progress?</h4>
-        <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then.</p>
+        <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then. The site reminds you after 25 new marks.</p>
         <h3>-=-=- QUICK KEYS -=-=-</h3>
+        <div class="k">ARROW KEYS - MOVE BETWEEN ENTRIES</div>
+        <div class="k">SPACE - MARK FOUND / MISSING</div>
+        <div class="k">ENTER - OPEN</div>
+        <div class="k">SHIFT + STAR - MARK A RANGE</div>
+        <div class="k">CTRL + Z - UNDO</div>
         <div class="k">/ - SEARCH</div>
         <div class="k">ESC - BACK / CLEAR SEARCH</div>
-        <div class="k">MOUSE WHEEL ON TABS - SCROLL TABS</div>
-        <div class="k">CLICK ENTRY - OPEN IT</div>
-        <div class="k">HOVER + STAR - MARK FOUND / MISSING</div>
-        <div class="k">CLICK TIER HEADER - UNLOCK WHOLE TIER</div>
+        <div class="k">&#8592; &#8594; ON A PAGE - NEXT / PREVIOUS PICTURE</div>
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
       </div>`;
@@ -815,7 +1032,7 @@
         <div class="srow"><input type="range" id="vol" min="0" max="100" step="5" value="${settings.volume}" aria-label="Volume"><span>Volume: <b id="volv">${settings.volume}</b>%</span></div>
         <h3>User Preference</h3>
         ${sw("lockedNames", "Show names on locked entries?")}
-        ${sw("hideFound", "Hide entries you've already found?")}
+        <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Data</h3>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
@@ -825,7 +1042,7 @@
     $("#reset").onclick = ev => {
       const b = ev.currentTarget;
       if (b.dataset.armed) {
-        found = {}; save(KEY_FOUND, found); updateCount(); play("deselect");
+        change(Object.keys(found), false, "reset all progress"); play("deselect");
         b.textContent = "RESET ALL PROGRESS"; delete b.dataset.armed;
         $("#rmsg").textContent = "Progress cleared.";
       } else {
@@ -854,12 +1071,25 @@
   }
   const openDetail = (type, id) => { play("open"); imgIndex = 0; detail = { type, id }; render(); };
 
-  function handleStar(star) {
+  function handleStar(star, shift) {
     const id = star.dataset.star;
-    toggle(id);
+    // shift-click: give everything between the last star and this one the same state
+    if (shift && lastStar && !detail) {
+      const order = [...screen.querySelectorAll("[data-entry]")].map(el => trackOf(el.dataset.entry));
+      const a = order.indexOf(trackOf(lastStar.id)), b = order.indexOf(trackOf(id));
+      if (a >= 0 && b >= 0) {
+        const ids = order.slice(Math.min(a, b), Math.max(a, b) + 1);
+        if (change(ids, lastStar.on, "a shift-click range")) play(lastStar.on ? "confirm" : "deselect");
+        keepScroll(render); return;
+      }
+    }
+    const on = toggle(id);
+    lastStar = { id, on };
     if (detail) { render(); return; }
+    const focusedEntry = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.entry;
     keepScroll(render);
     flash(id);
+    if (focusedEntry) { const el = screen.querySelector(`[data-entry="${CSS.escape(focusedEntry)}"]`); if (el) el.focus({ preventScroll: true }); }
   }
 
   screen.addEventListener("click", ev => {
@@ -869,7 +1099,20 @@
 
     // the star is checked first, so pressing it never also opens the entry under it
     const star = t.closest("[data-star]");
-    if (star) { ev.preventDefault(); handleStar(star); return; }
+    if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
+
+    const fav = t.closest("[data-fav]");
+    if (fav) {
+      const id = fav.dataset.fav;
+      if (favs[id]) delete favs[id]; else favs[id] = 1;
+      save(KEY_FAV, favs); play(favs[id] ? "select" : "deselect");
+      toast(favs[id] ? "Added to favourites. It shows on your Profile." : "Removed from favourites.");
+      render(); return;
+    }
+    const bt = t.closest("[data-btab]");
+    if (bt) { play("click"); ui.btab = bt.dataset.btab; persistUI(); render(); if (ui.btab === "notes") { const ta = screen.querySelector(".notes"); if (ta) ta.focus(); } return; }
+    const st = t.closest("[data-stype]");
+    if (st) { play("click"); ui.stype = st.dataset.stype; persistUI(); render(); return; }
 
     const arrow = t.closest("[data-img]");
     if (arrow) { play("click"); imgIndex += +arrow.dataset.img; render(); return; }
@@ -906,10 +1149,132 @@
     }
     if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
   });
-  // keyboard: Enter / Space on a focused star
-  screen.addEventListener("keydown", ev => {
-    const star = ev.target.closest && ev.target.closest(".hstar");
-    if (star && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); ev.stopPropagation(); handleStar(star); }
+  // notes save as you type
+  screen.addEventListener("input", ev => {
+    const ta = ev.target.closest && ev.target.closest("[data-note]");
+    if (!ta) return;
+    const id = ta.dataset.note;
+    if (ta.value.trim()) notes[id] = ta.value; else delete notes[id];
+    save(KEY_NOTES, notes);
+  });
+
+  /* =====================================================================
+     KEYBOARD: arrows move, Space marks, Enter opens, Ctrl+Z undoes
+     ===================================================================== */
+  function moveFocus(key) {
+    const els = [...screen.querySelectorAll("[data-entry]")].filter(el => el.offsetParent);
+    if (!els.length) return;
+    const cur = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-entry]");
+    if (!cur || !els.includes(cur)) { els[0].focus(); return; }
+    let next;
+    if (key === "ArrowRight") next = els[els.indexOf(cur) + 1];
+    else if (key === "ArrowLeft") next = els[els.indexOf(cur) - 1];
+    else {
+      const r = cur.getBoundingClientRect(), cx = r.left + r.width / 2, dir = key === "ArrowDown" ? 1 : -1;
+      let best = Infinity;
+      els.forEach(el => {
+        if (el === cur) return;
+        const q = el.getBoundingClientRect(), dy = (q.top - r.top) * dir;
+        if (dy < 4) return;
+        const d = dy * 3 + Math.abs(q.left + q.width / 2 - cx);
+        if (d < best) { best = d; next = el; }
+      });
+    }
+    if (next) { next.focus(); next.scrollIntoView({ block: "nearest" }); }
+  }
+  document.addEventListener("keydown", e => {
+    const tag = document.activeElement && document.activeElement.tagName;
+    const typing = /INPUT|TEXTAREA|SELECT/.test(tag);
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing) { e.preventDefault(); undo(); return; }
+    if (typing) return;
+    if (e.key.startsWith("Arrow")) {
+      if (detail && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        const imgs = screen.querySelectorAll("[data-img]");
+        if (imgs.length) { e.preventDefault(); imgIndex += e.key === "ArrowRight" ? 1 : -1; play("click"); render(); }
+        return;
+      }
+      if (!detail) { e.preventDefault(); moveFocus(e.key); }
+      return;
+    }
+    if (e.key === " ") {
+      const el = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-entry]");
+      const st = el && el.querySelector("[data-star]");
+      if (st) { e.preventDefault(); handleStar(st, e.shiftKey); }
+      else if (document.activeElement && document.activeElement.classList.contains("hstar")) { e.preventDefault(); handleStar(document.activeElement, e.shiftKey); }
+    }
+  });
+
+  /* phones: swipe the picture to change image, swipe the stats to change variant */
+  let sw0 = null;
+  screen.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") sw0 = { x: e.clientX, y: e.clientY, t: e.target }; });
+  screen.addEventListener("pointerup", e => {
+    if (!sw0) return;
+    const dx = e.clientX - sw0.x, dy = e.clientY - sw0.y, tgt = sw0.t; sw0 = null;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > 40 || !detail) return;
+    const step = dx < 0 ? 1 : -1;
+    if (tgt.closest(".preview") && screen.querySelector("[data-img]")) { imgIndex += step; play("click"); render(); return; }
+    if (tgt.closest(".edata")) {
+      const tabs = [...screen.querySelectorAll("[data-member]")];
+      const i = tabs.findIndex(b => b.classList.contains("on"));
+      const nxt = tabs[i + step];
+      if (nxt) { play("click"); imgIndex = 0; detail = { type: "person", id: nxt.dataset.member }; render(); }
+    }
+  });
+
+  /* =====================================================================
+     TOOLBAR (grid/list + all/missing/found), TOASTS, SHARED-LINK BANNER
+     ===================================================================== */
+  function syncToolbar() {
+    document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", ui.view === b.dataset.view));
+    document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", ui.filter === b.dataset.filter));
+  }
+  document.querySelector(".viewtools").addEventListener("click", e => {
+    const v = e.target.closest("[data-view]"), f = e.target.closest("[data-filter]");
+    if (v) { ui.view = v.dataset.view; }
+    else if (f) { ui.filter = f.dataset.filter; }
+    else return;
+    play("click"); persistUI(); detail = null; render();
+  });
+
+  const toastEl = document.createElement("div"); toastEl.className = "toast"; toastEl.setAttribute("role", "status");
+  const nagEl = document.createElement("div"); nagEl.className = "toast nag"; nagEl.setAttribute("role", "status");
+  document.body.append(toastEl, nagEl);
+  function toast(msg, o = {}) {
+    const el = o.nag ? nagEl : toastEl;
+    el.innerHTML = `<span>${esc(msg)}</span>${o.undo ? '<button data-t="undo">UNDO</button>' : ""}${o.action ? `<button data-t="act">${esc(o.actionLabel || "OK")}</button>` : ""}<button data-t="x" aria-label="Close">×</button>`;
+    el._act = o.action || null;
+    el.classList.add("on");
+    clearTimeout(el._timer); el._timer = setTimeout(() => el.classList.remove("on"), o.ms || 5000);
+  }
+  [toastEl, nagEl].forEach(el => el.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.t === "undo") undo();
+    else if (b.dataset.t === "act" && el._act) el._act();
+    el.classList.remove("on");
+  }));
+
+  const bannerEl = $("#banner");
+  function renderBanner() {
+    if (viewOnly) {
+      bannerEl.hidden = false;
+      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA · READ-ONLY · ${Object.keys(viewOnly.set).length} / ${entries.length} FOUND</span>
+        <span><button data-b="compare">COMPARE WITH MINE</button><button data-b="exit">EXIT</button></span>`;
+    } else if (friend) {
+      const n = entries.filter(e => friend.set[e.id] && !found[e.id]).length;
+      bannerEl.hidden = false;
+      bannerEl.innerHTML = `<span>COMPARING WITH <b>${esc(friend.name || "A FRIEND")}</b> · THEY HAVE ${n} YOU DON'T</span>
+        <span><button data-b="show">SHOW</button><button data-b="stop">STOP</button></span>`;
+    } else bannerEl.hidden = true;
+  }
+  function leaveView() { viewOnly = null; try { history.replaceState(null, "", location.pathname + location.search); } catch { location.hash = ""; } }
+  bannerEl.addEventListener("click", e => {
+    const b = e.target.closest("[data-b]"); if (!b) return;
+    play("click");
+    if (b.dataset.b === "exit") leaveView();
+    if (b.dataset.b === "compare") { friend = viewOnly; save(KEY_FRIEND, friend); leaveView(); ui.tab = "cloud"; }
+    if (b.dataset.b === "show") { ui.tab = "cloud"; detail = null; if (query) clearSearch(false); }
+    if (b.dataset.b === "stop") { friend = null; save(KEY_FRIEND, null); }
+    persistUI(); updateCount(); renderTabs(); render();
   });
 
   /* =====================================================================
@@ -956,6 +1321,9 @@
   new MutationObserver(() => { if (!screen.dataset.keepx) showActiveSubtab(); }).observe(screen, { childList: true });
 
   /* ---------- go ---------- */
+  if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
+  if (newIds.size) setTimeout(() => toast(`${newIds.size} new entr${newIds.size > 1 ? "ies were" : "y was"} added since your last visit.`, {
+    action: () => { searchBox.value = ":new"; query = ":new"; clearBtn.hidden = false; renderTabs(); render(); }, actionLabel: "SHOW THEM", ms: 10000 }), 400);
   renderTabs();
   updateCount();
   render();
