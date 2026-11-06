@@ -24,7 +24,7 @@
   const KEY_FRIEND= pk("pda-friend-v1");
   const KEY_SINCE = pk("pda-since-backup-v1");
   const KEY_PROG  = pk("pda-progress-v1");
-  const KEY_LOAD  = pk("pda-loadout-v1");      // { slot: entry id }      // { "2026-11-06": 42, ... } found count per day
+  const KEY_LOAD  = pk("pda-loadout-v2");      // { items: [[entry id, count]], base: "" }      // { "2026-11-06": 42, ... } found count per day
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
@@ -41,7 +41,8 @@
   let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
   let sinceBackup = load(KEY_SINCE, 0);
   let progress = load(KEY_PROG, {});
-  let loadout  = load(KEY_LOAD, {});
+  let loadout  = load(KEY_LOAD, null);
+  if (!loadout || !Array.isArray(loadout.items)) loadout = { items: [], base: "" };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   // this browser tab's session: what you had when you opened the site
   let sessionStart = null;
@@ -1035,60 +1036,76 @@
      WHAT'S LEFT — every missing entry in one place
      ===================================================================== */
   /* =====================================================================
-     LOADOUT PLANNER: pick what you carry, see the PDA numbers added up
+     LOADOUT PLANNER: carry anything (duplicates too); space is carry weight
      ===================================================================== */
-  const GUN_CATS = ["PISTOLS", "SUBMACHINE GUNS", "RIFLES", "MACHINE GUNS", "SHOTGUNS", "HEAVY PISTOL", "HEAVY RIFLES"];
-  const gearOf = t => e => e.stats && e.stats["GEAR TYPE"] === t;
-  const inCats = names => e => names.includes(e.group);
-  const LOAD_SLOTS = [
-    ["primary", "PRIMARY", inCats(GUN_CATS)], ["secondary", "SECONDARY", inCats(GUN_CATS)],
-    ["melee", "MELEE", inCats(["BLUDGEON", "SHARP", "ETHEREAL"])],
-    ["util1", "UTILITY 1", inCats(["UTILITY"])], ["util2", "UTILITY 2", inCats(["UTILITY"])], ["util3", "UTILITY 3", inCats(["UTILITY"])],
-    ["helmet", "HELMET", gearOf("HELMET")], ["face", "FACE WEAR", gearOf("FACE WEAR")], ["torso", "TORSO WEAR", gearOf("TORSO WEAR")],
-    ["legs", "LEG WEAR", gearOf("LEG WEAR")], ["back", "BACKPACK", gearOf("BACKPACK")], ["neck", "NECKGEAR", gearOf("NeckGear")]
-  ];
-  const LOAD_SUMS = ["WEIGHT", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "DEFENSE INCREASE", "SHIELD DURABILITY", "SUPER SHIELD INCREASE"];
-  const KEY_STATS = ["CALIBER TYPE", "DAMAGE", "STRENGTH", "RPM", "GEAR TYPE", "DEFENSE INCREASE", "SHIELD DURABILITY", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "WEIGHT"];
+  const LOAD_SUMS = ["CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "DEFENSE INCREASE", "SHIELD DURABILITY", "SUPER SHIELD INCREASE"];
+  const KEY_STATS = ["CALIBER TYPE", "DAMAGE", "STRENGTH", "RPM", "GEAR TYPE", "DEFENSE INCREASE", "SHIELD DURABILITY", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE"];
   const num = v => { const n = parseFloat(String(v)); return isNaN(n) ? 0 : n; };
   const fmtN = n => String(Math.round(n * 1000) / 1000);
-  function loadoutPicks() {
-    return LOAD_SLOTS.map(([k, label]) => [k, label, loadout[k] && byId.get(loadout[k])]).filter(x => x[2]);
-  }
+  const saveLoad = () => save(KEY_LOAD, loadout);
+  const loadItems = () => loadout.items.map(([id, n]) => [byId.get(id), n]).filter(([e]) => e);
   function loadoutSums() {
-    const out = {};
-    loadoutPicks().forEach(([, , e]) => LOAD_SUMS.forEach(k => { const v = e.stats && e.stats[k]; if (v != null) out[k] = (out[k] || 0) + num(v); }));
+    const out = { WEIGHT: 0 };
+    loadItems().forEach(([e, n]) => {
+      out.WEIGHT += num(e.stats && e.stats.WEIGHT) * n;
+      LOAD_SUMS.forEach(k => { const v = e.stats && e.stats[k]; if (v != null) out[k] = (out[k] || 0) + num(v) * n; });
+    });
     return out;
   }
   function renderLoadout() {
     const onlyFound = !!ui.loadFound;
-    const rows = LOAD_SLOTS.map(([k, label, test]) => {
-      const pool = allTools().filter(e => !e.unknown && test(e) && (!onlyFound || isFound(e.id) || loadout[k] === e.id));
-      const groups = [...new Set(pool.map(e => e.group))];
-      const cur = loadout[k] && byId.get(loadout[k]);
-      const opts = groups.map(g => `<optgroup label="${esc(g)}">${sortEntries(pool.filter(e => e.group === g)).map(e =>
-        `<option value="${esc(e.id)}"${cur === e ? " selected" : ""}>${isFound(e.id) ? "★ " : ""}${esc(e.name)} (T${e.tier})</option>`).join("")}</optgroup>`).join("");
-      const facts = cur ? KEY_STATS.filter(s => cur.stats && cur.stats[s] != null).map(s =>
-        `<span><i style="color:${TOOL_STAT_COLORS[s] || "#ddd"}">${esc(s)}</i>: ${esc(cur.stats[s])}</span>`).join("") : "";
-      return `<div class="lslot"><label>${label}</label>
-        <select data-lslot="${k}"><option value="">— none —</option>${opts}</select>
-        ${cur ? `<button class="mini-btn" data-open-tool="${esc(cur.id)}" title="Open its PDA page">OPEN</button>` : "<span></span>"}
-        <div class="lfacts">${facts}</div></div>`;
+    const pool = allTools().filter(e => !e.unknown && (!onlyFound || isFound(e.id)));
+    const opts = PDA_DATA.tools.map(c => {
+      const list = sortEntries(pool.filter(e => e.group === c.name));
+      return list.length ? `<optgroup label="${esc(c.name)}">${list.map(e => `<option value="${esc(e.id)}">${isFound(e.id) ? "★ " : ""}${esc(e.name)} (T${e.tier}${e.stats && e.stats.WEIGHT != null ? " · " + esc(e.stats.WEIGHT) : ""})</option>`).join("")}</optgroup>` : "";
     }).join("");
+    const items = loadItems();
     const sums = loadoutSums();
+    const hasBase = String(loadout.base).trim() !== "" && !isNaN(parseFloat(loadout.base));
+    const cap = hasBase ? parseFloat(loadout.base) + (sums["CARRY WEIGHT INCREASE"] || 0) : null;
+    const used = sums.WEIGHT, over = cap != null && used > cap;
+    const pct = cap ? Math.min(100, used / cap * 100) : 0;
+    const rows = items.map(([e, n], i) => {
+      const facts = KEY_STATS.filter(s => e.stats && e.stats[s] != null).map(s =>
+        `<span><i style="color:${TOOL_STAT_COLORS[s] || "#ddd"}">${esc(s)}</i>: ${esc(e.stats[s])}</span>`).join("");
+      const w = num(e.stats && e.stats.WEIGHT);
+      return `<div class="litem">
+        <button class="linkish lname" data-open-tool="${esc(e.id)}" title="Open its PDA page">${esc(e.name)}</button>
+        <span class="lmeta">${esc(e.group)} · T${e.tier}</span>
+        <span class="lcount"><button class="mini-btn" data-lminus="${i}" title="One less">−</button><b>×${n}</b><button class="mini-btn" data-lplus="${i}" title="One more">+</button></span>
+        <span class="lweight">${e.stats && e.stats.WEIGHT != null ? `${fmtN(w * n)} wt` : "no weight"}</span>
+        <button class="mini-btn" data-lremove="${i}" title="Remove">✕</button>
+        ${facts ? `<div class="lfacts">${facts}</div>` : ""}</div>`;
+    }).join("");
     const sumHTML = LOAD_SUMS.filter(k => sums[k] != null).map(k =>
-      `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}${k === "WEIGHT" ? ";text-shadow:0 0 1px #888" : ""}">${k === "WEIGHT" ? "TOTAL WEIGHT" : "TOTAL " + esc(k)}</i>: ${fmtN(sums[k])}${k.includes("DEFENSE") || k.includes("SHIELD") ? "%" : ""}</div>`).join("");
+      `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}">TOTAL ${esc(k)}</i>: ${fmtN(sums[k])}${k.includes("DEFENSE") || k.includes("SHIELD") ? "%" : ""}</div>`).join("");
     screen.innerHTML = `<div class="results loadout">
-      <div class="leftsum"><b>LOADOUT</b> · pick what you carry and see the PDA numbers added up
+      <div class="leftsum"><b>LOADOUT</b> · carry anything you like, as many as you like
         <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
-      <div class="lgrid">${rows}</div>
-      <div class="dbox ltotal"><div class="dhead">Totals</div><div class="stats">${sumHTML || '<p class="none">Pick something to see totals.</p>'}
-        <p class="cat-note">These are the PDA's own numbers added together. The game may combine some of them differently (for example, whether defence from two pieces of gear stacks).</p></div></div>
+      <div class="ladd"><select data-lpick><option value="">— pick a weapon, utility or gear —</option>${opts}</select><button class="mini-btn go" data-ladd>ADD</button></div>
+      <div class="dbox lspace${over ? " over" : ""}"><div class="dhead">Space</div><div class="stats">
+        <label class="lbase">YOUR BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(loadout.base)}" placeholder="type it in"></label>
+        <div class="lbar"><div style="width:${pct}%"></div></div>
+        <div class="stat"><i style="color:#bbb">USED</i>: ${fmtN(used)}${cap != null ? ` / ${fmtN(cap)}` : ""}${cap != null ? (over ? ` <b class="lover">OVER BY ${fmtN(used - cap)}</b>` : ` <span class="lfree">(${fmtN(cap - used)} free)</span>`) : ""}</div>
+        ${cap == null ? '<p class="cat-note">Type in your base carry weight to see how much space you have. Backpacks and vests with CARRY WEIGHT INCREASE add to it.</p>' : `<p class="cat-note">Space = base ${fmtN(parseFloat(loadout.base))} + ${fmtN(sums["CARRY WEIGHT INCREASE"] || 0)} from gear. You can go over; it just shows how far.</p>`}
+        ${sumHTML}
+      </div></div>
+      <div class="llist">${rows || '<p class="none">Nothing yet. Pick something above and press ADD.</p>'}</div>
+      <p class="cat-note">Totals are the PDA's numbers added together. The game may combine some differently (for example, whether defence from two pieces of gear stacks).</p>
     </div>`;
   }
+  function loadoutAdd(id) {
+    if (!byId.has(id)) return;
+    const it = loadout.items.find(x => x[0] === id);
+    if (it) it[1]++; else loadout.items.push([id, 1]);
+    saveLoad(); play("select"); keepScroll(render);
+  }
   function loadoutText() {
-    const picks = loadoutPicks(), sums = loadoutSums();
-    return `PDA LOADOUT${user ? " — " + user : ""}\n` + picks.map(([, label, e]) => `${label}: ${e.name} (Tier ${e.tier})`).join("\n") +
-      (Object.keys(sums).length ? "\n\n" + LOAD_SUMS.filter(k => sums[k] != null).map(k => `TOTAL ${k}: ${fmtN(sums[k])}`).join("\n") : "");
+    const sums = loadoutSums(), hasBase = String(loadout.base).trim() !== "";
+    const cap = hasBase ? parseFloat(loadout.base) + (sums["CARRY WEIGHT INCREASE"] || 0) : null;
+    return `PDA LOADOUT${user ? " — " + user : ""}\n` + loadItems().map(([e, n]) => `${n > 1 ? n + "x " : ""}${e.name} (Tier ${e.tier})`).join("\n") +
+      `\n\nWEIGHT: ${fmtN(sums.WEIGHT)}${cap != null ? " / " + fmtN(cap) : ""}` +
+      LOAD_SUMS.filter(k => sums[k] != null).map(k => `\nTOTAL ${k}: ${fmtN(sums[k])}`).join("");
   }
 
   function renderMissing() {
@@ -1646,7 +1663,14 @@
     if (nxb) { goNext(byId.get(nxb.dataset.next)); return; }
     const mn = t.closest("[data-marknext]");
     if (mn) { markAndNext(mn.dataset.marknext); return; }
-    if (t.closest("[data-lclear]")) { if (Object.keys(loadout).length) { loadout = {}; save(KEY_LOAD, loadout); play("deselect"); render(); toast("Loadout cleared."); } return; }
+    if (t.closest("[data-ladd]")) { const sel = screen.querySelector("[data-lpick]"); if (sel && sel.value) loadoutAdd(sel.value); else toast("Pick something first."); return; }
+    { const b = t.closest("[data-lplus],[data-lminus],[data-lremove]");
+      if (b) { const i = +(b.dataset.lplus ?? b.dataset.lminus ?? b.dataset.lremove), it = loadout.items[i]; if (!it) return;
+        if (b.dataset.lplus != null) { it[1]++; play("select"); }
+        else if (b.dataset.lminus != null && it[1] > 1) { it[1]--; play("deselect"); }
+        else { loadout.items.splice(i, 1); play("deselect"); }
+        saveLoad(); keepScroll(render); return; } }
+    if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
     if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
     if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
@@ -1729,7 +1753,8 @@
     else if (sel.matches("[data-tmin]")) ui.tmin = sel.value.trim();
     else if (sel.matches("[data-tmax]")) ui.tmax = sel.value.trim();
     else if (sel.matches("[data-cal]")) ui.cal = sel.value;
-    else if (sel.matches("[data-lslot]")) { if (sel.value) loadout[sel.dataset.lslot] = sel.value; else delete loadout[sel.dataset.lslot]; save(KEY_LOAD, loadout); play("select"); keepScroll(render); return; }
+    else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
+    else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-lfound]")) { ui.loadFound = sel.checked; play("click"); persistUI(); keepScroll(render); return; }
     else return;
     play("click"); persistUI(); render();
