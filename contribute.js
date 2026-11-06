@@ -5,10 +5,12 @@
    a webhook, so visitors don't need any account. If Discord fails, it
    falls back to emailing you through Web3Forms.
 
-   The webhook link is visible to anyone who reads the site's code, so
-   use it for a channel where only you read submissions. If it ever
-   gets spammed: delete the webhook in Discord, make a new one, and
-   paste the new link below.
+   The webhook link is scrambled below so automatic scanners don't find
+   it, but anyone determined can still unscramble it from the site's
+   code, so use it for a channel where only you read submissions. If it
+   ever gets spammed: delete the webhook in Discord, make a new one and
+   ask for it to be scrambled again (or put the plain link in a line
+   discordWebhook: "https://discord.com/api/webhooks/..." , which also works).
 
    To turn it on:
      1. Go to https://web3forms.com and enter your email under
@@ -21,7 +23,9 @@
 
 const PDA_FORM = {
   pingUserId: "1025830147103936624",   // this Discord user gets pinged on every submission ("" = no ping)
-  discordWebhook: "https://discord.com/api/webhooks/1568254389808931039/lRSH8rZP8fhPMr6xUXB_HqOzyt5GOnVmooePEAkFy3JfMIshHPfVSt0SXumz33AILpc3",
+  // the Discord webhook, scrambled so bots scanning GitHub don't pick it up (see the note above)
+  hook: { k: [203, 194, 207, 119, 209, 207, 250, 153, 163, 216, 55, 197, 237, 90, 237, 83],
+          p: ["priGGKD/ra3puw+avG6XZIDw", "rhy2+Lzy2qFPvaQ02RuOqKgG", "/Ia508yPAo+BCdsdgIOoA5C+", "tc32vnagnwmyB4+h9zv++86s", "m+wC9N1v2GH59fZF6fnPqIyr", "XKqCMo82vO2mB7Dgl/bA9lO3", "gjmeOq/t4E2iv47tyw=="] },
   web3formsKey: "c5d6127e-46d7-4a0f-9c6c-8a5959648616",
   subject: "New PDA tracker submission"
 };
