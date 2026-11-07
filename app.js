@@ -1131,6 +1131,8 @@
       strength: xnum(s.STRENGTH) || 1, rpm: xnum(s.RPM) }));
   }
   const dmgWeapons = () => allTools().filter(e => !e.unknown && fireModes(e).some(m => m.melee || m.cals.length));
+  /* "Advanced Scavengers (Master)" for a variant, plain name otherwise */
+  const tgtName = p => { const c = p.card; return c && c.kind === "group" && c.members && c.members.length > 1 && c.name && c.name !== p.name ? `${c.name} (${p.name})` : p.name; };
   const dmgTargets = () => people.filter(p => p.base && p.base.Health != null);
   /* the rules, in order: superarmor bypass → superarmor → defense penetration → defense */
   function calcHit({ dmg, sa, saBypass, def, pen, trueDmg }) {
@@ -1177,7 +1179,7 @@
     const opt = (v, cur, label) => `<option value="${esc(v)}"${String(cur) === String(v) ? " selected" : ""}>${esc(label)}</option>`;
     const gunOpts = PDA_DATA.tools.map(c => { const l = sortEntries(weapons.filter(e => e.group === c.name)); return l.length ? `<optgroup label="${esc(c.name)}">${l.map(e => opt(e.id, d.gun, e.name + (isFound(e.id) ? " ★" : ""))).join("")}</optgroup>` : ""; }).join("");
     const ammoOpts = [...new Set(pool.map(a => a.caliber))].map(c => `<optgroup label="${esc(c)}">${pool.filter(a => a.caliber === c).map(a => opt(a.key, ammo && ammo.key, a.name)).join("")}</optgroup>`).join("");
-    const tgtGroups = PDA_DATA.biography.map(g => { const l = dmgTargets().filter(p => p.group === g.name || (p.card && p.card.entry && p.card.entry.group === g.name)); return l.length ? `<optgroup label="${esc(g.name)}">${l.map(p => opt(p.id, d.target, p.name)).join("")}</optgroup>` : ""; }).join("");
+    const tgtGroups = PDA_DATA.biography.map(g => { const l = dmgTargets().filter(p => p.group === g.name || (p.card && p.card.entry && p.card.entry.group === g.name)); return l.length ? `<optgroup label="${esc(g.name)}">${l.map(p => [p, tgtName(p)]).sort((a, b) => collator.compare(a[1], b[1])).map(([p, n]) => opt(p.id, d.target, n)).join("")}</optgroup>` : ""; }).join("");
 
     const step = (k, v, note = "") => `<div class="stat"><i style="color:#c8a0ff">${k}</i>: ${v}${note ? ` <span class="dim">${note}</span>` : ""}</div>`;
     let steps = "";
@@ -1192,7 +1194,7 @@
       const penP = melee ? (xnum(mode.s["DEFENSE BYPASS"]) || 0) : ammo ? (ammo.pen || 0) * 100 : 0;
       steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && d.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
     }
-    const tShield = tb && (tb.Shield || tb.Supershield) ? `<p class="cat-note">${tgt.name} also has ${[tb.Shield ? `Shield ${tb.Shield}` : "", tb.Supershield ? `Supershield ${tb.Supershield}` : ""].filter(Boolean).join(" and ")}. These aren't counted: the chart doesn't say how they work.</p>` : "";
+    const tShield = tb && (tb.Shield || tb.Supershield) ? `<p class="cat-note">${esc(tgtName(tgt))} also has ${[tb.Shield ? `Shield ${tb.Shield}` : "", tb.Supershield ? `Supershield ${tb.Supershield}` : ""].filter(Boolean).join(" and ")}. These aren't counted: the chart doesn't say how they work.</p>` : "";
     const resist = tb ? Object.entries(tb).filter(([k]) => !["Health", "Speed", "Defense", "Super Armour", "Shield", "Supershield"].includes(k)).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ") : "";
 
     /* every ammo that fits, side by side */
@@ -1223,7 +1225,7 @@
         </div></div>
         <div class="dbox"><div class="dhead">Target</div><div class="dform">
           <label>WHO <select data-dmg="target"><option value="">— custom numbers —</option>${tgtGroups}</select></label>
-          ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgt.name.toUpperCase())}</button>
+          ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgtName(tgt).toUpperCase())}</button>
             <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
           : `<label>HEALTH <input type="number" step="any" data-dmg="hp" value="${esc(d.hp)}"></label>
              <label>DEFENSE % <input type="number" step="any" data-dmg="def" value="${esc(d.def)}"></label>
