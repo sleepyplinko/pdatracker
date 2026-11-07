@@ -30,7 +30,30 @@ Put the address in [`../cloud-config.js`](../cloud-config.js):
 Commit, and the ACCOUNT section appears in the CLOUD tab, plus
 "FOUND BY" on item pages and RAREST FIRST in the sort menu.
 
+## 4. Update for the admin page, friends, leaderboard and submissions
+(Do this once if you set the backend up before November 2026.)
+1. D1 database `pda` → **Console**: paste everything in
+   [`schema-update-2.sql`](schema-update-2.sql) and press **Execute**.
+   (New setups can paste [`schema-full.sql`](schema-full.sql) instead of
+   `schema.sql` in step 1.)
+2. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**.
+3. Worker → **Settings → Variables and Secrets → Add**:
+   - `ADMINS` (Text): your account name(s) on the site, comma separated,
+     e.g. `Gabe`. Logging in with one of these names shows the ADMIN tab.
+   - `DISCORD_WEBHOOK` (**Secret**, optional): a Discord webhook URL. Each
+     new submission sends a short ping there. Because it's a secret it
+     never appears in the site's files. Leave it out for no pings.
+   - `DISCORD_PING` (Text, optional): your Discord user id, so the ping
+     mentions you.
+   Deploy.
+
+SUBMIT now saves straight to the database; you review it in the ADMIN tab
+(mark done / reject / delete, or PUBLISH INFO to change an entry's stats,
+comment, tier or description for everyone within a minute, no commit
+needed). Published info is stored on the server, separate from data.js.
+
 ## Notes
+- Submissions are limited to 6 per IP per 10 minutes.
 - Passwords never reach the server; the browser turns them into a key
   first, and the server only stores a salted hash of that key.
 - Login/register is limited to 20 tries per IP per 10 minutes.

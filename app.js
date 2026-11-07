@@ -250,6 +250,8 @@
     settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
     community: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M3 5h18v11H9l-5 4v-4H3z"/><path d="M8 10.5h8" stroke-linecap="round"/></svg>',
     damage: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#111"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>',
+    players: '<svg viewBox="0 0 24 24" fill="#111"><circle cx="8" cy="8" r="3.4"/><circle cx="16.5" cy="9" r="2.8"/><path d="M1.5 20c.4-4 3-6.2 6.5-6.2s6.1 2.2 6.5 6.2zM13.6 14.6c.8-.5 1.8-.8 2.9-.8 3 0 5.2 1.9 5.6 5.4h-7.4c-.1-1.8-.5-3.4-1.1-4.6z"/></svg>',
+    admin: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.5 8.6-8 10-4.5-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>',
     loadout: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M8 4h8l1 3h3v13H4V7h3z"/><path d="M9 12h6M12 9v6"/></svg>',
     missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
     heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
@@ -374,11 +376,11 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community"];
-  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE" };
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "players", "admin"];
+  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", players: "PLAYERS", admin: "ADMIN" };
   /* the checklist tabs sit on top, everything else along the bottom */
   const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout", "damage"];
-  const BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
+  let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
   const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
   function renderTabs() {
     [["#tabs", TOP_TABS], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
@@ -484,11 +486,19 @@
       const sc = screen.querySelector(SCROLLERS);
       if (sc && lastVk && ui.scroll[lastVk]) sc.scrollTop = ui.scroll[lastVk];
     }
+    if (settings.kbMode && !detail && !query) {
+      const el = (kbFocus && screen.querySelector(`[data-entry="${CSS.escape(kbFocus)}"]`)) || (!same && screen.querySelector("[data-entry]"));
+      if (el && document.activeElement !== el && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) el.focus({ preventScroll: true });
+    }
   }
+  let kbFocus = null;
+  screen.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest("[data-entry]"); if (el) kbFocus = el.dataset.entry; });
   function renderInner() {
     screen.classList.toggle("show-locked-names", !!settings.lockedNames);
     screen.classList.toggle("compact", !!ui.compact);
     document.body.classList.toggle("crt", !!settings.crt);
+    document.body.classList.toggle("light", !!settings.light);
+    document.body.classList.toggle("kbmode", !!settings.kbMode);
     syncToolbar(); renderBanner();
     if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
@@ -499,7 +509,7 @@
     detail = null;
     if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, players: renderPlayers, admin: renderAdmin })[ui.tab]();
   }
 
   /* =====================================================================
@@ -799,7 +809,9 @@
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${moreMenu((fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE CALC</button>` : "") + `<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>` + linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
+            ${countHTML(e)}
             ${rarityHTML(e)}
+            ${communityHTML(e)}
             ${ammoLinkHTML(e)}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
@@ -954,7 +966,7 @@
         return statRow(k, v).replace(/<span class="ev">(.*?)<\/span>/, `<button class="ev linkish" data-tool="${esc(tool.id)}" title="Open ${esc(tool.name)}">$1</button>${isFound(tool.id) ? ' <span class="egot" title="Found">✓</span>' : ""}`);
       }),
       loadoutMarkHTML(e),
-      rarityHTML(card.entry) ? `<div class="erarity">${rarityHTML(card.entry)}</div>` : ""
+      `<div class="erarity">${countHTML(card.entry)}${rarityHTML(card.entry)}${communityHTML(e) || communityHTML(card.entry)}</div>`
     ].join("");
     const empty = !base.length && !skills.length && !load.length;
     const members = card.kind === "group" ? card.members : [];
@@ -1453,6 +1465,20 @@
       LOAD_SUMS.filter(k => sums[k] != null).map(k => `\nTOTAL ${k}: ${fmtN(sums[k])}`).join("");
   }
 
+  /* tiers / tabs you're closest to finishing */
+  function closestHTML() {
+    const groups = [];
+    PDA_DATA.tools.forEach(c => Object.keys(c.tiers).forEach(t => groups.push([`${c.name} · TIER ${t}`, c.items.filter(e => e.tier === +t)])));
+    PDA_DATA.biography.forEach(g => groups.push([`BIOGRAPHY · ${g.name}`, g.items]));
+    PDA_DATA.documents.forEach(g => groups.push([`DOCUMENTS · ${g.name}`, g.items]));
+    const close = groups.map(([n, items]) => { const real = items.filter(e => !e.unknown); const left = sortEntries(real.filter(e => !isFound(e.id))); return [n, left, real.length]; })
+      .filter(([, left, tot]) => left.length && left.length <= 3 && tot > left.length)
+      .sort((a, b) => a[1].length - b[1].length || b[2] - a[2]).slice(0, 10);
+    if (!close.length) return "";
+    const open = e => ({ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]);
+    return `<div class="sgroup closest"><div class="tier-head">ALMOST DONE<small>${close.length}</small></div>${close.map(([n, left, tot]) =>
+      `<div class="closerow"><b>${esc(n)}</b><span class="dim">${tot - left.length}/${tot}</span><span>${left.length} left: ${left.map(e => `<button class="linkish" data-${open(e)}="${esc(e.id)}">${esc(e.name)}</button>`).join(", ")}</span></div>`).join("")}</div>`;
+  }
   function renderMissing() {
     const [f, t] = countOf(entries);
     const groups = [];
@@ -1467,6 +1493,7 @@
     screen.innerHTML = `<div class="results">
       <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}
         <span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#127922; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
+      ${closestHTML()}
       ${body || '<div class="empty-cat"><b>EVERYTHING FOUND</b>Nice work.</div>'}</div>`;
   }
 
@@ -1692,7 +1719,7 @@
     return { name, set };
   }
   function doExport() {
-    const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", v: 2, user, found, favs, notes, log: history_ }, null, 1)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", v: 3, user, found, favs, notes, log: history_, counts, loadout }, null, 1)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `pda-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -1752,6 +1779,7 @@
           if (st === 409) continue;                       // changed elsewhere meanwhile: redo the merge
           if (st !== 200) throw new Error(me.error || "Couldn't save.");
         }
+        if (!acc.at) { pullCounts(); checkAdmin(); }
         acc.base = me.found; acc.ver = me.ver; acc.at = Date.now(); acc.share = me.share; acc.public = me.public; acc.name = me.name;
         save(KEY_ACC, acc);
         applyServer(me.found);
@@ -1815,13 +1843,14 @@
         save(KEY_ACC, acc); play("confirm");
         await syncNow();
         if (mode === "login") { const s = !$("#accShare").checked ? false : null, p = !$("#accPublic").checked ? false : null; if (s === false || p === false) await api("PUT", "/api/me", { ...(s === false ? { share: false } : {}), ...(p === false ? { public: false } : {}) }); }
+        checkAdmin(); pullCounts(); friends = null;
         toast(mode === "login" ? `Logged in as ${acc.name}. Your progress here was merged with your account.` : `Account ${acc.name} created.`, { ms: 6000 });
         loadRarity(true); keepScroll(render);
       } catch { msg.textContent = "Couldn't reach the server. Check your connection."; play("warn"); }
     };
     const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
     on("syncNow", () => { play("click"); syncNow(false); const sb = $("#syncStatus"); if (sb) sb.textContent = "Syncing…"; });
-    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
+    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); setAdmin(false); friends = null; toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
     const flag = (id, k) => { const el = $("#" + id); if (el) el.onchange = async () => { const [st, r] = await api("PUT", "/api/me", { [k]: el.checked }).catch(() => [0, {}]); if (st === 200) { acc.share = r.share; acc.public = r.public; save(KEY_ACC, acc); play("click"); keepScroll(render); } else { toast("Couldn't save that. Try again."); el.checked = !el.checked; } }; };
     flag("accShare2", "share"); flag("accPublic2", "public");
     on("copyLive", async () => { play("click"); try { await navigator.clipboard.writeText($("#liveLink").value); toast("Profile link copied."); } catch { $("#liveLink").select(); toast("Link selected. Press Ctrl+C to copy."); } });
@@ -1936,6 +1965,202 @@
     if (files.length) { e.preventDefault(); importShots(files); }
   });
 
+
+  /* =====================================================================
+     PUBLISHED INFO: stats / comments / descriptions added on the admin page
+     ===================================================================== */
+  let overrides = API ? load("pda-overrides-v1", {}) : {};
+  const origInfo = new Map();         // entry object -> its original fields
+  const findEntry = id => byId.get(id) || people.find(p => p.id === id) || null;
+  function applyOverrides(ov) {
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; }); });
+    origInfo.clear();
+    Object.entries(ov || {}).forEach(([id, o]) => {
+      const e = findEntry(id); if (!e) return;
+      origInfo.set(e, { stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community });
+      if (o.stats && Object.keys(o.stats).length) {
+        const st = { ...(e.stats || {}), ...o.stats };
+        if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }       // weight stays last, like the game
+        e.stats = st;
+      }
+      if (typeof o.comment === "string") e.comment = o.comment;
+      if (typeof o.desc === "string") e.desc = o.desc;
+      if (o.tier && e.section === "tools") e.tier = o.tier;
+      e.community = o.updated || 1;
+    });
+  }
+  async function loadOverrides() {
+    if (!API) return;
+    try {
+      const [st, r] = await api("GET", "/api/overrides");
+      if (st !== 200) return;
+      if (JSON.stringify(r) === JSON.stringify(overrides)) return;
+      overrides = r; save("pda-overrides-v1", r); applyOverrides(r); keepScroll(render);
+    } catch { /* offline: keep the cached copy */ }
+  }
+  const communityHTML = e => e && e.community ? `<div class="stat gap"><i style="color:#8de08d">COMMUNITY</i>: <span class="dim">some info here was sent in by players and approved</span></div>` : "";
+
+  /* =====================================================================
+     FOUND COUNTS: how many times you've picked something up
+     ===================================================================== */
+  const KEY_COUNTS = pk("pda-counts-v1");
+  let counts = load(KEY_COUNTS, {});
+  let countPush = {}, countTimer = 0;
+  const countOf1 = id => counts[trackOf(id)] || (isFound(id) ? 1 : 0);
+  function setCount(id, n) {
+    const t = trackOf(id); n = Math.max(0, Math.min(99999, n | 0));
+    if (n) counts[t] = n; else delete counts[t];
+    save(KEY_COUNTS, counts);
+    if (n && !isFound(id)) change([id], true);
+    if (acc) { countPush[t] = n; clearTimeout(countTimer); countTimer = setTimeout(pushCounts, 2000); }
+  }
+  async function pushCounts() {
+    if (!acc || !Object.keys(countPush).length) return;
+    const set = countPush; countPush = {};
+    try { const [st] = await api("PUT", "/api/counts", { set }); if (st !== 200) Object.assign(countPush, set); } catch { Object.assign(countPush, set); }
+  }
+  async function pullCounts() {
+    if (!acc) return;
+    try {
+      const [st, r] = await api("GET", "/api/counts"); if (st !== 200) return;
+      let changed = false, up = {};
+      Object.entries(r).forEach(([id, n]) => { if ((counts[id] || 0) < n) { counts[id] = n; changed = true; } });
+      Object.entries(counts).forEach(([id, n]) => { if ((r[id] || 0) < n) up[id] = n; });
+      if (changed) save(KEY_COUNTS, counts);
+      if (Object.keys(up).length) await api("PUT", "/api/counts", { counts: up });
+    } catch { /* ignore */ }
+  }
+  function countHTML(e) {
+    if (e.unknown || viewOnly) return "";
+    const n = countOf1(e.id);
+    return `<div class="stat gap timesfound"><i style="color:#f3c400">TIMES FOUND</i>: <button class="mini-btn" data-cnt="-1" data-cntid="${esc(e.id)}" title="One less"${n ? "" : " disabled"}>−</button> <b>${n}</b> <button class="mini-btn" data-cnt="1" data-cntid="${esc(e.id)}" title="Found it again">+</button></div>`;
+  }
+
+  /* =====================================================================
+     PLAYERS: friends + leaderboard
+     ===================================================================== */
+  let friends = null, friendsMsg = "", board = { scope: "", rows: null, msg: "" };
+  async function loadFriends() {
+    if (!acc) { friends = null; return; }
+    try { const [st, r] = await api("GET", "/api/friends"); if (st === 200) friends = r; else friendsMsg = r.error || "Couldn't load friends."; } catch { friendsMsg = "Couldn't reach the server."; }
+    if (ui.tab === "players") keepScroll(render);
+  }
+  async function loadLB() {
+    try { const [st, r] = await api("GET", "/api/leaderboard" + (board.scope ? "?prefix=" + encodeURIComponent(board.scope) : "")); if (st === 200) { board.rows = r.rows; board.msg = ""; } else board.msg = r.error || "Couldn't load."; } catch { board.msg = "Couldn't reach the server."; }
+    if (ui.tab === "players") keepScroll(render);
+  }
+  function lbScopes() {
+    return [["", "EVERYTHING", entries], ...PDA_DATA.tools.map(c => [`t|${slug(c.name)}|`, c.name, c.items]),
+      ["b|", "BIOGRAPHY", entries.filter(e => e.section === "bio")], ["d|", "DOCUMENTS", entries.filter(e => e.section === "docs")]];
+  }
+  function renderPlayers() {
+    if (!API) { screen.innerHTML = '<div class="results"><p class="none">Players needs the cloud server.</p></div>'; return; }
+    if (friends === null && acc) { friends = []; loadFriends(); }
+    if (board.rows === null) { board.rows = []; loadLB(); }
+    const mine = new Set(Object.keys(found));
+    const fr = !acc ? `<p>Log in (CLOUD tab) to add friends and see their progress next to yours.</p>`
+      : `<form class="addfriend" id="addFriend"><input id="friendName" placeholder="their account name" maxlength="20" autocomplete="off"><button class="pbtn" type="submit">ADD FRIEND</button></form>
+        ${friendsMsg ? `<div class="msg" style="color:#ff8a7a">${esc(friendsMsg)}</div>` : ""}
+        ${(friends || []).length ? `<div class="frlist">${friends.map(f => {
+          if (f.hidden) return `<div class="frrow"><b>${esc(f.name)}</b><span class="dim">made their profile private</span><span></span><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></div>`;
+          const set = new Set(f.found), n = entries.filter(e => set.has(e.id)).length, they = entries.filter(e => set.has(e.id) && !mine.has(e.id)).length, you = entries.filter(e => mine.has(e.id) && !set.has(e.id)).length;
+          return `<div class="frrow"><b>${esc(f.name)}</b><span>${n} / ${entries.length} found ${pbar(n, entries.length)}</span><span class="dim">has ${they} you don't · you have ${you} they don't</span>
+            <span class="frbtns"><button class="mini-btn" data-frview="${esc(f.name)}">VIEW</button><button class="mini-btn" data-frcmp="${esc(f.name)}" title="Show their finds as badges on your tiles">COMPARE</button><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></span></div>`;
+        }).join("")}</div>` : `<p class="dim">No friends added yet. Ask a friend for their account name (they need a public profile).</p>`}`;
+    const sc = lbScopes(), cur = sc.find(x => x[0] === board.scope) || sc[0], total = countOf(cur[2])[1];
+    const me = acc && acc.name ? acc.name.toLowerCase() : "";
+    const rows = (board.rows || []).map((r, i) => `<tr class="${r.name.toLowerCase() === me ? "me" : ""}"><td>${i + 1}</td><td><button class="linkish" data-frview="${esc(r.name)}">${esc(r.name)}</button></td><td>${r.n}</td><td>${total ? Math.round(r.n / total * 100) : 0}%</td></tr>`).join("");
+    screen.innerHTML = `<div class="results players">
+      <h3 class="ph3">FRIENDS //</h3>${fr}
+      <h3 class="ph3">LEADERBOARD //</h3>
+      <div class="lbbar"><select data-lbscope>${sc.map(([p, n]) => `<option value="${esc(p)}"${p === board.scope ? " selected" : ""}>${esc(n)}</option>`).join("")}</select><span class="dim">Players with a public profile. Updates every few minutes.</span></div>
+      ${board.msg ? `<div class="msg" style="color:#ff8a7a">${esc(board.msg)}</div>` : ""}
+      ${rows ? `<table class="ammotab lbtab"><thead><tr><th>#</th><th>PLAYER</th><th>FOUND</th><th>OF ${total}</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="dim">Nobody on the board yet.</p>'}
+    </div>`;
+    const f = $("#addFriend");
+    if (f) f.onsubmit = async ev => {
+      ev.preventDefault(); const n = $("#friendName").value.trim(); if (!n) return;
+      const [st, r] = await api("POST", "/api/friends", { name: n }).catch(() => [0, { error: "Couldn't reach the server." }]);
+      if (st === 201 || st === 200) { friendsMsg = ""; play("confirm"); toast(`Added ${r.name}.`); loadFriends(); } else { friendsMsg = r.error || "Couldn't add them."; play("warn"); keepScroll(render); }
+    };
+  }
+
+  /* =====================================================================
+     ADMIN: submissions + publishing info (only for names in the Worker's ADMINS)
+     ===================================================================== */
+  let adm = { status: "new", rows: null, counts: {}, msg: "", edit: null };
+  async function checkAdmin() {
+    if (!API || !acc) { setAdmin(false); return; }
+    try { const [st, r] = await api("GET", "/api/admin/check"); setAdmin(st === 200 && r.admin); } catch { /* keep */ }
+  }
+  function setAdmin(on) {
+    const want = ["profile", "cloud", "manual", "settings", "community", ...(API ? ["players"] : []), ...(on ? ["admin"] : [])];
+    if (want.join() !== BOTTOM_TABS.join()) { BOTTOM_TABS = want; if (!on && ui.tab === "admin") ui.tab = "community"; renderTabs(); }
+  }
+  async function loadAdmin() {
+    try { const [st, r] = await api("GET", "/api/admin/submissions?status=" + adm.status); if (st === 200) { adm.rows = r.rows; adm.counts = r.counts || {}; adm.msg = ""; } else adm.msg = r.error || "Couldn't load."; }
+    catch { adm.msg = "Couldn't reach the server."; }
+    if (ui.tab === "admin") keepScroll(render);
+  }
+  const safeLink = u => /^https?:\/\//i.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : esc(u);
+  const statsToText = st => Object.entries(st || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
+  function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
+  function adminEditorHTML() {
+    const ed = adm.edit; if (!ed) return "";
+    const e = ed.entry && findEntry(ed.entry);
+    const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }));
+    const isTool = e && e.section === "tools", isPerson = e && e.section === "bio";
+    const target = isPerson && e.isCard ? e.card.members[0] : e;
+    const pub = e && overrides[e.id];
+    return `<div class="dbox admedit"><div class="dhead">Publish info${ed.sub ? ` (from submission #${ed.sub})` : ""}</div><div class="dform">
+      <label>ENTRY</label>${pickerHTML("admentry", { items, placeholder: e ? `${e.name}  (type to change)` : "Type the entry this is for…", onPick: v => { adm.edit.entry = v; keepScroll(render); } })}
+      ${e ? `${isTool ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x · lines you leave out keep their old value</small><textarea id="admStats" rows="10">${esc(statsToText(e.stats))}</textarea>
+          <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
+          <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
+        : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>`}
+        <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
+        <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
+    </div></div>`;
+  }
+  function renderAdmin() {
+    if (!API || !acc) { screen.innerHTML = '<div class="results"><p class="none">Log in with an admin account.</p></div>'; return; }
+    if (adm.rows === null) { adm.rows = []; loadAdmin(); }
+    const st = ["new", "done", "rejected"];
+    const list = (adm.rows || []).map(r => {
+      const e = r.entry && entries.find(x => x.name.toLowerCase() === r.entry.toLowerCase());
+      return `<div class="subcard"><div class="subhead"><b>#${r.id} · ${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(r.who || "anonymous")}${r.account ? ` (account ${esc(r.account)})` : ""} · ${new Date(r.created * 1000).toLocaleString()}</span></div>
+        ${r.text ? `<div class="subtext">${esc(r.text)}</div>` : ""}${r.link ? `<div class="sublink">${safeLink(r.link)}</div>` : ""}
+        <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}">PUBLISH INFO…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button></div></div>`;
+    }).join("");
+    const pubs = Object.keys(overrides).map(id => findEntry(id)).filter(Boolean);
+    screen.innerHTML = `<div class="results admin">
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns"><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      ${adminEditorHTML()}
+      <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}</div>
+      ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
+      ${list || `<p class="dim">Nothing here.</p>`}
+      <h3 class="ph3">PUBLISHED //</h3>
+      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}</span><span></span><span class="frbtns"><button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button></span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
+    </div>`;
+    const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
+    on("admCancel", () => { adm.edit = null; play("back"); keepScroll(render); });
+    on("admUnpub", async () => {
+      const id = adm.edit.entry; const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(id)).catch(() => [0]);
+      if (st === 200) { delete overrides[id]; save("pda-overrides-v1", overrides); applyOverrides(overrides); toast("Removed."); adm.edit = null; keepScroll(render); } else toast("Couldn't remove it.");
+    });
+    on("admPublish", async () => {
+      const e = findEntry(adm.edit.entry); if (!e) return;
+      const data = {};
+      if (e.section === "tools") { data.stats = textToStats($("#admStats").value); data.comment = $("#admComment").value; const t = +$("#admTier").value; if (t && t !== e.tier) data.tier = t; }
+      else data.desc = $("#admDesc").value;
+      const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return; }
+      if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
+      overrides[e.id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); applyOverrides(overrides);
+      play("confirm"); toast(`Published for ${e.name}.`); adm.edit = null; loadAdmin();
+    });
+  }
+
   /* first-visit tour */
   const TOUR = [
     ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
@@ -2029,6 +2254,8 @@
       if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
       if (data.favs && typeof data.favs === "object") { favs = data.favs; save(KEY_FAV, favs); }
       if (data.notes && typeof data.notes === "object") { notes = data.notes; save(KEY_NOTES, notes); }
+      if (data.counts && typeof data.counts === "object") { counts = data.counts; save(KEY_COUNTS, counts); }
+      if (data.loadout && Array.isArray(data.loadout.items)) { loadout = data.loadout; save(KEY_LOAD, loadout); }
       if (Array.isArray(data.log)) { history_ = data.log.slice(0, 60); save(KEY_LOG, history_); }
       undoStack.length = 0; sinceBackup = 0; save(KEY_SINCE, 0);
       save(KEY_FOUND, found); updateCount(); scheduleSync(); play("confirm");
@@ -2079,7 +2306,12 @@
   })();
   const hasDiscord = () => /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(webhookURL);
   const hasW3F = () => !!(FORM.web3formsKey && FORM.web3formsKey.trim());
-  const formLive = () => hasDiscord() || hasW3F();
+  const hasServer = () => !!API;
+  const formLive = () => hasServer() || hasDiscord() || hasW3F();
+  async function sendServer(d, botcheck) {
+    const [st, r] = await api("POST", "/api/submit", { kind: d.kind, entry: d.entry, text: d.text, link: d.link, name: d.name, botcheck });
+    if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st === 429 || st === 400; throw e; }
+  }
   const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
   const clip = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
   async function sendDiscord(d) {
@@ -2173,14 +2405,15 @@
     sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
     try {
       let sent = false;
-      if (hasDiscord()) { try { await sendDiscord(d); sent = true; } catch (err) { if (!hasW3F()) throw err; } }
+      if (hasServer()) { try { await sendServer(d, false); sent = true; } catch (err) { if (err.user || (!hasDiscord() && !hasW3F())) throw err; } }
+      if (!sent && hasDiscord()) { try { await sendDiscord(d); sent = true; } catch (err) { if (!hasW3F()) throw err; } }
       if (!sent) await sendW3F(d);
       window.__pdaLastSend = Date.now();
       formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
       draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name };
       play("confirm");
     } catch (err) {
-      formMsg = { ok: false, text: "Couldn't send right now. Check your connection and try again." };
+      formMsg = { ok: false, text: err && err.user ? err.message : "Couldn't send right now. Check your connection and try again." };
       play("warn");
     }
     sending = false; keepScroll(render);
@@ -2253,10 +2486,12 @@
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
+        ${sw("light", "Light theme? (easier to read in daylight)")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Checking off</h3>
         ${note("Safety nets for marking things.")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
+        ${sw("kbMode", "Keyboard mode? (always shows where you are, keeps your place; arrows move, SPACE marks, [ ] switch category, ? lists keys)")}
         <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">The quick walkthrough from your first visit.</span></div>
         <h3>Data</h3>
         ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
@@ -2380,6 +2615,16 @@
         keepScroll(render); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const d = ui.dmg = dmgState(); d.ammo = row.dataset.dmgammo; d.hits = ""; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-dmgcalc]"); if (b) { const d = ui.dmg = dmgState(); d.gun = b.dataset.dmgcalc; d.mode = 0; d.ammo = ""; d.hits = ""; detail = null; ui.tab = "damage"; persistUI(); play("click"); renderTabs(); render(); return; } }
+    { const b = t.closest("[data-cnt]"); if (b) { const id = b.dataset.cntid; setCount(id, countOf1(id) + +b.dataset.cnt); play(+b.dataset.cnt > 0 ? "select" : "deselect"); keepScroll(render); return; } }
+    { const b = t.closest("[data-frview]"); if (b) { play("open"); location.hash = "#u=" + encodeURIComponent(b.dataset.frview); return; } }
+    { const b = t.closest("[data-frcmp]"); if (b) { const f = (friends || []).find(x => x.name === b.dataset.frcmp); if (f) { const set = {}; f.found.forEach(id => { set[id] = 1; }); friend = { name: f.name, set }; save(KEY_FRIEND, friend); play("confirm"); toast(`Comparing with ${f.name}: their finds show as badges on your tiles.`); renderBanner(); } return; } }
+    { const b = t.closest("[data-frdel]"); if (b) { api("DELETE", "/api/friends/" + encodeURIComponent(b.dataset.frdel)).then(() => { play("deselect"); loadFriends(); }).catch(() => toast("Couldn't remove.")); return; } }
+    { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; play("click"); render(); return; } }
+    if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
+    if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
+    { const b = t.closest("[data-admedit]"); if (b) { adm.edit = { sub: b.dataset.admedit ? +b.dataset.admedit : null, entry: b.dataset.admentry || null }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
+    { const b = t.closest("[data-admst]"); if (b) { api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst }).then(() => { play("click"); loadAdmin(); }); return; } }
+    { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("deselect"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
     if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
@@ -2474,6 +2719,7 @@
       if (k === "ammo") d.hits = "";
       persistUI(); play("click"); keepScroll(render); return;
     }
+    else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
     else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-lfound]")) { ui.loadFound = sel.checked; play("click"); persistUI(); keepScroll(render); return; }
@@ -2526,6 +2772,18 @@
     if (typing) return;
     if (e.key === "?") { e.preventDefault(); toggleKeys(); return; }
     if ((e.key === "r" || e.key === "R") && !e.ctrlKey && !e.metaKey) { e.preventDefault(); randomMissing(); return; }
+    if ((e.key === "[" || e.key === "]") && !detail && !query) {
+      e.preventDefault(); const d = e.key === "]" ? 1 : -1;
+      if (ui.tab === "tools") { const n = PDA_DATA.tools.length; ui.cat = ((ui.cat < 0 ? 0 : ui.cat) + d + n) % n; }
+      else if (ui.tab === "biography") { const n = PDA_DATA.biography.length; ui.bio = ((ui.bio < 0 ? 0 : ui.bio) + d + n) % n; }
+      else if (ui.tab === "documents") { const n = PDA_DATA.documents.length; ui.docs = (ui.docs + d + n) % n; }
+      else return;
+      kbFocus = null; play("click"); persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return;
+    }
+    if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey) {
+      const el = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-entry]");
+      const st = el && el.querySelector("[data-star]"); if (st) { e.preventDefault(); handleStar(st, false); } return;
+    }
     if (detail && !e.ctrlKey && !e.metaKey && (e.key === "n" || e.key === "N")) { const b = screen.querySelector("[data-marknext]"); if (b) { e.preventDefault(); markAndNext(b.dataset.marknext); } return; }
     if (detail && !e.ctrlKey && !e.metaKey && (e.key === "m" || e.key === "M")) { const b = screen.querySelector("[data-next]"); if (b) { e.preventDefault(); goNext(byId.get(b.dataset.next)); } return; }
     if (e.key.startsWith("Arrow")) {
@@ -2586,7 +2844,7 @@
 
   /* ---------- "?" keyboard shortcut list ---------- */
   const KEYS = [["← ↑ → ↓", "Move between entries"], ["SPACE", "Mark found / missing"], ["ENTER", "Open"], ["SHIFT + STAR", "Mark a range"],
-    ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["N  on a page", "Mark found + open next missing"], ["M  on a page", "Next missing"], ["?", "This list"]];
+    ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["F", "Same as SPACE"], ["[  ]", "Previous / next category or tab"], ["N  on a page", "Mark found + open next missing"], ["M  on a page", "Next missing"], ["?", "This list"]];
   const keysEl = document.createElement("div"); keysEl.className = "lightbox keysbox"; keysEl.hidden = true; document.body.appendChild(keysEl);
   function toggleKeys() {
     if (!keysEl.hidden) { keysEl.hidden = true; return; }
@@ -2734,8 +2992,10 @@
   render();
   backupNag();
   if (API) {
-    loadRarity();
-    if (acc) syncNow();
+    applyOverrides(overrides);
+    setAdmin(false);
+    loadRarity(); loadOverrides();
+    if (acc) { syncNow(); pullCounts(); checkAdmin(); }
     // pick up changes made on another device when you come back to this tab
     document.addEventListener("visibilitychange", () => { if (!document.hidden && acc && (!acc.at || Date.now() - acc.at > 20000)) syncNow(); });
     window.addEventListener("online", () => scheduleSync(500));
