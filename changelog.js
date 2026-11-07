@@ -13,7 +13,7 @@ const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
     "DAMAGE tab: damage calculator with every ammo type from the OANC Ammo Chart (credit: gluehesthar, @iaminyourwallsiaminyourwalls on Discord)",
     "Weapon pages have a DAMAGE button that opens the calculator with that weapon",
-    "Damage calculator counts supershield (each hit takes 1 off it and does no damage)"
+    "Damage calculator counts supershield and the ammo's supershield bypass"
   ]},
   { date: "2026-11-06", items: [
     "People pages: MARK THEIR GEAR FOUND marks their weapon and magazine (you pick which random weapon you got)",

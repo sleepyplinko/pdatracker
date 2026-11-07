@@ -1173,8 +1173,12 @@
       return { per, proj, dmg, ...calcHit({ dmg, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && d.direct }) };
     };
     const r = (mode || !gun) ? shot(ammo) : null;
-    const toKill = f => f > 0 && hp > 0 ? ss + Math.ceil(hp / f - 1e-9) : null;
-    const htk = r ? toKill(r.final) : null;
+    /* supershield: a hit with bypass B goes through if supershield ≤ B, otherwise it's blocked and knocks max(1, B) off */
+    const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !d.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
+    const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
+    const toKill = (f, a) => f > 0 && hp > 0 ? blocked(ssByp(a)) + Math.ceil(hp / f - 1e-9) : null;
+    const htk = r ? toKill(r.final, ammo) : null;
+    const nBlocked = blocked(ssByp(ammo));
     const rpm = mode && mode.rpm;
     const ttk = htk && rpm ? (htk - 1) * 60 / rpm : null;
 
@@ -1201,8 +1205,8 @@
 
     /* every ammo that fits, side by side */
     const cmpRows = !melee && pool.length > 1 ? pool.map(a => [a, shot(a)]).sort((x, y) => y[1].final - x[1].final).map(([a, s]) => {
-      const k = toKill(s.final) || "—";
-      return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
+      const k = toKill(s.final, a) || "—";
+      return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
     }).join("") : "";
 
     const ammoCard = ammo ? `<div class="ammocard"><b>${esc(ammo.name)}</b> <span class="dim">${esc(ammo.caliber)} · ${esc(ammo.section)}</span>
@@ -1236,14 +1240,14 @@
         </div></div>
         <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>${ss ? `<div class="dim">${ss} of those just break supershield (1 per hit, no damage), then ${htk - ss} to take the health down.${ammo && xnum(ammo.raw.ssBypass) ? ` This ammo has Supershield Bypass ${esc(ammo.raw.ssBypass)}, which isn't counted yet.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>${ss ? `<div class="dim">${nBlocked ? `${nBlocked} of those are blocked by supershield (${ss}), then ${htk - nBlocked} to take the health down.` : `Goes straight through the supershield (${ss}).`}${ssByp(ammo) ? ` Supershield bypass ${esc(fmt2(ssByp(ammo)))}: each blocked hit knocks ${esc(fmt2(ssByp(ammo)))} off, and hits go through once it's ${esc(fmt2(ssByp(ammo)))} or less.` : " Each blocked hit knocks 1 off and does no damage."}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${ttk != null ? '<p class="cat-note">Time to kill assumes every shot lands and no reloading or burst delay.</p>' : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>
       </div>
-      ${cmpRows ? `<div class="dbox"><div class="dhead">Every ammo that fits, against this target</div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${cmpRows}</tbody></table></div></div>` : ""}
+      ${cmpRows ? `<div class="dbox"><div class="dhead">Every ammo that fits, against this target</div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${cmpRows}</tbody></table></div></div>` : ""}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
-      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: every hit takes 1 off it and does no damage until it's gone.</p>
+      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: a blocked hit does no damage and takes 1 off it, or the ammo's supershield bypass if that's higher. Once supershield is at or below the bypass, hits go straight through.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a>. Credit to <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord) for being the original spreadsheet creator and putting most of these ammo types in.</p>
     </div>`;
   }
