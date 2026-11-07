@@ -5,6 +5,7 @@
    you add entries, pictures or features:
 
      { date: "2026-11-07", items: [
+    "Backend ready for accounts with sync between devices, \"found by X% of players\" rarity, RAREST FIRST sorting and live profile links (switches on once the server is connected)",
     "Short tour on your first visit (replay it in Settings)",
     "Item pages: LINK, FIX?, COMPARE and DAMAGE moved into a ⋯ menu",
     "Backup reminder bar after 25 changes, with DOWNLOAD and LATER",
