@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Damage calculator: Shield (takes half of each hit until it breaks; explosives and bludgeons skip it) and melee time to kill",
     "Backend ready for accounts with sync between devices, \"found by X% of players\" rarity, RAREST FIRST sorting and live profile links (switches on once the server is connected)",
     "Short tour on your first visit (replay it in Settings)",
     "Item pages: LINK, FIX?, COMPARE and DAMAGE moved into a ⋯ menu",
