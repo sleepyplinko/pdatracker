@@ -246,6 +246,7 @@
     manual:  '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#111"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#ddd" stroke-width="2.6"/></svg>',
     settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
     community: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M3 5h18v11H9l-5 4v-4H3z"/><path d="M8 10.5h8" stroke-linecap="round"/></svg>',
+    damage: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#111"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>',
     loadout: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M8 4h8l1 3h3v13H4V7h3z"/><path d="M9 12h6M12 9v6"/></svg>',
     missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
     heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
@@ -370,10 +371,10 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "community"];
-  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT" };
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community"];
+  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE" };
   /* the checklist tabs sit on top, everything else along the bottom */
-  const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout"];
+  const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout", "damage"];
   const BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
   const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
   function renderTabs() {
@@ -495,7 +496,7 @@
     detail = null;
     if (query) return renderSearch();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, community: renderCommunity })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity })[ui.tab]();
   }
 
   /* =====================================================================
@@ -781,7 +782,7 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE</button>` : ""}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${ammoLinkHTML(e)}
@@ -1107,6 +1108,150 @@
   /* =====================================================================
      WHAT'S LEFT — every missing entry in one place
      ===================================================================== */
+
+  /* =====================================================================
+     DAMAGE CALCULATOR — ammo data from the OANC Ammo Chart (ammo.js)
+     ===================================================================== */
+  const AMMO = (typeof PDA_AMMO === "object" && PDA_AMMO) || { groups: [] };
+  const CAL_ALIAS = { "5 KG BIO-SLUG": ["8x25mm / .50 BC / Bio-slug", "5 KG-Somafluid Slug"] };
+  const ammoAll = AMMO.groups.flatMap((g, gi) => g.items.map((a, ai) => ({ ...a, key: gi + ":" + ai, caliber: g.caliber, section: g.section, notes: g.notes })));
+  const ammoFor = cal => {
+    if (CAL_ALIAS[cal]) { const [c, n] = CAL_ALIAS[cal]; return ammoAll.filter(a => a.caliber === c && (!n || a.name === n)); }
+    return ammoAll.filter(a => a.caliber === cal);
+  };
+  const xnum = v => { const n = parseFloat(String(v == null ? "" : v).replace(",", ".")); return isNaN(n) ? null : n; };
+  const fmt2 = n => n == null || !isFinite(n) ? "—" : String(Math.round(n * 100) / 100);
+  /* every way a weapon can fire: its base stats plus any extra modes (e.g. underslung) */
+  function fireModes(e) {
+    if (!e || !e.stats) return [];
+    const list = [e.stats, ...(e.modes || [])];
+    return list.map((s, i) => ({ i, label: s.MODE || (i ? "Mode " + (i + 1) : "Base"), s,
+      melee: s.DAMAGE != null && !s["CALIBER TYPE"],
+      cals: String(s["CALIBER TYPE"] || "").split("|").map(x => x.trim()).filter(Boolean),
+      strength: xnum(s.STRENGTH) || 1, rpm: xnum(s.RPM) }));
+  }
+  const dmgWeapons = () => allTools().filter(e => !e.unknown && fireModes(e).some(m => m.melee || m.cals.length));
+  const dmgTargets = () => people.filter(p => p.base && p.base.Health != null);
+  /* the rules, in order: superarmor bypass → superarmor → defense penetration → defense */
+  function calcHit({ dmg, sa, saBypass, def, pen, trueDmg }) {
+    const effSA = trueDmg ? 0 : Math.max(0, sa - saBypass * 100);
+    const afterSA = dmg > 0 ? dmg / Math.pow(dmg, effSA / 100) : 0;
+    const effDef = trueDmg ? 0 : Math.min(100, Math.max(0, def * (1 - Math.min(1, pen))));
+    return { effSA, afterSA, effDef, final: afterSA * (1 - effDef / 100) };
+  }
+  function dmgState() {
+    const d = ui.dmg || (ui.dmg = {});
+    return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", direct: true, custom: "" }, d);
+  }
+  function renderDamage() {
+    const d = dmgState();
+    const weapons = dmgWeapons();
+    const gun = d.gun && byId.get(d.gun);
+    const modes = fireModes(gun);
+    const mode = modes[Math.min(d.mode, modes.length - 1)] || null;
+    const melee = mode && mode.melee;
+    const pool = mode && !melee ? mode.cals.flatMap(ammoFor) : (gun ? [] : ammoAll);
+    let ammo = pool.find(a => a.key === d.ammo) || null;
+    if (!ammo && pool.length && mode) ammo = pool[0];
+    const tgt = d.target && people.find(p => p.id === d.target);
+    const tb = tgt ? tgt.base : null;
+    const hp = tb ? +tb.Health : xnum(d.hp) || 0;
+    const def = tb ? +(tb.Defense || 0) : xnum(d.def) || 0;
+    const sa = tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0;
+    const strength = mode && !melee && d.str ? mode.strength : 1;
+
+    /* one shot with a given ammo */
+    const shot = a => {
+      if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; }
+      if (!a) { const dmg = xnum(d.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
+      const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
+      const proj = xnum(d.hits) != null && a.proj > 1 ? Math.max(0, Math.min(a.proj, xnum(d.hits))) : a.proj;
+      const dmg = per * proj;
+      return { per, proj, dmg, ...calcHit({ dmg, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && d.direct }) };
+    };
+    const r = (mode || !gun) ? shot(ammo) : null;
+    const htk = r && r.final > 0 && hp > 0 ? Math.ceil(hp / r.final - 1e-9) : null;
+    const rpm = mode && mode.rpm;
+    const ttk = htk && rpm ? (htk - 1) * 60 / rpm : null;
+
+    const opt = (v, cur, label) => `<option value="${esc(v)}"${String(cur) === String(v) ? " selected" : ""}>${esc(label)}</option>`;
+    const gunOpts = PDA_DATA.tools.map(c => { const l = sortEntries(weapons.filter(e => e.group === c.name)); return l.length ? `<optgroup label="${esc(c.name)}">${l.map(e => opt(e.id, d.gun, e.name + (isFound(e.id) ? " ★" : ""))).join("")}</optgroup>` : ""; }).join("");
+    const ammoOpts = [...new Set(pool.map(a => a.caliber))].map(c => `<optgroup label="${esc(c)}">${pool.filter(a => a.caliber === c).map(a => opt(a.key, ammo && ammo.key, a.name)).join("")}</optgroup>`).join("");
+    const tgtGroups = PDA_DATA.biography.map(g => { const l = dmgTargets().filter(p => p.group === g.name || (p.card && p.card.entry && p.card.entry.group === g.name)); return l.length ? `<optgroup label="${esc(g.name)}">${l.map(p => opt(p.id, d.target, p.name)).join("")}</optgroup>` : ""; }).join("");
+
+    const step = (k, v, note = "") => `<div class="stat"><i style="color:#c8a0ff">${k}</i>: ${v}${note ? ` <span class="dim">${note}</span>` : ""}</div>`;
+    let steps = "";
+    if (r) {
+      if (melee) steps += step("DAMAGE", fmt2(r.dmg), "melee hit");
+      else if (ammo) {
+        steps += step("PER PROJECTILE", fmt2(r.per), `${ammo.base} base × ${ammo.mult == null ? "?" : ammo.mult}${strength !== 1 ? ` × ${strength} strength` : ""}`);
+        if (ammo.proj > 1) steps += step("ONE BLAST", fmt2(r.dmg), `${r.proj} projectile${r.proj === 1 ? "" : "s"} counted as one hit`);
+      } else steps += step("DAMAGE", fmt2(r.dmg), "your number");
+      steps += step("SUPERARMOR", `${fmt2(r.effSA)}%`, ammo && ammo.trueOnDirect && d.direct ? "true damage on a direct hit" : `${fmt2(sa)}%${ammo && ammo.saBypass ? ` − ${fmt2(ammo.saBypass * 100)}% bypass` : ""}`);
+      steps += step("AFTER SUPERARMOR", fmt2(r.afterSA), r.effSA ? `${fmt2(r.dmg)} ÷ ${fmt2(r.dmg)}^${fmt2(r.effSA / 100)}` : "no superarmor");
+      const penP = melee ? (xnum(mode.s["DEFENSE BYPASS"]) || 0) : ammo ? (ammo.pen || 0) * 100 : 0;
+      steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && d.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
+    }
+    const tShield = tb && (tb.Shield || tb.Supershield) ? `<p class="cat-note">${tgt.name} also has ${[tb.Shield ? `Shield ${tb.Shield}` : "", tb.Supershield ? `Supershield ${tb.Supershield}` : ""].filter(Boolean).join(" and ")}. These aren't counted: the chart doesn't say how they work.</p>` : "";
+    const resist = tb ? Object.entries(tb).filter(([k]) => !["Health", "Speed", "Defense", "Super Armour", "Shield", "Supershield"].includes(k)).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ") : "";
+
+    /* every ammo that fits, side by side */
+    const cmpRows = !melee && pool.length > 1 ? pool.map(a => [a, shot(a)]).sort((x, y) => y[1].final - x[1].final).map(([a, s]) => {
+      const k = s.final > 0 && hp > 0 ? Math.ceil(hp / s.final - 1e-9) : "—";
+      return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
+    }).join("") : "";
+
+    const ammoCard = ammo ? `<div class="ammocard"><b>${esc(ammo.name)}</b> <span class="dim">${esc(ammo.caliber)} · ${esc(ammo.section)}</span>
+      <div class="ammoraw">${Object.entries({ "Base Damage": "base", "Damage Mult": "mult", "Spread Multiplier": "spread", "# of Projectiles": "proj", "Armor Pen": "pen", "Shield Piercing": "shieldPierce", "Fracture": "fracture", "Causes Bleed": "bleed", "Super Armor Bypass": "saBypass", "Supershield Bypass": "ssBypass", "Causes Weakness": "weakness", "Statuses": "statuses", "Alert Radius Mult": "alert" })
+        .filter(([, k]) => k in ammo.raw).map(([l, k]) => `<span><i>${l}</i>: ${esc(ammo.raw[k] === "" ? "—" : ammo.raw[k])}</span>`).join("")}</div>
+      ${ammo.notes && ammo.notes.length ? `<div class="dim">${ammo.notes.map(n => "* " + esc(n)).join("<br>")}</div>` : ""}</div>` : "";
+
+    screen.innerHTML = `<div class="results dmgcalc">
+      <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)</div>
+      <div class="dgrid">
+        <div class="dbox"><div class="dhead">Attacker</div><div class="dform">
+          <label>WEAPON <select data-dmg="gun"><option value="">— no weapon (pick ammo directly) —</option>${gunOpts}</select></label>
+          ${gun ? `<button class="mini-btn" data-open-tool="${esc(gun.id)}">OPEN ${esc(gun.name.toUpperCase())}</button>` : ""}
+          ${modes.length > 1 ? `<label>MODE <select data-dmg="mode">${modes.map(m => opt(m.i, mode.i, m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))).join("")}</select></label>` : ""}
+          ${melee ? `<p class="cat-note">Melee: uses the weapon's DAMAGE, with its DEFENSE BYPASS as defense penetration.</p>`
+            : pool.length ? `<label>AMMO <select data-dmg="ammo">${ammoOpts}</select></label>`
+            : gun ? `<p class="cat-note">The ammo chart has nothing for ${esc(mode ? mode.cals.join(" | ") : "this weapon")}. Type a damage number instead:</p><label>DAMAGE PER HIT <input type="number" step="any" data-dmg="custom" value="${esc(d.custom)}"></label>` : ""}
+          ${!melee && mode && mode.strength !== 1 ? `<label class="chk"><input type="checkbox" data-dmg="str"${d.str ? " checked" : ""}> multiply by the weapon's STRENGTH (${mode.strength}x)</label>` : ""}
+          ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" step="1" data-dmg="hits" value="${esc(d.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
+          ${ammo && ammo.trueOnDirect ? `<label class="chk"><input type="checkbox" data-dmg="direct"${d.direct ? " checked" : ""}> direct hit (true damage)</label>` : ""}
+          ${ammoCard}
+        </div></div>
+        <div class="dbox"><div class="dhead">Target</div><div class="dform">
+          <label>WHO <select data-dmg="target"><option value="">— custom numbers —</option>${tgtGroups}</select></label>
+          ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgt.name.toUpperCase())}</button>
+            <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
+          : `<label>HEALTH <input type="number" step="any" data-dmg="hp" value="${esc(d.hp)}"></label>
+             <label>DEFENSE % <input type="number" step="any" data-dmg="def" value="${esc(d.def)}"></label>
+             <label>SUPERARMOR % <input type="number" step="any" data-dmg="sa" value="${esc(d.sa)}"></label>`}
+        </div></div>
+        <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
+          ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
+            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${ttk != null ? '<p class="cat-note">Time to kill assumes every shot lands and no reloading or burst delay.</p>' : ""}`
+          : '<p class="none">Pick a weapon or ammo.</p>'}
+        </div></div>
+      </div>
+      ${cmpRows ? `<div class="dbox"><div class="dhead">Every ammo that fits, against this target</div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${cmpRows}</tbody></table></div></div>` : ""}
+      <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
+      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage.</p>
+      <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a>. Credit to <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord) for being the original spreadsheet creator and putting most of these ammo types in.</p>
+    </div>`;
+  }
+  function ammoChartHTML() {
+    const cols = [["Base Damage", "base"], ["Damage Mult", "mult"], ["Spread Multiplier", "spread"], ["# of Projectiles", "proj"], ["Armor Pen", "pen"], ["Shield Piercing", "shieldPierce"], ["Fracture", "fracture"], ["Causes Bleed", "bleed"], ["Super Armor Bypass", "saBypass"], ["Supershield Bypass", "ssBypass"], ["Causes Weakness", "weakness"], ["Statuses", "statuses"], ["Alert Radius Mult", "alert"]];
+    let sec = "";
+    return AMMO.groups.map(g => {
+      const use = cols.filter(([, k]) => g.items.some(a => k in a.raw));
+      const head = g.section !== sec ? `<h4 class="ammosec">${esc(sec = g.section)}</h4>` : "";
+      return `${head}<div class="dtable"><table class="ammotab"><thead><tr><th>${esc(g.caliber)}</th>${use.map(([l]) => `<th>${esc(l)}</th>`).join("")}</tr></thead><tbody>${g.items.map(a => `<tr><td>${esc(a.name)}</td>${use.map(([, k]) => `<td>${esc(a.raw[k] || "")}</td>`).join("")}</tr>`).join("")}</tbody></table>${g.notes.length ? `<div class="dim">${g.notes.map(n => "* " + esc(n)).join("<br>")}</div>` : ""}</div>`;
+    }).join("");
+  }
+
   /* =====================================================================
      LOADOUT PLANNER: carry anything (duplicates too); space is carry weight
      ===================================================================== */
@@ -1824,6 +1969,8 @@
         loadPick = null;
         if (change([...fixed.map(x => x.id), ...picked], true, `${p.name}'s gear`)) play("confirm"); else { play("click"); toast("Nothing new to mark."); }
         keepScroll(render); return; } }
+    { const row = t.closest("[data-dmgammo]"); if (row) { const d = ui.dmg = dmgState(); d.ammo = row.dataset.dmgammo; d.hits = ""; persistUI(); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-dmgcalc]"); if (b) { const d = ui.dmg = dmgState(); d.gun = b.dataset.dmgcalc; d.mode = 0; d.ammo = ""; d.hits = ""; detail = null; ui.tab = "damage"; persistUI(); play("click"); renderTabs(); render(); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
     if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
@@ -1909,6 +2056,14 @@
     else if (sel.matches("[data-tmin]")) ui.tmin = sel.value.trim();
     else if (sel.matches("[data-tmax]")) ui.tmax = sel.value.trim();
     else if (sel.matches("[data-cal]")) ui.cal = sel.value;
+    else if (sel.matches("[data-dmg]")) {
+      const d = ui.dmg = dmgState(), k = sel.dataset.dmg;
+      d[k] = sel.type === "checkbox" ? sel.checked : sel.value;
+      if (k === "gun") { d.mode = 0; d.ammo = ""; d.hits = ""; }
+      if (k === "mode") { d.mode = +sel.value; d.ammo = ""; d.hits = ""; }
+      if (k === "ammo") d.hits = "";
+      persistUI(); play("click"); keepScroll(render); return;
+    }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
     else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-lfound]")) { ui.loadFound = sel.checked; play("click"); persistUI(); keepScroll(render); return; }

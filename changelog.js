@@ -10,6 +10,10 @@
    ===================================================================== */
 
 const PDA_CHANGELOG = [
+  { date: "2026-11-07", items: [
+    "DAMAGE tab: damage calculator with every ammo type from the OANC Ammo Chart (credit: gluehesthar, @iaminyourwallsiaminyourwalls on Discord)",
+    "Weapon pages have a DAMAGE button that opens the calculator with that weapon"
+  ]},
   { date: "2026-11-06", items: [
     "People pages: MARK THEIR GEAR FOUND marks their weapon and magazine (you pick which random weapon you got)",
     "Gun pages list their magazines, magazine pages list their guns",
