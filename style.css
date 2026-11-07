@@ -906,3 +906,31 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
   .ename { height: auto; min-height: 26px; }
   .stats h2 { font-size: 22px; overflow-wrap: anywhere; }
 }
+
+/* ---------- damage calculator ---------- */
+.dmgcalc a { color: #9ad0ff; }
+.dgrid { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 8px; margin: 8px 0; }
+.dform { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.dform label { display: flex; flex-direction: column; gap: 3px; font-weight: 800; color: #f3ee30; font-size: 12px; }
+.dform label.chk { flex-direction: row; align-items: center; gap: 6px; color: #ddd; font-weight: 600; }
+.dform select, .dform input[type=number] { background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 5px; font: inherit; font-size: 13px; min-width: 0; width: 100%; box-sizing: border-box; }
+.dform .mini-btn { align-self: flex-start; }
+.dform .stat { font-size: 15px; }
+.dres .stats { padding: 8px 10px; }
+.dres .stat { font-size: 14px; }
+.dbig { font-size: 34px; font-weight: 900; color: #fff; margin-top: 8px; }
+.dbig small { font-size: 13px; color: #aaa; font-weight: 600; }
+.dbig2 { font-size: 18px; font-weight: 800; color: #ff7a7a; }
+.ammocard { border-top: 1px solid #333; padding-top: 6px; }
+.ammoraw { display: flex; flex-wrap: wrap; gap: 2px 12px; margin: 4px 0; color: #ddd; }
+.ammoraw i { color: #c8a0ff; }
+.dtable { overflow-x: auto; margin: 6px 0; }
+.ammotab { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.ammotab th, .ammotab td { border: 1px solid #333; padding: 3px 6px; text-align: left; white-space: nowrap; }
+.ammotab th { background: #222; color: #f3ee30; position: sticky; top: 0; }
+.ammotab tbody tr[data-dmgammo] { cursor: pointer; }
+.ammotab tbody tr[data-dmgammo]:hover { background: #1d1d2a; }
+.ammotab tr.on { background: #24304a; }
+.ammosec { margin: 12px 0 2px; color: #f3ee30; }
+.dmgcalc .dim { color: #999; font-size: 12px; }
+@media (max-width: 1000px) { .dgrid { grid-template-columns: 1fr; } }
