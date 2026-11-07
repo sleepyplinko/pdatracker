@@ -1,22 +1,22 @@
 /* =====================================================================
    PDA TRACKER — CHANGELOG
    ---------------------------------------------------------------------
-   Shown in the MANUAL tab. Newest first. Add a block at the top when
+   Shown in the SUBMIT tab. Newest first. Add a block at the top when
    you add entries, pictures or features:
 
-     { date: "2026-11-07", items: [
-    "Backend ready for accounts with sync between devices, \"found by X% of players\" rarity, RAREST FIRST sorting and live profile links (switches on once the server is connected)",
-    "Short tour on your first visit (replay it in Settings)",
-    "Item pages: LINK, FIX?, COMPARE and DAMAGE moved into a ⋯ menu",
-    "Backup reminder bar after 25 changes, with DOWNLOAD and LATER",
-    "Pictures load only when needed; Settings split into Sound, Display, Checking off and Data",
-    "Checked every weapon, melee, gear and utility stat against the game again; added the missing WEIGHT to 15 pistols","Added every SMG", "Pictures for ..."] },
+     { date: "YYYY-MM-DD", items: ["Added every SMG", "Pictures for ..."] },
 
    Leave the list empty ([]) to hide the CHANGELOG section entirely.
    ===================================================================== */
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Backend ready for accounts with sync between devices, \"found by X% of players\" rarity, RAREST FIRST sorting and live profile links (switches on once the server is connected)",
+    "Short tour on your first visit (replay it in Settings)",
+    "Item pages: LINK, FIX?, COMPARE and DAMAGE moved into a ⋯ menu",
+    "Backup reminder bar after 25 changes, with DOWNLOAD and LATER",
+    "Pictures load only when needed; Settings split into Sound, Display, Checking off and Data",
+    "Checked every weapon, melee, gear and utility stat against the game again; added the missing WEIGHT to 15 pistols",
     "DAMAGE tab: damage calculator with every ammo type from the OANC Ammo Chart (credit: gluehesthar, @iaminyourwallsiaminyourwalls on Discord)",
     "Weapon pages have a DAMAGE button that opens the calculator with that weapon",
     "Damage calculator counts supershield and the ammo's supershield bypass"
