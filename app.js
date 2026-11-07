@@ -1143,7 +1143,7 @@
   }
   function dmgState() {
     const d = ui.dmg || (ui.dmg = {});
-    return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", direct: true, custom: "" }, d);
+    return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", ss: "0", direct: true, custom: "" }, d);
   }
   function renderDamage() {
     const d = dmgState();
@@ -1160,6 +1160,7 @@
     const hp = tb ? +tb.Health : xnum(d.hp) || 0;
     const def = tb ? +(tb.Defense || 0) : xnum(d.def) || 0;
     const sa = tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0;
+    const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));   // each hit knocks 1 off and does no damage
     const strength = mode && !melee && d.str ? mode.strength : 1;
 
     /* one shot with a given ammo */
@@ -1172,7 +1173,8 @@
       return { per, proj, dmg, ...calcHit({ dmg, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && d.direct }) };
     };
     const r = (mode || !gun) ? shot(ammo) : null;
-    const htk = r && r.final > 0 && hp > 0 ? Math.ceil(hp / r.final - 1e-9) : null;
+    const toKill = f => f > 0 && hp > 0 ? ss + Math.ceil(hp / f - 1e-9) : null;
+    const htk = r ? toKill(r.final) : null;
     const rpm = mode && mode.rpm;
     const ttk = htk && rpm ? (htk - 1) * 60 / rpm : null;
 
@@ -1194,12 +1196,12 @@
       const penP = melee ? (xnum(mode.s["DEFENSE BYPASS"]) || 0) : ammo ? (ammo.pen || 0) * 100 : 0;
       steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && d.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
     }
-    const tShield = tb && (tb.Shield || tb.Supershield) ? `<p class="cat-note">${esc(tgtName(tgt))} also has ${[tb.Shield ? `Shield ${tb.Shield}` : "", tb.Supershield ? `Supershield ${tb.Supershield}` : ""].filter(Boolean).join(" and ")}. These aren't counted: the chart doesn't say how they work.</p>` : "";
+    const tShield = tb && tb.Shield ? `<p class="cat-note">${esc(tgtName(tgt))} also has Shield ${esc(tb.Shield)}. That isn't counted yet.</p>` : "";
     const resist = tb ? Object.entries(tb).filter(([k]) => !["Health", "Speed", "Defense", "Super Armour", "Shield", "Supershield"].includes(k)).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ") : "";
 
     /* every ammo that fits, side by side */
     const cmpRows = !melee && pool.length > 1 ? pool.map(a => [a, shot(a)]).sort((x, y) => y[1].final - x[1].final).map(([a, s]) => {
-      const k = s.final > 0 && hp > 0 ? Math.ceil(hp / s.final - 1e-9) : "—";
+      const k = toKill(s.final) || "—";
       return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
     }).join("") : "";
 
@@ -1226,21 +1228,22 @@
         <div class="dbox"><div class="dhead">Target</div><div class="dform">
           <label>WHO <select data-dmg="target"><option value="">— custom numbers —</option>${tgtGroups}</select></label>
           ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgtName(tgt).toUpperCase())}</button>
-            <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
+            <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div><div class="stat"><i style="color:#ff3a3a">SUPERSHIELD</i>: ${esc(tb.Supershield || 0)}</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
           : `<label>HEALTH <input type="number" step="any" data-dmg="hp" value="${esc(d.hp)}"></label>
              <label>DEFENSE % <input type="number" step="any" data-dmg="def" value="${esc(d.def)}"></label>
-             <label>SUPERARMOR % <input type="number" step="any" data-dmg="sa" value="${esc(d.sa)}"></label>`}
+             <label>SUPERARMOR % <input type="number" step="any" data-dmg="sa" value="${esc(d.sa)}"></label>
+             <label>SUPERSHIELD <input type="number" step="1" min="0" data-dmg="ss" value="${esc(d.ss)}"></label>`}
         </div></div>
         <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>${ss ? `<div class="dim">${ss} of those just break supershield (1 per hit, no damage), then ${htk - ss} to take the health down.${ammo && xnum(ammo.raw.ssBypass) ? ` This ammo has Supershield Bypass ${esc(ammo.raw.ssBypass)}, which isn't counted yet.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${ttk != null ? '<p class="cat-note">Time to kill assumes every shot lands and no reloading or burst delay.</p>' : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>
       </div>
       ${cmpRows ? `<div class="dbox"><div class="dhead">Every ammo that fits, against this target</div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${cmpRows}</tbody></table></div></div>` : ""}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
-      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage.</p>
+      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: every hit takes 1 off it and does no damage until it's gone.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a>. Credit to <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord) for being the original spreadsheet creator and putting most of these ammo types in.</p>
     </div>`;
   }
