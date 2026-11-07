@@ -1151,7 +1151,7 @@
   }
   function dmgState() {
     const d = ui.dmg || (ui.dmg = {});
-    return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", ss: "0", direct: true, custom: "" }, d);
+    return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", ss: "0", sh: "0", direct: true, custom: "" }, d);
   }
   function renderDamage() {
     const d = dmgState();
@@ -1184,11 +1184,31 @@
     /* supershield: a hit with bypass B goes through if supershield ≤ B, otherwise it's blocked and knocks max(1, B) off */
     const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !d.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
-    const toKill = (f, a) => f > 0 && hp > 0 ? blocked(ssByp(a)) + Math.ceil(hp / f - 1e-9) : null;
+    /* shield: while it lasts, half of each hit goes to the shield and half to health. Explosives and bludgeons ignore it */
+    const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
+    const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
+    const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket/i.test(a.caliber) || /rocket/i.test(a.name));
+    const ignoresShield = a => isBludgeon || isExplosive(a);
+    function healthHits(f, a) {
+      if (!(f > 0) || !(hp > 0)) return null;
+      if (!shield || ignoresShield(a)) return { n: Math.ceil(hp / f - 1e-9), sh: 0 };
+      let h = hp, sh = shield, n = 0, shHits = 0;
+      while (h > 1e-9 && n < 100000) {
+        n++;
+        if (sh > 1e-9) { const half = f / 2, took = Math.min(sh, half); sh -= took; h -= f - took; shHits++; }
+        else h -= f;
+      }
+      return { n, sh: shHits };
+    }
+    const toKill = (f, a) => { const k = healthHits(f, a); return k ? blocked(ssByp(a)) + k.n : null; };
     const htk = r ? toKill(r.final, ammo) : null;
     const nBlocked = blocked(ssByp(ammo));
+    const shInfo = r ? healthHits(r.final, ammo) : null;
+    /* time to kill: guns from RPM; melee from SWING TIME (a burst is several swings in a row) */
     const rpm = mode && mode.rpm;
-    const ttk = htk && rpm ? (htk - 1) * 60 / rpm : null;
+    const swing = melee ? xnum(mode.s["SWING TIME"]) : null;
+    const burstN = melee && mode.s.BURST === "YES" ? Math.max(1, xnum(mode.s["BURST AMOUNT"]) || 1) : 1;
+    const ttk = htk && rpm ? (htk - 1) * 60 / rpm : htk && swing ? (htk - 1) * swing : null;
 
     const opt = (v, cur, label) => `<option value="${esc(v)}"${String(cur) === String(v) ? " selected" : ""}>${esc(label)}</option>`;
     const gunOpts = PDA_DATA.tools.map(c => { const l = sortEntries(weapons.filter(e => e.group === c.name)); return l.length ? `<optgroup label="${esc(c.name)}">${l.map(e => opt(e.id, d.gun, e.name + (isFound(e.id) ? " ★" : ""))).join("")}</optgroup>` : ""; }).join("");
@@ -1208,7 +1228,7 @@
       const penP = melee ? (xnum(mode.s["DEFENSE BYPASS"]) || 0) : ammo ? (ammo.pen || 0) * 100 : 0;
       steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && d.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
     }
-    const tShield = tb && tb.Shield ? `<p class="cat-note">${esc(tgtName(tgt))} also has Shield ${esc(tb.Shield)}. That isn't counted yet.</p>` : "";
+    const tShield = "";
     const resist = tb ? Object.entries(tb).filter(([k]) => !["Health", "Speed", "Defense", "Super Armour", "Shield", "Supershield"].includes(k)).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ") : "";
 
     /* every ammo that fits, side by side */
@@ -1240,22 +1260,23 @@
         <div class="dbox"><div class="dhead">Target</div><div class="dform">
           <label>WHO <select data-dmg="target"><option value="">— custom numbers —</option>${tgtGroups}</select></label>
           ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgtName(tgt).toUpperCase())}</button>
-            <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div><div class="stat"><i style="color:#ff3a3a">SUPERSHIELD</i>: ${esc(tb.Supershield || 0)}</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
+            <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div><div class="stat"><i style="color:#ff3a3a">SUPERSHIELD</i>: ${esc(tb.Supershield || 0)}</div><div class="stat"><i style="color:#c8c8ff">SHIELD</i>: ${esc(tb.Shield || 0)}</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
           : `<label>HEALTH <input type="number" step="any" data-dmg="hp" value="${esc(d.hp)}"></label>
              <label>DEFENSE % <input type="number" step="any" data-dmg="def" value="${esc(d.def)}"></label>
              <label>SUPERARMOR % <input type="number" step="any" data-dmg="sa" value="${esc(d.sa)}"></label>
-             <label>SUPERSHIELD <input type="number" step="1" min="0" data-dmg="ss" value="${esc(d.ss)}"></label>`}
+             <label>SUPERSHIELD <input type="number" step="1" min="0" data-dmg="ss" value="${esc(d.ss)}"></label>
+             <label>SHIELD <input type="number" step="any" min="0" data-dmg="sh" value="${esc(d.sh)}"></label>`}
         </div></div>
         <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s at ${rpm} RPM` : ""}</div>${ss ? `<div class="dim">${nBlocked ? `${nBlocked} of those are blocked by supershield (${ss}), then ${htk - nBlocked} to take the health down.` : `Goes straight through the supershield (${ss}).`}${ssByp(ammo) ? ` Supershield bypass ${esc(fmt2(ssByp(ammo)))}: each blocked hit knocks ${esc(fmt2(ssByp(ammo)))} off, and hits go through once it's ${esc(fmt2(ssByp(ammo)))} or less.` : " Each blocked hit knocks 1 off and does no damage."}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
-            ${ttk != null ? '<p class="cat-note">Time to kill assumes every shot lands and no reloading or burst delay.</p>' : ""}`
+            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}${ss ? `<div class="dim">${nBlocked ? `${nBlocked} of those are blocked by supershield (${ss}), then ${htk - nBlocked} to take the health down.` : `Goes straight through the supershield (${ss}).`}${ssByp(ammo) ? ` Supershield bypass ${esc(fmt2(ssByp(ammo)))}: each blocked hit knocks ${esc(fmt2(ssByp(ammo)))} off, and hits go through once it's ${esc(fmt2(ssByp(ammo)))} or less.` : " Each blocked hit knocks 1 off and does no damage."}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${ttk != null ? `<p class="cat-note">Time to kill assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : " and no reloading or burst delay"}.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>
       </div>
       ${cmpRows ? `<div class="dbox"><div class="dhead">Every ammo that fits, against this target</div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${cmpRows}</tbody></table></div></div>` : ""}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
-      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: a blocked hit does no damage and takes 1 off it, or the ammo's supershield bypass if that's higher. Once supershield is at or below the bypass, hits go straight through.</p>
+      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: a blocked hit does no damage and takes 1 off it, or the ammo's supershield bypass if that's higher. Once supershield is at or below the bypass, hits go straight through. Shield takes half of each hit as extra health until it runs out; explosives and bludgeons skip it.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a>. Credit to <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord) for being the original spreadsheet creator and putting most of these ammo types in.</p>
     </div>`;
   }
