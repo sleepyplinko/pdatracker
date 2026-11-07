@@ -521,14 +521,22 @@
     return `<span class="hstar${on ? " on" : ""}" data-star="${esc(id)}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${on ? "Unmark" : "Mark"} ${esc(name)} as found" title="${on ? "Found: click to unmark" : "Click to mark as found"}">${I.star(on)}</span>`;
   }
   /* font size that fills a tile the way the game does */
-  function tileFont(name) {
-    const n = name.length;
-    if (n <= 5) return "font-size:var(--tf-xl)";
-    if (n <= 8) return "font-size:var(--tf-l)";
-    if (n <= 11) return "font-size:var(--tf-m)";
-    if (n <= 15) return "font-size:var(--tf-s)";
-    return "font-size:var(--tf-xs)";
+  /* like the game: the name fills the tile width; long names wrap onto two balanced lines */
+  function tileLines(name) {
+    const w = String(name).split(" ");
+    if (name.length <= 12 || w.length < 2) return [name];
+    let best = [name], bestLen = name.length;
+    for (let i = 1; i < w.length; i++) {
+      const a = w.slice(0, i).join(" "), b = w.slice(i).join(" "), m = Math.max(a.length, b.length);
+      if (m < bestLen) { best = [a, b]; bestLen = m; }
+    }
+    return best;
   }
+  function tileFont(name) {
+    const lines = tileLines(name), n = Math.max(...lines.map(l => l.length), 3);
+    return `--tn:${n};--tl:${lines.length}`;
+  }
+  const tileText = name => tileLines(name).map(esc).join("<br>");
   function tileHTML(e) {
     const got = isFound(e.id);
     const l = label(e);
@@ -537,7 +545,7 @@
         <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
     }
     return `<button class="tile${e.special ? " special" : ""}${e.gold ? " gold" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
-      <span class="tname" style="${tileFont(l)}">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
+      <span class="tname" style="${tileFont(l)}">${tileText(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
   }
 
   function tierHeadHTML(ci, tier, items) {
@@ -550,7 +558,7 @@
         <span class="tier-actions"><button class="tier-yes" data-tier-yes="${key}">YES</button><button class="tier-no" data-tier-no>NO</button></span>
       </div>`;
     }
-    return `<div class="tier-head${allFound ? " complete" : ""}"><button class="tier-btn" data-tier="${key}" title="${allFound ? "Lock" : "Unlock"} every weapon in this tier">TIER ${tier}<span class="tier-hint">${allFound ? "click to lock all" : "click to unlock all"}</span></button><small>${f}/${t}</small>${pbar(f, t)}</div>`;
+    return `<div class="tier-head clickable${allFound ? " complete" : ""}" data-tier="${key}" role="button" tabindex="0" title="Click anywhere on this bar to ${allFound ? "lock" : "unlock"} every entry in tier ${tier}"><span class="tier-btn">TIER ${tier}<span class="tier-hint">${allFound ? "click the bar to lock all" : "click the bar to unlock all"}</span></span><small>${f}/${t}</small>${pbar(f, t)}</div>`;
   }
 
   /* ---------- weapon stats as numbers ---------- */
@@ -625,6 +633,7 @@
     } else {
       body += statBarHTML(cat);
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
+      if (!settings.tierTip && !viewOnly) body += `<div class="tiptip">&#128161; Tip: click anywhere on a <b>TIER</b> bar to mark that whole tier found. <button class="mini-btn" data-tiptip>GOT IT</button></div>`;
       tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin).forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
         if (ui.hideDone && all.length && all.every(e => isFound(e.id))) { hiddenDone++; return; }
@@ -644,9 +653,8 @@
     return cats.map((c, i) => {
       const [f, t] = countOf(c.items);
       if (ui.hideDone && t && f === t && i !== ui.cat) return "";
-      const n = c.name.length, cf = n <= 7 ? 38 : n <= 9 ? 33 : n <= 12 ? 27 : 21;
-      return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cf:${cf}px">${esc(c.name)}${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
-    }).join("") + `<button class="cat calcat" data-cat="-1" aria-selected="${ui.cat === -1}" style="--cf:27px">CALIBERS</button>`;
+      return `<button class="cat${t && f === t ? " complete" : ""}" data-cat="${i}" aria-selected="${i === ui.cat}" style="--cn:${c.name.length}"><span class="cl">${esc(c.name)}</span>${t ? `<span class="mini">${f}/${t}</span>${pbar(f, t)}` : ""}</button>`;
+    }).join("") + `<button class="cat calcat" data-cat="-1" aria-selected="${ui.cat === -1}" style="--cn:8"><span class="cl">CALIBERS</span></button>`;
   }
 
   /* the "unlock this whole tab" bar under Biography / Documents sub-tabs */
@@ -1932,6 +1940,7 @@
   const TOUR = [
     ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
     ["Mark what you've found", "Hover over (or tap) any tile and press its <b>&#9733; star</b> to mark it found. Click the tile itself to open its page with stats and comments."],
+    ["Unlock a whole tier at once", "Click anywhere on a <b>TIER</b> bar (or a Biography / Documents tab you're already on) to mark everything in it as found. It asks first, and clicking a finished bar again locks it all."],
     ["Search marks things too", "Type a name in the search bar and press <b>ENTER</b> to mark the top match as found, without leaving the page. Made a mistake? <b>Ctrl+Z</b> undoes it."],
     ["See what's left", "<b>WHAT'S LEFT</b> lists everything you're still missing. <b>MISSING</b> next to the search bar hides what you already have."],
     ["Keep a backup", "Your progress lives only in this browser. Download a backup in <b>CLOUD</b> (or from the reminder bar) so you never lose it. That's it, have fun!"]
@@ -2419,8 +2428,9 @@
     const yes = t.closest("[data-tier-yes]");
     if (yes) { applyTier(yes.dataset.tierYes); keepScroll(render); return; }
     if (t.closest("[data-tier-no]")) { play("back"); cancelTier(); keepScroll(render); return; }
+    if (t.closest("[data-tiptip]")) { settings.tierTip = true; save(KEY_SET, settings); play("back"); keepScroll(render); return; }
     const tierBtn = t.closest("[data-tier]");
-    if (tierBtn) { askTier(tierBtn.dataset.tier); keepScroll(render); return; }
+    if (tierBtn) { if (!settings.tierTip) { settings.tierTip = true; save(KEY_SET, settings); } askTier(tierBtn.dataset.tier); keepScroll(render); return; }
 
     const tool = t.closest("[data-open-tool]") || t.closest("[data-tool]");
     if (tool) { openDetail("tool", tool.dataset.openTool || tool.dataset.tool); return; }
@@ -2471,6 +2481,7 @@
     play("click"); persistUI(); render();
   });
   // clicking a star shouldn't focus it (focusing scrolls the list to it)
+  screen.addEventListener("keydown", ev => { const th = ev.target.closest && ev.target.closest(".tier-head[data-tier]"); if (th && (ev.key === "Enter" || ev.key === " ") && ev.target === th) { ev.preventDefault(); askTier(th.dataset.tier); keepScroll(render); } });
   screen.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest(".hstar, .sres-star, .sres-ic, .tile, .card, .doc, .subtab, .cat")) ev.preventDefault(); });
   screen.addEventListener("submit", ev => { if (!ev.target.matches("form.contrib")) return; ev.preventDefault(); submitForm(ev.target); });
   // keep the form's text if you switch tabs
