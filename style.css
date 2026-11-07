@@ -1,13 +1,13 @@
 /* Inconsolata: the font the game's PDA uses (Roblox "Code"). Self-hosted, see fonts/Inconsolata-OFL.txt */
 /* Fixed-weight copies of Inconsolata (the variable font drew some letters wrong in Safari) */
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-400.woff") format("woff"); font-weight: 400; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-500.woff") format("woff"); font-weight: 500; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600.woff") format("woff"); font-weight: 600; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-700.woff") format("woff"); font-weight: 700; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-800.woff") format("woff"); font-weight: 800; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-900.woff") format("woff"); font-weight: 900; font-stretch: 100%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-800-85.woff") format("woff"); font-weight: 800; font-stretch: 85%; font-display: swap; }
-@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600-88.woff") format("woff"); font-weight: 600; font-stretch: 88%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-400.woff?v=3") format("woff"); font-weight: 400; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-500.woff?v=3") format("woff"); font-weight: 500; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600.woff?v=3") format("woff"); font-weight: 600; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-700.woff?v=3") format("woff"); font-weight: 700; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-800.woff?v=3") format("woff"); font-weight: 800; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-900.woff?v=3") format("woff"); font-weight: 900; font-stretch: 100%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-800-85.woff?v=3") format("woff"); font-weight: 800; font-stretch: 85%; font-display: swap; }
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600-88.woff?v=3") format("woff"); font-weight: 600; font-stretch: 88%; font-display: swap; }
 /* =====================================================================
    PDA.exe — Once A Normal City tracker
    Styled after the in-game PDA: see-through black window, glossy grey
