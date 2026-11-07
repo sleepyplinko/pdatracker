@@ -1053,3 +1053,4 @@ body.light .window .mtab, body.light .window .viewtools button[aria-pressed="tru
 body.light .window .rtag, body.light .window .chip-btn[aria-pressed="true"], body.light .window .pk-chip.on { filter: invert(1) hue-rotate(180deg); }
 body.light .window .tile img, body.light .window .card img, body.light .window .preview img, body.light .window .doc img { filter: none; }
 body.light .footer { color: rgba(0,0,0,.5); }
+.dbig2 .sscalc { color: #ffd23a; }
