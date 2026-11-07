@@ -188,6 +188,9 @@
       if (ui.sort === "recent" && idOf) {
         const ta = foundAt(idOf(a)), tb = foundAt(idOf(b));
         if (ta !== tb) return tb - ta;
+      } else if (ui.sort === "rare" && idOf && rarity) {
+        const ra = rarityOf(idOf(a)), rb = rarityOf(idOf(b));
+        if (ra !== rb) return (ra == null ? 2 : ra) - (rb == null ? 2 : rb);
       } else if (ui.sort !== "az") {
         const fa = isOn(a), fb = isOn(b);
         if (fa !== fb) return fa ? -1 : 1;
@@ -210,7 +213,7 @@
     const changed = [];
     ids.forEach(id => { const t = trackOf(id); if (!!found[t] !== on) { if (on) found[t] = 1; else delete found[t]; changed.push(t); } });
     if (!changed.length) return false;
-    save(KEY_FOUND, found); updateCount();
+    save(KEY_FOUND, found); updateCount(); scheduleSync();
     undoStack.push(before); if (undoStack.length > 30) undoStack.shift();
     const now = Date.now();
     if (changed.length <= 3) changed.forEach(id => history_.unshift({ id, on, t: now }));
@@ -226,7 +229,7 @@
   function undo() {
     if (viewOnly || !undoStack.length) { toast("Nothing to undo."); return; }
     found = undoStack.pop();
-    save(KEY_FOUND, found); updateCount();
+    save(KEY_FOUND, found); updateCount(); scheduleSync();
     history_.unshift({ undo: true, t: Date.now() }); save(KEY_LOG, history_.slice(0, 60));
     play("back"); toast("Undone.");
     keepScroll(render); renderTabs();
@@ -788,6 +791,7 @@
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${moreMenu((fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE CALC</button>` : "") + `<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>` + linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
+            ${rarityHTML(e)}
             ${ammoLinkHTML(e)}
             ${users.length ? `<div class="stat gap"><i style="color:#f3ee30">CARRIED BY</i>: ${users.map(u => `<button class="linkish" data-person="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>` : ""}
           </div></div>
@@ -941,7 +945,8 @@
         if (!tool) return statRow(k, v);
         return statRow(k, v).replace(/<span class="ev">(.*?)<\/span>/, `<button class="ev linkish" data-tool="${esc(tool.id)}" title="Open ${esc(tool.name)}">$1</button>${isFound(tool.id) ? ' <span class="egot" title="Found">✓</span>' : ""}`);
       }),
-      loadoutMarkHTML(e)
+      loadoutMarkHTML(e),
+      rarityHTML(card.entry) ? `<div class="erarity">${rarityHTML(card.entry)}</div>` : ""
     ].join("");
     const empty = !base.length && !skills.length && !load.length;
     const members = card.kind === "group" ? card.members : [];
@@ -1583,6 +1588,150 @@
     sinceBackup = 0; save(KEY_SINCE, 0); save(KEY_SNOOZE, 0);
   }
   let nagged = false;
+
+  /* =====================================================================
+     CLOUD: accounts + sync, rarity, live profile links (backend/worker.js)
+     ===================================================================== */
+  const API = (typeof PDA_CLOUD === "object" && PDA_CLOUD && String(PDA_CLOUD.api || "").replace(/\/+$/, "")) || "";
+  const KEY_ACC = pk("pda-account-v1");          // { name, token, base: [ids at last sync], ver, at }
+  let acc = API ? load(KEY_ACC, null) : null;
+  let syncState = { busy: false, msg: "", bad: false, timer: 0 };
+  let rarity = API ? load("pda-rarity-v1", null) : null;    // { players, counts, at }
+  const rarityOf = id => { if (!rarity || !rarity.players) return null; const t = trackOf(id); return (rarity.counts[t] || 0) / rarity.players; };
+  async function api(method, path, data) {
+    const r = await fetch(API + path, { method, headers: { "Content-Type": "application/json", ...(acc && acc.token ? { Authorization: "Bearer " + acc.token } : {}) }, body: data ? JSON.stringify(data) : undefined });
+    let j = null; try { j = await r.json(); } catch { /* ignore */ }
+    return [r.status, j || {}];
+  }
+  /* the password never leaves the browser: it's stretched into a key first */
+  async function passKey(name, pass) {
+    const enc = new TextEncoder();
+    const k = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: enc.encode("pda-tracker:" + name.toLowerCase()), iterations: 150000 }, k, 256);
+    return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+  const foundIds = () => Object.keys(found).filter(id => /^[tbd]\|/.test(id)).sort();
+  /* three-way merge: what the server has, plus what you added here, minus what you removed here */
+  function mergeFound(server, base, local) {
+    const B = new Set(base), L = new Set(local), out = new Set(server);
+    local.forEach(id => { if (!B.has(id)) out.add(id); });
+    base.forEach(id => { if (!L.has(id)) out.delete(id); });
+    return [...out].sort();
+  }
+  function applyServer(ids) {
+    const before = foundIds().join("\n");
+    found = {}; ids.forEach(id => { found[id] = 1; });
+    save(KEY_FOUND, found);
+    if (before !== ids.join("\n")) { updateCount(); keepScroll(render); renderTabs(); }
+  }
+  function scheduleSync(ms = 2500) { if (!acc || viewOnly) return; clearTimeout(syncState.timer); syncState.timer = setTimeout(syncNow, ms); }
+  async function syncNow(quiet = true) {
+    if (!acc || syncState.busy || viewOnly) return;
+    syncState.busy = true;
+    try {
+      for (let tries = 0; tries < 3; tries++) {
+        let [st, me] = await api("GET", "/api/me");
+        if (st === 401) { acc = null; save(KEY_ACC, null); syncState.msg = "You were logged out. Log in again to keep syncing."; syncState.bad = true; break; }
+        if (st !== 200) throw new Error(me.error || "Couldn't reach the server.");
+        const merged = mergeFound(me.found, acc.base || [], foundIds());
+        if (merged.join("\n") !== me.found.join("\n")) {
+          [st, me] = await api("PUT", "/api/me", { found: merged, ver: me.ver });
+          if (st === 409) continue;                       // changed elsewhere meanwhile: redo the merge
+          if (st !== 200) throw new Error(me.error || "Couldn't save.");
+        }
+        acc.base = me.found; acc.ver = me.ver; acc.at = Date.now(); acc.share = me.share; acc.public = me.public; acc.name = me.name;
+        save(KEY_ACC, acc);
+        applyServer(me.found);
+        syncState.msg = ""; syncState.bad = false;
+        break;
+      }
+    } catch (e) { syncState.msg = (e && e.message) || "Sync failed. It'll retry."; syncState.bad = true; scheduleSync(30000); }
+    syncState.busy = false;
+    const sb = $("#syncStatus"); if (sb) sb.innerHTML = syncStatusHTML();
+    if (!quiet && !syncState.bad) toast("Synced.");
+  }
+  const syncStatusHTML = () => syncState.busy ? "Syncing…" : syncState.bad ? `<span style="color:#ff8a7a">${esc(syncState.msg)}</span>` : acc && acc.at ? `Synced ${ago(acc.at)}.` : "";
+  const profileURL = name => `${location.origin}${location.pathname}#u=${encodeURIComponent(name)}`;
+  async function loadRarity(force) {
+    if (!API) return;
+    if (!force && rarity && Date.now() - rarity.got < 10 * 60000) return;
+    try { const [st, r] = await api("GET", "/api/rarity"); if (st === 200) { rarity = { ...r, got: Date.now() }; save("pda-rarity-v1", rarity); if (detail) keepScroll(render); } } catch { /* offline */ }
+  }
+  function rarityHTML(e) {
+    const r = rarityOf(e.id); if (r == null) return "";
+    const pct = Math.round(r * 1000) / 10;
+    const tag = pct < 5 ? "VERY RARE" : pct < 20 ? "RARE" : pct < 50 ? "UNCOMMON" : "COMMON";
+    return `<div class="stat gap rarity" title="Out of ${rarity.players} players who share their progress"><i style="color:#7ad7ff">FOUND BY</i>: ${pct}% of players <span class="rtag r-${tag.replace(" ", "")}">${tag}</span></div>`;
+  }
+  function accountHTML() {
+    if (!API) return "";
+    if (!acc) return `<h4>ACCOUNT · SYNC BETWEEN DEVICES</h4>
+      <p>Make a free account and your checklist follows you to every phone and computer you log in on. Your password never leaves this browser.</p>
+      <form class="accform" id="accForm" autocomplete="on">
+        <input id="accName" name="username" autocomplete="username" placeholder="name (3-20 letters, numbers, _)" maxlength="20">
+        <input id="accPass" name="password" type="password" autocomplete="current-password" placeholder="password (8+ characters)">
+        <label class="chk"><input type="checkbox" id="accShare" checked> Count my finds in the anonymous "found by %" numbers</label>
+        <label class="chk"><input type="checkbox" id="accPublic" checked> Let people see my progress with a profile link</label>
+        <div class="btnrow"><button class="pbtn" type="submit" data-acc="login">LOG IN</button><button class="pbtn" type="submit" data-acc="register">CREATE ACCOUNT</button></div>
+        <div class="msg" id="accMsg"></div>
+      </form>`;
+    return `<h4>ACCOUNT · SYNC BETWEEN DEVICES</h4>
+      <p>Logged in as <b>${esc(acc.name)}</b>. Everything you mark is saved to your account and shows up on your other devices. <span id="syncStatus">${syncStatusHTML()}</span></p>
+      <div class="btnrow"><button class="pbtn" id="syncNow">SYNC NOW</button><button class="pbtn" id="accOut">LOG OUT</button></div>
+      <label class="chk"><input type="checkbox" id="accShare2"${acc.share !== false ? " checked" : ""}> Count my finds in the anonymous "found by %" numbers</label>
+      <label class="chk"><input type="checkbox" id="accPublic2"${acc.public !== false ? " checked" : ""}> Let people see my progress with a profile link</label>
+      ${acc.public !== false ? `<div class="btnrow"><input readonly id="liveLink" value="${esc(profileURL(acc.name))}"><button class="pbtn" id="copyLive">${I.share} COPY PROFILE LINK</button></div><p class="dim">This link always shows your current progress (unlike the share link below, which is a snapshot).</p>` : ""}
+      <div class="btnrow"><button class="pbtn danger" id="accDel">DELETE ACCOUNT</button><span class="dim" id="accDelMsg">Removes it from the server. Your progress stays in this browser.</span></div>`;
+  }
+  function wireAccount() {
+    if (!API) return;
+    const f = $("#accForm");
+    if (f) f.onsubmit = async ev => {
+      ev.preventDefault();
+      const mode = (ev.submitter && ev.submitter.dataset.acc) || "login";
+      const name = $("#accName").value.trim(), pass = $("#accPass").value, msg = $("#accMsg");
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) { msg.textContent = "Names are 3-20 letters, numbers or _."; play("warn"); return; }
+      if (pass.length < 8) { msg.textContent = "Use at least 8 characters for the password."; play("warn"); return; }
+      msg.textContent = mode === "login" ? "Logging in…" : "Creating your account…";
+      try {
+        const key = await passKey(name, pass);
+        const [st, r] = await api("POST", "/api/" + mode, mode === "register" ? { name, key, found: foundIds(), share: $("#accShare").checked, public: $("#accPublic").checked } : { name, key });
+        if (st !== 200 && st !== 201) { msg.textContent = r.error || "Something went wrong."; play("warn"); return; }
+        acc = { name: r.name, token: r.token, base: [], ver: r.ver, share: r.share, public: r.public };
+        if (mode === "register") { acc.base = r.found; acc.at = Date.now(); }
+        save(KEY_ACC, acc); play("confirm");
+        await syncNow();
+        if (mode === "login") { const s = !$("#accShare").checked ? false : null, p = !$("#accPublic").checked ? false : null; if (s === false || p === false) await api("PUT", "/api/me", { ...(s === false ? { share: false } : {}), ...(p === false ? { public: false } : {}) }); }
+        toast(mode === "login" ? `Logged in as ${acc.name}. Your progress here was merged with your account.` : `Account ${acc.name} created.`, { ms: 6000 });
+        loadRarity(true); keepScroll(render);
+      } catch { msg.textContent = "Couldn't reach the server. Check your connection."; play("warn"); }
+    };
+    const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
+    on("syncNow", () => { play("click"); syncNow(false); const sb = $("#syncStatus"); if (sb) sb.textContent = "Syncing…"; });
+    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
+    const flag = (id, k) => { const el = $("#" + id); if (el) el.onchange = async () => { const [st, r] = await api("PUT", "/api/me", { [k]: el.checked }).catch(() => [0, {}]); if (st === 200) { acc.share = r.share; acc.public = r.public; save(KEY_ACC, acc); play("click"); keepScroll(render); } else { toast("Couldn't save that. Try again."); el.checked = !el.checked; } }; };
+    flag("accShare2", "share"); flag("accPublic2", "public");
+    on("copyLive", async () => { play("click"); try { await navigator.clipboard.writeText($("#liveLink").value); toast("Profile link copied."); } catch { $("#liveLink").select(); toast("Link selected. Press Ctrl+C to copy."); } });
+    on("accDel", async ev => {
+      const b = ev.currentTarget;
+      if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "CLICK AGAIN TO DELETE"; play("warn"); return; }
+      const [st] = await api("DELETE", "/api/me").catch(() => [0]);
+      if (st === 200) { acc = null; save(KEY_ACC, null); toast("Account deleted. Your progress stays in this browser."); keepScroll(render); } else toast("Couldn't delete it right now.");
+    });
+  }
+  async function openProfileLink(name) {
+    try {
+      const [st, r] = await api("GET", "/api/u/" + encodeURIComponent(name));
+      if (st !== 200) { toast(r.error || "That profile isn't available.", { ms: 6000 }); leaveView(); return; }
+      const set = {}; r.found.forEach(id => { set[id] = 1; });
+      viewOnly = { name: r.name, set, live: true };
+      renderTabs(); updateCount(); render();
+    } catch { toast("Couldn't load that profile."); }
+  }
+
+  if (API) { const o = document.createElement("option"); o.value = "rare"; o.textContent = "RAREST FIRST"; $("#sortSel").appendChild(o); $("#sortSel").value = ui.sort; }
+  else if (ui.sort === "rare") ui.sort = "found";
+
   /* first-visit tour */
   const TOUR = [
     ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
@@ -1628,6 +1777,7 @@
           <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
+          ${accountHTML()}
           <h4>MARK A LIST AS FOUND</h4>
           <p>Paste names, one per line (from your notes, a friend, or a COPY AS TEXT list). Anything that matches an entry gets marked found. You can undo it with Ctrl+Z.</p>
           <textarea id="bulkIn" class="bulkin" rows="6" placeholder="AK74&#10;Plate Carrier Vest&#10;10rnd ADV Mag&#10;..."></textarea>
@@ -1643,6 +1793,7 @@
         </div>
       </div>`;
     $("#exp").onclick = () => { play("click"); doExport(); $("#cmsg").textContent = "Backup downloaded."; };
+    wireAccount();
     $("#bulkGo").onclick = () => {
       const r = bulkMark($("#bulkIn").value);
       if (!r) return;
@@ -1674,7 +1825,7 @@
       if (data.notes && typeof data.notes === "object") { notes = data.notes; save(KEY_NOTES, notes); }
       if (Array.isArray(data.log)) { history_ = data.log.slice(0, 60); save(KEY_LOG, history_); }
       undoStack.length = 0; sinceBackup = 0; save(KEY_SINCE, 0);
-      save(KEY_FOUND, found); updateCount(); play("confirm");
+      save(KEY_FOUND, found); updateCount(); scheduleSync(); play("confirm");
       renderCloud(`Restored ${Object.keys(found).length} entries.`);
     } catch {
       play("warn");
@@ -2124,7 +2275,7 @@
   });
   // clicking a star shouldn't focus it (focusing scrolls the list to it)
   screen.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest(".hstar, .sres-star, .sres-ic, .tile, .card, .doc, .subtab, .cat")) ev.preventDefault(); });
-  screen.addEventListener("submit", ev => { ev.preventDefault(); submitForm(ev.target); });
+  screen.addEventListener("submit", ev => { if (!ev.target.matches("form.contrib")) return; ev.preventDefault(); submitForm(ev.target); });
   // keep the form's text if you switch tabs
   screen.addEventListener("input", ev => { const f = ev.target.closest && ev.target.closest("form.contrib"); if (f) readForm(f); });
   // notes save as you type
@@ -2281,7 +2432,7 @@
   function renderBanner() {
     if (viewOnly) {
       bannerEl.hidden = false;
-      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA · READ-ONLY · ${Object.keys(viewOnly.set).length} / ${entries.length} FOUND</span>
+      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
         <span><button data-b="compare">COMPARE WITH MINE</button><button data-b="exit">EXIT</button></span>`;
     } else if (friend) {
       const n = entries.filter(e => friend.set[e.id] && !found[e.id]).length;
@@ -2357,6 +2508,7 @@
   if (!sessionStart || !Array.isArray(sessionStart.ids)) { sessionStart = { f: countOf(entries)[0], t: (sessionStart && sessionStart.t) || Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
   if (Object.keys(found).length && !progress[today()]) snapProgress();
   if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
+  else if (/^#u=/.test(location.hash) && API) { viewOnly = { name: decodeURIComponent(location.hash.slice(3)), set: {}, live: true }; openProfileLink(viewOnly.name); }
   else if (/^#e=/.test(location.hash)) {
     const id = byHash.get(location.hash.slice(3, 8));
     const e = id && byId.get(id);
@@ -2373,6 +2525,14 @@
   updateCount();
   render();
   backupNag();
+  if (API) {
+    loadRarity();
+    if (acc) syncNow();
+    // pick up changes made on another device when you come back to this tab
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && acc && (!acc.at || Date.now() - acc.at > 20000)) syncNow(); });
+    window.addEventListener("online", () => scheduleSync(500));
+    window.addEventListener("hashchange", () => { const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
+  }
   // first visit: short tour (not when opening someone's share link)
   if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
 
