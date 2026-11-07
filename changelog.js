@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Loadout and damage calculator: dropdowns replaced with type-to-search pickers (arrows + Enter, category chips; loadout stays open to add several)",
     "IMPORT FROM SCREENSHOTS in CLOUD: drop or paste PDA screenshots and it marks what it can read (you check the list first)",
     "Damage calculator: Shield (takes half of each hit until it breaks; explosives and bludgeons skip it) and melee time to kill",
     "Backend ready for accounts with sync between devices, \"found by X% of players\" rarity, RAREST FIRST sorting and live profile links (switches on once the server is connected)",
