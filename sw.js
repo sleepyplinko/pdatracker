@@ -1,6 +1,6 @@
 /* Offline support. Always tries the network first so updates show up straight away,
    and falls back to the saved copy when you're offline. */
-const CACHE = "pda-tracker-v25";
+const CACHE = "pda-tracker-v26";
 const CORE = ["./", "index.html", "style.css", "app.js", "data.js", "descriptions.js", "tooltips.js", "changelog.js", "ammo-links.js", "ammo.js", "contribute.js", "cloud-config.js", "screenshot-import.js", "sounds.js", "manifest.webmanifest", "icons/icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
