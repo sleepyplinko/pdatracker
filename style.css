@@ -1010,3 +1010,38 @@ details.more[open] > summary { background: #fff; }
   text-shadow: -1.3px -1.3px 0 #555, 1.3px -1.3px 0 #555, -1.3px 1.3px 0 #555, 1.3px 1.3px 0 #555, 0 1px 2px rgba(0,0,0,.3); }
 .tname[style*="--tl:2"] { --tmax: 25px; }
 @media (max-width: 700px) { .cat, .cat[aria-selected="true"] { container-type: normal; } .cat .cl { font-size: 22px; } }
+
+/* ---------- players / admin / closest / counts ---------- */
+.ph3 { color: #f3ee30; margin: 14px 0 6px; letter-spacing: .05em; }
+.addfriend { display: flex; gap: 8px; max-width: 460px; }
+.addfriend input { flex: 1; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 7px 8px; font: inherit; }
+.frlist { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.frrow { display: grid; grid-template-columns: minmax(110px, auto) minmax(180px, 1fr) minmax(160px, 1fr) auto; gap: 6px 12px; align-items: center; background: #151515; border: 1px solid #333; border-radius: 6px; padding: 7px 10px; font-size: 14px; }
+.frrow .dim, .closerow .dim { color: #999; font-size: 12px; }
+.frbtns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.lbbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.lbbar select { background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 5px; font: inherit; }
+.lbbar .dim { color: #999; font-size: 12px; }
+.lbtab { max-width: 640px; } .lbtab tr.me td { background: #2c3a55; font-weight: 800; }
+.subcard { background: #151515; border: 1px solid #3a3a3a; border-radius: 6px; padding: 8px 10px; margin: 6px 0; }
+.subhead { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; } .subhead .dim { color: #999; font-size: 12px; }
+.subtext { white-space: pre-wrap; margin: 6px 0; font-size: 14px; color: #eee; max-height: 260px; overflow: auto; }
+.sublink a { color: #9ad0ff; word-break: break-all; }
+.admedit { margin: 8px 0; } .admedit textarea, .admedit input[type=number] { width: 100%; box-sizing: border-box; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 6px; font: inherit; font-size: 13px; }
+.admedit small { color: #999; font-weight: 600; }
+.closerow { display: grid; grid-template-columns: minmax(200px, auto) 60px 1fr; gap: 4px 12px; padding: 5px 8px; border-bottom: 1px solid #2a2a2a; font-size: 14px; align-items: baseline; }
+.timesfound .mini-btn { height: 20px; padding: 0 7px; }
+@media (max-width: 700px) { .frrow { grid-template-columns: 1fr auto; } .frrow > span:nth-child(3) { grid-column: 1 / -1; } .closerow { grid-template-columns: 1fr auto; } .closerow > span:last-child { grid-column: 1 / -1; } }
+/* ---------- keyboard mode ---------- */
+body.kbmode [data-entry]:focus { outline: 3px solid #f3ee30 !important; outline-offset: 2px; z-index: 2; position: relative; }
+/* ---------- light theme: flip the dark panels, keep the game-coloured pieces as they are ---------- */
+body.light { background: #e9e4dc; }
+body.light .sky { filter: brightness(1.6) saturate(.6); opacity: .55; }
+body.light .window { filter: invert(1) hue-rotate(180deg); background: rgba(0,0,0,.9); }
+body.light .window img, body.light .window .tile, body.light .window .cat, body.light .window .tab, body.light .window .tier-head,
+body.light .window .dhead, body.light .window .subtab, body.light .window .card, body.light .window .doc, body.light .window .preview,
+body.light .window .pbtn, body.light .window .mini-btn, body.light .window .hbtn, body.light .window .return, body.light .window .ename,
+body.light .window .mtab, body.light .window .viewtools button[aria-pressed="true"], body.light .window .backupbar, body.light .window .estar,
+body.light .window .rtag, body.light .window .chip-btn[aria-pressed="true"], body.light .window .pk-chip.on { filter: invert(1) hue-rotate(180deg); }
+body.light .window .tile img, body.light .window .card img, body.light .window .preview img, body.light .window .doc img { filter: none; }
+body.light .footer { color: rgba(0,0,0,.5); }

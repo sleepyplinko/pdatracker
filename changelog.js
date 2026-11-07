@@ -11,6 +11,13 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Click anywhere on a tier bar (not just the text) to mark the whole tier, with a tip and a tour step",
+    "Font switched to Inconsolata, the font the game uses, and sized to fit like in-game",
+    "PLAYERS tab: add friends by account name, compare finds, and a leaderboard (public profiles only)",
+    "TIMES FOUND counter on item and people pages, synced with your account",
+    "ALMOST DONE list at the top of WHAT'S LEFT",
+    "Light theme and keyboard mode in SETTINGS",
+    "SUBMIT now goes straight to the site's own server for review",
     "Damage calculator: supershield blocks one hit fewer (hits go through once it's down to 1), matching in-game testing",
     "Loadout and damage calculator: dropdowns replaced with type-to-search pickers (arrows + Enter, category chips; loadout stays open to add several)",
     "IMPORT FROM SCREENSHOTS in CLOUD: drop or paste PDA screenshots and it marks what it can read (you check the list first)",
