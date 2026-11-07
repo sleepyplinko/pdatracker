@@ -934,3 +934,25 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .ammosec { margin: 12px 0 2px; color: #f3ee30; }
 .dmgcalc .dim { color: #999; font-size: 12px; }
 @media (max-width: 1000px) { .dgrid { grid-template-columns: 1fr; } }
+
+/* ---------- ⋯ menu on item pages ---------- */
+details.more { position: relative; display: inline-block; }
+details.more > summary { list-style: none; cursor: pointer; height: 16px; min-width: 26px; padding: 0 6px; border: 1px solid #555; border-radius: 3px; background: #ddd; color: #111; font-weight: 900; line-height: 14px; text-align: center; user-select: none; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more[open] > summary { background: #fff; }
+.morebox { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; display: flex; flex-direction: column; gap: 4px; padding: 6px; background: #1a1a1a; border: 1px solid #555; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.6); min-width: 140px; }
+.morebox .hbtn { width: 100%; text-align: left; }
+/* ---------- backup bar ---------- */
+.backupbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 6px 4px; padding: 6px 10px; background: #3a2a06; border: 1px solid #b8862a; border-radius: 6px; color: #ffe2a0; font-size: 13px; }
+.backupbar span { flex: 1 1 260px; }
+.backupbar[hidden] { display: none; }
+/* ---------- tour ---------- */
+#tour { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
+#tour[hidden] { display: none; }
+.tourbox { width: min(440px, 100%); background: #141414; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.7); }
+.tourbox .dhead { height: 28px; font-size: 16px; }
+.tourbody { padding: 14px 16px 6px; color: #eee; font-size: 15px; line-height: 1.45; }
+.tourbody b { color: #f3ee30; }
+.tourbtns { display: flex; gap: 6px; justify-content: flex-end; padding: 8px 12px 12px; }
+/* ---------- settings notes ---------- */
+.snote { font-size: 12px; color: #9a9a9a; font-style: italic; padding: 0 12px 4px; }
