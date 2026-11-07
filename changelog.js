@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Fixed letters like K drawing squashed on some browsers (Safari)",
     "Click anywhere on a tier bar (not just the text) to mark the whole tier, with a tip and a tour step",
     "Font switched to Inconsolata, the font the game uses, and sized to fit like in-game",
     "PLAYERS tab: add friends by account name, compare finds, and a leaderboard (public profiles only)",
