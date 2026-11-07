@@ -112,6 +112,28 @@
   const norm = raw => Array.isArray(raw) ? { name: raw[0], ...(raw[1] || {}) }
                     : typeof raw === "string" ? { name: raw } : { ...raw };
 
+  /* entries added from the admin page: the last copy from the server is slotted
+     into the data before anything is built (loadOverrides reloads if it changes) */
+  const OV_CACHE = (typeof PDA_CLOUD === "object" && PDA_CLOUD && PDA_CLOUD.api) ? load("pda-overrides-v1", {}) : {};
+  const addedSig = ov => JSON.stringify(Object.entries(ov || {}).filter(([, o]) => o && o.add).map(([id, o]) => [id, o.add]).sort());
+  const ADDED_SIG = addedSig(OV_CACHE);
+  const SEC_DATA = { tools: () => PDA_DATA.tools, bio: () => PDA_DATA.biography, docs: () => PDA_DATA.documents };
+  const SEC_LETTER = { tools: "t", bio: "b", docs: "d" };
+  Object.values(OV_CACHE).forEach(o => {
+    const a = o && o.add; if (!a || !SEC_DATA[a.section]) return;
+    const g = SEC_DATA[a.section]().find(x => slug(x.name) === slug(a.group)); if (!g) return;
+    const all = a.section === "tools" ? Object.values(g.tiers).flat() : g.entries;
+    if (all.some(r => slug(norm(r).name) === slug(a.name))) return;          // data.js has it now
+    const raw = [a.name, { added: true }];
+    const newId = `${SEC_LETTER[a.section]}|${slug(g.name)}|${slug(a.name)}`;
+    const m = a.replace && a.replace.match(/^[tbd]\|[^|]+\|(?:(\d+)\|)?\?\?\?(\d+)$/);
+    let list = a.section === "tools" ? (g.tiers[m && m[1] ? m[1] : a.tier] = g.tiers[m && m[1] ? m[1] : a.tier] || []) : g.entries;
+    if (m && list[+m[2]] !== undefined && norm(list[+m[2]]).name === "???") {
+      list[+m[2]] = raw;                                                       // fills a ??? slot
+      if (found[a.replace] && !found[newId]) { found[newId] = 1; save(KEY_FOUND, found); }
+    } else list.push(raw);
+  });
+
   PDA_DATA.tools.forEach((cat, ci) => {
     cat.items = [];
     Object.keys(cat.tiers).sort((a, b) => a - b).forEach(tier => {
@@ -521,6 +543,7 @@
     const out = [];
     if (friend && !viewOnly && friend.set[t] && !found[t]) out.push(`<b class="bfr" title="${esc(friend.name || "Your friend")} has this and you don't">${esc((friend.name || "F").charAt(0).toUpperCase())}✓</b>`);
     if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥</b>');
+    if (e.update && e.update === latestUpdate) out.push(`<b class="bnew" title="New in ${esc(e.update)}">NEW</b>`);
     return out.length ? `<span class="badges">${out.join("")}</span>` : "";
   }
   const pbar = (f, t) => `<span class="pbar"><i style="width:${t ? Math.round(f / t * 100) : 0}%"></i></span>`;
@@ -1013,6 +1036,7 @@
               ${statRow("Type", type)}
               ${statRow("Category", g.name)}
             </div>
+            <div class="erarity">${communityHTML(e)}</div>
             <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
           </div>
         </div>
@@ -1480,11 +1504,15 @@
       `<div class="closerow"><b>${esc(n)}</b><span class="dim">${tot - left.length}/${tot}</span><span>${left.length} left: ${left.map(e => `<button class="linkish" data-${open(e)}="${esc(e.id)}">${esc(e.name)}</button>`).join(", ")}</span></div>`).join("")}</div>`;
   }
   function renderMissing() {
-    const [f, t] = countOf(entries);
+    const tags = updateTags();
+    if (ui.leftUpd && !tags.includes(ui.leftUpd)) ui.leftUpd = "";
+    const inUpd = list => ui.leftUpd ? list.filter(e => e.update === ui.leftUpd) : list;
+    const [f, t] = countOf(inUpd(entries));
     const groups = [];
-    PDA_DATA.tools.forEach(c => groups.push(["TOOLS › " + c.name, c.items]));
-    PDA_DATA.biography.forEach(g => groups.push(["BIOGRAPHY › " + g.name, g.items]));
-    PDA_DATA.documents.forEach(g => groups.push(["DOCUMENTS › " + g.name, g.items]));
+    PDA_DATA.tools.forEach(c => groups.push(["TOOLS › " + c.name, inUpd(c.items)]));
+    PDA_DATA.biography.forEach(g => groups.push(["BIOGRAPHY › " + g.name, inUpd(g.items)]));
+    PDA_DATA.documents.forEach(g => groups.push(["DOCUMENTS › " + g.name, inUpd(g.items)]));
+    const updSel = tags.length ? `<label class="leftupd">SHOW <select data-leftupd><option value="">EVERYTHING</option>${tags.map(x => `<option value="${esc(x)}"${x === ui.leftUpd ? " selected" : ""}>NEW IN ${esc(x.toUpperCase())}</option>`).join("")}</select></label>` : "";
     const body = groups.map(([name, items]) => {
       const left = sortEntries(items.filter(e => !isFound(e.id)));
       if (!left.length) return "";
@@ -1492,9 +1520,9 @@
     }).join("");
     screen.innerHTML = `<div class="results">
       <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}
-        <span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#127922; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
-      ${closestHTML()}
-      ${body || '<div class="empty-cat"><b>EVERYTHING FOUND</b>Nice work.</div>'}</div>`;
+        ${updSel}<span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#127922; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
+      ${ui.leftUpd ? "" : closestHTML()}
+      ${body || `<div class="empty-cat"><b>${ui.leftUpd ? "ALL OF " + esc(ui.leftUpd.toUpperCase()) + " FOUND" : "EVERYTHING FOUND"}</b>Nice work.</div>`}</div>`;
   }
 
   function missingGroups() {
@@ -1743,6 +1771,14 @@
     let j = null; try { j = await r.json(); } catch { /* ignore */ }
     return [r.status, j || {}];
   }
+  let serverInfo = { uploads: false };
+  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; if (ui.tab === "community") keepScroll(render); } } catch { /* offline */ } }
+  async function uploadPic(file) {
+    const r = await fetch(API + "/api/upload", { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream" }, body: file });
+    let j = {}; try { j = await r.json(); } catch { /* ignore */ }
+    if (r.status !== 201) { const e = new Error(j.error || "Upload failed."); e.user = true; throw e; }
+    return j.url;
+  }
   /* the password never leaves the browser: it's stretched into a key first */
   async function passKey(name, pass) {
     const enc = new TextEncoder();
@@ -1843,14 +1879,14 @@
         save(KEY_ACC, acc); play("confirm");
         await syncNow();
         if (mode === "login") { const s = !$("#accShare").checked ? false : null, p = !$("#accPublic").checked ? false : null; if (s === false || p === false) await api("PUT", "/api/me", { ...(s === false ? { share: false } : {}), ...(p === false ? { public: false } : {}) }); }
-        checkAdmin(); pullCounts(); friends = null;
+        checkAdmin(); pullCounts(); friends = null; mySubs = null;
         toast(mode === "login" ? `Logged in as ${acc.name}. Your progress here was merged with your account.` : `Account ${acc.name} created.`, { ms: 6000 });
         loadRarity(true); keepScroll(render);
       } catch { msg.textContent = "Couldn't reach the server. Check your connection."; play("warn"); }
     };
     const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
     on("syncNow", () => { play("click"); syncNow(false); const sb = $("#syncStatus"); if (sb) sb.textContent = "Syncing…"; });
-    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); setAdmin(false); friends = null; toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
+    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); setAdmin(false); friends = null; activity = null; mySubs = null; toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
     const flag = (id, k) => { const el = $("#" + id); if (el) el.onchange = async () => { const [st, r] = await api("PUT", "/api/me", { [k]: el.checked }).catch(() => [0, {}]); if (st === 200) { acc.share = r.share; acc.public = r.public; save(KEY_ACC, acc); play("click"); keepScroll(render); } else { toast("Couldn't save that. Try again."); el.checked = !el.checked; } }; };
     flag("accShare2", "share"); flag("accPublic2", "public");
     on("copyLive", async () => { play("click"); try { await navigator.clipboard.writeText($("#liveLink").value); toast("Profile link copied."); } catch { $("#liveLink").select(); toast("Link selected. Press Ctrl+C to copy."); } });
@@ -1970,14 +2006,23 @@
      PUBLISHED INFO: stats / comments / descriptions added on the admin page
      ===================================================================== */
   let overrides = API ? load("pda-overrides-v1", {}) : {};
+  let latestUpdate = "";
   const origInfo = new Map();         // entry object -> its original fields
   const findEntry = id => byId.get(id) || people.find(p => p.id === id) || null;
+  /* the newest update tag: entries with it get a NEW badge */
+  function updateTags() {
+    const seen = new Map();
+    entries.concat(people).forEach(e => { if (e.update && !seen.has(e.update)) seen.set(e.update, 0); });
+    Object.values(overrides || {}).forEach(o => { if (o && o.update) seen.set(o.update, Math.max(seen.get(o.update) || 0, o.updated || 0)); });
+    return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; }); });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+      if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community });
+      origInfo.set(e, { stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       if (o.stats && Object.keys(o.stats).length) {
         const st = { ...(e.stats || {}), ...o.stats };
         if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }       // weight stays last, like the game
@@ -1986,8 +2031,11 @@
       if (typeof o.comment === "string") e.comment = o.comment;
       if (typeof o.desc === "string") e.desc = o.desc;
       if (o.tier && e.section === "tools") e.tier = o.tier;
-      e.community = o.updated || 1;
+      if (o.update) e.update = o.update;
+      if (o.img && e.section !== "tools") { e.img = o.img; delete e.imgs; if (e.isCard && e.card) e.card.img = o.img; }
+      if (Object.keys(o).some(k => !["update", "updated", "add"].includes(k))) e.community = o.updated || 1;
     });
+    latestUpdate = updateTags()[0] || "";
   }
   async function loadOverrides() {
     if (!API) return;
@@ -1995,10 +2043,19 @@
       const [st, r] = await api("GET", "/api/overrides");
       if (st !== 200) return;
       if (JSON.stringify(r) === JSON.stringify(overrides)) return;
-      overrides = r; save("pda-overrides-v1", r); applyOverrides(r); keepScroll(render);
+      overrides = r; save("pda-overrides-v1", r);
+      if (addedSig(r) !== ADDED_SIG) {                 // entries were added or removed: they need a fresh start
+        if (!touched || adm.reloadAfter) { location.reload(); return; }
+        toast("New entries were added to the site. Reload the page to see them.");
+      }
+      applyOverrides(r); keepScroll(render);
     } catch { /* offline: keep the cached copy */ }
   }
-  const communityHTML = e => e && e.community ? `<div class="stat gap"><i style="color:#8de08d">COMMUNITY</i>: <span class="dim">some info here was sent in by players and approved</span></div>` : "";
+  let touched = false;
+  document.addEventListener("pointerdown", () => { touched = true; }, { once: true, capture: true });
+  document.addEventListener("keydown", () => { touched = true; }, { once: true, capture: true });
+  const communityHTML = e => !e ? "" : (e.update ? `<div class="stat gap"><i style="color:#ff9cf0">ADDED IN</i>: ${esc(e.update)}</div>` : "") +
+    (e.community ? `<div class="stat${e.update ? "" : " gap"}"><i style="color:#8de08d">COMMUNITY</i>: <span class="dim">some info here was sent in by players and approved</span></div>` : "");
 
   /* =====================================================================
      FOUND COUNTS: how many times you've picked something up
@@ -2040,8 +2097,24 @@
      PLAYERS: friends + leaderboard
      ===================================================================== */
   let friends = null, friendsMsg = "", board = { scope: "", rows: null, msg: "" };
+  let activity = null, activityAt = 0;
+  async function loadActivity() {
+    activityAt = Date.now();
+    try { const [st, r] = await api("GET", "/api/friends/activity"); if (st === 200) activity = r; } catch { /* offline */ }
+    if (ui.tab === "players") keepScroll(render);
+  }
+  function activityHTML() {
+    if (!acc || !(friends || []).length || !(activity || []).length) return "";
+    const open = e => ({ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]);
+    return `<h3 class="ph3">RECENT FINDS //</h3><div class="frlist recent">${activity.map(a => {
+      const e = a.id && findEntry(a.id);
+      const what = !a.id ? `${a.n} things at once` : e ? `<button class="linkish" data-${open(e)}="${esc(e.id)}">${esc(e.name)}</button>${isFound(e.id) ? ' <span class="dim">(you have it)</span>' : ""}` : "something";
+      return `<div class="frrow"><b>${esc(a.name)}</b><span>found ${what}</span><span class="dim">${esc(ago(a.t * 1000))}</span></div>`;
+    }).join("")}</div>`;
+  }
   async function loadFriends() {
     if (!acc) { friends = null; return; }
+    loadActivity();
     try { const [st, r] = await api("GET", "/api/friends"); if (st === 200) friends = r; else friendsMsg = r.error || "Couldn't load friends."; } catch { friendsMsg = "Couldn't reach the server."; }
     if (ui.tab === "players") keepScroll(render);
   }
@@ -2056,6 +2129,7 @@
   function renderPlayers() {
     if (!API) { screen.innerHTML = '<div class="results"><p class="none">Players needs the cloud server.</p></div>'; return; }
     if (friends === null && acc) { friends = []; loadFriends(); }
+    else if (acc && Date.now() - activityAt > 15000) loadActivity();
     if (board.rows === null) { board.rows = []; loadLB(); }
     const mine = new Set(Object.keys(found));
     const fr = !acc ? `<p>Log in (CLOUD tab) to add friends and see their progress next to yours.</p>`
@@ -2072,6 +2146,7 @@
     const rows = (board.rows || []).map((r, i) => `<tr class="${r.name.toLowerCase() === me ? "me" : ""}"><td>${i + 1}</td><td><button class="linkish" data-frview="${esc(r.name)}">${esc(r.name)}</button></td><td>${r.n}</td><td>${total ? Math.round(r.n / total * 100) : 0}%</td></tr>`).join("");
     screen.innerHTML = `<div class="results players">
       <h3 class="ph3">FRIENDS //</h3>${fr}
+      ${activityHTML()}
       <h3 class="ph3">LEADERBOARD //</h3>
       <div class="lbbar"><select data-lbscope>${sc.map(([p, n]) => `<option value="${esc(p)}"${p === board.scope ? " selected" : ""}>${esc(n)}</option>`).join("")}</select><span class="dim">Players with a public profile. Updates every few minutes.</span></div>
       ${board.msg ? `<div class="msg" style="color:#ff8a7a">${esc(board.msg)}</div>` : ""}
@@ -2105,8 +2180,33 @@
   const safeLink = u => /^https?:\/\//i.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : esc(u);
   const statsToText = st => Object.entries(st || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
+  const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
+  const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
+  function addEditorHTML() {
+    const a = adm.edit.add, sec = a.section || "tools";
+    const groups = SEC_DATA[sec]().map(g => g.name);
+    if (!groups.includes(a.group)) a.group = groups[0];
+    const g = SEC_DATA[sec]().find(x => x.name === a.group);
+    const slots = (g.items || []).filter(e => e.unknown);
+    return `<div class="dbox admedit"><div class="dhead">Add a new entry${adm.edit.sub ? ` (from submission #${adm.edit.sub})` : ""}</div><div class="dform addform">
+      <div class="frow"><label>SECTION <select data-admadd="section">${[["tools", "TOOLS"], ["bio", "BIOGRAPHY"], ["docs", "DOCUMENTS"]].map(([v, n]) => `<option value="${v}"${v === sec ? " selected" : ""}>${n}</option>`).join("")}</select></label>
+        <label>${sec === "tools" ? "CATEGORY" : "GROUP"} <select data-admadd="group">${groups.map(n => `<option${n === a.group ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+        ${sec === "tools" ? `<label>TIER <input type="number" min="1" max="9" data-admadd="tier" value="${esc(a.tier || "")}"></label>` : ""}</div>
+      <label>NAME <small>exactly as the PDA shows it</small><input data-admadd="name" maxlength="80" value="${esc(a.name || "")}"></label>
+      ${slots.length ? `<label>FILLS A ??? SLOT? <small>pick one if this is one of the unknown entries, so the total stays right</small><select data-admadd="replace"><option value="">No, it's an extra entry</option>${slots.map(e => `<option value="${esc(e.id)}"${e.id === a.replace ? " selected" : ""}>??? in ${esc(e.group)}${e.tier ? " tier " + e.tier : ""}</option>`).join("")}</select></label>` : ""}
+      ${sec === "tools" ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x (optional)</small><textarea data-admadd="stats" rows="6">${esc(a.stats || "")}</textarea>
+        <label>COMMENT</label><textarea data-admadd="comment" rows="4">${esc(a.comment || "")}</textarea>`
+      : `<label>DESCRIPTION</label><textarea data-admadd="desc" rows="5">${esc(a.desc || "")}</textarea>
+        <label>PICTURE LINK</label><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">`}
+      <label>ADDED IN UPDATE <small>optional</small><input data-admadd="update" list="admUpdList" maxlength="40" value="${esc(a.update || "")}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
+      <div class="btnrow"><button class="pbtn" id="admAddGo">ADD ENTRY${adm.edit.sub ? " + MARK DONE" : ""}</button><button class="pbtn" id="admCancel">CANCEL</button></div>
+      <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
+    </div></div>`;
+  }
+  function readAddForm() { if (!adm.edit || !adm.edit.add) return; screen.querySelectorAll("[data-admadd]").forEach(el => { adm.edit.add[el.dataset.admadd] = el.value; }); }
   function adminEditorHTML() {
     const ed = adm.edit; if (!ed) return "";
+    if (ed.add) return addEditorHTML();
     const e = ed.entry && findEntry(ed.entry);
     const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }));
     const isTool = e && e.section === "tools", isPerson = e && e.section === "bio";
@@ -2117,7 +2217,9 @@
       ${e ? `${isTool ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x · lines you leave out keep their old value</small><textarea id="admStats" rows="10">${esc(statsToText(e.stats))}</textarea>
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
-        : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>`}
+        : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>
+          <label>PICTURE LINK <small>a picture someone uploaded, or any https:// image link</small><input id="admImg" value="${esc(ed.img || (pub && pub.img) || "")}" placeholder="https://"></label>${ed.img || (pub && pub.img) ? `<img class="subimg" src="${esc(ed.img || pub.img)}" alt="">` : ""}`}
+        ${updateFieldHTML(pub && pub.update || e.update || "")}
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
@@ -2129,35 +2231,58 @@
     const list = (adm.rows || []).map(r => {
       const e = r.entry && entries.find(x => x.name.toLowerCase() === r.entry.toLowerCase());
       return `<div class="subcard"><div class="subhead"><b>#${r.id} · ${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(r.who || "anonymous")}${r.account ? ` (account ${esc(r.account)})` : ""} · ${new Date(r.created * 1000).toLocaleString()}</span></div>
-        ${r.text ? `<div class="subtext">${esc(r.text)}</div>` : ""}${r.link ? `<div class="sublink">${safeLink(r.link)}</div>` : ""}
-        <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}">PUBLISH INFO…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button></div></div>`;
+        ${r.text ? `<div class="subtext">${esc(r.text)}</div>` : ""}${r.link ? `<div class="sublink">${safeLink(r.link)}</div>${isImgLink(r.link) ? `<a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer"><img class="subimg" src="${esc(r.link)}" alt="" loading="lazy"></a>` : ""}` : ""}
+        <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="${r.account ? `Note for ${esc(r.account)}, shown on their SUBMIT tab (optional, e.g. why it wasn't added)` : "Private note (they sent it without an account, so they won't see it)"}">
+        <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button></div></div>`;
     }).join("");
-    const pubs = Object.keys(overrides).map(id => findEntry(id)).filter(Boolean);
+    const pubs = Object.entries(overrides).map(([id, o]) => { const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: e ? e.group : (o.add ? o.add.group : ""), added: !!o.add, update: o.update, ok: !!e }; })
+      .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns"><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns"><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
       <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}</div>
       ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
       ${list || `<p class="dim">Nothing here.</p>`}
       <h3 class="ph3">PUBLISHED //</h3>
-      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}</span><span></span><span class="frbtns"><button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button></span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
+      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns"><button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button></span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
     </div>`;
     const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
     on("admCancel", () => { adm.edit = null; play("back"); keepScroll(render); });
     on("admUnpub", async () => {
       const id = adm.edit.entry; const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(id)).catch(() => [0]);
-      if (st === 200) { delete overrides[id]; save("pda-overrides-v1", overrides); applyOverrides(overrides); toast("Removed."); adm.edit = null; keepScroll(render); } else toast("Couldn't remove it.");
+      if (st === 200) { const wasAdd = overrides[id] && overrides[id].add; delete overrides[id]; save("pda-overrides-v1", overrides); if (wasAdd) { location.reload(); return; } applyOverrides(overrides); toast("Removed."); adm.edit = null; keepScroll(render); } else toast("Couldn't remove it.");
     });
     on("admPublish", async () => {
       const e = findEntry(adm.edit.entry); if (!e) return;
       const data = {};
       if (e.section === "tools") { data.stats = textToStats($("#admStats").value); data.comment = $("#admComment").value; const t = +$("#admTier").value; if (t && t !== e.tier) data.tier = t; }
-      else data.desc = $("#admDesc").value;
+      else { data.desc = $("#admDesc").value; const im = $("#admImg").value.trim(); if (im) { if (!/^https?:\/\//.test(im)) { toast("The picture link has to start with https://"); play("warn"); return; } data.img = im; } }
+      const up = $("#admUpdate").value.trim(); if (up) data.update = up;
+      if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;      // keep it an added entry
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return; }
       if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
       overrides[e.id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); applyOverrides(overrides);
       play("confirm"); toast(`Published for ${e.name}.`); adm.edit = null; loadAdmin();
+    });
+    on("admAddGo", async () => {
+      readAddForm(); const a = adm.edit.add, sec = a.section || "tools";
+      const name = (a.name || "").trim(), tier = +a.tier;
+      if (!name || name === "???") { toast("Type the entry's name."); play("warn"); return; }
+      if (sec === "tools" && !(tier >= 1 && tier <= 9) && !a.replace) { toast("Pick a tier from 1 to 9."); play("warn"); return; }
+      const g = SEC_DATA[sec]().find(x => x.name === a.group);
+      const id = `${SEC_LETTER[sec]}|${slug(g.name)}|${slug(name)}`;
+      if (findEntry(id)) { toast(`${name} is already in ${g.name}. Use EDIT ANY ENTRY to change it.`); play("warn"); return; }
+      const slot = a.replace && findEntry(a.replace);
+      const data = { add: { section: sec, group: g.name, name, tier: sec === "tools" ? (slot ? slot.tier : tier) : undefined, replace: a.replace || undefined } };
+      if (sec === "tools") { const st = textToStats(a.stats || ""); if (Object.keys(st).length) data.stats = st; if ((a.comment || "").trim()) data.comment = a.comment; }
+      else { if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.img = a.img.trim(); } }
+      if ((a.update || "").trim()) data.update = a.update.trim();
+      const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't add it."); play("warn"); return; }
+      if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
+      overrides[id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides);
+      play("confirm"); toast(`Added ${name}. Reloading…`); setTimeout(() => location.reload(), 600);
     });
   }
 
@@ -2283,9 +2408,10 @@
     const url = `${REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body + "\n\n_Sent from the PDA tracker._")}`;
     window.open(url, "_blank", "noopener");
   }
-  function openSuggest(e) {
+  function openSuggest(e, kind) {
     if (!e) return;
-    draft = Object.assign({}, draft, { entry: e.name, kind: "Wrong info", text: draft.entry === e.name ? draft.text : "" });
+    const nm = e.unknown ? `${e.group}${e.tier ? " tier " + e.tier : ""} ??? (unknown)` : e.name;
+    draft = Object.assign({}, draft, { entry: nm, kind: kind || "Wrong info", text: draft.entry === nm ? draft.text : "" });
     formMsg = null; detail = null; ui.tab = "community"; persistUI(); renderTabs(); render();
     const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus();
   }
@@ -2343,6 +2469,21 @@
     if (!res.ok || j.success === false) throw new Error(j.message || res.status);
   }
   let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
+  let pickedFile = null;
+  let mySubs = null;
+  async function loadMySubs() {
+    if (!API || !acc) { mySubs = null; return; }
+    try { const [st, r] = await api("GET", "/api/mysubs"); if (st === 200) mySubs = r; } catch { /* offline */ }
+    if (ui.tab === "community") keepScroll(render);
+  }
+  function mySubsHTML() {
+    if (!hasServer()) return "";
+    if (!acc) return `<p class="cat-note">Log in from the CLOUD tab before sending, and you'll see here when what you sent gets added.</p>`;
+    if (mySubs === null) { mySubs = []; loadMySubs(); }
+    if (!mySubs.length) return "";
+    const st = { new: ["WAITING", "#ffd23a"], done: ["ADDED", "#6cff6c"], rejected: ["NOT ADDED", "#ff7a7a"] };
+    return `<h3>-=-=- WHAT YOU SENT -=-=-</h3><div class="frlist mysubs">${mySubs.map(r => `<div class="frrow"><b>${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(new Date(r.created * 1000).toLocaleDateString())}</span><span class="substat" style="color:${(st[r.status] || st.new)[1]}">${(st[r.status] || st.new)[0]}</span>${r.note ? `<span class="subnote">${esc(r.note)}</span>` : ""}</div>`).join("")}</div>`;
+  }
   let formMsg = null;   // { ok, text }
   function contribHTML() {
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
@@ -2352,6 +2493,7 @@
       <div class="frow"><label>WHAT IS IT?<select name="ckind">${kinds.map(k => `<option${k === draft.kind ? " selected" : ""}>${k}</option>`).join("")}</select></label>
         <label class="grow">WHICH ENTRY? <small>(optional)</small><input name="centry" list="centries" value="${esc(draft.entry)}" placeholder="start typing a name"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label></div>
       <label>DETAILS<textarea name="ctext" rows="6" placeholder="Paste the description or stats, or describe what's wrong.">${esc(draft.text)}</textarea></label>
+      ${hasServer() && serverInfo.uploads ? `<div class="frow upl"><label class="grow">UPLOAD A PICTURE <small>(optional: PNG, JPG, WEBP or GIF, up to 5 MB)</small><input name="cfile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-cfile></label>${pickedFile ? `<span class="dim">${esc(pickedFile.name)} <button type="button" class="mini-btn" data-cfileclear>REMOVE</button></span>` : ""}</div>` : ""}
       <div class="frow"><label class="grow">PICTURE OR VIDEO LINK <small>(optional: Imgur, Discord, YouTube, Google Drive…)</small><input name="clink" type="url" value="${esc(draft.link)}" placeholder="https://"></label>
         <label>YOUR NAME <small>(optional, for credit)</small><input name="cname" maxlength="40" value="${esc(draft.name || user || "")}" placeholder="Roblox name"></label></div>
       <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -2367,22 +2509,28 @@
     const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
     const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
-    return [["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment"], ["PEOPLE WITH NO DESCRIPTION", noDesc, "description"],
-            ["PEOPLE WITH NO PICTURE", noPic, "picture"], ["PEOPLE WITH NO STATS", noStats, "stats"]].filter(([, l]) => l.length);
+    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && e.stats && e.stats.WEIGHT == null);
+    const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !imagesOf(e).length);
+    const unknown = entries.filter(e => e.unknown);
+    return [["UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
+            ["WEAPONS MISSING THEIR WEIGHT", noWeight, "weight", "Stats"], ["PEOPLE WITH NO DESCRIPTION", noDesc, "description", "Description"],
+            ["PEOPLE WITH NO PICTURE", noPic, "picture", "Picture"], ["PEOPLE WITH NO STATS", noStats, "stats", "Stats"],
+            ["DOCUMENTS WITH NO PICTURE OR TEXT", docs, "picture or text", "Picture"]].filter(([, l]) => l.length);
   }
   function helpHTML() {
     const groups = helpWanted();
     if (!groups.length) return "";
     return `<h3>-=-=- HELP WANTED -=-=-</h3>
       <p class="cat-note">The site doesn't have this info yet. If you have one of these in your PDA, press SEND next to it (screenshots or a video link are perfect).</p>
-      ${groups.map(([title, list, what]) => `<details class="helpw"><summary>${esc(title)} <small>${list.length}</small></summary><div class="helplist">${sortEntries(list).map(e =>
-        `<div class="helprow"><button class="linkish" data-${e.section === "tools" ? "open-tool" : "open"}="${esc(e.id)}">${esc(e.name)}</button><span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><button class="mini-btn" data-suggest="${esc(e.id)}" title="Send the ${esc(what)} for ${esc(e.name)}">SEND</button></div>`).join("")}</div></details>`).join("")}`;
+      ${groups.map(([title, list, what, kind]) => `<details class="helpw"><summary>${esc(title)} <small>${list.length}</small></summary><div class="helplist">${sortEntries(list).map(e =>
+        `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></div>`).join("")}</div></details>`).join("")}`;
   }
   function renderCommunity() {
     const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
     screen.innerHTML = `<div class="manual community">
       <h3>-=-=- SEND IN INFO -=-=-</h3>
       ${contribHTML()}
+      ${mySubsHTML()}
       ${helpHTML()}
       ${log.length ? `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
     </div>`;
@@ -2394,7 +2542,7 @@
   let sending = false;
   async function submitForm(f) {
     const d = readForm(f);
-    if (!d.text && !d.link) { formMsg = { ok: false, text: "Write some details or add a link first." }; play("warn"); return keepScroll(render); }
+    if (!d.text && !d.link && !pickedFile) { formMsg = { ok: false, text: "Write some details or add a link first." }; play("warn"); return keepScroll(render); }
     if (!formLive()) {
       openIssue(`[${d.kind}] ${d.entry || "General"}`, `**What:** ${d.kind}\n**Entry:** ${d.entry || "-"}\n${d.link ? `**Link:** ${d.link}\n` : ""}${d.name ? `**From:** ${d.name}\n` : ""}\n${d.text}`);
       return;
@@ -2405,12 +2553,17 @@
     sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
     try {
       let sent = false;
+      if (pickedFile) {
+        if (pickedFile.size > 5 * 1024 * 1024) { const e = new Error("Pictures can be up to 5 MB."); e.user = true; throw e; }
+        const url = await uploadPic(pickedFile);
+        if (!d.link) d.link = url; else d.text = (d.text ? d.text + "\n\n" : "") + "Uploaded picture: " + url;
+      }
       if (hasServer()) { try { await sendServer(d, false); sent = true; } catch (err) { if (err.user || (!hasDiscord() && !hasW3F())) throw err; } }
       if (!sent && hasDiscord()) { try { await sendDiscord(d); sent = true; } catch (err) { if (!hasW3F()) throw err; } }
       if (!sent) await sendW3F(d);
       window.__pdaLastSend = Date.now();
       formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
-      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name };
+      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name }; pickedFile = null; if (acc) loadMySubs();
       play("confirm");
     } catch (err) {
       formMsg = { ok: false, text: err && err.user ? err.message : "Couldn't send right now. Check your connection and try again." };
@@ -2622,8 +2775,11 @@
     { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; play("click"); render(); return; } }
     if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
     if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
-    { const b = t.closest("[data-admedit]"); if (b) { adm.edit = { sub: b.dataset.admedit ? +b.dataset.admedit : null, entry: b.dataset.admentry || null }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
-    { const b = t.closest("[data-admst]"); if (b) { api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst }).then(() => { play("click"); loadAdmin(); }); return; } }
+    { const b = t.closest("[data-admedit]"); if (b) { adm.edit = { sub: b.dataset.admedit ? +b.dataset.admedit : null, entry: b.dataset.admentry || null, img: b.dataset.admimg || "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
+    { const b = t.closest("[data-admaddnew]"); if (b) { const sub = b.dataset.admaddnew ? +b.dataset.admaddnew : null; const row = sub && (adm.rows || []).find(x => x.id === sub);
+        adm.edit = { sub, add: { section: "tools", name: b.dataset.admname || "", img: row && isImgLink(row.link) ? row.link : "", stats: row && row.kind === "Stats" ? row.text : "", desc: row && row.kind === "Description" ? row.text : "" } };
+        play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
+    { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("deselect"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
@@ -2649,8 +2805,9 @@
       return;
     }
     const sg = t.closest("[data-suggest]");
-    if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest)); return; }
+    if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest), sg.dataset.skind); return; }
     if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }
+    if (t.closest("[data-cfileclear]")) { pickedFile = null; play("back"); keepScroll(render); return; }
     const ct = t.closest("[data-contrib]");
     if (ct) { ev.preventDefault(); submitForm(ct.closest("form")); return; }
 
@@ -2719,6 +2876,9 @@
       if (k === "ammo") d.hits = "";
       persistUI(); play("click"); keepScroll(render); return;
     }
+    else if (sel.matches("[data-cfile]")) { const f = sel.files && sel.files[0]; if (f && f.size > 5 * 1024 * 1024) { toast("That picture is over 5 MB."); sel.value = ""; return; } pickedFile = f || null; readForm(sel.closest("form")); keepScroll(render); return; }
+    else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
+    else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
     else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
     else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
@@ -2993,8 +3153,8 @@
   backupNag();
   if (API) {
     applyOverrides(overrides);
-    setAdmin(false);
-    loadRarity(); loadOverrides();
+    setAdmin(!!acc && ui.tab === "admin");          // checkAdmin() confirms it
+    loadRarity(); loadOverrides(); loadServerInfo();
     if (acc) { syncNow(); pullCounts(); checkAdmin(); }
     // pick up changes made on another device when you come back to this tab
     document.addEventListener("visibilitychange", () => { if (!document.hidden && acc && (!acc.at || Date.now() - acc.at > 20000)) syncNow(); });

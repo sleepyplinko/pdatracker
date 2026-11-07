@@ -52,8 +52,20 @@ SUBMIT now saves straight to the database; you review it in the ADMIN tab
 comment, tier or description for everyone within a minute, no commit
 needed). Published info is stored on the server, separate from data.js.
 
+## 5. Update for new entries, friends' recent finds and picture uploads
+1. D1 database `pda` → **Console**: paste [`schema-update-3.sql`](schema-update-3.sql), **Execute**.
+2. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**.
+3. Optional, for picture uploads on the SUBMIT tab:
+   - Left menu: **Storage & Databases → R2 Object Storage → Create bucket**, name it
+     `pda-pictures`. (Cloudflare may ask you to add a payment method to turn R2 on.
+     The free allowance is 10 GB, far more than this needs.)
+   - Worker → **Bindings → Add binding → R2 bucket**. Variable name: `IMAGES`
+     (exactly), bucket: `pda-pictures`. Deploy.
+   Without this, everything else still works; the upload box just stays hidden.
+
 ## Notes
-- Submissions are limited to 6 per IP per 10 minutes.
+- Submissions are limited to 6 per IP per 10 minutes, picture uploads to 8
+  (5 MB each, PNG/JPG/WEBP/GIF only, checked by the server).
 - Passwords never reach the server; the browser turns them into a key
   first, and the server only stores a salted hash of that key.
 - Login/register is limited to 20 tries per IP per 10 minutes.

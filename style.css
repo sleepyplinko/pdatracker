@@ -1054,3 +1054,14 @@ body.light .window .rtag, body.light .window .chip-btn[aria-pressed="true"], bod
 body.light .window .tile img, body.light .window .card img, body.light .window .preview img, body.light .window .doc img { filter: none; }
 body.light .footer { color: rgba(0,0,0,.5); }
 .dbig2 .sscalc { color: #ffd23a; }
+
+.bnew { background: #ff4fd8; color: #fff; font-size: 9px; letter-spacing: .5px; }
+.leftupd { display: inline-flex; gap: 6px; align-items: center; font-size: 11px; margin-left: 10px; }
+.leftupd select { font: inherit; }
+.mysubs .frrow { flex-wrap: wrap; }
+.substat { font-weight: 800; font-size: 11px; }
+.subnote { flex-basis: 100%; font-size: 12px; color: #ccc; padding-left: 10px; border-left: 2px solid #666; }
+.upl input[type=file] { padding: 6px; }
+.subimg { display: block; max-width: 260px; max-height: 180px; margin: 6px 0; border: 1px solid #555; border-radius: 4px; object-fit: contain; background: #000; }
+.admnote { width: 100%; margin: 6px 0; box-sizing: border-box; }
+.addform .frow { display: flex; gap: 10px; flex-wrap: wrap; }

@@ -15,6 +15,18 @@ const RARITY_TTL = 300;            // seconds the rarity numbers are cached
 const AUTH_LIMIT = 20;             // login/register tries per IP per 10 minutes
 const SUBMIT_LIMIT = 6;            // submissions per IP per 10 minutes
 const LB_TTL = 300;                // seconds the leaderboard is cached
+const UPLOAD_LIMIT = 8;            // picture uploads per IP per 10 minutes
+const UPLOAD_MAX = 5 * 1024 * 1024; // 5 MB per picture
+const IMG_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
+/* check the file really is the picture type it says it is */
+function sniff(buf) {
+  const b = new Uint8Array(buf.slice(0, 12));
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  return "";
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -86,7 +98,7 @@ async function route(req, env, ctx) {
   const M = req.method;
 
   if (M === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker" });
+  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", uploads: !!env.IMAGES });
 
   /* ---- create an account ---- */
   if (path === "/api/register" && M === "POST") {
@@ -125,6 +137,13 @@ async function route(req, env, ctx) {
         const found = cleanIds(b.found); if (!found) return err(400, "Bad found list.");
         if (b.ver !== u.ver) return json({ conflict: true, ...meOut(u) }, 409);   // changed on another device: merge and retry
         sets.push("found = ?", "ver = ver + 1"); vals.push(JSON.stringify(found));
+        const had = new Set(JSON.parse(u.found)), added = found.filter(x => !had.has(x));
+        if (added.length) {                                             // for friends' "recent finds"
+          const t = now(), st = added.length <= 5 ? added.map(id => env.DB.prepare("INSERT INTO activity (name, id, n, t) VALUES (?, ?, 1, ?)").bind(name, id, t))
+            : [env.DB.prepare("INSERT INTO activity (name, id, n, t) VALUES (?, '', ?, ?)").bind(name, added.length, t)];
+          st.push(env.DB.prepare("DELETE FROM activity WHERE t < ?").bind(t - 30 * 86400));
+          ctx.waitUntil(env.DB.batch(st).catch(() => {}));
+        }
       }
       if (typeof b.share === "boolean") { sets.push("share = ?"); vals.push(b.share ? 1 : 0); }
       if (typeof b.public === "boolean") { sets.push("public = ?"); vals.push(b.public ? 1 : 0); }
@@ -135,7 +154,7 @@ async function route(req, env, ctx) {
     }
     if (M === "DELETE") {
       await env.DB.batch([env.DB.prepare("DELETE FROM users WHERE name = ?").bind(name), env.DB.prepare("DELETE FROM sessions WHERE name = ?").bind(name),
-        env.DB.prepare("DELETE FROM friends WHERE name = ? OR friend = ?").bind(name, name), env.DB.prepare("DELETE FROM counts WHERE name = ?").bind(name)]);
+        env.DB.prepare("DELETE FROM friends WHERE name = ? OR friend = ?").bind(name, name), env.DB.prepare("DELETE FROM counts WHERE name = ?").bind(name), env.DB.prepare("DELETE FROM activity WHERE name = ?").bind(name)]);
       return json({ deleted: true });
     }
   }
@@ -182,6 +201,11 @@ async function route(req, env, ctx) {
       return json({ ok: true, name: u.display }, 201);
     }
   }
+  if (path === "/api/friends/activity" && M === "GET") {
+    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
+    const rows = await env.DB.prepare("SELECT u.display AS name, a.id AS id, a.n AS n, a.t AS t FROM friends f JOIN users u ON u.name = f.friend JOIN activity a ON a.name = f.friend WHERE f.name = ? AND u.public = 1 AND a.t > ? ORDER BY a.t DESC LIMIT 40").bind(name, now() - 14 * 86400).all();
+    return json(rows.results || []);
+  }
   const fm = path.match(/^\/api\/friends\/([A-Za-z0-9_]{3,20})$/);
   if (fm && M === "DELETE") {
     const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
@@ -219,6 +243,33 @@ async function route(req, env, ctx) {
     }
     return json({ ok: true }, 201);
   }
+  if (path === "/api/mysubs" && M === "GET") {
+    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
+    const rows = await env.DB.prepare("SELECT id, kind, entry, status, note, created FROM submissions WHERE account = ? ORDER BY created DESC LIMIT 50").bind(name).all();
+    return json(rows.results || []);
+  }
+
+  /* ---- picture uploads (needs an R2 bucket bound as IMAGES) ---- */
+  if (path === "/api/upload" && M === "POST") {
+    if (!env.IMAGES) return err(501, "Picture uploads aren't set up.");
+    const len = +(req.headers.get("Content-Length") || 0); if (len > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
+    if (!(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
+    const buf = await req.arrayBuffer();
+    if (!buf.byteLength) return err(400, "No picture.");
+    if (buf.byteLength > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
+    const type = sniff(buf); if (!type) return err(415, "Only PNG, JPG, WEBP or GIF pictures.");
+    const key = `${now()}-${randomHex(8)}.${IMG_TYPES[type]}`;
+    await env.IMAGES.put(key, buf, { httpMetadata: { contentType: type } });
+    return json({ url: `${url.origin}/img/${key}` }, 201);
+  }
+  const im = path.match(/^\/img\/(\d+-[0-9a-f]{16}\.(png|jpg|webp|gif))$/);
+  if (im && M === "GET") {
+    if (!env.IMAGES) return err(404, "Not found.");
+    const o = await env.IMAGES.get(im[1]); if (!o) return err(404, "Not found.");
+    const type = Object.keys(IMG_TYPES).find(k => IMG_TYPES[k] === im[2]);
+    return new Response(o.body, { headers: { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'", ...CORS } });
+  }
+
   if (path === "/api/admin/check" && M === "GET") return json({ admin: isAdmin(env, await whoami(env, req)) });
   if (path.startsWith("/api/admin/")) {
     const name = await whoami(env, req);
@@ -236,7 +287,13 @@ async function route(req, env, ctx) {
       await env.DB.prepare("UPDATE submissions SET status = ?, note = ? WHERE id = ?").bind(st, clip(b.note, 500), +sm[1]).run();
       return json({ ok: true });
     }
-    if (sm && M === "DELETE") { await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true }); }
+    if (sm && M === "DELETE") {
+      const row = await env.DB.prepare("SELECT link FROM submissions WHERE id = ?").bind(+sm[1]).first();
+      const own = row && env.IMAGES && String(row.link).startsWith(url.origin + "/img/") ? row.link.slice(url.origin.length + 5) : "";
+      const used = own && await env.DB.prepare("SELECT 1 FROM overrides WHERE data LIKE ?").bind("%" + own + "%").first();
+      if (own && !used) await env.IMAGES.delete(own);                 // uploaded picture nobody published
+      await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true });
+    }
     const om = path.match(/^\/api\/admin\/overrides\/(.+)$/);
     if (om) {
       const id = decodeURIComponent(om[1]); if (!ID_RE.test(id)) return err(400, "Bad entry.");
@@ -247,6 +304,16 @@ async function route(req, env, ctx) {
         if (typeof src.desc === "string") d.desc = clip(src.desc, 8000);
         if (src.stats && typeof src.stats === "object") { d.stats = {}; Object.entries(src.stats).slice(0, 60).forEach(([k, v]) => { d.stats[clip(k, 40).toUpperCase()] = clip(v, 120); }); }
         if (typeof src.tier === "number" && src.tier >= 1 && src.tier <= 9) d.tier = src.tier;
+        if (typeof src.update === "string" && src.update.trim()) d.update = clip(src.update.trim(), 40);
+        if (typeof src.img === "string" && /^https?:\/\/[^\s"'<>]{4,500}$/.test(src.img)) d.img = src.img;
+        if (src.add && typeof src.add === "object") {                  // a brand-new entry that isn't in data.js
+          const a = src.add, sec = ["tools", "bio", "docs"].includes(a.section) ? a.section : "";
+          const nm = clip(a.name, 80).trim(), grp = clip(a.group, 60).trim();
+          if (!sec || !nm || nm === "???" || !grp) return err(400, "New entries need a section, group and name.");
+          d.add = { section: sec, group: grp, name: nm };
+          if (sec === "tools") { if (!(Number.isInteger(a.tier) && a.tier >= 1 && a.tier <= 9)) return err(400, "Pick a tier."); d.add.tier = a.tier; }
+          if (typeof a.replace === "string" && ID_RE.test(a.replace)) d.add.replace = a.replace;
+        }
         await env.DB.prepare("INSERT INTO overrides (id, data, updated, by) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated = excluded.updated, by = excluded.by").bind(id, JSON.stringify(d), now(), name).run();
         return json({ ok: true, id, data: d });
       }
@@ -287,6 +354,6 @@ async function route(req, env, ctx) {
 export default {
   async fetch(req, env, ctx) {
     try { return await route(req, env, ctx); }
-    catch (e) { return err(500, /no such table/.test(String(e && e.message)) ? "Database needs updating: run schema-update-2.sql in the D1 console." : "Server error."); }
+    catch (e) { return err(500, /no such table/.test(String(e && e.message)) ? "Database needs updating: run the newest schema-update SQL file in the D1 console." : "Server error."); }
   }
 };
