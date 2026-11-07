@@ -1117,6 +1117,80 @@
      WHAT'S LEFT — every missing entry in one place
      ===================================================================== */
 
+
+  /* =====================================================================
+     SEARCH PICKER: type to filter, arrows + Enter or click to pick
+     ===================================================================== */
+  const PICKERS = {};                 // key -> { items: [{ v, label, group, sub, star }], onPick, keepOpen, chips }
+  const pkState = {};                 // key -> { chip, hi }
+  const pkFold = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9$+.]+/g, " ").trim();
+  function pickerHTML(key, cfg) {
+    PICKERS[key] = cfg;
+    const st = pkState[key] || (pkState[key] = { chip: "", hi: 0 });
+    return `<div class="picker" data-pk="${key}"><input class="pk-in" type="search" autocomplete="off" spellcheck="false" placeholder="${esc(cfg.placeholder || "Type to search…")}" aria-label="${esc(cfg.label || "Search")}">
+      <div class="pk-pop" hidden></div></div>`;
+  }
+  function pkFilter(key, q) {
+    const cfg = PICKERS[key], st = pkState[key];
+    const words = pkFold(q).split(" ").filter(Boolean);
+    const scored = [];
+    cfg.items.forEach((it, i) => {
+      if (st.chip && it.group !== st.chip) return;
+      const toks = (it._t || (it._t = pkFold(it.label + " " + (it.alias || "")).split(" ")));
+      let sc = 0;
+      for (const w of words) {
+        if (toks.includes(w)) continue;                        // whole word: best
+        if (toks.some(x => x.startsWith(w))) { sc += 1; continue; }
+        if (toks.join(" ").includes(w)) { sc += 3; continue; }
+        return;
+      }
+      scored.push([sc, i, it]);
+    });
+    if (words.length) scored.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    return scored.map(x => x[2]);
+  }
+  function pkDraw(root) {
+    const key = root.dataset.pk, cfg = PICKERS[key], st = pkState[key]; if (!cfg) return;
+    const inp = root.querySelector(".pk-in"), pop = root.querySelector(".pk-pop");
+    const list = pkFilter(key, inp.value);
+    st.hi = Math.max(0, Math.min(st.hi, list.length - 1));
+    const groups = [...new Set(cfg.items.map(i => i.group).filter(Boolean))];
+    const chips = cfg.chips !== false && groups.length > 1 ? `<div class="pk-chips"><button type="button" class="pk-chip${st.chip ? "" : " on"}" data-pkchip="">ALL</button>${groups.map(g => `<button type="button" class="pk-chip${st.chip === g ? " on" : ""}" data-pkchip="${esc(g)}">${esc(g)}</button>`).join("")}</div>` : "";
+    let last = null, html = "";
+    list.slice(0, 150).forEach((it, i) => {
+      const searching = !!inp.value.trim();
+      if (!searching && it.group && it.group !== last && !st.chip) { html += `<div class="pk-grp">${esc(it.group)}</div>`; last = it.group; }
+      const sub = [searching && !st.chip ? it.group : "", it.sub].filter(Boolean).join(" · ");
+      html += `<div class="pk-opt${i === st.hi ? " hi" : ""}" data-pkv="${esc(it.v)}" data-pki="${i}">${it.star ? '<span class="pk-star">★</span>' : ""}<span class="pk-l">${esc(it.label)}</span>${sub ? `<span class="pk-sub">${esc(sub)}</span>` : ""}</div>`;
+    });
+    pop.innerHTML = chips + `<div class="pk-scroll">${html || '<div class="pk-none">Nothing matches.</div>'}${list.length > 150 ? `<div class="pk-none">${list.length - 150} more: keep typing…</div>` : ""}</div>`;
+    pop.hidden = false;
+    const h = pop.querySelector(".pk-opt.hi"); if (h) { const sc = pop.querySelector(".pk-scroll"); const t = h.offsetTop - sc.offsetTop; if (t < sc.scrollTop) sc.scrollTop = t; else if (t + h.offsetHeight > sc.scrollTop + sc.clientHeight) sc.scrollTop = t + h.offsetHeight - sc.clientHeight; }
+  }
+  function pkPick(root, v) {
+    const key = root.dataset.pk, cfg = PICKERS[key]; if (!cfg) return;
+    const keep = cfg.keepOpen, q = keep ? root.querySelector(".pk-in").value : "";
+    cfg.onPick(v);
+    if (keep) requestAnimationFrame(() => { const r = screen.querySelector(`[data-pk="${key}"]`); if (!r) return; const i = r.querySelector(".pk-in"); i.value = q; i.focus(); i.select(); pkDraw(r); });
+  }
+  screen.addEventListener("focusin", e => { const r = e.target.closest && e.target.closest(".picker"); if (r && e.target.matches(".pk-in")) pkDraw(r); });
+  screen.addEventListener("input", e => { if (!e.target.matches || !e.target.matches(".pk-in")) return; const r = e.target.closest(".picker"); pkState[r.dataset.pk].hi = 0; pkDraw(r); });
+  screen.addEventListener("focusout", e => { const r = e.target.closest && e.target.closest(".picker"); if (r) setTimeout(() => { if (!r.contains(document.activeElement)) { const p = r.querySelector(".pk-pop"); if (p) p.hidden = true; } }, 120); });
+  screen.addEventListener("keydown", e => {
+    if (!e.target.matches || !e.target.matches(".pk-in")) return;
+    const r = e.target.closest(".picker"), st = pkState[r.dataset.pk], n = pkFilter(r.dataset.pk, e.target.value).length;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); e.stopPropagation(); st.hi = (st.hi + (e.key === "ArrowDown" ? 1 : -1) + n) % Math.max(1, n); pkDraw(r); }
+    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const it = pkFilter(r.dataset.pk, e.target.value)[st.hi]; if (it) pkPick(r, it.v); }
+    else if (e.key === "Escape") { e.stopPropagation(); r.querySelector(".pk-pop").hidden = true; e.target.blur(); }
+  }, true);
+  screen.addEventListener("mousedown", e => {
+    const r = e.target.closest && e.target.closest(".picker"); if (!r) return;
+    const ch = e.target.closest("[data-pkchip]");
+    if (ch) { e.preventDefault(); pkState[r.dataset.pk].chip = ch.dataset.pkchip; pkState[r.dataset.pk].hi = 0; play("click"); pkDraw(r); return; }
+    const o = e.target.closest("[data-pkv]");
+    if (o) { e.preventDefault(); pkPick(r, o.dataset.pkv); }
+  });
+
   /* =====================================================================
      DAMAGE CALCULATOR — ammo data from the OANC Ammo Chart (ammo.js)
      ===================================================================== */
@@ -1152,6 +1226,14 @@
   function dmgState() {
     const d = ui.dmg || (ui.dmg = {});
     return Object.assign({ gun: "", mode: 0, ammo: "", str: true, hits: "", target: "", hp: "100", def: "0", sa: "0", ss: "0", sh: "0", direct: true, custom: "" }, d);
+  }
+  function setDmg(k, v) {
+    const d = ui.dmg = dmgState();
+    d[k] = v;
+    if (k === "gun") { d.mode = 0; d.ammo = ""; d.hits = ""; }
+    if (k === "mode") { d.mode = +v; d.ammo = ""; d.hits = ""; }
+    if (k === "ammo") d.hits = "";
+    persistUI(); play("select"); keepScroll(render);
   }
   function renderDamage() {
     const d = dmgState();
@@ -1246,11 +1328,13 @@
       <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)</div>
       <div class="dgrid">
         <div class="dbox"><div class="dhead">Attacker</div><div class="dform">
-          <label>WEAPON <select data-dmg="gun"><option value="">— no weapon (pick ammo directly) —</option>${gunOpts}</select></label>
+          <label>WEAPON</label>${pickerHTML("dmggun", { label: "Weapon", placeholder: gun ? `${gun.name}  (type to change)` : "Type a weapon name…", onPick: v => setDmg("gun", v),
+            items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier })))] })}
           ${gun ? `<button class="mini-btn" data-open-tool="${esc(gun.id)}">OPEN ${esc(gun.name.toUpperCase())}</button>` : ""}
           ${modes.length > 1 ? `<label>MODE <select data-dmg="mode">${modes.map(m => opt(m.i, mode.i, m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))).join("")}</select></label>` : ""}
           ${melee ? `<p class="cat-note">Melee: uses the weapon's DAMAGE, with its DEFENSE BYPASS as defense penetration.</p>`
-            : pool.length ? `<label>AMMO <select data-dmg="ammo">${ammoOpts}</select></label>`
+            : pool.length ? `<label>AMMO</label>${pickerHTML("dmgammo", { label: "Ammo", placeholder: ammo ? `${ammo.name}  (type to change)` : "Type an ammo name…", onPick: v => setDmg("ammo", v), chips: true,
+                items: pool.map(a => ({ v: a.key, label: a.name, group: a.caliber, star: !!(ammo && a.key === ammo.key), sub: `${fmt2(a.base * (a.mult == null ? 1 : a.mult))} dmg${a.proj > 1 ? " ×" + a.proj : ""}${a.pen ? " · " + fmt2(a.pen * 100) + "% pen" : ""}` })) })}`
             : gun ? `<p class="cat-note">The ammo chart has nothing for ${esc(mode ? mode.cals.join(" | ") : "this weapon")}. Type a damage number instead:</p><label>DAMAGE PER HIT <input type="number" step="any" data-dmg="custom" value="${esc(d.custom)}"></label>` : ""}
           ${!melee && mode && mode.strength !== 1 ? `<label class="chk"><input type="checkbox" data-dmg="str"${d.str ? " checked" : ""}> multiply by the weapon's STRENGTH (${mode.strength}x)</label>` : ""}
           ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" step="1" data-dmg="hits" value="${esc(d.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
@@ -1258,7 +1342,8 @@
           ${ammoCard}
         </div></div>
         <div class="dbox"><div class="dhead">Target</div><div class="dform">
-          <label>WHO <select data-dmg="target"><option value="">— custom numbers —</option>${tgtGroups}</select></label>
+          <label>WHO</label>${pickerHTML("dmgtgt", { label: "Target", placeholder: tgt ? `${tgtName(tgt)}  (type to change)` : "Type a name, or leave for custom numbers…", onPick: v => setDmg("target", v),
+            items: [{ v: "", label: "Custom numbers", group: "" }, ...PDA_DATA.biography.flatMap(g => dmgTargets().filter(p => p.group === g.name || (p.card && p.card.entry && p.card.entry.group === g.name)).map(p => ({ v: p.id, label: tgtName(p), group: g.name, sub: `${p.base.Health} HP` }))).sort((a, b) => 0)] })}
           ${tgt ? `<button class="mini-btn" data-open="${esc((tgt.card && tgt.card.entry ? tgt.card.entry : tgt).id)}">OPEN ${esc(tgtName(tgt).toUpperCase())}</button>
             <div class="stat"><i style="color:#ff5a5a">HEALTH</i>: ${esc(tb.Health)}</div><div class="stat"><i style="color:#ff9a40">DEFENSE</i>: ${esc(tb.Defense || 0)}%</div><div class="stat"><i style="color:#35d6ff">SUPER ARMOUR</i>: ${esc(tb["Super Armour"] || 0)}%</div><div class="stat"><i style="color:#ff3a3a">SUPERSHIELD</i>: ${esc(tb.Supershield || 0)}</div><div class="stat"><i style="color:#c8c8ff">SHIELD</i>: ${esc(tb.Shield || 0)}</div>${resist ? `<div class="dim">${resist}</div>` : ""}${tShield}`
           : `<label>HEALTH <input type="number" step="any" data-dmg="hp" value="${esc(d.hp)}"></label>
@@ -1310,10 +1395,8 @@
   function renderLoadout() {
     const onlyFound = !!ui.loadFound;
     const pool = allTools().filter(e => !e.unknown && (!onlyFound || isFound(e.id)));
-    const opts = PDA_DATA.tools.map(c => {
-      const list = sortEntries(pool.filter(e => e.group === c.name));
-      return list.length ? `<optgroup label="${esc(c.name)}">${list.map(e => `<option value="${esc(e.id)}">${isFound(e.id) ? "★ " : ""}${esc(e.name)} (T${e.tier}${e.stats && e.stats.WEIGHT != null ? " · " + esc(e.stats.WEIGHT) : ""})</option>`).join("")}</optgroup>` : "";
-    }).join("");
+    const pickItems = PDA_DATA.tools.flatMap(c => sortEntries(pool.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id),
+      sub: `T${e.tier}${e.stats && e.stats.WEIGHT != null ? " · " + e.stats.WEIGHT + " wt" : ""}${e.stats && e.stats["GEAR TYPE"] ? " · " + e.stats["GEAR TYPE"].toLowerCase() : ""}` })));
     const items = loadItems();
     const sums = loadoutSums();
     const cap = baseCarry() + (sums["CARRY WEIGHT INCREASE"] || 0);
@@ -1336,7 +1419,7 @@
     screen.innerHTML = `<div class="results loadout">
       <div class="leftsum"><b>LOADOUT</b> · carry anything you like, as many as you like
         <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
-      <div class="ladd"><select data-lpick><option value="">— pick a weapon, utility or gear —</option>${opts}</select><button class="mini-btn go" data-ladd>ADD</button></div>
+      <div class="ladd">${pickerHTML("load", { items: pickItems, keepOpen: true, label: "Add to loadout", placeholder: "Type to add: ak74, plate carrier, fak…  (Enter adds, keeps open for more)", onPick: v => loadoutAdd(v) })}</div>
       <div class="dbox lspace${over ? " over" : ""}"><div class="dhead">Space</div><div class="stats">
         <label class="lbase">BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(fmtN(baseCarry()))}" title="Everyone starts with ${BASE_CARRY}"></label>
         <div class="lbar"><div style="width:${pct}%"></div></div>
