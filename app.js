@@ -344,7 +344,7 @@
     if (!imgs.length) return fallback;
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
-    return `<img src="${esc(im.src)}" alt="" class="zoomable" title="Click to enlarge" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
+    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" title="Click to enlarge" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
            (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "");
   }
   function arrowsHTML(imgs) {
@@ -718,6 +718,9 @@
     const got = isFound(base.id), nx = nextMissing(base);
     return `<span class="flow">${!got && !viewOnly ? `<button class="hbtn go" data-marknext="${esc(base.id)}" title="Mark this as found and open the next missing one (N)">&#9733; FOUND + NEXT</button>` : ""}${nx ? `<button class="hbtn" data-next="${esc(nx.id)}" title="Next missing: ${esc(nx.name)} (M)">NEXT MISSING &#9654;</button>` : '<span class="flowdone">ALL FOUND HERE</span>'}</span>`;
   };
+  /* rarely-used page buttons tucked behind a ⋯ menu */
+  const moreMenu = inner => `<details class="more"><summary title="More: link, fix, compare...">⋯</summary><div class="morebox">${inner}</div></details>`;
+  document.addEventListener("click", e => { document.querySelectorAll("details.more[open]").forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
   const linkBtn = id => `<button class="hbtn" data-link="${esc(id)}" title="Copy a link straight to this page">LINK</button>`;
   const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Send a fix or missing info for this entry (no account needed)">FIX?</button>`;
   const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
@@ -782,7 +785,7 @@
           <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
-        <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE</button>` : ""}<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+        <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${moreMenu((fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE CALC</button>` : "") + `<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>` + linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${ammoLinkHTML(e)}
@@ -953,7 +956,7 @@
           <div class="preview">${got || settings.missingPics ? previewHTML(imgs, `<span class="ph big">${got ? I.person : I.question}</span>`) : `<span class="ph big">${I.question}</span>`}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
-            <span class="hright">${flowBtns(e)}${linkBtn(card.entry.id)}${suggestBtn(card.entry.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(card.entry.id) + suggestBtn(card.entry.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
@@ -978,7 +981,7 @@
           <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
-            <span class="hright">${flowBtns(e)}${linkBtn(e.id)}${suggestBtn(e.id)}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
+            <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
           <div class="ename">${esc(l)}</div>
           <div class="ebody">
             <div class="erows">
@@ -1577,14 +1580,44 @@
     a.download = `pda-backup-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    sinceBackup = 0; save(KEY_SINCE, 0);
+    sinceBackup = 0; save(KEY_SINCE, 0); save(KEY_SNOOZE, 0);
   }
   let nagged = false;
-  function backupNag() {
-    if (nagged || sinceBackup < 25) return;
-    nagged = true;
-    setTimeout(() => toast(`You've marked ${sinceBackup} things since your last backup.`, { action: () => { doExport(); toast("Backup downloaded."); }, actionLabel: "DOWNLOAD BACKUP", ms: 12000, nag: true }), 600);
+  /* first-visit tour */
+  const TOUR = [
+    ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
+    ["Mark what you've found", "Hover over (or tap) any tile and press its <b>&#9733; star</b> to mark it found. Click the tile itself to open its page with stats and comments."],
+    ["Search marks things too", "Type a name in the search bar and press <b>ENTER</b> to mark the top match as found, without leaving the page. Made a mistake? <b>Ctrl+Z</b> undoes it."],
+    ["See what's left", "<b>WHAT'S LEFT</b> lists everything you're still missing. <b>MISSING</b> next to the search bar hides what you already have."],
+    ["Keep a backup", "Your progress lives only in this browser. Download a backup in <b>CLOUD</b> (or from the reminder bar) so you never lose it. That's it, have fun!"]
+  ];
+  function startTour(i = 0) {
+    let el = $("#tour"); if (!el) { el = document.createElement("div"); el.id = "tour"; document.body.appendChild(el); }
+    const [h, p] = TOUR[i];
+    el.innerHTML = `<div class="tourbox" role="dialog" aria-label="${esc(h)}"><div class="dhead">${esc(h)}<span>${i + 1} / ${TOUR.length}</span></div>
+      <div class="tourbody"><p>${p}</p></div>
+      <div class="tourbtns"><button class="mini-btn" data-tourskip>${i === TOUR.length - 1 ? "CLOSE" : "SKIP"}</button>${i ? `<button class="mini-btn" data-tourgo="${i - 1}">BACK</button>` : ""}${i < TOUR.length - 1 ? `<button class="mini-btn go" data-tourgo="${i + 1}">NEXT</button>` : `<button class="mini-btn go" data-tourskip>GOT IT</button>`}</div></div>`;
+    el.hidden = false;
   }
+  document.addEventListener("click", e => {
+    const g = e.target.closest("[data-tourgo]"); if (g) { play("click"); startTour(+g.dataset.tourgo); return; }
+    if (e.target.closest("[data-tourskip]") || e.target.id === "tour") { const el = $("#tour"); if (el) el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); play("back"); }
+  });
+  document.addEventListener("keydown", e => { const el = $("#tour"); if (el && !el.hidden && e.key === "Escape") { el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); } });
+
+  /* a bar that stays put once you've marked 25+ things without backing up */
+  const KEY_SNOOZE = pk("pda-backup-snooze-v1");
+  function backupNag() {
+    const el = $("#backupbar"); if (!el) return;
+    const snooze = load(KEY_SNOOZE, 0);
+    const show = !viewOnly && sinceBackup >= 25 && sinceBackup >= snooze;
+    el.hidden = !show;
+    if (show) el.innerHTML = `<span>&#9888; You've marked <b>${sinceBackup}</b> things since your last backup. Progress only lives in this browser.</span><button class="mini-btn go" data-bkdl>DOWNLOAD BACKUP</button><button class="mini-btn" data-bklater title="Remind me after 25 more">LATER</button>`;
+  }
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-bkdl]")) { doExport(); toast("Backup downloaded."); backupNag(); }
+    else if (e.target.closest("[data-bklater]")) { save(KEY_SNOOZE, sinceBackup + 25); play("back"); backupNag(); }
+  });
 
   function renderCloud(msg = "", bad = false) {
     screen.innerHTML = `
@@ -1850,21 +1883,31 @@
         <button class="on" data-set="${key}" data-val="1" aria-pressed="${!!settings[key]}">ON</button>
         <button class="off" data-set="${key}" data-val="0" aria-pressed="${!settings[key]}">OFF</button>
       </div>${text}</div>`;
+    const note = t => `<div class="snote">${t}</div>`;
     screen.innerHTML = `
       <div class="settings">
         <h3>Sound</h3>
+        ${note("Clicks and beeps copied from the game's PDA.")}
         ${sw("sound", "Sound effects?")}
         ${sw("hoverSound", "Play a sound when hovering over things?")}
         <div class="srow"><input type="range" id="vol" min="0" max="100" step="5" value="${settings.volume}" aria-label="Volume"><span>Volume: <b id="volv">${settings.volume}</b>%</span></div>
-        <h3>User Preference</h3>
+        <h3>Display</h3>
+        ${note("How locked entries and pages look.")}
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
-        ${sw("confirmUnmark", "Ask before unmarking something?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
+        <h3>Checking off</h3>
+        ${note("Safety nets for marking things.")}
+        ${sw("confirmUnmark", "Ask before unmarking something?")}
+        <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">The quick walkthrough from your first visit.</span></div>
         <h3>Data</h3>
+        ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
+        <div class="srow"><button class="pbtn" id="bkNow">DOWNLOAD BACKUP</button><span class="dim">${sinceBackup ? `${sinceBackup} change${sinceBackup === 1 ? "" : "s"} since your last backup.` : "Backed up."} Upload it again in CLOUD.</span></div>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
+    $("#tourAgain").onclick = () => { play("click"); startTour(); };
+    $("#bkNow").onclick = () => { play("click"); doExport(); toast("Backup downloaded."); backupNag(); keepScroll(render); };
     const vol = $("#vol");
     vol.addEventListener("input", () => { settings.volume = +vol.value; $("#volv").textContent = vol.value; save(KEY_SET, settings); });
     vol.addEventListener("change", () => play("select"));
@@ -2329,5 +2372,8 @@
   renderTabs();
   updateCount();
   render();
+  backupNag();
+  // first visit: short tour (not when opening someone's share link)
+  if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
 
 })();

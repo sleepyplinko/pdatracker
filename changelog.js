@@ -5,6 +5,10 @@
    you add entries, pictures or features:
 
      { date: "2026-11-07", items: [
+    "Short tour on your first visit (replay it in Settings)",
+    "Item pages: LINK, FIX?, COMPARE and DAMAGE moved into a ⋯ menu",
+    "Backup reminder bar after 25 changes, with DOWNLOAD and LATER",
+    "Pictures load only when needed; Settings split into Sound, Display, Checking off and Data",
     "Checked every weapon, melee, gear and utility stat against the game again; added the missing WEIGHT to 15 pistols","Added every SMG", "Pictures for ..."] },
 
    Leave the list empty ([]) to hide the CHANGELOG section entirely.
