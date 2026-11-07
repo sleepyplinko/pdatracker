@@ -965,3 +965,10 @@ details.more[open] > summary { background: #fff; }
 .r-VERYRARE { background: #ff3a3a; color: #fff; } .r-RARE { background: #ff9a40; color: #111; }
 .r-UNCOMMON { background: #7ad7ff; color: #111; } .r-COMMON { background: #555; color: #eee; }
 .erarity { padding: 4px 12px; } .erarity .stat { font-size: 14px; color: #eee; }
+
+/* ---------- screenshot import ---------- */
+.dropzone { box-sizing: border-box; width: 100%; display: grid; place-items: center; min-height: 90px; margin: 6px 0; border: 2px dashed #777; border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; padding: 10px; }
+.dropzone.over, .dropzone:hover { border-color: #f3ee30; color: #fff; background: rgba(243,238,48,.06); }
+.ocrres { border: 1px solid #444; border-radius: 6px; padding: 8px 10px; background: #141414; margin: 6px 0; }
+.ocrlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 12px; max-height: 320px; overflow-y: auto; margin: 6px 0; }
+.ocrlist .dim { color: #999; font-size: 11px; }

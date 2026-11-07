@@ -1753,6 +1753,97 @@
   if (API) { const o = document.createElement("option"); o.value = "rare"; o.textContent = "RAREST FIRST"; $("#sortSel").appendChild(o); $("#sortSel").value = ui.sort; }
   else if (ui.sort === "rare") ui.sort = "found";
 
+
+  /* =====================================================================
+     IMPORT FROM SCREENSHOTS: read names off PDA screenshots (tesseract.js)
+     ===================================================================== */
+  const OCR_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+  let ocr = { busy: false, msg: "", found: null, already: 0 };
+  let ocrWorker = null;
+  function loadScript(src) {
+    return new Promise((ok, bad) => { if (window.Tesseract) return ok(); const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => bad(new Error("Couldn't load the text reader. Check your connection.")); document.head.appendChild(s); });
+  }
+  async function getOcr() {
+    if (ocrWorker) return ocrWorker;
+    await loadScript(OCR_SRC);
+    ocrWorker = await window.Tesseract.createWorker("eng");
+    await ocrWorker.setParameters({ tessedit_pageseg_mode: "11" });
+    return ocrWorker;
+  }
+  /* two versions of each screenshot: as-is (people / documents) and only the brightest pixels (white tile names) */
+  async function prepImage(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new Error("That file isn't a picture.")); i.src = url; });
+      const scale = Math.min(1, 2400 / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+      const plain = mk(), pc = plain.getContext("2d"); pc.drawImage(img, 0, 0, w, h);
+      const px = pc.getImageData(0, 0, w, h), d = px.data;
+      const thr = mk(), tc = thr.getContext("2d"), tp = tc.createImageData(w, h), t = tp.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        d[i] = d[i + 1] = d[i + 2] = g;
+        const v = g > 235 ? 0 : 255; t[i] = t[i + 1] = t[i + 2] = v; t[i + 3] = 255;
+      }
+      pc.putImageData(px, 0, 0); tc.putImageData(tp, 0, 0);
+      return [thr, plain];
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const OCR_IGNORE = () => [...PDA_DATA.tools.map(c => c.name), ...PDA_DATA.biography.map(g => g.name), ...PDA_DATA.documents.map(g => g.name)];
+  async function importShots(files) {
+    files = [...files].filter(f => /^image\//.test(f.type));
+    if (!files.length) { toast("Pick screenshot images (PNG or JPG)."); return; }
+    if (typeof PDA_MATCH !== "function") { toast("The screenshot reader didn't load."); return; }
+    if (viewOnly) { toast("This is someone else's PDA. Press EXIT first."); return; }
+    ocr = { busy: true, msg: "Loading the text reader (first time takes a few seconds)…", found: null, already: 0 }; keepScroll(render);
+    try {
+      const w = await getOcr();
+      const ids = new Map();
+      const pool = entries.filter(e => !e.unknown).map(e => ({ id: e.id, name: e.name }));
+      for (let i = 0; i < files.length; i++) {
+        ocr.msg = `Reading screenshot ${i + 1} of ${files.length}…`; const m = $("#ocrMsg"); if (m) m.textContent = ocr.msg;
+        let text = "";
+        for (const c of await prepImage(files[i])) { const r = await w.recognize(c); text += "\n" + r.data.text; }
+        PDA_MATCH(text, pool, OCR_IGNORE()).forEach(x => { if (!ids.has(x.id) || x.sure) ids.set(x.id, x); });
+      }
+      const all = [...ids.values()];
+      ocr = { busy: false, msg: "", found: all.filter(x => !isFound(x.id)), already: all.filter(x => isFound(x.id)).length };
+      play(ocr.found.length ? "confirm" : "click");
+    } catch (e) { ocr = { busy: false, msg: (e && e.message) || "Something went wrong reading that.", found: null, already: 0 }; play("warn"); }
+    keepScroll(render);
+  }
+  function importHTML() {
+    const res = ocr.found;
+    return `<h4>IMPORT FROM SCREENSHOTS</h4>
+      <p>Screenshot your PDA in-game (weapon tiers, Biography, Documents) and drop the pictures here, or press Ctrl+V to paste one. Every name it can read is something you've unlocked; padlocks are skipped. You check the list before anything is marked.</p>
+      <label class="dropzone" id="ocrDrop"><input type="file" id="ocrFile" accept="image/*" multiple hidden>${ocr.busy ? `<span id="ocrMsg">${esc(ocr.msg)}</span>` : "<b>DROP SCREENSHOTS HERE</b> or click to choose"}</label>
+      ${!ocr.busy && ocr.msg ? `<div class="msg" style="color:#ff8a7a">${esc(ocr.msg)}</div>` : ""}
+      ${res ? (res.length ? `<div class="ocrres"><div class="ocrhead">Found <b>${res.length}</b> new${ocr.already ? ` · ${ocr.already} you already had` : ""}. Untick anything that's wrong:</div>
+          <div class="ocrlist">${sortEntries(res.map(x => byId.get(x.id)).filter(Boolean)).map(e => { const x = res.find(r => r.id === e.id);
+            return `<label class="chk"><input type="checkbox" data-ocrid="${esc(e.id)}" checked> ${esc(e.name)} <span class="dim">${esc(e.group)}${x && !x.sure ? " · check this one" : ""}</span></label>`; }).join("")}</div>
+          <div class="btnrow"><button class="pbtn" id="ocrGo">MARK TICKED AS FOUND</button><button class="pbtn" id="ocrClear">CLEAR</button></div></div>`
+        : `<div class="msg">Nothing new found${ocr.already ? ` (${ocr.already} things it read you already have)` : ""}. Make sure the names are on screen and not too small.</div>`) : ""}`;
+  }
+  function wireImport() {
+    const drop = $("#ocrDrop"), inp = $("#ocrFile"); if (!drop) return;
+    inp.onchange = () => { if (inp.files.length) importShots(inp.files); };
+    ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", e => { if (e.dataTransfer && e.dataTransfer.files.length) importShots(e.dataTransfer.files); });
+    const go = $("#ocrGo"); if (go) go.onclick = () => {
+      const ids = [...screen.querySelectorAll("[data-ocrid]:checked")].map(c => c.dataset.ocrid);
+      if (ids.length && change(ids, true, "screenshot import")) play("confirm");
+      ocr = { busy: false, msg: "", found: null, already: 0 }; keepScroll(render);
+    };
+    const cl = $("#ocrClear"); if (cl) cl.onclick = () => { ocr = { busy: false, msg: "", found: null, already: 0 }; play("back"); keepScroll(render); };
+  }
+  document.addEventListener("paste", e => {
+    if (ui.tab !== "cloud" || detail || query || ocr.busy) return;
+    const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => /^image\//.test(f.type));
+    if (files.length) { e.preventDefault(); importShots(files); }
+  });
+
   /* first-visit tour */
   const TOUR = [
     ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
@@ -1798,6 +1889,7 @@
           <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
+          ${importHTML()}
           ${accountHTML()}
           <h4>MARK A LIST AS FOUND</h4>
           <p>Paste names, one per line (from your notes, a friend, or a COPY AS TEXT list). Anything that matches an entry gets marked found. You can undo it with Ctrl+Z.</p>
@@ -1814,7 +1906,7 @@
         </div>
       </div>`;
     $("#exp").onclick = () => { play("click"); doExport(); $("#cmsg").textContent = "Backup downloaded."; };
-    wireAccount();
+    wireAccount(); wireImport();
     $("#bulkGo").onclick = () => {
       const r = bulkMark($("#bulkIn").value);
       if (!r) return;
