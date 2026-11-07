@@ -70,7 +70,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "2.5",
           "SPREAD INCREMENT": "0.15",
           "SPREAD DECREASE": "0.4/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.25"
         }, comment: "The most popular handgun amongst the lowest ranking of civilians.. GLOCK 18! A tiny machine gun for handguns.. Uses 9mm and can be quite threatening, so it's no surprise it became a choice for the civilians." }],
         ["ZVI Kevin M", { stats: {
           "CALIBER TYPE": "9x18mm Makarov",
@@ -87,7 +88,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "3.5",
           "SPREAD INCREMENT": "0.75",
           "SPREAD DECREASE": "0.4/0.1s",
-          "EQUIP TIME": "0.25s"
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "0.25"
         }, comment: "BERETTA GLOCK KEVIN???" }],
         ["USFA Zip .22", { stats: {
           "CALIBER TYPE": ".22lr",
@@ -104,7 +106,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "0.5",
           "SPREAD INCREMENT": "0.3",
           "SPREAD DECREASE": "0.03/0.1s",
-          "EQUIP TIME": "0.5s"
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "0.25"
         }, comment: "So tactical in it's design and ergo, a pretty big handgun compared to others, 17-round magazine for your safety.. Accepts many bullet types so that's a neat trait about this pistol." }],
         ["M45A1", { stats: {
           "CALIBER TYPE": ".45ACP",
@@ -121,7 +124,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "1",
           "SPREAD INCREMENT": "0.05",
           "SPREAD DECREASE": "1.5/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.25"
         }, comment: "Sweet .45 ACP! M1911s were outdated so M45A1s became more popular instead, a pretty odd choice since these weapons were honestly kind of forgotten even for their intended replacement. You'll find some of these amongst scavengers instead." }],
         ["PM Makarov", { stats: {
           "CALIBER TYPE": "9x18mm Makarov",
@@ -138,7 +142,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "0.75",
           "SPREAD INCREMENT": "0.425",
           "SPREAD DECREASE": "1.5/0.1s",
-          "EQUIP TIME": "0.45s"
+          "EQUIP TIME": "0.45s",
+          "WEIGHT": "0.25"
         }, comment: "" }],
         ["Skorpion", { stats: {
           "CALIBER TYPE": ".32 ACP | 9x19mm | 9x18mm Makarov",
@@ -172,7 +177,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "1",
           "SPREAD INCREMENT": "0.5",
           "SPREAD DECREASE": "0.75/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
         }, comment: "This pistol is a menace. No seriously, it's really popular for whatever reason. Everyone loves these and nobody really knows why, is it because of it's incredible ergonomics? The fact that there's 5 different extended magazines available for it? Or that it accepts almost every single pistol bullet possible?\n\nMysteries that time will.. probably never tell." }]
         ],
         2: [
@@ -191,7 +197,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "2.75",
           "SPREAD INCREMENT": "0.3",
           "SPREAD DECREASE": "0.4/0.1s",
-          "EQUIP TIME": "0.25s"
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "0.25"
         }, comment: "The most popular handgun amongst the lowest ranking of civilians.. GLOCK 18! A tiny machine gun for handguns.. Uses 9mm and can be quite threatening, so it's no surprise it became a choice for the civilians." }],
         ["OTs-02 Kiparis", { stats: {
           "CALIBER TYPE": "9x18mm Makarov",
@@ -226,7 +233,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "1",
           "SPREAD INCREMENT": "0.5",
           "SPREAD DECREASE": "0.4/0.1s",
-          "EQUIP TIME": "0.25s"
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "0.5"
         }, comment: "So tactical in it's design and ergo, a pretty big handgun compared to others, 17-round magazine for your safety.. Accepts many bullet types so that's a neat trait about this pistol." }],
         ["Ashot", { stats: {
           "CALIBER TYPE": ".410",
@@ -264,7 +272,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "2.25",
           "SPREAD INCREMENT": "0.05",
           "SPREAD DECREASE": "0.1/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
         }, comment: "" }],
         ["Warne Super Jägare", { stats: {
           "CALIBER TYPE": ".45ACP | 10x25mm",
@@ -281,7 +290,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "0.5",
           "SPREAD INCREMENT": "0.25",
           "SPREAD DECREASE": "0.1/0.05s",
-          "EQUIP TIME": "1s"
+          "EQUIP TIME": "1s",
+          "WEIGHT": "0.25"
         }, comment: "" }],
         ["Stechkin APB", { stats: {
           "CALIBER TYPE": "9x18mm Makarov",
@@ -319,7 +329,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "3",
           "SPREAD INCREMENT": "0.1",
           "SPREAD DECREASE": "0.2/0.1s",
-          "EQUIP TIME": "0.25s"
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "0.5"
         }, comment: "" }],
         ["H&K USP Compact", { stats: {
           "CALIBER TYPE": ".45ACP | .40 S&W | 9x19mm | .357 SIG",
@@ -336,7 +347,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "0.5",
           "SPREAD INCREMENT": "0.125",
           "SPREAD DECREASE": "0.1/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
         }, comment: "The H&K USP Compact was formerly used by the 'Government' for it's high stopping power as well as the fact that they can utilize a variety of ammo types. Though it was eventually replaced by the H&K MP7 which had immense backlash due to the fact that President Tofuu thought it would be a good idea to replace a side arm with a submachine gun. A long debate was formed over this change where Tofuu tried to argue against the military on how the H&K MP7 classifies as a side-arm. He didn't win. Though instead of backing down, later that year he found the Beretta CX4 Storm and fell in love with it and thus chose that weapon instead for the military." }],
         ["Glock 19", { stats: {
           "CALIBER TYPE": "9x19mm",
@@ -353,7 +365,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "2",
           "SPREAD INCREMENT": "0.075",
           "SPREAD DECREASE": "0.1/0.1s",
-          "EQUIP TIME": "1s"
+          "EQUIP TIME": "1s",
+          "WEIGHT": "0.5"
         }, comment: "The GLOCK 19 is a popular choice within the average district, decent ergonomics, average stopping power, variety of magazine supports ranging from 17 rounds to 80 rounds. Though you'll only ever see 17-20 rounds as the higher capacity is unnecessary and reasonably expensive. It's accessible ammo further makes it a popular pick within the district. Despite the fact that it only fires 9x19mm. It was also popularized by the Beige Boxes a faction known for their army of cardboard \"armoured\" men with GLOCK 19s. They're pretty weak especially on the durability side admittedly but there's so many of them that it's almost uncountable, I guess that makes up for their quality." }],
         ["Ruger P345", { stats: {
           "CALIBER TYPE": ".45ACP",
@@ -390,7 +403,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "1.5",
           "SPREAD INCREMENT": "0.05",
           "SPREAD DECREASE": "0.1/0.1s",
-          "EQUIP TIME": "0.75s"
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
         }, comment: "" }],
         ["AMT Hardballer", { stats: {
           "CALIBER TYPE": ".45ACP",
@@ -445,7 +459,8 @@ const PDA_DATA = {
           "MINIMUM SPREAD": "0",
           "SPREAD INCREMENT": "0.35",
           "SPREAD DECREASE": "0.03/0.1s",
-          "EQUIP TIME": "0s"
+          "EQUIP TIME": "0s",
+          "WEIGHT": "0.25"
         }, comment: "" }],
         ["Killer²", { stats: {
           "CALIBER TYPE": ".45ACP",

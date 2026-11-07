@@ -4,7 +4,8 @@
    Shown in the MANUAL tab. Newest first. Add a block at the top when
    you add entries, pictures or features:
 
-     { date: "2026-11-07", items: ["Added every SMG", "Pictures for ..."] },
+     { date: "2026-11-07", items: [
+    "Checked every weapon, melee, gear and utility stat against the game again; added the missing WEIGHT to 15 pistols","Added every SMG", "Pictures for ..."] },
 
    Leave the list empty ([]) to hide the CHANGELOG section entirely.
    ===================================================================== */
