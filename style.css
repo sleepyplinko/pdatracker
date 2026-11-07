@@ -1,3 +1,5 @@
+/* Inconsolata: the font the game's PDA uses (Roblox "Code"). Self-hosted, see fonts/Inconsolata-OFL.txt */
+@font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata.woff") format("woff"); font-weight: 200 900; font-stretch: 50% 200%; font-display: swap; }
 /* =====================================================================
    PDA.exe — Once A Normal City tracker
    Styled after the in-game PDA: see-through black window, glossy grey
@@ -989,3 +991,22 @@ details.more[open] > summary { background: #fff; }
 .pk-l { flex: 1; } .pk-sub { color: #999; font-size: 12px; white-space: nowrap; } .pk-star { color: #f3c400; }
 .pk-none { padding: 8px 10px; color: #999; font-size: 13px; }
 .dform .picker { width: 100%; }
+
+.tier-head.clickable { cursor: pointer; }
+.tier-head.clickable:hover { filter: brightness(1.08); }
+.tier-head.clickable:hover .tier-hint, .tier-head.clickable:focus-visible .tier-hint { opacity: 1; }
+.tier-head.clickable:focus-visible { outline: 2px solid #f3ee30; outline-offset: 1px; }
+
+.tiptip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 6px; padding: 6px 10px; border: 1px dashed #b8a64a; border-radius: 6px; background: rgba(243,238,48,.07); color: #eee; font-size: 13px; }
+
+/* ---------- text drawn like the game's PDA (Inconsolata, regular weight, thin outline, sized to fit) ---------- */
+.cat { container-type: inline-size; font-weight: 500; font-stretch: 100%; letter-spacing: 0;
+  color: #fff; text-shadow: -1.5px -1.5px 0 #6e6e6e, 1.5px -1.5px 0 #6e6e6e, -1.5px 1.5px 0 #6e6e6e, 1.5px 1.5px 0 #6e6e6e, 0 2px 1px rgba(0,0,0,.25); }
+.cat[aria-selected="true"] { --cs: 1.15; }
+.cat .cl { font-size: min(calc(46px * var(--cs, 1)), calc(90cqw / (var(--cn, 8) * .5))); }
+.tile { container-type: inline-size; font-weight: 500; font-stretch: 100%; }
+.tname { word-spacing: 0; overflow-wrap: normal; line-height: 1.05;
+  font-size: min(var(--tmax, 44px), calc(92cqw / (var(--tn, 8) * .5)));
+  text-shadow: -1.3px -1.3px 0 #555, 1.3px -1.3px 0 #555, -1.3px 1.3px 0 #555, 1.3px 1.3px 0 #555, 0 1px 2px rgba(0,0,0,.3); }
+.tname[style*="--tl:2"] { --tmax: 25px; }
+@media (max-width: 700px) { .cat, .cat[aria-selected="true"] { container-type: normal; } .cat .cl { font-size: 22px; } }

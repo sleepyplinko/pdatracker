@@ -24,8 +24,8 @@
 const PDA_FORM = {
   pingUserId: "1025830147103936624",   // this Discord user gets pinged on every submission ("" = no ping)
   // the Discord webhook, scrambled so bots scanning GitHub don't pick it up (see the note above)
-  hook: { k: [203, 194, 207, 119, 209, 207, 250, 153, 163, 216, 55, 197, 237, 90, 237, 83],
-          p: ["priGGKD/ra3puw+avG6XZIDw", "rhy2+Lzy2qFPvaQ02RuOqKgG", "/Ia508yPAo+BCdsdgIOoA5C+", "tc32vnagnwmyB4+h9zv++86s", "m+wC9N1v2GH59fZF6fnPqIyr", "XKqCMo82vO2mB7Dgl/bA9lO3", "gjmeOq/t4E2iv47tyw=="] },
+  hook: { k: [84, 198, 63, 25, 76, 113, 58, 247, 16, 184, 225, 8, 66, 74, 46, 78],
+          p: ["LJxFdhQ3fblFlYwlIwkZADn/", "YGstNVGuYfCyWx0DeykRnk5G", "NDUOmFzXomEUP2EYFolzVTke", "Yo5HwIB5GB8WISSvdWxjQg/A", "II/TOHN4HXpl/wYvdEcPxj/L", "imctIkwrI+lWaS1eV5hzloV6", "LSldJzDpECM/AU6DeA=="] },
   web3formsKey: "c5d6127e-46d7-4a0f-9c6c-8a5959648616",
   subject: "New PDA tracker submission"
 };
