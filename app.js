@@ -1335,7 +1335,8 @@
 
     /* every ammo that fits, side by side */
     const cmpRows = !melee && pool.length > 1 ? pool.map(a => [a, shot(a)]).sort((x, y) => y[1].final - x[1].final).map(([a, s]) => {
-      const k = toKill(s.final, a) || "—";
+      const kk = toKill(s.final, a), kb = kk && ss ? blocked(ssByp(a)) : 0;
+      const k = kk ? (kb ? `${kk} <small class="dim">(${kb}+${kk - kb})</small>` : kk) : "—";
       return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
     }).join("") : "";
 
@@ -1374,7 +1375,7 @@
         </div></div>
         <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}${ss ? `<div class="dim">${nBlocked ? `${nBlocked} of those are blocked by supershield (${ss}), then ${htk - nBlocked} to take the health down.` : `Goes straight through the supershield (${ss}).`}${ssByp(ammo) ? ` Supershield bypass ${esc(fmt2(ssByp(ammo)))}: each blocked hit knocks ${esc(fmt2(ssByp(ammo)))} off, and hits go through once it's ${esc(fmt2(ssByp(ammo)))} or less.` : " Each blocked hit knocks 1 off and does no damage."}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${ttk != null ? `<p class="cat-note">Time to kill assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : " and no reloading or burst delay"}.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>
