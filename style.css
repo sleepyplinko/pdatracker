@@ -110,6 +110,13 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .tab[data-tab="profile"] { background: linear-gradient(#f4f6b2, #d6dc84); }
 .tab[data-tab="cloud"]   { background: linear-gradient(#a6f3f6, #70d4da); }
 .tab[data-tab="manual"]  { background: linear-gradient(#bfbaf8, #9690e6); }
+/* the site's own tabs: same pastel recipe as the game's three (hsl ~80%/83% to ~58%/67%), hues spread around the wheel */
+.tab[data-tab="missing"]   { background: linear-gradient(hsl(95, 70%, 83%), hsl(95, 48%, 64%)); }
+.tab[data-tab="loadout"]   { background: linear-gradient(hsl(140, 62%, 83%), hsl(140, 44%, 63%)); }
+.tab[data-tab="damage"]    { background: linear-gradient(hsl(28, 85%, 83%), hsl(28, 66%, 66%)); }
+.tab[data-tab="community"] { background: linear-gradient(hsl(213, 85%, 85%), hsl(213, 60%, 70%)); }
+.tab[data-tab="players"]   { background: linear-gradient(hsl(300, 70%, 86%), hsl(300, 46%, 71%)); }
+.tab[data-tab="admin"]     { background: linear-gradient(hsl(0, 80%, 76%), hsl(0, 62%, 56%)); }
 .tab:hover { filter: brightness(1.06); }
 .tab[aria-selected="true"] { filter: brightness(.86); box-shadow: inset 0 2px 5px rgba(0,0,0,.45); }
 
