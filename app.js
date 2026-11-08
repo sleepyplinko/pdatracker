@@ -1797,12 +1797,7 @@
   const adminTag = n => isAdminName(n) ? ' <b class="badm" title="Runs this site">ADMIN</b>' : "";
   const amAdmin = () => BOTTOM_TABS.includes("admin");
   async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); if (["community", "players"].includes(ui.tab)) keepScroll(render); } } catch { /* offline */ } }
-  async function uploadPic(file) {
-    const r = await fetch(API + "/api/upload", { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream", ...(acc && acc.token ? { Authorization: "Bearer " + acc.token } : {}) }, body: file });
-    let j = {}; try { j = await r.json(); } catch { /* ignore */ }
-    if (r.status !== 201) { const e = new Error(j.error ? `Upload failed: ${j.error}` : `Upload failed (server answered ${r.status}${r.status === 404 ? ": the Worker code is older than the site, paste the newest worker.js" : ""}).`); e.user = true; throw e; }
-    return j.url;
-  }
+
   /* the password never leaves the browser: it's stretched into a key first */
   async function passKey(name, pass) {
     const enc = new TextEncoder();
@@ -2209,7 +2204,7 @@
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
   let imgRowN = 0;
   const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
-  const upBtn = target => serverInfo.uploads || amAdmin() ? `<label class="mini-btn upbtn">UPLOAD…<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-admupload='${target}' hidden></label>` : "";
+  const upBtn = () => "";   // pictures are added by link only
   const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
@@ -2227,7 +2222,7 @@
       ${sec === "tools" ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x (optional)</small><textarea data-admadd="stats" rows="6">${esc(a.stats || "")}</textarea>
         <label>COMMENT</label><textarea data-admadd="comment" rows="4">${esc(a.comment || "")}</textarea>`
       : `<label>DESCRIPTION</label><textarea data-admadd="desc" rows="5">${esc(a.desc || "")}</textarea>
-        <label>PICTURE <small>upload one, or paste any https:// image link</small></label><div class="imgrow"><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">${upBtn('[data-admadd="img"]')}</div><img class="subimg" data-imgprev='[data-admadd="img"]' src="${esc(a.img || "")}" alt=""${a.img ? "" : " hidden"}>`}
+        <label>PICTURE <small>paste an https:// image link</small></label><div class="imgrow"><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">${upBtn('[data-admadd="img"]')}</div><img class="subimg" data-imgprev='[data-admadd="img"]' src="${esc(a.img || "")}" alt=""${a.img ? "" : " hidden"}>`}
       <label>ADDED IN UPDATE <small>optional</small><input data-admadd="update" list="admUpdList" maxlength="40" value="${esc(a.update || "")}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
       <div class="btnrow"><button class="pbtn" id="admAddGo">ADD ENTRY${adm.edit.sub ? " + MARK DONE" : ""}</button><button class="pbtn" id="admCancel">CANCEL</button></div>
       <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
@@ -2256,7 +2251,6 @@
     const s = adm.setup; if (!s) return "";
     if (s.old) return `<div class="setupbox bad"><b>SERVER SETUP:</b> the Worker is running older code than the site. Paste the newest <code>worker.js</code> into the Worker and Deploy.</div>`;
     const rows = [["Database tables", s.tables.missing.length ? `missing ${s.tables.missing.join(", ")}: run ${s.tables.fix} in the D1 console` : "", true],
-      ["Picture uploads (R2 bucket bound as IMAGES)", s.uploads ? "" : "not set up: README step 5.3", true],
       ["New-submission pings (DISCORD_WEBHOOK)", s.ping ? "" : "off (optional)", false],
       ["Discord announcements (ANNOUNCE_WEBHOOK)", s.announce ? "" : "off (optional): README step 6.3", false]];
     const allOk = rows.every(r => !r[1]);
@@ -2290,7 +2284,7 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>
-          <label>PICTURES <small>the first one shows on the tile; upload, or paste https:// image links</small></label>
+          <label>PICTURES <small>the first one shows on the tile; paste https:// image links (Imgur and similar; Discord links can expire)</small></label>
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); return (l.length ? l : [""]).map(u => imgRowHTML(u)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
@@ -2561,7 +2555,6 @@
     if (!res.ok || j.success === false) throw new Error(j.message || res.status);
   }
   let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
-  let pickedFile = null;
   let mySubs = null;
   async function loadMySubs() {
     if (!API || !acc) { mySubs = null; return; }
@@ -2585,7 +2578,6 @@
       <div class="frow"><label>WHAT IS IT?<select name="ckind">${kinds.map(k => `<option${k === draft.kind ? " selected" : ""}>${k}</option>`).join("")}</select></label>
         <label class="grow">WHICH ENTRY? <small>(optional)</small><input name="centry" list="centries" value="${esc(draft.entry)}" placeholder="start typing a name"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label></div>
       <label>DETAILS<textarea name="ctext" rows="6" placeholder="Paste the description or stats, or describe what's wrong.">${esc(draft.text)}</textarea></label>
-      ${hasServer() && serverInfo.uploads ? `<div class="frow upl"><label class="grow">UPLOAD A PICTURE <small>(optional: PNG, JPG, WEBP or GIF, up to 5 MB)</small><input name="cfile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-cfile></label>${pickedFile ? `<span class="dim">${esc(pickedFile.name)} <button type="button" class="mini-btn" data-cfileclear>REMOVE</button></span>` : ""}</div>` : ""}
       <div class="frow"><label class="grow">PICTURE OR VIDEO LINK <small>(optional: Imgur, Discord, YouTube, Google Drive…)</small><input name="clink" type="url" value="${esc(draft.link)}" placeholder="https://"></label>
         <label>YOUR NAME <small>(optional, for credit)</small><input name="cname" maxlength="40" value="${esc(draft.name || user || "")}" placeholder="Roblox name"></label></div>
       <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -2634,7 +2626,7 @@
   let sending = false;
   async function submitForm(f) {
     const d = readForm(f);
-    if (!d.text && !d.link && !pickedFile) { formMsg = { ok: false, text: "Write some details or add a link first." }; play("warn"); return keepScroll(render); }
+    if (!d.text && !d.link) { formMsg = { ok: false, text: "Write some details or add a link first." }; play("warn"); return keepScroll(render); }
     if (!formLive()) {
       openIssue(`[${d.kind}] ${d.entry || "General"}`, `**What:** ${d.kind}\n**Entry:** ${d.entry || "-"}\n${d.link ? `**Link:** ${d.link}\n` : ""}${d.name ? `**From:** ${d.name}\n` : ""}\n${d.text}`);
       return;
@@ -2645,17 +2637,12 @@
     sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
     try {
       let sent = false;
-      if (pickedFile) {
-        if (pickedFile.size > 5 * 1024 * 1024) { const e = new Error("Pictures can be up to 5 MB."); e.user = true; throw e; }
-        const url = await uploadPic(pickedFile);
-        if (!d.link) d.link = url; else d.text = (d.text ? d.text + "\n\n" : "") + "Uploaded picture: " + url;
-      }
       if (hasServer()) { try { await sendServer(d, false); sent = true; } catch (err) { if (err.user || (!hasDiscord() && !hasW3F())) throw err; } }
       if (!sent && hasDiscord()) { try { await sendDiscord(d); sent = true; } catch (err) { if (!hasW3F()) throw err; } }
       if (!sent) await sendW3F(d);
       window.__pdaLastSend = Date.now();
       formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
-      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name }; pickedFile = null; if (acc) loadMySubs();
+      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name }; if (acc) loadMySubs();
       play("confirm");
     } catch (err) {
       formMsg = { ok: false, text: err && err.user ? err.message : "Couldn't send right now. Check your connection and try again." };
@@ -2916,7 +2903,6 @@
     const sg = t.closest("[data-suggest]");
     if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest), sg.dataset.skind); return; }
     if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }
-    if (t.closest("[data-cfileclear]")) { pickedFile = null; play("back"); keepScroll(render); return; }
     const ct = t.closest("[data-contrib]");
     if (ct) { ev.preventDefault(); submitForm(ct.closest("form")); return; }
 
@@ -2985,16 +2971,9 @@
       if (k === "ammo") d.hits = "";
       persistUI(); play("click"); keepScroll(render); return;
     }
-    else if (sel.matches("[data-admupload]")) {
-      const f = sel.files && sel.files[0], tgt = screen.querySelector(sel.dataset.admupload); if (!f || !tgt) return;
-      const lab = sel.closest("label"); lab.firstChild.textContent = "UPLOADING…";
-      uploadPic(f).then(url => { tgt.value = url; if (adm.edit && adm.edit.add) adm.edit.add.img = url; const pv = screen.querySelector(`[data-imgprev='${sel.dataset.admupload}']`); if (pv) { pv.src = url; pv.hidden = false; } lab.firstChild.textContent = "UPLOAD…"; play("confirm"); toast("Uploaded. Press PUBLISH to put it on the page."); })
-        .catch(err => { lab.firstChild.textContent = "UPLOAD…"; toast(err.user ? err.message : "Upload failed: couldn't reach the server (" + (err.message || "network error") + ").", { ms: 9000 }); play("warn"); });
-      return;
-    }
-    else if (sel.matches("[data-cfile]")) { const f = sel.files && sel.files[0]; if (f && f.size > 5 * 1024 * 1024) { toast("That picture is over 5 MB."); sel.value = ""; return; } pickedFile = f || null; readForm(sel.closest("form")); keepScroll(render); return; }
     else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-annupd]")) { adm.ann.update = sel.value; adm.ann.msg = ($("#annMsg") || {}).value || ""; keepScroll(render); return; }
+    else if (sel.matches("[data-admimgi]")) { const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); if (pv) { const u = sel.value.trim(); pv.hidden = !/^https?:\/\/\S+$|^images\//.test(u); if (!pv.hidden) pv.src = u; } return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
     else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }

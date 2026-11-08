@@ -21,7 +21,6 @@ const PDA_CHANGELOG = [
     "New entries can now be added straight from the site; entries from a game update get a NEW badge and a filter on WHAT'S LEFT",
     "HELP WANTED on SUBMIT now also lists unknown entries, weapons missing their weight, and documents with no picture",
     "Logged in when you send info? The SUBMIT tab shows whether it was added",
-    "Upload pictures straight from the SUBMIT tab",
     "PLAYERS: see what your friends found recently",
     "Fixed letters like K drawing squashed on some browsers (Safari)",
     "Click anywhere on a tier bar (not just the text) to mark the whole tier, with a tip and a tour step",

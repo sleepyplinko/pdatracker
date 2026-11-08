@@ -15,18 +15,6 @@ const RARITY_TTL = 300;            // seconds the rarity numbers are cached
 const AUTH_LIMIT = 20;             // login/register tries per IP per 10 minutes
 const SUBMIT_LIMIT = 6;            // submissions per IP per 10 minutes
 const LB_TTL = 300;                // seconds the leaderboard is cached
-const UPLOAD_LIMIT = 8;            // picture uploads per IP per 10 minutes
-const UPLOAD_MAX = 5 * 1024 * 1024; // 5 MB per picture
-const IMG_TYPES = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "image/gif": "gif" };
-/* check the file really is the picture type it says it is */
-function sniff(buf) {
-  const b = new Uint8Array(buf.slice(0, 12));
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
-  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
-  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
-  return "";
-}
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -112,7 +100,7 @@ async function route(req, env, ctx) {
   const M = req.method;
 
   if (M === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", uploads: !!env.IMAGES, admins: String(env.ADMINS || "").split(",").map(x => x.trim()).filter(Boolean) });
+  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", admins: String(env.ADMINS || "").split(",").map(x => x.trim()).filter(Boolean) });
 
   /* ---- create an account ---- */
   if (path === "/api/register" && M === "POST") {
@@ -266,29 +254,6 @@ async function route(req, env, ctx) {
     return json(rows.results || []);
   }
 
-  /* ---- picture uploads (needs an R2 bucket bound as IMAGES) ---- */
-  if (path === "/api/upload" && M === "POST") {
-    if (!env.IMAGES) return err(501, "Picture uploads aren't set up.");
-    const len = +(req.headers.get("Content-Length") || 0); if (len > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
-    const upName = await whoami(env, req);
-    if (!isAdmin(env, upName) && await isBlocked(env, req, upName)) return err(403, "You can't send info to this site.");
-    if (!isAdmin(env, upName) && !(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
-    const buf = await req.arrayBuffer();
-    if (!buf.byteLength) return err(400, "No picture.");
-    if (buf.byteLength > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
-    const type = sniff(buf); if (!type) return err(415, "Only PNG, JPG, WEBP or GIF pictures.");
-    const key = `${now()}-${randomHex(8)}.${IMG_TYPES[type]}`;
-    await env.IMAGES.put(key, buf, { httpMetadata: { contentType: type } });
-    return json({ url: `${url.origin}/img/${key}` }, 201);
-  }
-  const im = path.match(/^\/img\/(\d+-[0-9a-f]{16}\.(png|jpg|webp|gif))$/);
-  if (im && M === "GET") {
-    if (!env.IMAGES) return err(404, "Not found.");
-    const o = await env.IMAGES.get(im[1]); if (!o) return err(404, "Not found.");
-    const type = Object.keys(IMG_TYPES).find(k => IMG_TYPES[k] === im[2]);
-    return new Response(o.body, { headers: { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'", ...CORS } });
-  }
-
   if (path === "/api/admin/check" && M === "GET") return json({ admin: isAdmin(env, await whoami(env, req)), announce: !!env.ANNOUNCE_WEBHOOK });
   if (path.startsWith("/api/admin/")) {
     const name = await whoami(env, req);
@@ -306,13 +271,7 @@ async function route(req, env, ctx) {
       await env.DB.prepare("UPDATE submissions SET status = ?, note = ? WHERE id = ?").bind(st, clip(b.note, 500), +sm[1]).run();
       return json({ ok: true });
     }
-    if (sm && M === "DELETE") {
-      const row = await env.DB.prepare("SELECT link FROM submissions WHERE id = ?").bind(+sm[1]).first();
-      const own = row && env.IMAGES && String(row.link).startsWith(url.origin + "/img/") ? row.link.slice(url.origin.length + 5) : "";
-      const used = own && await env.DB.prepare("SELECT 1 FROM overrides WHERE data LIKE ?").bind("%" + own + "%").first();
-      if (own && !used) await env.IMAGES.delete(own);                 // uploaded picture nobody published
-      await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true });
-    }
+    if (sm && M === "DELETE") { await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true }); }
     /* what's set up on this Worker (shown on the admin page) */
     if (path === "/api/admin/setup" && M === "GET") {
       const want = { users: 1, sessions: 1, attempts: 1, submissions: 2, overrides: 2, friends: 2, counts: 2, activity: 3, changes: 4, blocks: 4, subip: 4 };
@@ -320,7 +279,7 @@ async function route(req, env, ctx) {
       const have = new Set((rows.results || []).map(r => r.name));
       const missing = Object.keys(want).filter(t => !have.has(t));
       const fix = missing.length ? [...new Set(missing.map(t => want[t] === 1 ? "schema.sql" : `schema-update-${want[t]}.sql`))].join(", then ") : "";
-      return json({ tables: { missing, fix }, uploads: !!env.IMAGES, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
+      return json({ tables: { missing, fix }, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
     }
     /* change history + undo */
     if (path === "/api/admin/changes" && M === "GET") {
