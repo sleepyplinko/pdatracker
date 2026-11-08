@@ -89,12 +89,12 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 /* ---------------- top tabs ---------------- */
 .tabs {
   display: flex; gap: 6px;
-  padding: 5px 6px 5px 0;
+  padding: 5px 6px;
   background: #050505;
   border-bottom: 1px solid #e6e6e6;
   overflow-x: auto; scrollbar-width: none;
 }
-.tabs::before { content: ""; flex: 0 0 8px; background: #e6e18a; border-radius: 0 4px 4px 0; }
+
 .tabs::-webkit-scrollbar { display: none; }
 
 .tab {
