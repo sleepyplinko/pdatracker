@@ -254,8 +254,8 @@ async function route(req, env, ctx) {
     if (r.meta && r.meta.last_row_id) await env.DB.prepare("INSERT OR REPLACE INTO subip (sub, ip) VALUES (?, ?)").bind(r.meta.last_row_id, await ipTag(req)).run();
     if (env.DISCORD_WEBHOOK) {                                        // optional ping, kept secret on the server
       ctx.waitUntil(fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        content: env.DISCORD_PING ? `<@${env.DISCORD_PING}> new submission` : "New PDA submission",
-        allowed_mentions: { parse: [], users: env.DISCORD_PING ? [String(env.DISCORD_PING)] : [] },
+        content: "@everyone new PDA submission",
+        allowed_mentions: { parse: ["everyone"] },
         embeds: [{ title: `${clip(b.kind, 40) || "Other"}${b.entry ? ": " + clip(b.entry, 150) : ""}`, description: (text + (link ? `\n\n${link}` : "")).slice(0, 3900), footer: { text: [clip(b.name, 60), account && "account: " + account].filter(Boolean).join(" · ") || "anonymous" } }] }) }).catch(() => {}));
     }
     return json({ ok: true }, 201);
