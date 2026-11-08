@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "New background: a slowed-down, blurred clip from the game",
     "Every tab now has its own colour (ADMIN is red), matching the game's pastel style; TOOLS, BIOGRAPHY, DOCUMENTS and SETTINGS stay white like in the game",
     "Hovering weapon categories plays the same sound as hovering weapons, like in the game",
     "All sounds now come from the game: marking and unmarking, hovering, switching tabs, opening and closing pages, warnings, buttons, and the PDA starting up",
