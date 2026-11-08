@@ -4020,7 +4020,7 @@ const PDA_DATA = {
         [W("KONSTANTINOV"), A("7.62x39mm MAI AP"), M("73rnd ProMag Drum")]), { img: "images/people/benjamin-tarkovsky.webp" })
     ]},
     { name: "Robot", color: "#4a63ff", bg: "#0b0f2a", entries: [
-      ["Security Bot A", { img: "images/people/security-bot-a.webp" }], ["Security Bot B", { img: "images/people/security-bot-b.webp" }], ["Security Bot C", { img: "images/people/security-bot-c.webp" }], ["Security Bot D", { img: "images/people/security-bot-d.webp" }],
+      ["Security Bot A", { img: "images/people/security-bot-a.webp" }], ["Security Bot B", { img: "images/people/security-bot-b.webp" }], ["Security Bot C", { imgs: ["images/people/security-bot-c-anim.webp", "images/people/security-bot-c.webp"] }], ["Security Bot D", { img: "images/people/security-bot-d.webp" }],
       ["Security Bot E", { img: "images/people/security-bot-e.webp" }], ["VLTS Attendant", { img: "images/people/vlts-attendant.webp" }], "Fabricated Dummy"
     ]},
     { name: "Animals", color: "#d6ef5a", bg: "#1e2509", entries: [
