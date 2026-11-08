@@ -103,8 +103,12 @@
 
   const HOVERABLE = "[data-hidedone], .pg-hit, .hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
+  let overX = -1, overY = -1;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
+    // the page redrawing under a still mouse isn't a hover: only count it when the mouse moved
+    const still = e.clientX === overX && e.clientY === overY; overX = e.clientX; overY = e.clientY;
+    if (still) { lastHover = e.target.closest(HOVERABLE); return; }
     const el = e.target.closest(HOVERABLE);
     if (!el || el === lastHover) return;
     lastHover = el;
@@ -274,7 +278,7 @@
   }
   function toggle(id) {
     const on = !isFound(id);
-    if (change([id], on)) play(on ? "select" : "deselect");
+    if (change([id], on)) play(on ? "marked" : "unmarked");
     return on;
   }
 
@@ -483,7 +487,7 @@
     const x = best[1];
     if (e.shiftKey) { play("click"); clearSearch(false); openEntry(x); return; }
     if (isFound(x.id)) { play("warn"); toast(`${x.name} is already found.`); return; }
-    if (change([x.id], true)) play("confirm");
+    if (change([x.id], true)) play("marked");
     searchBox.select();                      // ready for the next name
     query = searchBox.value.trim(); renderTabs(); render();
   });
@@ -735,7 +739,7 @@
     }
     const lockAll = items.every(e => isFound(e.id));
     const what = key.startsWith("tab:") ? "a whole tab" : "a whole tier";
-    if (change(items.map(e => e.id), !lockAll, what)) play(lockAll ? "deselect" : "confirm");
+    if (change(items.map(e => e.id), !lockAll, what)) play(lockAll ? "unmarked" : "confirm");
     cancelTier();
   }
 
@@ -1293,7 +1297,7 @@
     if (k === "gun") { d.mode = 0; d.ammo = ""; d.hits = ""; }
     if (k === "mode") { d.mode = +v; d.ammo = ""; d.hits = ""; }
     if (k === "ammo") d.hits = "";
-    persistUI(); play("select"); keepScroll(render);
+    persistUI(); play("marked"); keepScroll(render);
   }
   function renderDamage() {
     const d = dmgState();
@@ -1496,7 +1500,7 @@
     if (!byId.has(id)) return;
     const it = loadout.items.find(x => x[0] === id);
     if (it) it[1]++; else loadout.items.push([id, 1]);
-    saveLoad(); play("select"); keepScroll(render);
+    saveLoad(); play("marked"); keepScroll(render);
   }
   function loadoutText() {
     const sums = loadoutSums(), cap = baseCarry() + (sums["CARRY WEIGHT INCREASE"] || 0);
@@ -1566,7 +1570,7 @@
   }
   function markAndNext(id) {
     const e = byId.get(id); if (!e) return;
-    if (!isFound(id) && change([id], true)) play("select");
+    if (!isFound(id) && change([id], true)) play("marked");
     const nx = nextMissing(e);
     if (nx) goNext(nx); else { toast("That was the last one missing here!"); render(); }
   }
@@ -1696,7 +1700,7 @@
     const ids = [], miss = []; let already = 0;
     lines.forEach(l => { const hit = idx.get(bulkKey(l)); if (!hit) { miss.push(l); return; } hit.forEach(id => { if (isFound(id)) already++; else ids.push(id); }); });
     const uniq = [...new Set(ids)];
-    if (uniq.length) { change(uniq, true, "a pasted list"); play("confirm"); } else play(miss.length ? "warn" : "click");
+    if (uniq.length) { change(uniq, true, "a pasted list"); play("marked"); } else play(miss.length ? "warn" : "click");
     return { marked: uniq.length, already, miss };
   }
   /* everything checked off since the site was opened in this tab */
@@ -2010,7 +2014,7 @@
     drop.addEventListener("drop", e => { if (e.dataTransfer && e.dataTransfer.files.length) importShots(e.dataTransfer.files); });
     const go = $("#ocrGo"); if (go) go.onclick = () => {
       const ids = [...screen.querySelectorAll("[data-ocrid]:checked")].map(c => c.dataset.ocrid);
-      if (ids.length && change(ids, true, "screenshot import")) play("confirm");
+      if (ids.length && change(ids, true, "screenshot import")) play("marked");
       ocr = { busy: false, msg: "", found: null, already: 0 }; keepScroll(render);
     };
     const cl = $("#ocrClear"); if (cl) cl.onclick = () => { ocr = { busy: false, msg: "", found: null, already: 0 }; play("back"); keepScroll(render); };
@@ -2730,11 +2734,11 @@
     $("#bkNow").onclick = () => { play("click"); doExport(); toast("Backup downloaded."); backupNag(); keepScroll(render); };
     const vol = $("#vol");
     vol.addEventListener("input", () => { settings.volume = +vol.value; $("#volv").textContent = vol.value; save(KEY_SET, settings); });
-    vol.addEventListener("change", () => play("select"));
+    vol.addEventListener("change", () => play("marked"));
     $("#reset").onclick = ev => {
       const b = ev.currentTarget;
       if (b.dataset.armed) {
-        change(Object.keys(found), false, "reset all progress"); play("deselect");
+        change(Object.keys(found), false, "reset all progress"); play("unmarked");
         b.textContent = "RESET ALL PROGRESS"; delete b.dataset.armed;
         $("#rmsg").textContent = "Progress cleared.";
       } else {
@@ -2793,7 +2797,7 @@
       const a = order.indexOf(trackOf(lastStar.id)), b = order.indexOf(trackOf(id));
       if (a >= 0 && b >= 0) {
         const ids = order.slice(Math.min(a, b), Math.max(a, b) + 1);
-        if (change(ids, lastStar.on, "a shift-click range")) play(lastStar.on ? "confirm" : "deselect");
+        if (change(ids, lastStar.on, "a shift-click range")) play(lastStar.on ? "marked" : "unmarked");
         keepScroll(render); return;
       }
     }
@@ -2824,29 +2828,29 @@
     if (t.closest("[data-ladd]")) { const sel = screen.querySelector("[data-lpick]"); if (sel && sel.value) loadoutAdd(sel.value); else toast("Pick something first."); return; }
     { const b = t.closest("[data-lplus],[data-lminus],[data-lremove]");
       if (b) { const i = +(b.dataset.lplus ?? b.dataset.lminus ?? b.dataset.lremove), it = loadout.items[i]; if (!it) return;
-        if (b.dataset.lplus != null) { it[1]++; play("select"); }
-        else if (b.dataset.lminus != null && it[1] > 1) { it[1]--; play("deselect"); }
-        else { loadout.items.splice(i, 1); play("deselect"); }
+        if (b.dataset.lplus != null) { it[1]++; play("marked"); }
+        else if (b.dataset.lminus != null && it[1] > 1) { it[1]--; play("unmarked"); }
+        else { loadout.items.splice(i, 1); play("unmarked"); }
         saveLoad(); keepScroll(render); return; } }
     { const b = t.closest("[data-lmark]");
       if (b) { const p = byId.get(b.dataset.lmark) || people.find(x => x.id === b.dataset.lmark); if (!p) return;
         const { fixed, random } = loadoutParts(p);
         if (random.length) { loadPick = p.id; play("click"); keepScroll(render); return; }
-        if (change(fixed.map(x => x.id), true, `${p.name}'s gear`)) play("confirm"); keepScroll(render); return; } }
+        if (change(fixed.map(x => x.id), true, `${p.name}'s gear`)) play("marked"); keepScroll(render); return; } }
     if (t.closest("[data-lmarkcancel]")) { loadPick = null; play("back"); keepScroll(render); return; }
     { const b = t.closest("[data-lmarkgo]");
       if (b) { const p = byId.get(b.dataset.lmarkgo) || people.find(x => x.id === b.dataset.lmarkgo); if (!p) return;
         const { fixed } = loadoutParts(p);
         const picked = [...screen.querySelectorAll("[data-lpickid]:checked:not(:disabled)")].map(c => c.dataset.lpickid);
         loadPick = null;
-        if (change([...fixed.map(x => x.id), ...picked], true, `${p.name}'s gear`)) play("confirm"); else { play("click"); toast("Nothing new to mark."); }
+        if (change([...fixed.map(x => x.id), ...picked], true, `${p.name}'s gear`)) play("marked"); else { play("click"); toast("Nothing new to mark."); }
         keepScroll(render); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const d = ui.dmg = dmgState(); d.ammo = row.dataset.dmgammo; d.hits = ""; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-dmgcalc]"); if (b) { const d = ui.dmg = dmgState(); d.gun = b.dataset.dmgcalc; d.mode = 0; d.ammo = ""; d.hits = ""; detail = null; ui.tab = "damage"; persistUI(); play("click"); renderTabs(); render(); return; } }
-    { const b = t.closest("[data-cnt]"); if (b) { const id = b.dataset.cntid; setCount(id, countOf1(id) + +b.dataset.cnt); play(+b.dataset.cnt > 0 ? "select" : "deselect"); keepScroll(render); return; } }
+    { const b = t.closest("[data-cnt]"); if (b) { const id = b.dataset.cntid; setCount(id, countOf1(id) + +b.dataset.cnt); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-frview]"); if (b) { play("open"); location.hash = "#u=" + encodeURIComponent(b.dataset.frview); return; } }
     { const b = t.closest("[data-frcmp]"); if (b) { const f = (friends || []).find(x => x.name === b.dataset.frcmp); if (f) { const set = {}; f.found.forEach(id => { set[id] = 1; }); friend = { name: f.name, set }; save(KEY_FRIEND, friend); play("confirm"); toast(`Comparing with ${f.name}: their finds show as badges on your tiles.`); renderBanner(); } return; } }
-    { const b = t.closest("[data-frdel]"); if (b) { api("DELETE", "/api/friends/" + encodeURIComponent(b.dataset.frdel)).then(() => { play("deselect"); loadFriends(); }).catch(() => toast("Couldn't remove.")); return; } }
+    { const b = t.closest("[data-frdel]"); if (b) { api("DELETE", "/api/friends/" + encodeURIComponent(b.dataset.frdel)).then(() => { play("unmarked"); loadFriends(); }).catch(() => toast("Couldn't remove.")); return; } }
     { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; adm.changes = null; adm.blocks = null; play("click"); render(); return; } }
     if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
     if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
@@ -2857,7 +2861,7 @@
     { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
     if (t.closest("[data-admann]")) { adm.ann = { update: "", msg: "" }; play("click"); keepScroll(render); return; }
     if (t.closest("[data-admimgadd]")) { const box = $("#admImgs"); if (box) { box.insertAdjacentHTML("beforeend", imgRowHTML("")); play("click"); } return; }
-    { const b = t.closest("[data-admimgdel]"); if (b) { const it = b.closest(".imgitem"); const box = $("#admImgs"); if (box && box.children.length > 1) it.remove(); else { const i = it.querySelector("input"); i.value = ""; const pv = it.querySelector("img"); pv.hidden = true; } play("deselect"); return; } }
+    { const b = t.closest("[data-admimgdel]"); if (b) { const it = b.closest(".imgitem"); const box = $("#admImgs"); if (box && box.children.length > 1) it.remove(); else { const i = it.querySelector("input"); i.value = ""; const pv = it.querySelector("img"); pv.hidden = true; } play("unmarked"); return; } }
     { const b = t.closest("[data-admundo]"); if (b) {
         if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; }
         api("POST", `/api/admin/changes/${b.dataset.admundo}/undo`).then(([st, r]) => {
@@ -2870,12 +2874,12 @@
         }); return; } }
     { const b = t.closest("[data-admblock]"); if (b) {
         if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "BLOCK + REJECT ALL THEIR SUBMISSIONS?"; play("warn"); return; }
-        api("POST", "/api/admin/blocks", { sub: +b.dataset.admblock, purge: true }).then(([st, r]) => { if (st !== 201) { toast(r.error || "Couldn't block."); play("warn"); return; } play("deselect"); toast("Blocked. They can't send anything else."); loadAdmin(); }); return; } }
+        api("POST", "/api/admin/blocks", { sub: +b.dataset.admblock, purge: true }).then(([st, r]) => { if (st !== 201) { toast(r.error || "Couldn't block."); play("warn"); return; } play("unmarked"); toast("Blocked. They can't send anything else."); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admunblock]"); if (b) { api("DELETE", "/api/admin/blocks/" + b.dataset.admunblock).then(() => { play("click"); toast("Unblocked."); loadAdmin(); }); return; } }
-    { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("deselect"); loadAdmin(); }); return; } }
+    { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("unmarked"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
-    if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("deselect"); render(); toast("Loadout cleared."); } return; }
+    if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("unmarked"); render(); toast("Loadout cleared."); } return; }
     if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
     if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
@@ -2907,7 +2911,7 @@
     if (fav) {
       const id = fav.dataset.fav;
       if (favs[id]) delete favs[id]; else favs[id] = 1;
-      save(KEY_FAV, favs); play(favs[id] ? "select" : "deselect");
+      save(KEY_FAV, favs); play("click");
       toast(favs[id] ? "Added to favourites. It shows on your Profile." : "Removed from favourites.");
       render(); return;
     }
