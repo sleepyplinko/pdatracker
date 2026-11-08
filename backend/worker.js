@@ -313,6 +313,15 @@ async function route(req, env, ctx) {
       if (own && !used) await env.IMAGES.delete(own);                 // uploaded picture nobody published
       await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true });
     }
+    /* what's set up on this Worker (shown on the admin page) */
+    if (path === "/api/admin/setup" && M === "GET") {
+      const want = { users: 1, sessions: 1, attempts: 1, submissions: 2, overrides: 2, friends: 2, counts: 2, activity: 3, changes: 4, blocks: 4, subip: 4 };
+      const rows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
+      const have = new Set((rows.results || []).map(r => r.name));
+      const missing = Object.keys(want).filter(t => !have.has(t));
+      const fix = missing.length ? [...new Set(missing.map(t => want[t] === 1 ? "schema.sql" : `schema-update-${want[t]}.sql`))].join(", then ") : "";
+      return json({ tables: { missing, fix }, uploads: !!env.IMAGES, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
+    }
     /* change history + undo */
     if (path === "/api/admin/changes" && M === "GET") {
       const rows = await env.DB.prepare("SELECT id, entry, before, after, by, what, t FROM changes ORDER BY id DESC LIMIT 150").all();

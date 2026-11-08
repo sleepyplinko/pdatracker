@@ -115,7 +115,7 @@
     const now = performance.now();
     if (now - lastHoverAt < 35) return;
     lastHoverAt = now;
-    play(el.matches(".card") ? "hoverPerson" : el.matches(".tile, .doc") ? "hoverTool" : el.matches(".tab, .cat, .subtab, .mtab") ? "hoverTab" : "hover");
+    play(el.matches(".card") ? "hoverPerson" : el.matches(".tile, .doc, .cat") ? "hoverTool" : el.matches(".tab, .subtab, .mtab") ? "hoverTab" : "hover");
   });
   document.addEventListener("pointerout", e => {
     const el = e.target.closest(HOVERABLE);
@@ -1800,7 +1800,7 @@
   async function uploadPic(file) {
     const r = await fetch(API + "/api/upload", { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream", ...(acc && acc.token ? { Authorization: "Bearer " + acc.token } : {}) }, body: file });
     let j = {}; try { j = await r.json(); } catch { /* ignore */ }
-    if (r.status !== 201) { const e = new Error(j.error || "Upload failed."); e.user = true; throw e; }
+    if (r.status !== 201) { const e = new Error(j.error ? `Upload failed: ${j.error}` : `Upload failed (server answered ${r.status}${r.status === 404 ? ": the Worker code is older than the site, paste the newest worker.js" : ""}).`); e.user = true; throw e; }
     return j.url;
   }
   /* the password never leaves the browser: it's stretched into a key first */
@@ -2209,7 +2209,7 @@
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
   let imgRowN = 0;
   const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
-  const upBtn = target => serverInfo.uploads ? `<label class="mini-btn upbtn">UPLOAD…<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-admupload='${target}' hidden></label>` : "";
+  const upBtn = target => serverInfo.uploads || amAdmin() ? `<label class="mini-btn upbtn">UPLOAD…<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-admupload='${target}' hidden></label>` : "";
   const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
@@ -2250,6 +2250,18 @@
     if (adm.blocks === null) { adm.blocks = []; loadAdmin(); }
     if (!adm.blocks.length) return '<p class="dim">Nobody is blocked. Use BLOCK SENDER on a submission to stop someone spamming.</p>';
     return `<div class="frlist">${adm.blocks.map(x => `<div class="frrow"><b>${x.account ? esc(x.account) : "anonymous sender"}</b><span class="dim">${x.byip ? "blocked by connection" : ""}${x.byip && x.account ? " + " : ""}${x.account ? "account" : ""}${x.note ? " · " + esc(x.note) : ""}</span><span class="dim">by ${esc(x.by)} · ${esc(ago(x.created * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admunblock="${x.id}">UNBLOCK</button></span></div>`).join("")}</div>`;
+  }
+  function setupHTML() {
+    if (adm.setup === undefined) { adm.setup = null; api("GET", "/api/admin/setup").then(([st, r]) => { adm.setup = st === 200 ? r : { old: true }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
+    const s = adm.setup; if (!s) return "";
+    if (s.old) return `<div class="setupbox bad"><b>SERVER SETUP:</b> the Worker is running older code than the site. Paste the newest <code>worker.js</code> into the Worker and Deploy.</div>`;
+    const rows = [["Database tables", s.tables.missing.length ? `missing ${s.tables.missing.join(", ")}: run ${s.tables.fix} in the D1 console` : "", true],
+      ["Picture uploads (R2 bucket bound as IMAGES)", s.uploads ? "" : "not set up: README step 5.3", true],
+      ["New-submission pings (DISCORD_WEBHOOK)", s.ping ? "" : "off (optional)", false],
+      ["Discord announcements (ANNOUNCE_WEBHOOK)", s.announce ? "" : "off (optional): README step 6.3", false]];
+    const allOk = rows.every(r => !r[1]);
+    if (allOk && !adm.showSetup) return "";
+    return `<details class="setupbox${rows.some(r => r[1] && r[2]) ? " bad" : ""}"${rows.some(r => r[1] && r[2]) ? " open" : ""}><summary><b>SERVER SETUP</b> ${rows.filter(r => !r[1]).length}/${rows.length} on</summary>${rows.map(([n, msg]) => `<div>${msg ? "✗" : "✓"} ${esc(n)}${msg ? ` <span class="dim">· ${esc(msg)}</span>` : ""}</div>`).join("")}</details>`;
   }
   function announceHTML() {
     if (!adm.ann) return "";
@@ -2302,6 +2314,7 @@
     screen.innerHTML = `<div class="results admin">
       <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
+      ${setupHTML()}
       ${announceHTML()}
       <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="history" aria-pressed="${adm.status === "history"}">CHANGE HISTORY</button><button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
       ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
@@ -2976,7 +2989,7 @@
       const f = sel.files && sel.files[0], tgt = screen.querySelector(sel.dataset.admupload); if (!f || !tgt) return;
       const lab = sel.closest("label"); lab.firstChild.textContent = "UPLOADING…";
       uploadPic(f).then(url => { tgt.value = url; if (adm.edit && adm.edit.add) adm.edit.add.img = url; const pv = screen.querySelector(`[data-imgprev='${sel.dataset.admupload}']`); if (pv) { pv.src = url; pv.hidden = false; } lab.firstChild.textContent = "UPLOAD…"; play("confirm"); toast("Uploaded. Press PUBLISH to put it on the page."); })
-        .catch(err => { lab.firstChild.textContent = "UPLOAD…"; toast(err.user ? err.message : "Upload failed. Check your connection."); play("warn"); });
+        .catch(err => { lab.firstChild.textContent = "UPLOAD…"; toast(err.user ? err.message : "Upload failed: couldn't reach the server (" + (err.message || "network error") + ").", { ms: 9000 }); play("warn"); });
       return;
     }
     else if (sel.matches("[data-cfile]")) { const f = sel.files && sel.files[0]; if (f && f.size > 5 * 1024 * 1024) { toast("That picture is over 5 MB."); sel.value = ""; return; } pickedFile = f || null; readForm(sel.closest("form")); keepScroll(render); return; }

@@ -1071,3 +1071,8 @@ body.light .footer { color: rgba(0,0,0,.5); }
 .upbtn { cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; color: #111 !important; background: var(--bar) !important; }
 .imgitem { margin-bottom: 6px; }
 .hist .frrow > span:nth-child(2) { flex: 1; }
+.setupbox { margin: 8px 0; padding: 8px 10px; border: 1px solid #666; border-radius: 4px; font-size: 12px; background: #1a1a1a; }
+.setupbox.bad { border-color: #ff6a6a; background: #2a1414; }
+.setupbox summary { cursor: pointer; }
+.setupbox div { margin-top: 4px; }
+.subimg[hidden] { display: none; }

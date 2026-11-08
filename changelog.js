@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Hovering weapon categories plays the same sound as hovering weapons, like in the game",
     "All sounds now come from the game: marking and unmarking, hovering, switching tabs, opening and closing pages, warnings, buttons, and the PDA starting up",
     "New WC tab in BIOGRAPHY with WC Troop, WC Turret, WC gobloing, WC 'XT' Flame Unit and WC Advanced Troop; WC Speedster's stats filled in (your progress on the WC NPCs carries over)",
     "Icons redone to match the game",
