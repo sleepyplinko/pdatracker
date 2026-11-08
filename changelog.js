@@ -14,7 +14,7 @@ const PDA_CHANGELOG = [
     "Hovering weapon categories plays the same sound as hovering weapons, like in the game",
     "All sounds now come from the game: marking and unmarking, hovering, switching tabs, opening and closing pages, warnings, buttons, and the PDA starting up",
     "New WC tab in BIOGRAPHY with WC Troop, WC Turret, WC gobloing, WC 'XT' Flame Unit and WC Advanced Troop; WC Speedster's stats filled in (your progress on the WC NPCs carries over)",
-    "Icons redone to match the game",
+    "Tab icons are now the actual icons from the game, and the stat icons match it too",
     "People and documents can have more than one picture",
     "Site admins get an ADMIN tag on the leaderboard, friends lists and shared profiles",
     "Damage calculator shows the supershield math in the hits-to-kill line",

@@ -104,7 +104,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   color: #2b2b2b;
   font-size: 21px; font-weight: 600; letter-spacing: .02em;
 }
-.tab svg { width: 34px; height: 34px; flex: 0 0 auto; }
+.tab svg, .tab .tabimg { width: 34px; height: 34px; flex: 0 0 auto; }
+.tabimg { object-fit: contain; image-rendering: auto; pointer-events: none; }
 .tab span { flex: 1; text-align: center; }
 .tab[data-tab="profile"] { background: linear-gradient(#f4f6b2, #d6dc84); }
 .tab[data-tab="cloud"]   { background: linear-gradient(#a6f3f6, #70d4da); }
@@ -497,7 +498,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 @media (max-width: 1000px) {
   :root { --tf-xl: 34px; --tf-l: 28px; --tf-m: 22px; --tf-s: 17px; --tf-xs: 14px; }
   .tab { min-width: 160px; height: 48px; font-size: 18px; }
-  .tab svg { width: 28px; height: 28px; }
+  .tab svg, .tab .tabimg { width: 28px; height: 28px; }
   .tools { grid-template-columns: 220px 1fr; }
   .cat { --cs: .8; height: 48px; }
   .cat[aria-selected="true"] { --cs: .98; height: 56px; }
@@ -511,7 +512,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   .titlebar { grid-template-columns: auto 1fr; margin: 0 6px -2px; font-size: 17px; }
   .titlebar .hint { display: none; }
   .tab { min-width: 130px; height: 44px; font-size: 16px; gap: 6px; }
-  .tab svg { width: 24px; height: 24px; }
+  .tab svg, .tab .tabimg { width: 24px; height: 24px; }
   .searchbar { padding: 6px 8px 0; }
   .screen { height: auto; min-height: 70vh; padding: 8px; }
   .tools { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
@@ -840,7 +841,7 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .tabs .tab { flex: 1 1 0; min-width: 150px; }
 .tabs.bottom { border-bottom: 0; border-top: 1px solid #e6e6e6; }
 .tabs.bottom .tab { height: 44px; font-size: 18px; }
-.tabs.bottom .tab svg { width: 26px; height: 26px; }
+.tabs.bottom .tab svg, .tabs.bottom .tab .tabimg { width: 26px; height: 26px; }
 @media (max-width: 700px) {
   .tabs .tab { min-width: 118px; }
   .tabs.bottom .tab { height: 40px; font-size: 15px; }
