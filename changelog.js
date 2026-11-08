@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "New WC tab in BIOGRAPHY with WC Troop, WC Turret, WC gobloing, WC 'XT' Flame Unit and WC Advanced Troop; WC Speedster's stats filled in (your progress on the WC NPCs carries over)",
+    "Icons redone to match the game",
+    "People and documents can have more than one picture",
     "Site admins get an ADMIN tag on the leaderboard, friends lists and shared profiles",
     "Damage calculator shows the supershield math in the hits-to-kill line",
     "New entries can now be added straight from the site; entries from a game update get a NEW badge and a filter on WHAT'S LEFT",

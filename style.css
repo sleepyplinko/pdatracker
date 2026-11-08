@@ -1068,4 +1068,6 @@ body.light .footer { color: rgba(0,0,0,.5); }
 .badm { display: inline-block; background: #ff3b3b; color: #fff; font-size: 9px; letter-spacing: .5px; padding: 1px 4px; border-radius: 3px; margin-left: 4px; vertical-align: middle; text-shadow: none; }
 .imgrow { display: flex; gap: 8px; align-items: center; }
 .imgrow input { flex: 1; }
-.upbtn { cursor: pointer; white-space: nowrap; }
+.upbtn { cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; color: #111 !important; background: var(--bar) !important; }
+.imgitem { margin-bottom: 6px; }
+.hist .frrow > span:nth-child(2) { flex: 1; }

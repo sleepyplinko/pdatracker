@@ -57,6 +57,20 @@ function cleanIds(list) {
   const out = [...new Set(list.filter(x => typeof x === "string" && ID_RE.test(x)))];
   return out.length > MAX_IDS ? null : out.sort();
 }
+/* a one-way fingerprint of the sender's IP, so spammers can be blocked without storing addresses */
+async function ipTag(req) {
+  const ip = req.headers.get("CF-Connecting-IP") || "local";
+  const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("pda-block:" + ip));
+  return [...new Uint8Array(h)].slice(0, 12).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function isBlocked(env, req, account) {
+  const tag = await ipTag(req);
+  const row = await env.DB.prepare("SELECT 1 FROM blocks WHERE ip = ? OR (account != '' AND account = ?) LIMIT 1").bind(tag, account || "\u0000").first();
+  return !!row;
+}
+async function logChange(env, id, before, after, by, what) {
+  await env.DB.prepare("INSERT INTO changes (entry, before, after, by, what, t) VALUES (?, ?, ?, ?, ?, ?)").bind(id, before, after, by, what, now()).run();
+}
 async function rateLimit(env, req, bucket = "", limit = AUTH_LIMIT) {
   const ip = bucket + (req.headers.get("CF-Connecting-IP") || "local");
   const since = now() - 600;
@@ -231,10 +245,13 @@ async function route(req, env, ctx) {
     if (b.botcheck) return json({ ok: true });                       // spam bot filled the hidden box
     const text = clip(b.text, 4000).trim(), link = clip(b.link, 500).trim();
     if (!text && !link) return err(400, "Write some details or add a link first.");
+    const subAcct = await whoami(env, req);
+    if (await isBlocked(env, req, subAcct)) return err(403, "You can't send info to this site.");
     if (!(await rateLimit(env, req, "s:", SUBMIT_LIMIT))) return err(429, "You've sent a lot just now. Wait a few minutes.");
     const account = (await whoami(env, req)) || "";
     const r = await env.DB.prepare("INSERT INTO submissions (kind, entry, text, link, who, account, created) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .bind(clip(b.kind, 40) || "Other", clip(b.entry, 150), text, link, clip(b.name, 60), account, now()).run();
+    if (r.meta && r.meta.last_row_id) await env.DB.prepare("INSERT OR REPLACE INTO subip (sub, ip) VALUES (?, ?)").bind(r.meta.last_row_id, await ipTag(req)).run();
     if (env.DISCORD_WEBHOOK) {                                        // optional ping, kept secret on the server
       ctx.waitUntil(fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         content: env.DISCORD_PING ? `<@${env.DISCORD_PING}> new submission` : "New PDA submission",
@@ -253,7 +270,9 @@ async function route(req, env, ctx) {
   if (path === "/api/upload" && M === "POST") {
     if (!env.IMAGES) return err(501, "Picture uploads aren't set up.");
     const len = +(req.headers.get("Content-Length") || 0); if (len > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
-    if (!isAdmin(env, await whoami(env, req)) && !(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
+    const upName = await whoami(env, req);
+    if (!isAdmin(env, upName) && await isBlocked(env, req, upName)) return err(403, "You can't send info to this site.");
+    if (!isAdmin(env, upName) && !(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
     const buf = await req.arrayBuffer();
     if (!buf.byteLength) return err(400, "No picture.");
     if (buf.byteLength > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
@@ -270,7 +289,7 @@ async function route(req, env, ctx) {
     return new Response(o.body, { headers: { "Content-Type": type, "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'", ...CORS } });
   }
 
-  if (path === "/api/admin/check" && M === "GET") return json({ admin: isAdmin(env, await whoami(env, req)) });
+  if (path === "/api/admin/check" && M === "GET") return json({ admin: isAdmin(env, await whoami(env, req)), announce: !!env.ANNOUNCE_WEBHOOK });
   if (path.startsWith("/api/admin/")) {
     const name = await whoami(env, req);
     if (!isAdmin(env, name)) return err(403, "Admins only.");
@@ -294,6 +313,57 @@ async function route(req, env, ctx) {
       if (own && !used) await env.IMAGES.delete(own);                 // uploaded picture nobody published
       await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true });
     }
+    /* change history + undo */
+    if (path === "/api/admin/changes" && M === "GET") {
+      const rows = await env.DB.prepare("SELECT id, entry, before, after, by, what, t FROM changes ORDER BY id DESC LIMIT 150").all();
+      return json(rows.results || []);
+    }
+    const um = path.match(/^\/api\/admin\/changes\/(\d+)\/undo$/);
+    if (um && M === "POST") {
+      const c = await env.DB.prepare("SELECT * FROM changes WHERE id = ?").bind(+um[1]).first();
+      if (!c) return err(404, "That change isn't in the history any more.");
+      const cur = await env.DB.prepare("SELECT data FROM overrides WHERE id = ?").bind(c.entry).first();
+      if (c.before == null) await env.DB.prepare("DELETE FROM overrides WHERE id = ?").bind(c.entry).run();
+      else await env.DB.prepare("INSERT INTO overrides (id, data, updated, by) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated = excluded.updated, by = excluded.by").bind(c.entry, c.before, now(), name).run();
+      await logChange(env, c.entry, cur ? cur.data : null, c.before, name, `undid #${c.id}`);
+      await env.DB.prepare("DELETE FROM changes WHERE t < ?").bind(now() - 180 * 86400).run();
+      return json({ ok: true, entry: c.entry, data: c.before == null ? null : JSON.parse(c.before) });
+    }
+    /* blocking spammers */
+    if (path === "/api/admin/blocks" && M === "GET") {
+      const rows = await env.DB.prepare("SELECT id, account, note, by, created, ip != '' AS byip FROM blocks ORDER BY id DESC").all();
+      return json(rows.results || []);
+    }
+    if (path === "/api/admin/blocks" && M === "POST") {
+      const b = await body(req); if (!b) return err(400, "Bad request.");
+      const sub = b.sub ? await env.DB.prepare("SELECT s.account AS account, s.who AS who, i.ip AS ip FROM submissions s LEFT JOIN subip i ON i.sub = s.id WHERE s.id = ?").bind(+b.sub).first() : null;
+      if (b.sub && !sub) return err(404, "Submission not found.");
+      const acct = sub ? sub.account || "" : NAME_RE.test(String(b.account || "")) ? String(b.account) : "";
+      const ip = sub ? sub.ip || "" : "";
+      if (!acct && !ip) return err(400, "Nothing to block: that submission has no account or address on record.");
+      if (acct && isAdmin(env, acct)) return err(400, "You can't block an admin.");
+      await env.DB.prepare("INSERT INTO blocks (ip, account, note, by, created) VALUES (?, ?, ?, ?, ?)").bind(ip, acct, clip(b.note || (sub && sub.who) || "", 200), name, now()).run();
+      if (b.sub && b.purge) {                                         // also hide everything else they sent
+        if (ip) await env.DB.prepare("UPDATE submissions SET status = 'rejected' WHERE status = 'new' AND id IN (SELECT sub FROM subip WHERE ip = ?)").bind(ip).run();
+        if (acct) await env.DB.prepare("UPDATE submissions SET status = 'rejected' WHERE status = 'new' AND account = ?").bind(acct).run();
+      }
+      return json({ ok: true }, 201);
+    }
+    const bm = path.match(/^\/api\/admin\/blocks\/(\d+)$/);
+    if (bm && M === "DELETE") { await env.DB.prepare("DELETE FROM blocks WHERE id = ?").bind(+bm[1]).run(); return json({ ok: true }); }
+    /* post a "new entries" message to Discord */
+    if (path === "/api/admin/announce" && M === "POST") {
+      if (!env.ANNOUNCE_WEBHOOK) return err(501, "Set ANNOUNCE_WEBHOOK on the Worker first (see the README).");
+      const b = await body(req); const upd = clip(b && b.update, 40).trim(); if (!upd) return err(400, "Pick an update.");
+      const names = (Array.isArray(b.names) ? b.names : []).map(x => clip(x, 80)).filter(Boolean).slice(0, 60);
+      const site = env.SITE_URL || "https://sleepyplinko.github.io/pdatracker/";
+      const msg = clip(b.message, 1500).trim();
+      const res = await fetch(env.ANNOUNCE_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        allowed_mentions: { parse: [] },
+        embeds: [{ title: `New on PDA.exe: ${upd}`, url: site, description: ((msg ? msg + "\n\n" : "") + (names.length ? names.map(n => "• " + n).join("\n") : "")).slice(0, 3900) || "New entries were added.", footer: { text: "PDA.exe tracker" } }] }) }).catch(() => null);
+      if (!res || !res.ok) return err(502, "Discord didn't accept the message. Check the webhook.");
+      return json({ ok: true });
+    }
     const om = path.match(/^\/api\/admin\/overrides\/(.+)$/);
     if (om) {
       const id = decodeURIComponent(om[1]); if (!ID_RE.test(id)) return err(400, "Bad entry.");
@@ -305,7 +375,9 @@ async function route(req, env, ctx) {
         if (src.stats && typeof src.stats === "object") { d.stats = {}; Object.entries(src.stats).slice(0, 60).forEach(([k, v]) => { d.stats[clip(k, 40).toUpperCase()] = clip(v, 120); }); }
         if (typeof src.tier === "number" && src.tier >= 1 && src.tier <= 9) d.tier = src.tier;
         if (typeof src.update === "string" && src.update.trim()) d.update = clip(src.update.trim(), 40);
-        if (typeof src.img === "string" && /^https?:\/\/[^\s"'<>]{4,500}$/.test(src.img)) d.img = src.img;
+        const okUrl = u => typeof u === "string" && (/^https?:\/\/[^\s"'<>]{4,500}$/.test(u) || /^images\/[\w\-.\/]{1,200}$/.test(u));
+        if (Array.isArray(src.imgs)) { const l = src.imgs.filter(okUrl).slice(0, 8); if (l.length) d.imgs = l; }
+        else if (okUrl(src.img)) d.imgs = [src.img];
         if (src.add && typeof src.add === "object") {                  // a brand-new entry that isn't in data.js
           const a = src.add, sec = ["tools", "bio", "docs"].includes(a.section) ? a.section : "";
           const nm = clip(a.name, 80).trim(), grp = clip(a.group, 60).trim();
@@ -314,10 +386,17 @@ async function route(req, env, ctx) {
           if (sec === "tools") { if (!(Number.isInteger(a.tier) && a.tier >= 1 && a.tier <= 9)) return err(400, "Pick a tier."); d.add.tier = a.tier; }
           if (typeof a.replace === "string" && ID_RE.test(a.replace)) d.add.replace = a.replace;
         }
+        const prev = await env.DB.prepare("SELECT data FROM overrides WHERE id = ?").bind(id).first();
         await env.DB.prepare("INSERT INTO overrides (id, data, updated, by) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated = excluded.updated, by = excluded.by").bind(id, JSON.stringify(d), now(), name).run();
+        await logChange(env, id, prev ? prev.data : null, JSON.stringify(d), name, clip(b.what || (prev ? "edited" : d.add ? "added" : "published"), 60));
         return json({ ok: true, id, data: d });
       }
-      if (M === "DELETE") { await env.DB.prepare("DELETE FROM overrides WHERE id = ?").bind(id).run(); return json({ ok: true }); }
+      if (M === "DELETE") {
+        const prev = await env.DB.prepare("SELECT data FROM overrides WHERE id = ?").bind(id).first();
+        await env.DB.prepare("DELETE FROM overrides WHERE id = ?").bind(id).run();
+        if (prev) await logChange(env, id, prev.data, null, name, "removed");
+        return json({ ok: true });
+      }
     }
   }
 

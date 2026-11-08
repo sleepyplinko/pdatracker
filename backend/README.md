@@ -63,7 +63,19 @@ needed). Published info is stored on the server, separate from data.js.
      (exactly), bucket: `pda-pictures`. Deploy.
    Without this, everything else still works; the upload box just stays hidden.
 
+## 6. Update for change history, blocking and Discord announcements
+1. D1 database `pda` → **Console**: paste [`schema-update-4.sql`](schema-update-4.sql), **Execute**.
+2. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**.
+3. Optional, for **ANNOUNCE ON DISCORD** in the admin tab:
+   - In Discord, make a webhook in the channel you want announcements in
+     (Channel settings → Integrations → Webhooks → New Webhook → Copy URL).
+   - Worker → **Settings → Variables and Secrets → Add**: type **Secret**, name
+     `ANNOUNCE_WEBHOOK`, paste the URL. Deploy.
+   The button only shows up once this is set.
+
 ## Notes
+- Blocking stores a one-way fingerprint of the sender's connection, never the
+  address itself.
 - Submissions are limited to 6 per IP per 10 minutes, picture uploads to 8
   (5 MB each, PNG/JPG/WEBP/GIF only, checked by the server).
 - Passwords never reach the server; the browser turns them into a key

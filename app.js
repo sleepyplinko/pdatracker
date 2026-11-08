@@ -37,6 +37,15 @@
   if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
   let favs     = load(KEY_FAV, {});
   let notes    = load(KEY_NOTES, {});
+  /* entries that moved to another tab keep their progress (old id -> new id) */
+  const MOVED = { "b|miscellaneous|wc emissary": "b|wc|wc emissary", "b|miscellaneous|wc speedster": "b|wc|wc speedster" };
+  const migrateIds = (obj, key) => {
+    let ch = false;
+    Object.entries(MOVED).forEach(([o, n]) => { if (obj && o in obj) { if (!(n in obj)) obj[n] = obj[o]; delete obj[o]; ch = true; } });
+    if (ch) save(key, obj);
+    return obj;
+  };
+  migrateIds(found, KEY_FOUND); migrateIds(favs, KEY_FAV); migrateIds(notes, KEY_NOTES);
   let history_ = load(KEY_LOG, []);
   let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
   let sinceBackup = load(KEY_SINCE, 0);
@@ -266,21 +275,21 @@
      ICONS
      ===================================================================== */
   const I = {
-    profile: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#111"/><circle cx="12" cy="9.5" r="3.6" fill="#ddd"/><path d="M5.5 18.5c1.4-3 3.8-4.4 6.5-4.4s5.1 1.4 6.5 4.4" fill="#ddd"/></svg>',
-    cloud:   '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.1 11.1 3.5 3.5 0 0 0 7 18z"/><path d="M12 10v6m-2.5-2.5L12 16l2.5-2.5"/></svg>',
-    manual:  '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2" fill="#111"/><path d="M6 12.5l4 4 8-9" fill="none" stroke="#ddd" stroke-width="2.6"/></svg>',
-    settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
-    community: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M3 5h18v11H9l-5 4v-4H3z"/><path d="M8 10.5h8" stroke-linecap="round"/></svg>',
-    damage: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#111"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>',
-    players: '<svg viewBox="0 0 24 24" fill="#111"><circle cx="8" cy="8" r="3.4"/><circle cx="16.5" cy="9" r="2.8"/><path d="M1.5 20c.4-4 3-6.2 6.5-6.2s6.1 2.2 6.5 6.2zM13.6 14.6c.8-.5 1.8-.8 2.9-.8 3 0 5.2 1.9 5.6 5.4h-7.4c-.1-1.8-.5-3.4-1.1-4.6z"/></svg>',
-    admin: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2.5l8 3v6c0 5-3.5 8.6-8 10-4.5-1.4-8-5-8-10v-6z"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke-linecap="round"/></svg>',
-    loadout: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.2" stroke-linejoin="round"><path d="M8 4h8l1 3h3v13H4V7h3z"/><path d="M9 12h6M12 9v6"/></svg>',
-    missing: '<svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h10"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="#111"><path d="M12 19.2c-2.5 0-4.71-1.28-6-3.2.03-2 4-3.1 6-3.1s5.97 1.1 6 3.1a7.23 7.23 0 0 1-6 3.2M12 5a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3m0-3A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10c0-5.53-4.5-10-10-10"/></svg>',
+    cloud:   '<svg viewBox="0 0 24 24" fill="#111"><path d="M6.5 20q-2.28 0-3.89-1.57Q1 16.85 1 14.58q0-1.95 1.17-3.48 1.18-1.53 3.08-1.95.43-1.8 2.13-3.42Q9.07 4.1 11 4.1q.83 0 1.41.59.59.59.59 1.41v6.05l1.6-1.55L16 12l-4 4-4-4 1.4-1.4 1.6 1.55V6.1q-1.9.35-2.95 1.84T7 11h-.5q-1.45 0-2.47 1.03Q3 13.05 3 14.5T4.03 17q1.02 1 2.47 1h12q1.05 0 1.77-.73.73-.72.73-1.77t-.73-1.77Q19.55 13 18.5 13H17v-2q0-1.2-.55-2.24Q15.9 7.73 15 7V4.68q1.85.87 2.93 2.58Q19 9 19 11q1.73.2 2.86 1.5 1.14 1.28 1.14 3 0 1.88-1.31 3.19T18.5 20M12 11.05"/></svg>',
+    manual:  '<svg viewBox="0 0 24 24" fill="#111"><path d="m16.75 22.16-2.75-3L15.16 18l1.59 1.59L20.34 16l1.16 1.41zM6 22a2 2 0 0 1-2-2V4c0-1.11.89-2 2-2h1v7l2.5-1.5L12 9V2h6a2 2 0 0 1 2 2v9.34A6.005 6.005 0 0 0 12.8 22z"/></svg>',
+    settings:'<svg viewBox="0 0 24 24" fill="#111"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64z"/></svg>',
+    community: '<svg viewBox="0 0 24 24" fill="#111"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2M6 9h12v2H6m8 3H6v-2h8m4-4H6V6h12"/></svg>',
+    damage: '<svg viewBox="0 0 24 24" fill="#111"><path d="M12 8a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m-8.95 5H1v-2h2.05C3.5 6.83 6.83 3.5 11 3.05V1h2v2.05c4.17.45 7.5 3.78 7.95 7.95H23v2h-2.05c-.45 4.17-3.78 7.5-7.95 7.95V23h-2v-2.05C6.83 20.5 3.5 17.17 3.05 13M12 5a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7"/></svg>',
+    players: '<svg viewBox="0 0 24 24" fill="#111"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg>',
+    admin: '<svg viewBox="0 0 24 24" fill="#111"><path d="m12 1 9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5zm4 13H8v1.5c0 .27.19.46.47.5h6.96c.31 0 .52-.16.57-.41V14m1-6-2.67 2.67L12 8.34l-2.33 2.33L7 8l1 5h8z"/></svg>',
+    loadout: '<svg viewBox="0 0 24 24" fill="#111"><path d="M10 3 8 5v2H5C3.85 7 3.12 8 3 9L2 19c-.12 1 .54 2 2 2h16c1.46 0 2.12-1 2-2L21 9c-.12-1-.94-2-2-2h-3V5l-2-2zm0 2h4v2h-4zm1 5h2v3h3v2h-3v3h-2v-3H8v-2h3z"/></svg>',
+    missing: '<svg viewBox="0 0 24 24" fill="#111"><path d="M7 5h14v2H7zm0 8v-2h14v2zM4 4.5A1.5 1.5 0 0 1 5.5 6 1.5 1.5 0 0 1 4 7.5 1.5 1.5 0 0 1 2.5 6 1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12 1.5 1.5 0 0 1 4 13.5 1.5 1.5 0 0 1 2.5 12 1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2zm-3-2.5A1.5 1.5 0 0 1 5.5 18 1.5 1.5 0 0 1 4 19.5 1.5 1.5 0 0 1 2.5 18 1.5 1.5 0 0 1 4 16.5"/></svg>',
     heart: on => `<svg viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/></svg>`,
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
-    tools: '<svg viewBox="0 0 24 24" fill="#111"><path d="M3 5.5 7.5 1l5 4-2 2 9.5 13-2 2L5 12.5l-2 2-1-5z"/></svg>',
-    biography:'<svg viewBox="0 0 24 24" fill="#111"><path d="M2 6h7l2 2h11v13H2z"/><circle cx="12" cy="13" r="2.4" fill="#ccc"/><path d="M7.5 19c.8-2.2 2.5-3.3 4.5-3.3s3.7 1.1 4.5 3.3z" fill="#ccc"/><path d="M4 3h7v2H4z"/></svg>',
-    documents:'<svg viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5z" fill="#111"/><path d="M8 11h8M8 14h8M8 17h6" stroke="#ccc" stroke-width="1.6"/></svg>',
+    tools: '<svg viewBox="0 0 24 24" fill="#111"><g transform="translate(24 0) scale(-1 1)"><path d="M2 19.63 13.43 8.2l-.71-.7 1.42-1.43L12 3.89c1.2-1.19 3.09-1.19 4.27 0l3.6 3.61-1.42 1.41h2.84l.71.71-3.55 3.59-.71-.71V9.62l-1.47 1.42-.71-.71L4.13 21.76z"/></g></svg>',
+    biography:'<svg viewBox="0 0 24 24" fill="#111"><path d="M19 17h-8v-1c0-1.33 2.67-2 4-2s4 .67 4 2m-4-7a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2m5-3h-8l-2-2H4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2"/></svg>',
+    documents:'<svg viewBox="0 0 24 24" fill="#111"><path d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4c0-1.11.89-2 2-2m9 16v-2H6v2zm3-4v-2H6v2z"/></svg>',
     lock:    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5v12h-13V10zm2.5 0h5V7a2.5 2.5 0 0 0-5 0z"/><circle cx="12" cy="15.5" r="1.6" fill="#000"/><rect x="11.3" y="16" width="1.4" height="3" fill="#000"/></svg>',
     check:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>',
     question:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor"><circle cx="50" cy="50" r="44" stroke-width="5"/><path d="M36 38a14 14 0 1 1 20 12.6c-4 2-6 4.6-6 9.4v4" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="76" r="4.5" fill="currentColor" stroke="none"/></svg>',
@@ -294,26 +303,26 @@
     download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></svg>',
     upload:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M4 20h16"/></svg>'
   };
-  /* small icons for the enemy stat rows */
+  /* small icons for the enemy stat rows (Material Design Icons, Apache 2.0; burst + fist from Font Awesome Free, CC BY 4.0) */
   const SI = {
-    heart:  '<path d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/>',
-    run:    '<circle cx="14" cy="4" r="2.2"/><path d="M11 7l-4 3 1.4 1.6L11 9.8l1 3.4-4 4.8 1.6 1.4 4.6-5 2.4 2.6V22h2v-6l-3-3.4.8-3.4 2 2.2H22v-2h-3.6l-3.2-3.6z"/>',
-    shieldO:'<path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/>',
-    shieldP:'<path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/><path d="M8 12h8M12 8v8" stroke="#111" stroke-width="2.4"/>',
-    flame:  '<path d="M12 22c4.4 0 7-3 7-6.6 0-4-3-6-4-10-1.6 1.6-2 3.6-2 5-1.2-1.4-2-3.6-1.6-6.4C7.6 6.4 5 10.4 5 15.4 5 19 7.6 22 12 22z"/>',
-    drop:   '<path d="M12 2.5C9 7 6 10.4 6 14.4a6 6 0 0 0 12 0c0-4-3-7.4-6-11.9z"/>',
-    blast:  '<path d="M12 1l2 6 5-3-2 6 6 2-6 2 2 6-5-3-2 6-2-6-5 3 2-6-6-2 6-2-2-6 5 3z"/>',
-    bolt:   '<path d="M13 2L4 14h6l-1 8 9-12h-6z"/>',
-    bone:   '<path d="M6 3a3 3 0 0 0-1.5 5.6L15.4 19.5A3 3 0 1 0 19.5 15.4L8.6 4.5A3 3 0 0 0 6 3z"/>',
-    mute:   '<path d="M3 9h4l5-4v14l-5-4H3z"/><path d="M15 9l6 6M21 9l-6 6" stroke="currentColor" stroke-width="2.2"/>',
-    aim:    '<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 1v6M12 17v6M1 12h6M17 12h6" stroke="currentColor" stroke-width="2.2"/>',
-    fist:   '<path d="M7 9V5.5a1.5 1.5 0 0 1 3 0V9V4a1.5 1.5 0 0 1 3 0v5V5a1.5 1.5 0 0 1 3 0v5V7.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 8-7.5 8S5 19 5 15v-3.5a1.5 1.5 0 0 1 2-1.4z"/>',
-    eye:    '<path d="M12 5C6.5 5 2.5 9.4 1.5 12c1 2.6 5 7 10.5 7s9.5-4.4 10.5-7C21.5 9.4 17.5 5 12 5z"/><circle cx="12" cy="12" r="3.4" fill="#111"/>',
-    reload: '<path d="M20 12a8 8 0 1 1-2.4-5.7" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M20 3v6h-6z"/>',
-    ff:     '<path d="M2 5l9 7-9 7zM12 5l9 7-9 7z"/>',
-    swing:  '<path d="M4 20A16 16 0 0 1 20 4" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M8 20A12 12 0 0 1 20 8" fill="none" stroke="currentColor" stroke-width="2.4" opacity=".6"/>',
-    gun:    '<path d="M2 6h19v4h-7l-1.5 2H10l-1.5 8H4l2-8H2z"/>',
-    ammo:   '<path d="M6 3h4v18H6z"/><path d="M6 17h12v4H6z"/>'
+    heart: { vb: "0 0 24 24", b: '<path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.27 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53z"/>' },
+    run: { vb: "0 0 24 24", b: '<path d="M16.5 5.5a2 2 0 0 0 2-2 2 2 0 0 0-2-2 2 2 0 0 0-2 2 2 2 0 0 0 2 2m-3.6 13.9 1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3A7.3 7.3 0 0 0 22 13v-2c-1.76.03-3.4-.89-4.3-2.4l-1-1.6c-.36-.6-1-1-1.7-1-.3 0-.5.1-.8.1L9 8.3V13h2V9.6l1.8-.7-1.6 8.1-4.9-1-.4 2zM4 9a1 1 0 0 1-1-1 1 1 0 0 1 1-1h3v2zm1-4a1 1 0 0 1-1-1 1 1 0 0 1 1-1h5v2zm-2 8a1 1 0 0 1-1-1 1 1 0 0 1 1-1h4v2z"/>' },
+    shieldO: { vb: "0 0 24 24", b: '<path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/>' },
+    shieldP: { vb: "0 0 24 24", b: '<path d="M12 12h7c-.53 4.11-3.28 7.78-7 8.92zH5V6.3l7-3.11M12 1 3 5v6c0 5.55 3.84 10.73 9 12 5.16-1.27 9-6.45 9-12V5z"/>' },
+    flame: { vb: "0 0 24 24", b: '<path d="M17.66 11.2c-.23-.3-.51-.56-.77-.82-.67-.6-1.43-1.03-2.07-1.66C13.33 7.26 13 4.85 13.95 3c-.95.23-1.78.75-2.49 1.32-2.59 2.08-3.61 5.75-2.39 8.9.04.1.08.2.08.33 0 .22-.15.42-.35.5-.23.1-.47.04-.66-.12a.6.6 0 0 1-.14-.17c-1.13-1.43-1.31-3.48-.55-5.12C5.78 10 4.87 12.3 5 14.47c.06.5.12 1 .29 1.5.14.6.41 1.2.71 1.73 1.08 1.73 2.95 2.97 4.96 3.22 2.14.27 4.43-.12 6.07-1.6 1.83-1.66 2.47-4.32 1.53-6.6l-.13-.26c-.21-.46-.77-1.26-.77-1.26m-3.16 6.3c-.28.24-.74.5-1.1.6-1.12.4-2.24-.16-2.9-.82 1.19-.28 1.9-1.16 2.11-2.05.17-.8-.15-1.46-.28-2.23-.12-.74-.1-1.37.17-2.06.19.38.39.76.63 1.06.77 1 1.98 1.44 2.24 2.8.04.14.06.28.06.43.03.82-.33 1.72-.93 2.27"/>' },
+    drop: { vb: "0 0 24 24", b: '<path d="M12 20a6 6 0 0 1-6-6c0-4 6-10.75 6-10.75S18 10 18 14a6 6 0 0 1-6 6"/>' },
+    blast: { vb: "0 0 512 512", b: '<path d="M37.6 4.2C28-2.3 15.2-1.1 7 7S-2.3 28 4.2 37.6l112 163.3-99.6 32.3C6.7 236.4 0 245.6 0 256s6.7 19.6 16.6 22.8l103.1 33.4-52.9 100.6c-4.9 9.3-3.2 20.7 4.3 28.1s18.8 9.2 28.1 4.3l100.6-52.9 33.4 103.1c3.2 9.9 12.4 16.6 22.8 16.6s19.6-6.7 22.8-16.6l33.4-103.1 100.6 52.9c9.3 4.9 20.7 3.2 28.1-4.3s9.2-18.8 4.3-28.1l-52.9-100.6 103.1-33.4c9.9-3.2 16.6-12.4 16.6-22.8s-6.7-19.6-16.6-22.8l-106.5-34.5 25.7-70.4c3.2-8.8 1-18.6-5.6-25.2s-16.4-8.8-25.2-5.6l-70.4 25.7-34.5-106.5C275.6 6.7 266.4 0 256 0s-19.6 6.7-22.8 16.6L200.9 116.2 37.6 4.2z"/>' },
+    bolt: { vb: "0 0 24 24", b: '<path d="M21.4 7.5c.8.8.8 2.1 0 2.8l-2.8 2.8-7.8-7.8 2.8-2.8c.8-.8 2.1-.8 2.8 0l1.8 1.8 3-3 1.4 1.4-3 3zm-5.8 5.8-1.4-1.4-2.8 2.8-2.1-2.1 2.8-2.8-1.4-1.4-2.8 2.8-1.5-1.4-2.8 2.8c-.8.8-.8 2.1 0 2.8l1.8 1.8-4 4 1.4 1.4 4-4 1.8 1.8c.8.8 2.1.8 2.8 0l2.8-2.8-1.4-1.4z"/>' },
+    fist: { vb: "0 0 384 512", b: '<path d="M160 0c17.7 0 32 14.3 32 32l0 112-64 0 0-112c0-17.7 14.3-32 32-32zM32 64c0-17.7 14.3-32 32-32S96 46.3 96 64l0 80-64 0 0-80zm192 0c0-17.7 14.3-32 32-32s32 14.3 32 32l0 96c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-96zm96 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 64c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-64zm-96 88l0-.6c9.4 5.4 20.3 8.6 32 8.6 13.2 0 25.4-4 35.6-10.8 8.7 24.9 32.5 42.8 60.4 42.8 11.7 0 22.6-3.1 32-8.6l0 8.6c0 52.3-25.1 98.8-64 128l0 96c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-78.4c-17.3-7.9-33.2-18.8-46.9-32.5L37.5 357.5C13.5 333.5 0 300.9 0 267l0-27c0-35.3 28.7-64 64-64l88 0c22.1 0 40 17.9 40 40s-17.9 40-40 40l-56 0c-8.8 0-16 7.2-16 16s7.2 16 16 16l56 0c39.8 0 72-32.2 72-72z"/>' },
+    eye: { vb: "0 0 24 24", b: '<path d="M12 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0 8a5 5 0 0 1-5-5 5 5 0 0 1 5-5 5 5 0 0 1 5 5 5 5 0 0 1-5 5m0-12.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5"/>' },
+    reload: { vb: "0 0 24 24", b: '<path d="M12 18a6 6 0 0 1-6-6c0-1 .25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12a8 8 0 0 0 8 8v3l4-4-4-4m0-11V1L8 5l4 4V6a6 6 0 0 1 6 6c0 1-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12a8 8 0 0 0-8-8"/>' },
+    ff: { vb: "0 0 24 24", b: '<path d="M13 6v12l8.5-6M4 18l8.5-6L4 6z"/>' },
+    swing: { vb: "0 0 24 24", b: '<path d="M12 16c1.66 0 3-1.34 3-3 0-1.12-.61-2.1-1.5-2.61L3.79 4.77l5.53 9.58c.5.98 1.51 1.65 2.68 1.65m0-13c-1.81 0-3.5.5-4.97 1.32l2.1 1.21C10 5.19 11 5 12 5c4.42 0 8 3.58 8 8 0 2.21-.89 4.21-2.34 5.65h-.01a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.42.01A9.97 9.97 0 0 0 22 13c0-5.5-4.5-10-10-10M2 13c0 2.76 1.12 5.26 2.93 7.07.39.38 1.02.38 1.41-.01a.996.996 0 0 0 0-1.41A7.95 7.95 0 0 1 4 13c0-1 .19-2 .54-2.9L3.33 8C2.5 9.5 2 11.18 2 13"/>' },
+    gun: { vb: "0 0 24 24", b: '<path d="M7 5h16v4h-1v1h-6a1 1 0 0 0-1 1v1a2 2 0 0 1-2 2H9.62c-.38 0-.73.22-.9.56l-2.45 4.89c-.17.34-.51.55-.89.55H2s-3 0 1-6c0 0 3-4-1-4V5h1l.5-1h3zm7 7v-1a1 1 0 0 0-1-1h-1s-1 1 0 2a2 2 0 0 1-2-2 1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1"/>' },
+    mute: { vb: "0 0 24 24", b: '<circle cx="12" cy="12" r="10.4" fill="none" stroke="currentColor" stroke-width="1.8"/><g transform="translate(12 12) scale(.66) translate(-12 -12)"><path d="m20.84 22.73-1.67-1.67C17.7 22.85 15.5 24 13 24c-3.26 0-6.19-2-7.4-5l-3.03-7.63a1 1 0 0 1 1.24-1.32l.79.26c.56.19 1.02.61 1.24 1.16L7.25 15H8V9.89L1.11 3l1.28-1.27 19.72 19.73zM14 1.25a1.25 1.25 0 0 0-2.5 0V8.3l2.5 2.5zM21 16V5.75a1.25 1.25 0 0 0-2.5 0V12h-1V2.75a1.25 1.25 0 0 0-2.5 0v9.05l5.83 5.83c.11-.52.17-1.07.17-1.63M10.5 3.25a1.25 1.25 0 0 0-2.5 0V4.8l2.5 2.5z"/></g>' },
+    aim: { vb: "0 0 24 24", b: '<path d="M3.05 13H1v-2h2.05C3.5 6.83 6.83 3.5 11 3.05V1h2v2.05c4.17.45 7.5 3.78 7.95 7.95H23v2h-2.05c-.45 4.17-3.78 7.5-7.95 7.95V23h-2v-2.05C6.83 20.5 3.5 17.17 3.05 13M12 5a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7"/><circle cx="12" cy="12" r="1.3"/>' },
+    bone: { vb: "0 0 24 24", b: '<path d="M6 3a3 3 0 0 0-1.5 5.6L15.4 19.5A3 3 0 1 0 19.5 15.4L8.6 4.5A3 3 0 0 0 6 3z"/>' },
+    ammo: { vb: "0 0 24 24", b: '<path d="M6 3h4v18H6z"/><path d="M6 17h12v4H6z"/>' }
   };
   const STAT = {
     // base stats
@@ -940,8 +949,8 @@
   function statRow(key, val) {
     const s = STAT[key] || { c: "#ddd", i: "", u: "", tip: "" };
     let v = String(val);
-    if (s.u && v !== "true" && !/[a-z%]$/i.test(v)) v += s.u;
-    const icon = s.i ? `<svg viewBox="0 0 24 24" fill="currentColor">${SI[s.i]}</svg>` : "";
+    if (s.u && v !== "true" && (!/[a-z%]$/i.test(v) || v === "inf")) v += s.u;
+    const icon = s.i && SI[s.i] ? `<svg viewBox="${SI[s.i].vb}" fill="currentColor">${SI[s.i].b}</svg>` : "";
     return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `data-tip="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
   }
 
@@ -1259,7 +1268,7 @@
   const dmgWeapons = () => allTools().filter(e => !e.unknown && fireModes(e).some(m => m.melee || m.cals.length));
   /* "Advanced Scavengers (Master)" for a variant, plain name otherwise */
   const tgtName = p => { const c = p.card; return c && c.kind === "group" && c.members && c.members.length > 1 && c.name && c.name !== p.name ? `${c.name} (${p.name})` : p.name; };
-  const dmgTargets = () => people.filter(p => p.base && p.base.Health != null);
+  const dmgTargets = () => people.filter(p => p.base && p.base.Health != null && isFinite(+p.base.Health));   // not the unkillable ones
   /* the rules, in order: superarmor bypass → superarmor → defense penetration → defense */
   function calcHit({ dmg, sa, saBypass, def, pen, trueDmg }) {
     const effSA = trueDmg ? 0 : Math.max(0, sa - saBypass * 100);
@@ -1734,6 +1743,7 @@
   /* ---------- share links: #v=<name>.<5-char code per found entry> ---------- */
   const h5 = id => { let h = 0x811c9dc5; for (const ch of id) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36).padStart(7, "0").slice(-5); };
   const byHash = new Map(entries.map(e => [h5(e.id), e.id]));
+  Object.entries(MOVED).forEach(([o, n]) => { if (!byHash.has(h5(o))) byHash.set(h5(o), n); });   // old share links
   function shareLink() {
     const codes = Object.keys(found).filter(id => byId.has(id)).map(h5).join("");
     return `${location.origin}${location.pathname}#v=${encodeURIComponent(user || "")}.${codes}`;
@@ -1799,7 +1809,7 @@
   }
   function applyServer(ids) {
     const before = foundIds().join("\n");
-    found = {}; ids.forEach(id => { found[id] = 1; });
+    found = {}; ids.forEach(id => { found[MOVED[id] || id] = 1; });
     save(KEY_FOUND, found);
     if (before !== ids.join("\n")) { updateCount(); keepScroll(render); renderTabs(); }
   }
@@ -1904,7 +1914,7 @@
     try {
       const [st, r] = await api("GET", "/api/u/" + encodeURIComponent(name));
       if (st !== 200) { toast(r.error || "That profile isn't available.", { ms: 6000 }); leaveView(); return; }
-      const set = {}; r.found.forEach(id => { set[id] = 1; });
+      const set = {}; r.found.forEach(id => { set[MOVED[id] || id] = 1; });
       viewOnly = { name: r.name, set, live: true };
       renderTabs(); updateCount(); render();
     } catch { toast("Couldn't load that profile."); }
@@ -2011,7 +2021,7 @@
   let overrides = API ? load("pda-overrides-v1", {}) : {};
   let latestUpdate = "";
   const origInfo = new Map();         // entry object -> its original fields
-  const findEntry = id => byId.get(id) || people.find(p => p.id === id) || null;
+  const findEntry = id => { id = MOVED[id] || id; return byId.get(id) || people.find(p => p.id === id) || null; };
   /* the newest update tag: entries with it get a NEW badge */
   function updateTags() {
     const seen = new Map();
@@ -2035,7 +2045,8 @@
       if (typeof o.desc === "string") e.desc = o.desc;
       if (o.tier && e.section === "tools") e.tier = o.tier;
       if (o.update) e.update = o.update;
-      if (o.img && e.section !== "tools") { e.img = o.img; delete e.imgs; if (e.isCard && e.card) e.card.img = o.img; }
+      const oi = Array.isArray(o.imgs) ? o.imgs : o.img ? [o.img] : null;
+      if (oi && oi.length && e.section !== "tools") { delete e.img; e.imgs = oi.slice(); if (e.isCard && e.card) e.card.img = oi[0]; }
       if (Object.keys(o).some(k => !["update", "updated", "add"].includes(k))) e.community = o.updated || 1;
     });
     latestUpdate = updateTags()[0] || "";
@@ -2064,7 +2075,7 @@
      FOUND COUNTS: how many times you've picked something up
      ===================================================================== */
   const KEY_COUNTS = pk("pda-counts-v1");
-  let counts = load(KEY_COUNTS, {});
+  let counts = migrateIds(load(KEY_COUNTS, {}), KEY_COUNTS);
   let countPush = {}, countTimer = 0;
   const countOf1 = id => counts[trackOf(id)] || (isFound(id) ? 1 : 0);
   function setCount(id, n) {
@@ -2140,7 +2151,7 @@
         ${friendsMsg ? `<div class="msg" style="color:#ff8a7a">${esc(friendsMsg)}</div>` : ""}
         ${(friends || []).length ? `<div class="frlist">${friends.map(f => {
           if (f.hidden) return `<div class="frrow"><b>${esc(f.name)}</b><span class="dim">made their profile private</span><span></span><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></div>`;
-          const set = new Set(f.found), n = entries.filter(e => set.has(e.id)).length, they = entries.filter(e => set.has(e.id) && !mine.has(e.id)).length, you = entries.filter(e => mine.has(e.id) && !set.has(e.id)).length;
+          const set = new Set(f.found.map(id => MOVED[id] || id)), n = entries.filter(e => set.has(e.id)).length, they = entries.filter(e => set.has(e.id) && !mine.has(e.id)).length, you = entries.filter(e => mine.has(e.id) && !set.has(e.id)).length;
           return `<div class="frrow"><b>${esc(f.name)}${adminTag(f.name)}</b><span>${n} / ${entries.length} found ${pbar(n, entries.length)}</span><span class="dim">has ${they} you don't · you have ${you} they don't</span>
             <span class="frbtns"><button class="mini-btn" data-frview="${esc(f.name)}">VIEW</button><button class="mini-btn" data-frcmp="${esc(f.name)}" title="Show their finds as badges on your tiles">COMPARE</button><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></span></div>`;
         }).join("")}</div>` : `<p class="dim">No friends added yet. Ask a friend for their account name (they need a public profile).</p>`}`;
@@ -2166,16 +2177,18 @@
   /* =====================================================================
      ADMIN: submissions + publishing info (only for names in the Worker's ADMINS)
      ===================================================================== */
-  let adm = { status: "new", rows: null, counts: {}, msg: "", edit: null };
+  let adm = { status: "new", rows: null, counts: {}, msg: "", edit: null, announce: false, changes: null, blocks: null, ann: null };
   async function checkAdmin() {
     if (!API || !acc) { setAdmin(false); return; }
-    try { const [st, r] = await api("GET", "/api/admin/check"); setAdmin(st === 200 && r.admin); } catch { /* keep */ }
+    try { const [st, r] = await api("GET", "/api/admin/check"); adm.announce = !!(r && r.announce); setAdmin(st === 200 && r.admin); } catch { /* keep */ }
   }
   function setAdmin(on) {
     const want = ["profile", "cloud", "manual", "settings", "community", ...(API ? ["players"] : []), ...(on ? ["admin"] : [])];
     if (want.join() !== BOTTOM_TABS.join()) { BOTTOM_TABS = want; if (!on && ui.tab === "admin") ui.tab = "community"; renderTabs(); }
   }
   async function loadAdmin() {
+    if (adm.status === "history") { try { const [st, r] = await api("GET", "/api/admin/changes"); adm.changes = st === 200 ? r : []; adm.msg = st === 200 ? "" : r.error || "Couldn't load."; } catch { adm.msg = "Couldn't reach the server."; } if (ui.tab === "admin") keepScroll(render); return; }
+    if (adm.status === "blocked") { try { const [st, r] = await api("GET", "/api/admin/blocks"); adm.blocks = st === 200 ? r : []; adm.msg = st === 200 ? "" : r.error || "Couldn't load."; } catch { adm.msg = "Couldn't reach the server."; } if (ui.tab === "admin") keepScroll(render); return; }
     try { const [st, r] = await api("GET", "/api/admin/submissions?status=" + adm.status); if (st === 200) { adm.rows = r.rows; adm.counts = r.counts || {}; adm.msg = ""; } else adm.msg = r.error || "Couldn't load."; }
     catch { adm.msg = "Couldn't reach the server."; }
     if (ui.tab === "admin") keepScroll(render);
@@ -2183,6 +2196,8 @@
   const safeLink = u => /^https?:\/\//i.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : esc(u);
   const statsToText = st => Object.entries(st || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
+  let imgRowN = 0;
+  const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
   const upBtn = target => serverInfo.uploads ? `<label class="mini-btn upbtn">UPLOAD…<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-admupload='${target}' hidden></label>` : "";
   const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
@@ -2207,6 +2222,36 @@
       <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
     </div></div>`;
   }
+  const entryName = id => { const e = findEntry(id); return e ? e.name : id.split("|").pop(); };
+  function changeSummary(c) {
+    const a = c.after ? JSON.parse(c.after) : null, b = c.before ? JSON.parse(c.before) : null, src = a || b || {};
+    const parts = [];
+    if (src.add) parts.push("new entry");
+    ["stats", "comment", "desc", "tier", "update", "imgs", "img"].forEach(k => { if (JSON.stringify((a || {})[k]) !== JSON.stringify((b || {})[k])) parts.push({ stats: "stats", comment: "comment", desc: "description", tier: "tier", update: "update tag", imgs: "pictures", img: "pictures" }[k]); });
+    return [...new Set(parts)].join(", ") || "no visible change";
+  }
+  function historyHTML() {
+    if (adm.changes === null) { adm.changes = []; loadAdmin(); }
+    if (!adm.changes.length) return '<p class="dim">No changes yet. Everything published, edited, removed or undone shows up here.</p>';
+    return `<div class="frlist hist">${adm.changes.map(c => `<div class="frrow"><b>${esc(entryName(c.entry))}</b><span>${esc(c.what)} <span class="dim">(${esc(changeSummary(c))})</span></span><span class="dim">${esc(c.by)} · ${esc(ago(c.t * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admundo="${c.id}" title="Put this entry back the way it was before this change">UNDO</button></span></div>`).join("")}</div>`;
+  }
+  function blocksHTML() {
+    if (adm.blocks === null) { adm.blocks = []; loadAdmin(); }
+    if (!adm.blocks.length) return '<p class="dim">Nobody is blocked. Use BLOCK SENDER on a submission to stop someone spamming.</p>';
+    return `<div class="frlist">${adm.blocks.map(x => `<div class="frrow"><b>${x.account ? esc(x.account) : "anonymous sender"}</b><span class="dim">${x.byip ? "blocked by connection" : ""}${x.byip && x.account ? " + " : ""}${x.account ? "account" : ""}${x.note ? " · " + esc(x.note) : ""}</span><span class="dim">by ${esc(x.by)} · ${esc(ago(x.created * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admunblock="${x.id}">UNBLOCK</button></span></div>`).join("")}</div>`;
+  }
+  function announceHTML() {
+    if (!adm.ann) return "";
+    const tags = updateTags(), upd = adm.ann.update || tags[0] || "";
+    const names = upd ? entries.concat(people).filter(e => e.update === upd).map(e => e.name).filter((n, i, a) => a.indexOf(n) === i) : [];
+    return `<div class="dbox admedit"><div class="dhead">Announce on Discord</div><div class="dform">
+      ${tags.length ? `<label>UPDATE <select data-annupd>${tags.map(x => `<option${x === upd ? " selected" : ""}>${esc(x)}</option>`).join("")}</select></label>
+      <label>MESSAGE <small>optional, shown above the list</small><textarea id="annMsg" rows="3" maxlength="1500">${esc(adm.ann.msg || "")}</textarea></label>
+      <p class="dim">Will list ${names.length} entr${names.length === 1 ? "y" : "ies"}: ${esc(names.join(", ")) || "none tagged yet"}</p>
+      <div class="btnrow"><button class="pbtn" id="annGo"${names.length ? "" : " disabled"}>POST TO DISCORD</button><button class="pbtn" id="annCancel">CANCEL</button></div>`
+      : `<p class="dim">Tag entries with an update first (ADDED IN UPDATE in the editor). Then you can post the list here.</p><div class="btnrow"><button class="pbtn" id="annCancel">CLOSE</button></div>`}
+    </div></div>`;
+  }
   function readAddForm() { if (!adm.edit || !adm.edit.add) return; screen.querySelectorAll("[data-admadd]").forEach(el => { adm.edit.add[el.dataset.admadd] = el.value; }); }
   function adminEditorHTML() {
     const ed = adm.edit; if (!ed) return "";
@@ -2222,7 +2267,9 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>
-          <label>PICTURE <small>upload one, or paste any https:// image link</small></label><div class="imgrow"><input id="admImg" value="${esc(ed.img || (pub && pub.img) || "")}" placeholder="https://">${upBtn("#admImg")}</div><img class="subimg" data-imgprev="#admImg" src="${esc(ed.img || (pub && pub.img) || "")}" alt=""${ed.img || (pub && pub.img) ? "" : " hidden"}>`}
+          <label>PICTURES <small>the first one shows on the tile; upload, or paste https:// image links</small></label>
+          <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); return (l.length ? l : [""]).map(u => imgRowHTML(u)).join(""); })()}</div>
+          <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
@@ -2237,16 +2284,17 @@
       return `<div class="subcard"><div class="subhead"><b>#${r.id} · ${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(r.who || "anonymous")}${r.account ? ` (account ${esc(r.account)})` : ""} · ${new Date(r.created * 1000).toLocaleString()}</span></div>
         ${r.text ? `<div class="subtext">${esc(r.text)}</div>` : ""}${r.link ? `<div class="sublink">${safeLink(r.link)}</div>${isImgLink(r.link) ? `<a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer"><img class="subimg" src="${esc(r.link)}" alt="" loading="lazy"></a>` : ""}` : ""}
         <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="${r.account ? `Note for ${esc(r.account)}, shown on their SUBMIT tab (optional, e.g. why it wasn't added)` : "Private note (they sent it without an account, so they won't see it)"}">
-        <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button></div></div>`;
+        <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
     const pubs = Object.entries(overrides).map(([id, o]) => { const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: e ? e.group : (o.add ? o.add.group : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns"><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
-      <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}</div>
+      ${announceHTML()}
+      <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="history" aria-pressed="${adm.status === "history"}">CHANGE HISTORY</button><button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
       ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
-      ${list || `<p class="dim">Nothing here.</p>`}
+      ${adm.status === "history" ? historyHTML() : adm.status === "blocked" ? blocksHTML() : (list || `<p class="dim">Nothing here.</p>`)}
       <h3 class="ph3">PUBLISHED //</h3>
       ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns"><button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button></span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
     </div>`;
@@ -2260,7 +2308,13 @@
       const e = findEntry(adm.edit.entry); if (!e) return;
       const data = {};
       if (e.section === "tools") { data.stats = textToStats($("#admStats").value); data.comment = $("#admComment").value; const t = +$("#admTier").value; if (t && t !== e.tier) data.tier = t; }
-      else { data.desc = $("#admDesc").value; const im = $("#admImg").value.trim(); if (im) { if (!/^https?:\/\//.test(im)) { toast("The picture link has to start with https://"); play("warn"); return; } data.img = im; } }
+      else {
+        data.desc = $("#admDesc").value;
+        const ims = [...screen.querySelectorAll("[data-admimgi]")].map(x => x.value.trim()).filter(Boolean);
+        if (ims.some(u => !/^(https?:\/\/|images\/)/.test(u))) { toast("Picture links have to start with https://"); play("warn"); return; }
+        const orig = imagesOf(origInfo.has(e) ? { img: origInfo.get(e).img, imgs: origInfo.get(e).imgs } : e).map(x => x.src);
+        if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
+      }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
       if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;      // keep it an added entry
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
@@ -2268,6 +2322,14 @@
       if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
       overrides[e.id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); applyOverrides(overrides);
       play("confirm"); toast(`Published for ${e.name}.`); adm.edit = null; loadAdmin();
+    });
+    on("annCancel", () => { adm.ann = null; play("back"); keepScroll(render); });
+    on("annGo", async () => {
+      const upd = (screen.querySelector("[data-annupd]") || {}).value || "", msg = $("#annMsg").value;
+      const names = entries.concat(people).filter(e => e.update === upd).map(e => e.name).filter((n, i, a) => a.indexOf(n) === i);
+      const [st, r] = await api("POST", "/api/admin/announce", { update: upd, names, message: msg }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't post it."); play("warn"); return; }
+      adm.ann = null; play("confirm"); toast("Posted to Discord."); keepScroll(render);
     });
     on("admAddGo", async () => {
       readAddForm(); const a = adm.edit.add, sec = a.section || "tools";
@@ -2280,7 +2342,7 @@
       const slot = a.replace && findEntry(a.replace);
       const data = { add: { section: sec, group: g.name, name, tier: sec === "tools" ? (slot ? slot.tier : tier) : undefined, replace: a.replace || undefined } };
       if (sec === "tools") { const st = textToStats(a.stats || ""); if (Object.keys(st).length) data.stats = st; if ((a.comment || "").trim()) data.comment = a.comment; }
-      else { if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.img = a.img.trim(); } }
+      else { if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.imgs = [a.img.trim()]; } }
       if ((a.update || "").trim()) data.update = a.update.trim();
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't add it."); play("warn"); return; }
@@ -2381,7 +2443,7 @@
     try {
       const data = JSON.parse(await file.text());
       if (!data || typeof data.found !== "object") throw new Error();
-      found = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) found[k] = 1; });
+      found = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) found[MOVED[k] || k] = 1; });
       if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
       if (data.favs && typeof data.favs === "object") { favs = data.favs; save(KEY_FAV, favs); }
       if (data.notes && typeof data.notes === "object") { notes = data.notes; save(KEY_NOTES, notes); }
@@ -2442,7 +2504,7 @@
   const formLive = () => hasServer() || hasDiscord() || hasW3F();
   async function sendServer(d, botcheck) {
     const [st, r] = await api("POST", "/api/submit", { kind: d.kind, entry: d.entry, text: d.text, link: d.link, name: d.name, botcheck });
-    if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st === 429 || st === 400; throw e; }
+    if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st >= 400 && st < 500; throw e; }   // a "no" from the server (blocked, too many, bad input) is final
   }
   const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
   const clip = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
@@ -2778,7 +2840,7 @@
     { const b = t.closest("[data-frview]"); if (b) { play("open"); location.hash = "#u=" + encodeURIComponent(b.dataset.frview); return; } }
     { const b = t.closest("[data-frcmp]"); if (b) { const f = (friends || []).find(x => x.name === b.dataset.frcmp); if (f) { const set = {}; f.found.forEach(id => { set[id] = 1; }); friend = { name: f.name, set }; save(KEY_FRIEND, friend); play("confirm"); toast(`Comparing with ${f.name}: their finds show as badges on your tiles.`); renderBanner(); } return; } }
     { const b = t.closest("[data-frdel]"); if (b) { api("DELETE", "/api/friends/" + encodeURIComponent(b.dataset.frdel)).then(() => { play("deselect"); loadFriends(); }).catch(() => toast("Couldn't remove.")); return; } }
-    { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; play("click"); render(); return; } }
+    { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; adm.changes = null; adm.blocks = null; play("click"); render(); return; } }
     if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
     if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
     { const b = t.closest("[data-admedit]"); if (b) { adm.edit = { sub: b.dataset.admedit ? +b.dataset.admedit : null, entry: b.dataset.admentry || null, img: b.dataset.admimg || "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
@@ -2786,6 +2848,23 @@
         adm.edit = { sub, add: { section: "tools", name: b.dataset.admname || "", img: row && isImgLink(row.link) ? row.link : "", stats: row && row.kind === "Stats" ? row.text : "", desc: row && row.kind === "Description" ? row.text : "" } };
         play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
     { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
+    if (t.closest("[data-admann]")) { adm.ann = { update: "", msg: "" }; play("click"); keepScroll(render); return; }
+    if (t.closest("[data-admimgadd]")) { const box = $("#admImgs"); if (box) { box.insertAdjacentHTML("beforeend", imgRowHTML("")); play("click"); } return; }
+    { const b = t.closest("[data-admimgdel]"); if (b) { const it = b.closest(".imgitem"); const box = $("#admImgs"); if (box && box.children.length > 1) it.remove(); else { const i = it.querySelector("input"); i.value = ""; const pv = it.querySelector("img"); pv.hidden = true; } play("deselect"); return; } }
+    { const b = t.closest("[data-admundo]"); if (b) {
+        if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; }
+        api("POST", `/api/admin/changes/${b.dataset.admundo}/undo`).then(([st, r]) => {
+          if (st !== 200) { toast(r.error || "Couldn't undo."); play("warn"); return; }
+          const wasAdd = !!(overrides[r.entry] && overrides[r.entry].add), nowAdd = !!(r.data && r.data.add);
+          if (r.data) overrides[r.entry] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; else delete overrides[r.entry];
+          save("pda-overrides-v1", overrides);
+          if (wasAdd !== nowAdd) { location.reload(); return; }
+          applyOverrides(overrides); play("confirm"); toast(`Undone: ${entryName(r.entry)} is back to how it was.`); adm.changes = null; keepScroll(render);
+        }); return; } }
+    { const b = t.closest("[data-admblock]"); if (b) {
+        if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "BLOCK + REJECT ALL THEIR SUBMISSIONS?"; play("warn"); return; }
+        api("POST", "/api/admin/blocks", { sub: +b.dataset.admblock, purge: true }).then(([st, r]) => { if (st !== 201) { toast(r.error || "Couldn't block."); play("warn"); return; } play("deselect"); toast("Blocked. They can't send anything else."); loadAdmin(); }); return; } }
+    { const b = t.closest("[data-admunblock]"); if (b) { api("DELETE", "/api/admin/blocks/" + b.dataset.admunblock).then(() => { play("click"); toast("Unblocked."); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("deselect"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
@@ -2891,6 +2970,7 @@
     }
     else if (sel.matches("[data-cfile]")) { const f = sel.files && sel.files[0]; if (f && f.size > 5 * 1024 * 1024) { toast("That picture is over 5 MB."); sel.value = ""; return; } pickedFile = f || null; readForm(sel.closest("form")); keepScroll(render); return; }
     else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
+    else if (sel.matches("[data-annupd]")) { adm.ann.update = sel.value; adm.ann.msg = ($("#annMsg") || {}).value || ""; keepScroll(render); return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
     else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
