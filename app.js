@@ -414,7 +414,38 @@
   function updateCount() {
     const [f, t] = countOf(entries);
     $("#titleCount").textContent = `DATABANKS ${f} / ${t}`;
+    if (typeof netBadge === "function") netBadge();
   }
+  /* "OFFLINE" / "NOT SYNCED" next to the counter */
+  function netBadge() { try { netBadge_(); } catch { /* still starting up */ } }
+  function netBadge_() {
+    const el = $("#netBadge"); if (!el) return;
+    let unsynced = 0;
+    if (acc && Array.isArray(acc.base)) { const b = new Set(acc.base), f = foundIds(); unsynced = f.filter(x => !b.has(x)).length + acc.base.filter(x => !found[x]).length; }
+    const off = !navigator.onLine;
+    el.hidden = !off && !(unsynced && syncState && syncState.bad);
+    el.className = "netbadge" + (off ? " off" : "");
+    el.textContent = off ? (unsynced ? `OFFLINE · ${unsynced} NOT SYNCED` : "OFFLINE") : `${unsynced} NOT SYNCED`;
+    el.title = off ? "No connection. Everything is still saved in this browser" + (acc ? " and will sync when you're back online." : ".") : "Couldn't sync yet. It retries automatically.";
+  }
+  window.addEventListener("online", () => netBadge());
+  window.addEventListener("offline", () => netBadge());
+  /* installing the site as an app */
+  let installEvt = null;
+  const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; installBtn(); if (ui.tab === "settings") keepScroll(render); });
+  window.addEventListener("appinstalled", () => { installEvt = null; installBtn(); toast("Installed. Open PDA.exe from your home screen or apps."); });
+  function installBtn() {
+    const b = $("#installBtn"); if (!b) return;
+    b.hidden = !installEvt || isStandalone() || settings.hideInstall;
+  }
+  async function doInstall() {
+    if (installEvt) { play("click"); installEvt.prompt(); try { await installEvt.userChoice; } catch { /* ignore */ } installEvt = null; installBtn(); return; }
+    play("click");
+    toast(isIOS ? "In Safari, tap the Share button, then \"Add to Home Screen\"." : "Use your browser's menu: \"Install app\" or \"Add to Home screen\".", { ms: 9000 });
+  }
+  document.addEventListener("click", e => { if (e.target.closest("#installBtn, [data-install]")) doInstall(); });
 
   /* =====================================================================
      TOP TABS + SEARCH
@@ -451,7 +482,7 @@
     $(sel).addEventListener("click", e => {
       const b = e.target.closest(".tab"); if (!b) return;
       play(b.dataset.tab === ui.tab && !detail ? "click" : "transition");
-      ui.tab = b.dataset.tab; detail = null; cancelTier(); persistUI();
+      ui.tab = b.dataset.tab; detail = null; sinceView = false; cancelTier(); persistUI();
       if (query) clearSearch(false);
       renderTabs(); render();
     });
@@ -534,14 +565,82 @@
       if (el && document.activeElement !== el && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) el.focus({ preventScroll: true });
     }
   }
+  /* ---------- phone swipes: across a tile marks (right) / unmarks (left) it; anywhere else switches category ---------- */
+  let swipe = null;
+  screen.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1) { swipe = null; return; }
+    const t = e.touches[0]; swipe = { x: t.clientX, y: t.clientY, at: Date.now(), el: e.target };
+  }, { passive: true });
+  screen.addEventListener("touchmove", e => { if (swipe && e.touches.length !== 1) swipe = null; }, { passive: true });
+  screen.addEventListener("touchend", e => {
+    const s = swipe; swipe = null; if (!s) return;
+    const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (Math.abs(dx) < 55 || Math.abs(dy) > Math.abs(dx) * 0.6 || Date.now() - s.at > 700) return;
+    if (s.el.closest("input, textarea, select, .cats, .subtabs, .chips, .tierjump, .lbbar, table, .admin, .settings, .dform, [contenteditable]")) return;
+    if (detail || query || sinceView) return;
+    const tile = s.el.closest("[data-entry]");
+    if (tile && !viewOnly) {
+      const st = tile.querySelector("[data-star]") || (tile.matches("[data-star]") ? tile : null); if (!st) return;
+      const want = dx > 0;
+      if (isFound(st.dataset.star) !== want) handleStar(st, false); else { play("click"); toast(want ? "Already found." : "Already not found."); }
+      return;
+    }
+    const step = dx < 0 ? 1 : -1;
+    const move = (cur, min, max) => Math.max(min, Math.min(max, cur + step));
+    if (ui.tab === "tools") { const n = move(Math.max(0, ui.cat), 0, PDA_DATA.tools.length - 1); if (n === ui.cat) return; ui.cat = n; ui.cal = ""; }
+    else if (ui.tab === "biography") { const n = move(ui.bio, -1, PDA_DATA.biography.length - 1); if (n === ui.bio) return; ui.bio = n; }
+    else if (ui.tab === "documents") { const n = move(ui.docs, 0, PDA_DATA.documents.length - 1); if (n === ui.docs) return; ui.docs = n; }
+    else return;
+    play("switch"); persistUI(); render();
+    screen.classList.remove("slide-l", "slide-r"); void screen.offsetWidth; screen.classList.add(step > 0 ? "slide-l" : "slide-r");
+    const sel = screen.querySelector('.cat[aria-selected="true"], .subtab[aria-selected="true"]'); if (sel) sel.scrollIntoView({ block: "nearest", inline: "center" });
+  });
   let kbFocus = null;
   screen.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest("[data-entry]"); if (el) kbFocus = el.dataset.entry; });
+  function applyScale() { document.documentElement.style.setProperty("--uiz", String((settings.textScale || 100) / 100)); }
+  applyScale();
+  /* ---------- since your last visit ---------- */
+  const KEY_LAST = pk("pda-lastvisit-v1");        // { t, ids } from the last time the site was opened
+  let since = null, sinceView = false;           // { newIds, updIds }
+  function checkSince() {
+    const prev = load(KEY_LAST, null);
+    const ids = entries.filter(e => !e.unknown).map(e => e.id);
+    if (prev && Array.isArray(prev.ids) && prev.ids.length) {
+      const old = new Set(prev.ids.map(id => MOVED[id] || id));
+      const newIds = ids.filter(id => !old.has(id));
+      const nw = new Set(newIds);
+      const updIds = Object.entries(overrides || {}).filter(([id, o]) => o && o.updated > prev.t && !nw.has(MOVED[id] || id) && findEntry(id)).map(([id]) => findEntry(id).id);
+      if (newIds.length || updIds.length) since = { newIds, updIds: [...new Set(updIds)] };
+    }
+    save(KEY_LAST, { t: Math.floor(Date.now() / 1000), ids });
+    sinceBar();
+  }
+  function sinceBar() {
+    const el = $("#sincebar"); if (!el) return;
+    el.hidden = !since || viewOnly;
+    if (el.hidden) return;
+    const n = since.newIds.length, u = since.updIds.length;
+    el.innerHTML = `<span>&#128276; Since your last visit: ${[n ? `<b>${n}</b> new entr${n === 1 ? "y" : "ies"}` : "", u ? `<b>${u}</b> updated page${u === 1 ? "" : "s"}` : ""].filter(Boolean).join(" and ")}.</span><button class="mini-btn go" data-sinceshow>SHOW ME</button><button class="mini-btn" data-sinceclose>DISMISS</button>`;
+  }
+  function renderSince() {
+    const list = (ids, why) => ids.map(id => findEntry(id)).filter(Boolean).map(e => resultHTML(e, `${why} · ${contextOf(e)}`)).join("");
+    screen.innerHTML = `<div class="results"><div class="leftsum"><b>SINCE YOUR LAST VISIT</b><span class="leftbtns"><button class="mini-btn" data-sinceclose>DONE</button></span></div>
+      ${since && since.newIds.length ? `<div class="sgroup"><div class="tier-head">NEW ENTRIES<small>${since.newIds.length}</small></div>${list(since.newIds, "NEW")}</div>` : ""}
+      ${since && since.updIds.length ? `<div class="sgroup"><div class="tier-head">UPDATED PAGES<small>${since.updIds.length}</small></div>${list(since.updIds, "UPDATED")}</div>` : ""}
+      ${!since ? '<div class="empty-cat"><b>NOTHING NEW</b>You\'re up to date.</div>' : ""}</div>`;
+  }
+  document.addEventListener("click", e => {
+    if (e.target.closest("[data-sinceshow]")) { play("open"); sinceView = true; detail = null; if (query) clearSearch(false); $("#sincebar").hidden = true; render(); return; }
+    if (e.target.closest("[data-sinceclose]")) { play("back"); since = null; sinceView = false; sinceBar(); render(); }
+  });
+
   function renderInner() {
     screen.classList.toggle("show-locked-names", !!settings.lockedNames);
     screen.classList.toggle("compact", !!ui.compact);
     document.body.classList.toggle("crt", !!settings.crt);
     document.body.classList.toggle("light", !!settings.light);
     document.body.classList.toggle("kbmode", !!settings.kbMode);
+    document.body.classList.toggle("cb", !!settings.cbMode);
     syncToolbar(); renderBanner();
     if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
@@ -551,6 +650,7 @@
     }
     detail = null;
     if (query) return renderSearch();
+    if (sinceView) return renderSince();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
        tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, players: renderPlayers, admin: renderAdmin })[ui.tab]();
   }
@@ -687,6 +787,8 @@
     } else {
       body += statBarHTML(cat);
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
+      const shownTiers = tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin);
+      if (shownTiers.length > 2) body += `<div class="tierjump" role="navigation" aria-label="Jump to tier"><span>JUMP TO</span>${shownTiers.map(t => { const all = cat.items.filter(e => e.tier === +t), [f, n] = countOf(all); return `<button class="tj${f === n ? " done" : ""}" data-tierjump="${t}" title="Tier ${t}: ${f}/${n} found">T${t}</button>`; }).join("")}</div>`;
       if (!settings.tierTip && !viewOnly) body += `<div class="tiptip">&#128161; Tip: click anywhere on a <b>TIER</b> bar to mark that whole tier found. <button class="mini-btn" data-tiptip>GOT IT</button></div>`;
       tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin).forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
@@ -700,8 +802,16 @@
       });
     }
     if (hiddenDone) body += `<p class="cat-note">${hiddenDone} finished tier${hiddenDone > 1 ? "s" : ""} hidden (turn off HIDE DONE to see ${hiddenDone > 1 ? "them" : "it"}).</p>`;
-    screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap" id="grid">${body}</div></div>`;
+    screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap${body.includes('class="tierjump"') ? " hasjump" : ""}" id="grid">${body}</div></div>`;
   }
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-tierjump]"); if (!b) return;
+    const grid = $("#grid"), h = grid && grid.querySelector(`.tier-head[data-tier$="|${b.dataset.tierjump}"], .tier-head[data-tierkey$="|${b.dataset.tierjump}"]`); if (!h) return;
+    play("click");
+    const jump = grid.querySelector(".tierjump");
+    const y = grid.scrollTop + h.getBoundingClientRect().top - grid.getBoundingClientRect().top - (jump ? jump.offsetHeight + 4 : 0);
+    grid.scrollTo({ top: y, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
 
   function catButtons(cats) {
     return cats.map((c, i) => {
@@ -1114,7 +1224,30 @@
     // loose match: letters in order ("mp5k" finds "H&K MP5K", "bfc" finds "DEVILSPAWN-BFC")
     const compact = n.replace(/[^a-z0-9]/g, ""), cq = q.replace(/[^a-z0-9]/g, "");
     if (cq && compact.includes(cq)) return 4;
+    // typos: "glok" finds Glock, "kriss vectr" finds KRISS Vector (1 slip for short words, 2 for long)
+    if ((cq.match(/[a-z]/g) || []).length >= 3) {      // typos only for words, never numbers ("556" isn't "55rnd")
+      const allow = cq.length >= 7 ? 2 : 1;
+      const words = n.split(/[\s\-.'&]+/).map(w => w.replace(/[^a-z0-9]/g, "")).filter(Boolean);
+      // try the name from each word onwards, so "kriss vectr" finds "Military Kriss Vector"
+      for (let i = 0; i < words.length; i++) {
+        const tail = words.slice(i).join("");
+        const d = Math.min(typoDist(cq, tail.slice(0, cq.length)), typoDist(cq, tail));
+        if (d <= allow) return 5 + i * 0.1 + d * 0.01;            // earlier in the name ranks higher
+      }
+    }
     return -1;
+  }
+  /* edit distance with swapped letters counting as one slip */
+  function typoDist(a, b) {
+    if (Math.abs(a.length - b.length) > 2) return 9;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      const c = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
   }
   /* stat text each entry can be found by ("9x19mm", "tier 5", "health: 90hp") */
   function haystack(e) {
@@ -1136,7 +1269,6 @@
   }
   const STYPE = { all: "ALL", tools: "WEAPONS", bio: "PEOPLE", docs: "DOCUMENTS" };
   function renderSearch() {
-    const special = false;
     const q = slug(query);
     const okType = e => ui.stype === "all" || e.section === ui.stype;
     const okFound = e => passFilter(isFound(e.id));
@@ -1144,12 +1276,12 @@
     const pool = [...entries, ...people.filter(v => v.trackId)];
     pool.forEach(e => {
       if (!okType(e) || !okFound(e)) return;
-      if (special) { if (newIds.has(trackOf(e.id)) && !e.trackId) hits.push([0, e]); return; }
       if (e.unknown) return;
       const sc = score(e.name, q);
       if (sc >= 0) { hits.push([sc, e]); return; }
       if (q.length >= 2 && !e.trackId) {
-        const m = haystack(e).find(h => h.toLowerCase().includes(q));
+        const cq = q.replace(/[^a-z0-9]/g, "");
+        const m = haystack(e).find(h => h.toLowerCase().includes(q) || (cq.length >= 3 && h.toLowerCase().replace(/[^a-z0-9]/g, "").includes(cq)));
         if (m) statHits.push([e, m]);
       }
     });
@@ -1157,13 +1289,13 @@
     const section = (title, rows, n) => n ? `<div class="sgroup"><div class="tier-head">${title}<small>${n}</small></div>${rows}</div>` : "";
     const by = sec => hits.filter(h => h[1].section === sec).map(h => h[1]);
     const chips = `<div class="chips">${Object.entries(STYPE).map(([k, v]) => `<button class="chip-btn" data-stype="${k}" aria-pressed="${ui.stype === k}">${v}</button>`).join("")}
-      <span class="chips-note">${special ? "Entries added since your last visit" : `Showing ${ui.filter === "all" ? "found + missing" : ui.filter} · change with the buttons above`}</span></div>`;
+      <span class="chips-note">Showing ${ui.filter === "all" ? "found + missing" : ui.filter} · change with the buttons above${hits.some(h => h[0] >= 5) ? " · includes close spellings" : ""}</span></div>`;
     const html =
       section("TOOLS", by("tools").map(e => resultHTML(e)).join(""), by("tools").length) +
       section("PEOPLE", by("bio").map(e => resultHTML(e)).join(""), by("bio").length) +
       section("DOCUMENTS", by("docs").map(e => resultHTML(e)).join(""), by("docs").length) +
       section("MATCHING STATS", statHits.map(([e, m]) => resultHTML(e, m)).join(""), statHits.length);
-    screen.innerHTML = `<div class="results">${chips}${html || `<div class="empty-cat"><b>NO MATCHES</b>${special ? "Nothing new since your last visit." : `Nothing in the PDA matches “${esc(query)}”.`}</div>`}</div>`;
+    screen.innerHTML = `<div class="results">${chips}${html || `<div class="empty-cat"><b>NO MATCHES</b>Nothing in the PDA matches “${esc(query)}”.</div>`}</div>`;
   }
   function resultHTML(e, ctx) {
     const got = isFound(e.id);
@@ -1820,7 +1952,7 @@
     save(KEY_FOUND, found);
     if (before !== ids.join("\n")) { updateCount(); keepScroll(render); renderTabs(); }
   }
-  function scheduleSync(ms = 2500) { if (!acc || viewOnly) return; clearTimeout(syncState.timer); syncState.timer = setTimeout(syncNow, ms); }
+  function scheduleSync(ms = 2500) { setTimeout(netBadge, 0); if (!acc || viewOnly) return; clearTimeout(syncState.timer); syncState.timer = setTimeout(syncNow, ms); }
   async function syncNow(quiet = true) {
     if (!acc || syncState.busy || viewOnly) return;
     syncState.busy = true;
@@ -2066,7 +2198,7 @@
       if (JSON.stringify(r) === JSON.stringify(overrides)) return;
       overrides = r; save("pda-overrides-v1", r);
       if (addedSig(r) !== ADDED_SIG) {                 // entries were added or removed: they need a fresh start
-        if (!touched || adm.reloadAfter) { location.reload(); return; }
+        if (!touched || adm.reloadAfter) { location.reload(); return true; }
         toast("New entries were added to the site. Reload the page to see them.");
       }
       applyOverrides(r); keepScroll(render);
@@ -2720,12 +2852,17 @@
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
         ${sw("light", "Light theme? (easier to read in daylight)")}
+        <div class="srow"><input type="range" id="tscale" min="80" max="140" step="10" value="${settings.textScale || 100}" aria-label="Text size"><span>Text size: <b id="tscalev">${settings.textScale || 100}</b>%</span></div>
+        ${sw("cbMode", "Colour-blind friendly marks? (adds a clear ✓ to everything found and DONE to finished tiers, so nothing relies on colour)")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
         <h3>Checking off</h3>
         ${note("Safety nets for marking things.")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
         ${sw("kbMode", "Keyboard mode? (always shows where you are, keeps your place; arrows move, SPACE marks, [ ] switch category, ? lists keys)")}
         <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">The quick walkthrough from your first visit.</span></div>
+        <h3>App</h3>
+        ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
+        <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
         <h3>Data</h3>
         ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
         <div class="srow"><button class="pbtn" id="bkNow">DOWNLOAD BACKUP</button><span class="dim">${sinceBackup ? `${sinceBackup} change${sinceBackup === 1 ? "" : "s"} since your last backup.` : "Backed up."} Upload it again in CLOUD.</span></div>
@@ -2733,9 +2870,12 @@
       </div>`;
     $("#tourAgain").onclick = () => { play("click"); startTour(); };
     $("#bkNow").onclick = () => { play("click"); doExport(); toast("Backup downloaded."); backupNag(); keepScroll(render); };
+    const ts = $("#tscale");
+    ts.addEventListener("input", () => { settings.textScale = +ts.value; $("#tscalev").textContent = ts.value; save(KEY_SET, settings); applyScale(); });
+    ts.addEventListener("change", () => play("click"));
     const vol = $("#vol");
     vol.addEventListener("input", () => { settings.volume = +vol.value; $("#volv").textContent = vol.value; save(KEY_SET, settings); });
-    vol.addEventListener("change", () => play("marked"));
+    vol.addEventListener("change", () => play("click"));
     $("#reset").onclick = ev => {
       const b = ev.currentTarget;
       if (b.dataset.armed) {
@@ -3248,10 +3388,11 @@
   updateCount();
   render();
   backupNag();
+  if (!API) checkSince();
   if (API) {
     applyOverrides(overrides);
     setAdmin(!!acc && ui.tab === "admin");          // checkAdmin() confirms it
-    loadRarity(); loadOverrides(); loadServerInfo();
+    loadRarity(); loadOverrides().then(reloading => { if (!reloading) checkSince(); }); loadServerInfo();
     if (acc) { syncNow(); pullCounts(); checkAdmin(); }
     // pick up changes made on another device when you come back to this tab
     document.addEventListener("visibilitychange", () => { if (!document.hidden && acc && (!acc.at || Date.now() - acc.at > 20000)) syncNow(); });

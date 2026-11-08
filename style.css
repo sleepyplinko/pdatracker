@@ -1087,3 +1087,37 @@ body.light .footer { color: rgba(0,0,0,.5); }
 .setupbox summary { cursor: pointer; }
 .setupbox div { margin-top: 4px; }
 .subimg[hidden] { display: none; }
+
+/* ---------- since your last visit ---------- */
+.sincebar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 6px 4px; padding: 6px 10px; background: #0e2a1c; border: 1px solid #3fae6c; border-radius: 6px; color: #c8f5d8; font-size: 13px; }
+.sincebar span { flex: 1 1 260px; }
+.sincebar[hidden] { display: none; }
+/* ---------- title bar: install + offline ---------- */
+.titlebar .count { display: flex; gap: 8px; align-items: center; }
+.installbtn { font: 800 10px var(--font); padding: 2px 7px; border: 1px solid #444; border-radius: 3px; background: linear-gradient(hsl(213, 85%, 85%), hsl(213, 60%, 70%)); color: #111; cursor: pointer; }
+.installbtn[hidden], .netbadge[hidden] { display: none; }
+.netbadge { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px; background: #f0c040; color: #111; }
+.netbadge.off { background: #d23a3a; color: #fff; }
+/* ---------- jump-to-tier row (sticks to the top; tier bars stick just under it) ---------- */
+.tierjump { position: sticky; top: -8px; z-index: 5; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; padding: 5px 6px; background: #111; border: 1px solid #333; border-radius: 6px; }
+.tierjump span { font-size: 11px; font-weight: 800; color: #888; margin-right: 4px; }
+.tierjump .tj { font: 800 12px var(--font); min-width: 34px; height: 24px; border: 1px solid #888; border-radius: 4px; background: var(--bar); color: #111; cursor: pointer; }
+.tierjump .tj.done { background: linear-gradient(#fff6c8, #ffd94a); }
+#grid.hasjump .tier-head { top: 30px; }
+/* ---------- text size ---------- */
+.pda { zoom: var(--uiz, 1); }
+/* ---------- colour-blind friendly marks ---------- */
+body.cb .tile:not(.locked), body.cb .card:not(.missing), body.cb .doc:not(.missing) { position: relative; }
+body.cb .tile:not(.locked)::before, body.cb .card:not(.missing)::before, body.cb .doc:not(.missing)::before {
+  content: "✓"; position: absolute; top: 5px; left: 5px; z-index: 4; width: 22px; height: 22px; display: grid; place-items: center;
+  background: #fff; color: #000; border: 2px solid #000; border-radius: 50%; font: 900 14px/1 var(--font); }
+body.cb .tile.locked, body.cb .card.missing, body.cb .doc.missing { background-image: repeating-linear-gradient(135deg, transparent 0 9px, rgba(255,255,255,.05) 9px 11px); }
+body.cb .tier-head.complete .tier-btn::after { content: "  ✓ DONE"; }
+body.cb .cat.complete .cl::after, body.cb .subtab.complete::after { content: " ✓"; }
+body.cb .tierjump .tj.done::after { content: "✓"; }
+/* ---------- swipe feedback ---------- */
+@keyframes slideL { from { transform: translateX(28px); opacity: .5; } to { transform: none; opacity: 1; } }
+@keyframes slideR { from { transform: translateX(-28px); opacity: .5; } to { transform: none; opacity: 1; } }
+#screen.slide-l { animation: slideL .18s ease-out; }
+#screen.slide-r { animation: slideR .18s ease-out; }
+@media (prefers-reduced-motion: reduce) { #screen.slide-l, #screen.slide-r { animation: none; } }

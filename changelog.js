@@ -11,6 +11,12 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Phones: swipe across a tile to mark it found (right) or not found (left); swipe anywhere else to switch category",
+    "A note when you open the site shows what's new or updated since your last visit",
+    "Search forgives typos (\"glok\", \"kriss vectr\") and finds calibers without dots (\"556\")",
+    "INSTALL APP button, plus an OFFLINE / NOT SYNCED badge next to the counter",
+    "JUMP TO tier buttons on weapon categories",
+    "SETTINGS: text size slider and colour-blind friendly marks",
     "New background: a blurred picture from the game",
     "Every tab now has its own colour (ADMIN is red), matching the game's pastel style; TOOLS, BIOGRAPHY, DOCUMENTS and SETTINGS stay white like in the game",
     "Hovering weapon categories plays the same sound as hovering weapons, like in the game",
