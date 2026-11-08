@@ -1771,10 +1771,13 @@
     let j = null; try { j = await r.json(); } catch { /* ignore */ }
     return [r.status, j || {}];
   }
-  let serverInfo = { uploads: false };
-  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; if (ui.tab === "community") keepScroll(render); } } catch { /* offline */ } }
+  let serverInfo = API ? load("pda-server-v1", { uploads: false, admins: [] }) : { uploads: false, admins: [] };
+  const isAdminName = n => !!n && (serverInfo.admins || []).some(a => a.toLowerCase() === String(n).toLowerCase());
+  const adminTag = n => isAdminName(n) ? ' <b class="badm" title="Runs this site">ADMIN</b>' : "";
+  const amAdmin = () => BOTTOM_TABS.includes("admin");
+  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); if (["community", "players"].includes(ui.tab)) keepScroll(render); } } catch { /* offline */ } }
   async function uploadPic(file) {
-    const r = await fetch(API + "/api/upload", { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream" }, body: file });
+    const r = await fetch(API + "/api/upload", { method: "POST", headers: { "Content-Type": file.type || "application/octet-stream", ...(acc && acc.token ? { Authorization: "Bearer " + acc.token } : {}) }, body: file });
     let j = {}; try { j = await r.json(); } catch { /* ignore */ }
     if (r.status !== 201) { const e = new Error(j.error || "Upload failed."); e.user = true; throw e; }
     return j.url;
@@ -2054,7 +2057,7 @@
   let touched = false;
   document.addEventListener("pointerdown", () => { touched = true; }, { once: true, capture: true });
   document.addEventListener("keydown", () => { touched = true; }, { once: true, capture: true });
-  const communityHTML = e => !e ? "" : (e.update ? `<div class="stat gap"><i style="color:#ff9cf0">ADDED IN</i>: ${esc(e.update)}</div>` : "") +
+  const communityHTML = e => !e ? "" : (amAdmin() && !viewOnly ? `<div class="stat gap"><button class="mini-btn go" data-admquick="${esc(e.id)}">EDIT AS ADMIN${e.section !== "tools" ? " / ADD PICTURE" : ""}</button></div>` : "") + (e.update ? `<div class="stat gap"><i style="color:#ff9cf0">ADDED IN</i>: ${esc(e.update)}</div>` : "") +
     (e.community ? `<div class="stat${e.update ? "" : " gap"}"><i style="color:#8de08d">COMMUNITY</i>: <span class="dim">some info here was sent in by players and approved</span></div>` : "");
 
   /* =====================================================================
@@ -2109,7 +2112,7 @@
     return `<h3 class="ph3">RECENT FINDS //</h3><div class="frlist recent">${activity.map(a => {
       const e = a.id && findEntry(a.id);
       const what = !a.id ? `${a.n} things at once` : e ? `<button class="linkish" data-${open(e)}="${esc(e.id)}">${esc(e.name)}</button>${isFound(e.id) ? ' <span class="dim">(you have it)</span>' : ""}` : "something";
-      return `<div class="frrow"><b>${esc(a.name)}</b><span>found ${what}</span><span class="dim">${esc(ago(a.t * 1000))}</span></div>`;
+      return `<div class="frrow"><b>${esc(a.name)}${adminTag(a.name)}</b><span>found ${what}</span><span class="dim">${esc(ago(a.t * 1000))}</span></div>`;
     }).join("")}</div>`;
   }
   async function loadFriends() {
@@ -2138,12 +2141,12 @@
         ${(friends || []).length ? `<div class="frlist">${friends.map(f => {
           if (f.hidden) return `<div class="frrow"><b>${esc(f.name)}</b><span class="dim">made their profile private</span><span></span><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></div>`;
           const set = new Set(f.found), n = entries.filter(e => set.has(e.id)).length, they = entries.filter(e => set.has(e.id) && !mine.has(e.id)).length, you = entries.filter(e => mine.has(e.id) && !set.has(e.id)).length;
-          return `<div class="frrow"><b>${esc(f.name)}</b><span>${n} / ${entries.length} found ${pbar(n, entries.length)}</span><span class="dim">has ${they} you don't · you have ${you} they don't</span>
+          return `<div class="frrow"><b>${esc(f.name)}${adminTag(f.name)}</b><span>${n} / ${entries.length} found ${pbar(n, entries.length)}</span><span class="dim">has ${they} you don't · you have ${you} they don't</span>
             <span class="frbtns"><button class="mini-btn" data-frview="${esc(f.name)}">VIEW</button><button class="mini-btn" data-frcmp="${esc(f.name)}" title="Show their finds as badges on your tiles">COMPARE</button><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></span></div>`;
         }).join("")}</div>` : `<p class="dim">No friends added yet. Ask a friend for their account name (they need a public profile).</p>`}`;
     const sc = lbScopes(), cur = sc.find(x => x[0] === board.scope) || sc[0], total = countOf(cur[2])[1];
     const me = acc && acc.name ? acc.name.toLowerCase() : "";
-    const rows = (board.rows || []).map((r, i) => `<tr class="${r.name.toLowerCase() === me ? "me" : ""}"><td>${i + 1}</td><td><button class="linkish" data-frview="${esc(r.name)}">${esc(r.name)}</button></td><td>${r.n}</td><td>${total ? Math.round(r.n / total * 100) : 0}%</td></tr>`).join("");
+    const rows = (board.rows || []).map((r, i) => `<tr class="${r.name.toLowerCase() === me ? "me" : ""}"><td>${i + 1}</td><td><button class="linkish" data-frview="${esc(r.name)}">${esc(r.name)}</button>${adminTag(r.name)}</td><td>${r.n}</td><td>${total ? Math.round(r.n / total * 100) : 0}%</td></tr>`).join("");
     screen.innerHTML = `<div class="results players">
       <h3 class="ph3">FRIENDS //</h3>${fr}
       ${activityHTML()}
@@ -2180,6 +2183,7 @@
   const safeLink = u => /^https?:\/\//i.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : esc(u);
   const statsToText = st => Object.entries(st || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
+  const upBtn = target => serverInfo.uploads ? `<label class="mini-btn upbtn">UPLOAD…<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-admupload='${target}' hidden></label>` : "";
   const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
@@ -2197,7 +2201,7 @@
       ${sec === "tools" ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x (optional)</small><textarea data-admadd="stats" rows="6">${esc(a.stats || "")}</textarea>
         <label>COMMENT</label><textarea data-admadd="comment" rows="4">${esc(a.comment || "")}</textarea>`
       : `<label>DESCRIPTION</label><textarea data-admadd="desc" rows="5">${esc(a.desc || "")}</textarea>
-        <label>PICTURE LINK</label><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">`}
+        <label>PICTURE <small>upload one, or paste any https:// image link</small></label><div class="imgrow"><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">${upBtn('[data-admadd="img"]')}</div><img class="subimg" data-imgprev='[data-admadd="img"]' src="${esc(a.img || "")}" alt=""${a.img ? "" : " hidden"}>`}
       <label>ADDED IN UPDATE <small>optional</small><input data-admadd="update" list="admUpdList" maxlength="40" value="${esc(a.update || "")}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
       <div class="btnrow"><button class="pbtn" id="admAddGo">ADD ENTRY${adm.edit.sub ? " + MARK DONE" : ""}</button><button class="pbtn" id="admCancel">CANCEL</button></div>
       <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
@@ -2218,7 +2222,7 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>
-          <label>PICTURE LINK <small>a picture someone uploaded, or any https:// image link</small><input id="admImg" value="${esc(ed.img || (pub && pub.img) || "")}" placeholder="https://"></label>${ed.img || (pub && pub.img) ? `<img class="subimg" src="${esc(ed.img || pub.img)}" alt="">` : ""}`}
+          <label>PICTURE <small>upload one, or paste any https:// image link</small></label><div class="imgrow"><input id="admImg" value="${esc(ed.img || (pub && pub.img) || "")}" placeholder="https://">${upBtn("#admImg")}</div><img class="subimg" data-imgprev="#admImg" src="${esc(ed.img || (pub && pub.img) || "")}" alt=""${ed.img || (pub && pub.img) ? "" : " hidden"}>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
@@ -2304,6 +2308,8 @@
     el.hidden = false;
   }
   document.addEventListener("click", e => {
+    const aq = e.target.closest("[data-admquick]");
+    if (aq && amAdmin()) { play("click"); adm.edit = { entry: aq.dataset.admquick }; ui.tab = "admin"; detail = null; cancelTier(); persistUI(); if (query) clearSearch(false); renderTabs(); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
     const g = e.target.closest("[data-tourgo]"); if (g) { play("click"); startTour(+g.dataset.tourgo); return; }
     if (e.target.closest("[data-tourskip]") || e.target.id === "tour") { const el = $("#tour"); if (el) el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); play("back"); }
   });
@@ -2876,6 +2882,13 @@
       if (k === "ammo") d.hits = "";
       persistUI(); play("click"); keepScroll(render); return;
     }
+    else if (sel.matches("[data-admupload]")) {
+      const f = sel.files && sel.files[0], tgt = screen.querySelector(sel.dataset.admupload); if (!f || !tgt) return;
+      const lab = sel.closest("label"); lab.firstChild.textContent = "UPLOADING…";
+      uploadPic(f).then(url => { tgt.value = url; if (adm.edit && adm.edit.add) adm.edit.add.img = url; const pv = screen.querySelector(`[data-imgprev='${sel.dataset.admupload}']`); if (pv) { pv.src = url; pv.hidden = false; } lab.firstChild.textContent = "UPLOAD…"; play("confirm"); toast("Uploaded. Press PUBLISH to put it on the page."); })
+        .catch(err => { lab.firstChild.textContent = "UPLOAD…"; toast(err.user ? err.message : "Upload failed. Check your connection."); play("warn"); });
+      return;
+    }
     else if (sel.matches("[data-cfile]")) { const f = sel.files && sel.files[0]; if (f && f.size > 5 * 1024 * 1024) { toast("That picture is over 5 MB."); sel.value = ""; return; } pickedFile = f || null; readForm(sel.closest("form")); keepScroll(render); return; }
     else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
@@ -3058,7 +3071,7 @@
   function renderBanner() {
     if (viewOnly) {
       bannerEl.hidden = false;
-      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
+      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>${adminTag(viewOnly.name)}'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
         <span><button data-b="compare">COMPARE WITH MINE</button><button data-b="exit">EXIT</button></span>`;
     } else if (friend) {
       const n = entries.filter(e => friend.set[e.id] && !found[e.id]).length;

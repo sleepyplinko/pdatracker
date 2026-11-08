@@ -1,6 +1,6 @@
 /* Offline support. Always tries the network first so updates show up straight away,
    and falls back to the saved copy when you're offline. */
-const CACHE = "pda-tracker-v33";
+const CACHE = "pda-tracker-v34";
 const CORE = ["./", "index.html", "style.css", "app.js", "data.js", "descriptions.js", "tooltips.js", "changelog.js", "ammo-links.js", "ammo.js", "contribute.js", "cloud-config.js", "screenshot-import.js", "sounds.js", "manifest.webmanifest", "icons/icon-192.png", "fonts/inconsolata-400.woff?v=3", "fonts/inconsolata-500.woff?v=3", "fonts/inconsolata-600.woff?v=3", "fonts/inconsolata-700.woff?v=3", "fonts/inconsolata-800.woff?v=3", "fonts/inconsolata-900.woff?v=3", "fonts/inconsolata-800-85.woff?v=3", "fonts/inconsolata-600-88.woff?v=3"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

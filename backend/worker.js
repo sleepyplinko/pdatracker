@@ -98,7 +98,7 @@ async function route(req, env, ctx) {
   const M = req.method;
 
   if (M === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", uploads: !!env.IMAGES });
+  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", uploads: !!env.IMAGES, admins: String(env.ADMINS || "").split(",").map(x => x.trim()).filter(Boolean) });
 
   /* ---- create an account ---- */
   if (path === "/api/register" && M === "POST") {
@@ -253,7 +253,7 @@ async function route(req, env, ctx) {
   if (path === "/api/upload" && M === "POST") {
     if (!env.IMAGES) return err(501, "Picture uploads aren't set up.");
     const len = +(req.headers.get("Content-Length") || 0); if (len > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");
-    if (!(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
+    if (!isAdmin(env, await whoami(env, req)) && !(await rateLimit(env, req, "u:", UPLOAD_LIMIT))) return err(429, "You've uploaded a lot just now. Wait a few minutes.");
     const buf = await req.arrayBuffer();
     if (!buf.byteLength) return err(400, "No picture.");
     if (buf.byteLength > UPLOAD_MAX) return err(413, "Pictures can be up to 5 MB.");

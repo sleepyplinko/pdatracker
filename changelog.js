@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Site admins get an ADMIN tag on the leaderboard, friends lists and shared profiles",
     "Damage calculator shows the supershield math in the hits-to-kill line",
     "New entries can now be added straight from the site; entries from a game update get a NEW badge and a filter on WHAT'S LEFT",
     "HELP WANTED on SUBMIT now also lists unknown entries, weapons missing their weight, and documents with no picture",

@@ -1065,3 +1065,7 @@ body.light .footer { color: rgba(0,0,0,.5); }
 .subimg { display: block; max-width: 260px; max-height: 180px; margin: 6px 0; border: 1px solid #555; border-radius: 4px; object-fit: contain; background: #000; }
 .admnote { width: 100%; margin: 6px 0; box-sizing: border-box; }
 .addform .frow { display: flex; gap: 10px; flex-wrap: wrap; }
+.badm { display: inline-block; background: #ff3b3b; color: #fff; font-size: 9px; letter-spacing: .5px; padding: 1px 4px; border-radius: 3px; margin-left: 4px; vertical-align: middle; text-shadow: none; }
+.imgrow { display: flex; gap: 8px; align-items: center; }
+.imgrow input { flex: 1; }
+.upbtn { cursor: pointer; white-space: nowrap; }
