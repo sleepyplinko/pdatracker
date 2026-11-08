@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "GIFs work as pictures for people and documents; Giphy and Imgur page links are turned into the GIF itself automatically",
     "Phones: swipe across a tile to mark it found (right) or not found (left); swipe anywhere else to switch category",
     "A note when you open the site shows what's new or updated since your last visit",
     "Search forgives typos (\"glok\", \"kriss vectr\") and finds calibers without dots (\"556\")",

@@ -2338,7 +2338,21 @@
   let imgRowN = 0;
   const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
   const upBtn = () => "";   // pictures are added by link only
-  const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "");
+  /* turn GIF-site page links into the actual GIF file ("" + a hint when that can't be done) */
+  function gifLink(u) {
+    u = String(u || "").trim(); let m;
+    if ((m = u.match(/^https?:\/\/(?:www\.)?giphy\.com\/(?:gifs|stickers|embed)\/(?:[\w-]*-)?([A-Za-z0-9]{8,})\/?(?:[?#].*)?$/))) return { url: `https://media.giphy.com/media/${m[1]}/giphy.gif` };
+    if ((m = u.match(/^https?:\/\/(?:media\d*|i)\.giphy\.com\/media\/(?:v1\.[^/]+\/)?([A-Za-z0-9]{8,})\/[\w.-]*\.(?:mp4|webp|gif)(?:[?#].*)?$/))) return { url: `https://media.giphy.com/media/${m[1]}/giphy.gif` };
+    if ((m = u.match(/^(https?:\/\/i\.imgur\.com\/\w+)\.(?:gifv|mp4)(?:[?#].*)?$/))) return { url: m[1] + ".gif" };
+    if (/^https?:\/\/(?:www\.)?tenor\.com\/(?:[a-z-]+\/)?view\//.test(u)) return { url: "", hint: "That's a Tenor page, not the GIF itself. Open it, right-click the GIF and pick \"Copy image address\" (it starts with media.tenor.com), then paste that." };
+    return { url: u };
+  }
+  function fixGifInput(el) {
+    const r = gifLink(el.value); if (r.hint) { toast(r.hint, { ms: 10000 }); play("warn"); return false; }
+    if (r.url !== el.value.trim()) { el.value = r.url; toast("Changed that to the GIF's direct link."); }
+    return true;
+  }
+  const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "") || /^https?:\/\/(media\d*\.giphy\.com|media\.tenor\.com|c\.tenor\.com)\//i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
     const a = adm.edit.add, sec = a.section || "tools";
@@ -2461,6 +2475,7 @@
       if (e.section === "tools") { data.stats = textToStats($("#admStats").value); data.comment = $("#admComment").value; const t = +$("#admTier").value; if (t && t !== e.tier) data.tier = t; }
       else {
         data.desc = $("#admDesc").value;
+        if (![...screen.querySelectorAll("[data-admimgi]")].every(fixGifInput)) return;
         const ims = [...screen.querySelectorAll("[data-admimgi]")].map(x => x.value.trim()).filter(Boolean);
         if (ims.some(u => !/^(https?:\/\/|images\/)/.test(u))) { toast("Picture links have to start with https://"); play("warn"); return; }
         const orig = imagesOf(origInfo.has(e) ? { img: origInfo.get(e).img, imgs: origInfo.get(e).imgs } : e).map(x => x.src);
@@ -2493,7 +2508,8 @@
       const slot = a.replace && findEntry(a.replace);
       const data = { add: { section: sec, group: g.name, name, tier: sec === "tools" ? (slot ? slot.tier : tier) : undefined, replace: a.replace || undefined } };
       if (sec === "tools") { const st = textToStats(a.stats || ""); if (Object.keys(st).length) data.stats = st; if ((a.comment || "").trim()) data.comment = a.comment; }
-      else { if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.imgs = [a.img.trim()]; } }
+      else { if ((a.img || "").trim()) { const g = gifLink(a.img); if (g.hint) { toast(g.hint, { ms: 10000 }); play("warn"); return; } a.img = g.url; }
+        if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.imgs = [a.img.trim()]; } }
       if ((a.update || "").trim()) data.update = a.update.trim();
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't add it."); play("warn"); return; }
@@ -2753,7 +2769,7 @@
     </div>`;
   }
   function readForm(f) {
-    draft = { kind: f.ckind.value, entry: f.centry.value.trim(), text: f.ctext.value.trim(), link: f.clink.value.trim(), name: f.cname.value.trim() };
+    draft = { kind: f.ckind.value, entry: f.centry.value.trim(), text: f.ctext.value.trim(), link: gifLink(f.clink.value).url || f.clink.value.trim(), name: f.cname.value.trim() };
     return draft;
   }
   let sending = false;
@@ -3114,7 +3130,7 @@
     }
     else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-annupd]")) { adm.ann.update = sel.value; adm.ann.msg = ($("#annMsg") || {}).value || ""; keepScroll(render); return; }
-    else if (sel.matches("[data-admimgi]")) { const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); if (pv) { const u = sel.value.trim(); pv.hidden = !/^https?:\/\/\S+$|^images\//.test(u); if (!pv.hidden) pv.src = u; } return; }
+    else if (sel.matches("[data-admimgi]")) { fixGifInput(sel); const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); if (pv) { const u = sel.value.trim(); pv.hidden = !/^https?:\/\/\S+$|^images\//.test(u); if (!pv.hidden) pv.src = u; } return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
     else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
