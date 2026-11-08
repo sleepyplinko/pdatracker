@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-07", items: [
+    "Sounds from the game: hovering tiles, people and tabs, switching categories and tabs, opening and closing pages, and the PDA starting up",
     "New WC tab in BIOGRAPHY with WC Troop, WC Turret, WC gobloing, WC 'XT' Flame Unit and WC Advanced Troop; WC Speedster's stats filled in (your progress on the WC NPCs carries over)",
     "Icons redone to match the game",
     "People and documents can have more than one picture",

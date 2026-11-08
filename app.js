@@ -74,13 +74,13 @@
   const pools = {};
   function play(name) {
     if (!settings.sound) return;
-    if (name === "hover" && !settings.hoverSound) return;
+    if (name.startsWith("hover") && !settings.hoverSound) return;
     const def = SFX[name];
     if (!def || !def.file) return;
     let pool = pools[name];
     if (!pool) {
       pool = pools[name] = { i: 0, list: [] };
-      for (let n = 0; n < (name === "hover" ? 6 : 3); n++) {
+      for (let n = 0; n < (name.startsWith("hover") ? 6 : 3); n++) {
         const a = new Audio(def.file); a.preload = "auto"; pool.list.push(a);
       }
     }
@@ -91,6 +91,13 @@
       const p = a.play(); if (p && p.catch) p.catch(() => {});
     } catch { /* browsers block sound until the first click; ignore */ }
   }
+  /* the PDA "turning on": browsers only allow sound after the first click/key, so it waits for that if it has to */
+  (() => {
+    let done = false;
+    const go = () => { if (done || !settings.sound) return; done = true; play("pdaOpen"); };
+    try { const d = SFX.pdaOpen; if (d && d.file && settings.sound) { const a = new Audio(d.file); a.volume = Math.max(0, Math.min(1, (d.volume ?? 1) * settings.volume / 100)); a.play().then(() => { done = true; }).catch(() => {}); } } catch { /* ignore */ }
+    ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, go, { once: true, capture: true }));
+  })();
   // preload the files so the first hover isn't late
   window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
 
@@ -104,7 +111,7 @@
     const now = performance.now();
     if (now - lastHoverAt < 35) return;
     lastHoverAt = now;
-    play("hover");
+    play(el.matches(".card") ? "hoverPerson" : el.matches(".tile, .doc") ? "hoverTool" : el.matches(".tab, .cat, .subtab, .mtab") ? "hoverTab" : "hover");
   });
   document.addEventListener("pointerout", e => {
     const el = e.target.closest(HOVERABLE);
@@ -438,7 +445,7 @@
   ["#tabs", "#tabs2"].forEach(sel => {
     $(sel).addEventListener("click", e => {
       const b = e.target.closest(".tab"); if (!b) return;
-      play("click");
+      play(b.dataset.tab === ui.tab && !detail ? "click" : "transition");
       ui.tab = b.dataset.tab; detail = null; cancelTier(); persistUI();
       if (query) clearSearch(false);
       renderTabs(); render();
@@ -490,7 +497,7 @@
       e.preventDefault(); searchBox.focus(); searchBox.select();
     } else if (e.key === "Escape") {
       if (pendingTier) { cancelTier(); render(); }
-      else if (detail) { play("back"); detail = null; render(); }
+      else if (detail) { play("close"); detail = null; render(); }
       else if (query) { play("back"); clearSearch(); }
     }
   });
@@ -2931,20 +2938,20 @@
     const set = t.closest("[data-set]");
     if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
     const cat = t.closest("[data-cat]");
-    if (cat) { play("click"); if (ui.cat !== +cat.dataset.cat) ui.cal = ""; ui.cat = +cat.dataset.cat;
+    if (cat) { play(+cat.dataset.cat === ui.cat ? "click" : "switch"); if (ui.cat !== +cat.dataset.cat) ui.cal = ""; ui.cat = +cat.dataset.cat;
       { const nc = PDA_DATA.tools[ui.cat]; if (nc && ui.tsort && !nc.items.some(e => statNum(e, ui.tsort) != null)) { ui.tsort = ""; ui.tmin = ""; ui.tmax = ""; } } persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
     // clicking the sub-tab that's already open asks to unlock (or lock) the whole tab
     const bio = t.closest("[data-bio]");
     if (bio) {
       if (+bio.dataset.bio === ui.bio) { askTier(`tab:bio:${ui.bio}`); keepScroll(render); return; }
-      play("click"); ui.bio = +bio.dataset.bio; persistUI(); render(); return;
+      play("switch"); ui.bio = +bio.dataset.bio; persistUI(); render(); return;
     }
     const docs = t.closest("[data-docs]");
     if (docs) {
       if (+docs.dataset.docs === ui.docs) { askTier(`tab:docs:${ui.docs}`); keepScroll(render); return; }
-      play("click"); ui.docs = +docs.dataset.docs; persistUI(); render(); return;
+      play("switch"); ui.docs = +docs.dataset.docs; persistUI(); render(); return;
     }
-    if (t.closest("#ret")) { play("back"); detail = null; render(); return; }
+    if (t.closest("#ret")) { play("close"); detail = null; render(); return; }
   });
   screen.addEventListener("change", ev => {
     const sel = ev.target;
