@@ -53,9 +53,9 @@ body {
     linear-gradient(180deg, transparent 62%, rgba(10,2,2,.85) 100%),
     radial-gradient(120% 80% at 50% 0%, #c25a28 0%, #8a3018 34%, #4a120c 64%, #1a0505 100%);
 }
-.sky::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,.6) 100%); }
+.sky::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.35) 100%); }
 /* blurred in-game picture behind the PDA (images/bg/patio.jpg); the sky above shows if it can't load */
-.bgimg { position: absolute; inset: 0; background: url("images/bg/patio.jpg") center / cover no-repeat; transform: scale(1.04); filter: brightness(.85); }
+.bgimg { position: absolute; inset: 0; background: url("images/bg/patio.jpg?v=2") center / cover no-repeat; transform: scale(1.04); filter: brightness(1.15) saturate(1.05); }
 .sky { background-color: #120a06; }
 
 button { font-family: inherit; cursor: pointer; }
