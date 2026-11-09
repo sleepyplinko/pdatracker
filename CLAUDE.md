@@ -56,7 +56,8 @@ Read this first after any break or conversation summary. Update it whenever some
 - LOADOUT planner with carry weight. PROFILE: save profiles, progress, favourites, this run.
 - SUBMIT: send info without an account (status via token), HELP WANTED lists, changelog.
 - ADMIN: review submissions, edit/add entries and ammo via overrides, notice bar, announcements, change history with undo, blocking, stats.
-- Loading: PDA-style boot screen in `#screen` until first render; sounds preload on first interaction; site preview image `images/og.jpg` (real screenshot).
+- Boot-up screen (`#bootscr` in index.html, `runBoot()` in app.js): original design (owner chose not to copy the game), plays every load, ~1.6s: system-check lines with real progress counts, bar, READY, CRT collapse reveal. Skip by click/key; SETTINGS toggle `bootAnim`; skipped for reduced motion and share-view. Doubles as the loading screen. First-visit tour starts after it.
+- Loading: sounds preload on first interaction; site preview image `images/og.jpg` (real screenshot).
 - Tour (`TOUR` in app.js): 10 short steps on the basics only (owner wants it brief, no over-explaining, no minor features). Spotlights real elements, switches tabs, opens Glock 18 as demo, arrow keys/Enter/Esc, restores the user's place, never marks anything. Auto-starts on a first visit; replay from SETTINGS. Only add a step for a feature that's essential.
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
