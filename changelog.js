@@ -1,8 +1,8 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Boot-up screen: a quick PDA system check with your progress, then the screen switches on (click to skip; turn it off in SETTINGS)",
     "New guided tour that points at the actual buttons (replay it in SETTINGS)",
     "Faster loading: after your first visit the site opens almost instantly, even on slow connections, and updates itself when there's a new version",
-    "A PDA boot screen shows while the site loads",
     "Links from LINK now show the entry's name, picture and stats when pasted in Discord",
     "Security Bot C has a new animated portrait",
     "DAMAGE: COMPARE TWO LOADOUTS puts a second weapon and ammo next to the first against the same target, and says which one wins",

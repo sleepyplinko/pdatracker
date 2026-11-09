@@ -23,7 +23,7 @@
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ pageAnim: true, lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ bootAnim: true, pageAnim: true, lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc",
                                 sort: "found", compact: false, hideDone: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
@@ -2494,6 +2494,40 @@
   ];
   let tourAt = -1, tourSnap = null, tourSeq = 0;
   const tourOpen = () => tourAt >= 0;
+  function runBoot() {
+    const el = $("#bootscr");
+    if (!el) return Promise.resolve();
+    const reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (settings.bootAnim === false || reduced || viewOnly) { el.remove(); return Promise.resolve(); }
+    const log = $("#btLog"), bar = $("#btBar");
+    const sec = list => countOf(list), all = countOf(entries);
+    const rows = [
+      ["POWER", "OK"],
+      ["DISPLAY", "OK"],
+      ["AUDIO", settings.sound ? "OK" : "MUTED"],
+      ["TOOLS", sec(PDA_DATA.tools.flatMap(c => c.items)).join(" / ")],
+      ["BIOGRAPHY", sec(PDA_DATA.biography.flatMap(g => g.items)).join(" / ")],
+      ["DOCUMENTS", sec(PDA_DATA.documents.flatMap(g => g.items)).join(" / ")],
+      ["DATABANKS", `${all[0]} / ${all[1]} FOUND`]
+    ];
+    const line = ([k, v]) => `<span class="bt-k">&gt; ${k}</span> ${".".repeat(Math.max(2, 14 - k.length))} <b>${esc(v)}</b>`;
+    return new Promise(resolve => {
+      let i = 0, timer = null, ended = false;
+      const draw = () => { log.innerHTML = rows.slice(0, i).map(line).join("\n") + (i < rows.length ? `${i ? "\n" : ""}<span class="bt-cur">_</span>` : `\n<span class="bt-ok">READY</span>`); bar.style.width = (i / rows.length * 100) + "%"; };
+      const finish = () => {
+        if (ended) return; ended = true; clearTimeout(timer);
+        ["pointerdown", "keydown"].forEach(t => removeEventListener(t, skip, true));
+        i = rows.length; draw();
+        el.classList.add("bt-off");
+        setTimeout(() => { el.remove(); resolve(); }, 420);
+      };
+      const skip = e => { if (e.type === "keydown" && ["Shift", "Control", "Alt", "Meta"].includes(e.key)) return; finish(); };
+      ["pointerdown", "keydown"].forEach(t => addEventListener(t, skip, true));
+      const tick = () => { i++; draw(); timer = setTimeout(i < rows.length ? tick : finish, i < rows.length ? 115 : 380); };
+      el.classList.add("bt-run");
+      timer = setTimeout(tick, 180);
+    });
+  }
   function startTour(i = 0) {
     if (!tourOpen()) {
       tourSnap = { tab: ui.tab, detail, cat: ui.cat, bio: ui.bio };
@@ -2985,6 +3019,7 @@
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
         ${sw("light", "Light theme? (easier to read in daylight)")}
+        ${sw("bootAnim", "Boot-up screen when the site opens?")}
         ${sw("pageAnim", "Slide between pages, like the in-game PDA?")}
         <div class="srow"><input type="range" id="tscale" min="80" max="140" step="10" value="${settings.textScale || 100}" aria-label="Text size"><span>Text size: <b id="tscalev">${settings.textScale || 100}</b>%</span></div>
         ${sw("cbMode", "Colour-blind friendly marks? (adds a clear ✓ to everything found and DONE to finished tiers, so nothing relies on colour)")}
@@ -3529,6 +3564,7 @@
   renderTabs();
   updateCount();
   render();
+  const bootDone = runBoot();
   backupNag();
   if (!API) checkSince();
   if (API) {
@@ -3542,6 +3578,6 @@
     window.addEventListener("hashchange", () => { if (checkTransferHash()) return; const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
   }
 
-  if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
+  if (!settings.tourDone && !viewOnly && !Object.keys(found).length) bootDone.then(() => setTimeout(() => startTour(), 250));
   if (settings.tourDone === "later") settings.tourDone = false;
 })();

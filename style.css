@@ -1099,14 +1099,28 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .ammotab tr[data-dmgammo] { cursor: pointer; }
 @media (max-width: 1000px) { .dgrid2 { grid-template-columns: 1fr; } }
 
-.boot { height: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #d8d8d8; letter-spacing: 2px; }
-.boot-t { font-size: 28px; font-weight: 800; }
-.boot-bar { width: min(320px, 70%); height: 10px; border: 1px solid #8a8a8a; overflow: hidden; }
-.boot-bar i { display: block; height: 100%; width: 35%; background: #d8d8d8; animation: bootbar 1.1s ease-in-out infinite; }
-.boot-s { font-size: 12px; color: #9a9a9a; animation: bootblink 1s steps(2) infinite; }
-@keyframes bootbar { from { transform: translateX(-110%); } to { transform: translateX(300%); } }
-@keyframes bootblink { 50% { opacity: .35; } }
-@media (prefers-reduced-motion: reduce) { .boot-bar i, .boot-s { animation: none; } }
 .updbar { padding: 6px 10px; background: #1f2a1f; border-bottom: 1px solid #5ccf6b; color: #c9f5cf; font-size: 13px; }
 .updbar[hidden] { display: none; }
 .updbar button { margin-left: 8px; }
+
+.bootscr { position: absolute; inset: 0; z-index: 60; background: #050505; display: flex; align-items: center; justify-content: center; color: #d8d8d8; overflow: hidden; }
+.bootscr::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); }
+.bt-in { width: min(680px, 86%); display: flex; flex-direction: column; gap: 10px; }
+.bt-logo { font-size: 72px; font-weight: 900; letter-spacing: 3px; color: #f2f2f2; text-shadow: 0 0 14px rgba(255,255,255,.25); }
+.bt-logo span { color: #9a9a9a; }
+.bt-sub { font-size: 14px; letter-spacing: 2px; color: #8a8a8a; margin-top: -6px; }
+.bt-log { margin: 8px 0 0; min-height: 9.6em; font: inherit; font-size: 20px; line-height: 1.2; white-space: pre; color: #bdbdbd; }
+.bt-log .bt-k { color: #9a9a9a; }
+.bt-log b { color: #f3ee30; font-weight: 700; }
+.bt-ok { color: #5ccf6b; font-weight: 800; letter-spacing: 2px; }
+.bt-cur { animation: btblink .8s steps(2) infinite; }
+.bt-bar { height: 12px; border: 1px solid #6a6a6a; }
+.bt-bar i { display: block; height: 100%; width: 0; background: #d8d8d8; transition: width .11s linear; }
+.bt-skip { font-size: 12px; letter-spacing: 1.5px; color: #5a5a5a; text-align: right; opacity: 0; }
+.bootscr.bt-run .bt-skip { opacity: 1; }
+.bootscr.bt-off { animation: btoff .42s cubic-bezier(.6, 0, .9, .5) forwards; }
+.bootscr.bt-off .bt-in { animation: btoffin .42s ease-in forwards; }
+@keyframes btblink { 50% { opacity: 0; } }
+@keyframes btoff { 0% { background: #050505; } 35% { background: #e8e8e8; clip-path: inset(48% 0 48% 0); } 100% { background: #e8e8e8; clip-path: inset(50% 0 50% 0); opacity: 0; } }
+@keyframes btoffin { to { opacity: 0; transform: scaleY(.02); } }
+@media (max-width: 700px) { .bt-logo { font-size: 40px; } .bt-sub { font-size: 11px; } .bt-log { font-size: 13px; } .bt-bar { height: 8px; } .bt-skip { font-size: 10px; } }
