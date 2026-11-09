@@ -1612,7 +1612,7 @@
 
     screen.innerHTML = `<div class="results dmgcalc">
       <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)
-        <div class="dim dnote">&#9888;&#xFE0E; The chart is kept up by the community, so some ammo may be out of date with the game. Treat hits-to-kill as a close estimate.${ammoAll.some(a => a.edited) ? " Ammo marked ✎ was corrected by the site's admins." : ""}</div>${tools}</div>
+        <div class="dim dnote">&#9888;&#xFE0E; Community chart: some ammo may be out of date. Hits to kill is an estimate.${ammoAll.some(a => a.edited) ? " Ammo marked ✎ was corrected by the site's admins." : ""}</div>${tools}</div>
       ${vs ? `<div class="dgrid">${attackerBox(A, "", "Loadout A")}${attackerBox(B, "b.", "Loadout B")}${targetBox}</div>
         ${verdict ? `<div class="dverdict">${esc(verdict)}</div>` : ""}
         <div class="dgrid dgrid2">${resultHTML(A, "", "Result A", winA)}${resultHTML(B, "b.", "Result B", winB)}</div>
@@ -1620,8 +1620,8 @@
       : `<div class="dgrid">${attackerBox(A, "", "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
-      <p class="cat-note">How damage works: Superarmor bypass takes a flat amount off the target's superarmor. Superarmor is applied first: damage ÷ damage^(superarmor ÷ 100), with a shotgun blast counted as all its pellets together. Then armor pen lowers the target's defense by that percent, and defense takes that percent off the damage. Supershield blocks whole hits: a blocked hit does no damage and takes 1 off it, or the ammo's supershield bypass if that's higher. Once supershield is at or below the bypass, hits go straight through. Shield takes half of each hit as extra health until it runs out; explosives and bludgeons skip it.</p>
-      <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a>. Credit to <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord) for being the original spreadsheet creator and putting most of these ammo types in.</p>
+      <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
+      <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a> by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord).</p>
     </div>`;
   }
   function ammoChartHTML() {
@@ -1673,18 +1673,18 @@
     const sumHTML = LOAD_SUMS.filter(k => sums[k] != null).map(k =>
       `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}">TOTAL ${esc(k)}</i>: ${fmtN(sums[k])}${k.includes("DEFENSE") || k.includes("SHIELD") ? "%" : ""}</div>`).join("");
     screen.innerHTML = `<div class="results loadout">
-      <div class="leftsum"><b>LOADOUT</b> · carry anything you like, as many as you like
+      <div class="leftsum"><b>LOADOUT</b> · carry anything, as much as you like
         <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
       <div class="ladd">${pickerHTML("load", { items: pickItems, keepOpen: true, label: "Add to loadout", placeholder: "Type to add: ak74, plate carrier, fak…  (Enter adds, keeps open for more)", onPick: v => loadoutAdd(v) })}</div>
       <div class="dbox lspace${over ? " over" : ""}"><div class="dhead">Space</div><div class="stats">
         <label class="lbase">BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(fmtN(baseCarry()))}" title="Everyone starts with ${BASE_CARRY}"></label>
         <div class="lbar"><div style="width:${pct}%"></div></div>
         <div class="stat"><i style="color:#bbb">USED</i>: ${fmtN(used)}${cap != null ? ` / ${fmtN(cap)}` : ""}${cap != null ? (over ? ` <b class="lover">OVER BY ${fmtN(used - cap)}</b>` : ` <span class="lfree">(${fmtN(cap - used)} free)</span>`) : ""}</div>
-        <p class="cat-note">Space = base ${fmtN(baseCarry())}${baseCarry() === BASE_CARRY ? " (what everyone starts with)" : ""} + ${fmtN(sums["CARRY WEIGHT INCREASE"] || 0)} from gear. You can go over; it just shows how far.</p>
+        <p class="cat-note">Space = base ${fmtN(baseCarry())}${baseCarry() === BASE_CARRY ? " (default)" : ""} + ${fmtN(sums["CARRY WEIGHT INCREASE"] || 0)} from gear.</p>
         ${sumHTML}
       </div></div>
-      <div class="llist">${rows || '<p class="none">Nothing yet. Pick something above and press ADD.</p>'}</div>
-      <p class="cat-note">Totals are the PDA's numbers added together. The game may combine some differently (for example, whether defence from two pieces of gear stacks).</p>
+      <div class="llist">${rows || '<p class="none">Nothing yet. Add something above.</p>'}</div>
+      <p class="cat-note">Totals are the PDA's numbers added up. The game may stack some differently.</p>
     </div>`;
   }
   function loadoutAdd(id) {
@@ -1792,7 +1792,7 @@
   function progressChart() {
     const [, total] = countOf(entries);
     const days = Object.keys(progress).sort();
-    if (days.length < 2) return '<div class="row dim">A graph of your progress shows up here once you\'ve marked things on two different days.</div>';
+    if (days.length < 2) return '<div class="row dim">A progress graph shows up after two days of marking.</div>';
     const W = 640, H = 150, L = 34, R = 10, T = 10, B = 22;
     const t0 = Date.parse(days[0]), t1 = Date.parse(days[days.length - 1]) || t0 + 1;
     const x = d => L + (W - L - R) * ((Date.parse(d) - t0) / Math.max(1, t1 - t0));
@@ -1831,7 +1831,7 @@
             <input id="profNew" maxlength="24" placeholder="new profile name">
             <button class="mini-btn" id="profAdd">CREATE</button>
             ${PROF.active !== "Main" ? '<button class="mini-btn danger" id="profDel">DELETE THIS PROFILE</button>' : ""}
-            <span class="dim">Separate checklists, e.g. for an alt account. Each has its own marks, notes and favourites.</span>
+            <span class="dim">Separate checklists, like for an alt.</span>
           </div>
         </div>
         <div class="rows wide">
@@ -1908,7 +1908,7 @@
   }
   function favRows() {
     const ids = Object.keys(favs).filter(id => byId.has(id));
-    if (!ids.length) return '<div class="row dim">Press the ♥︎ on any weapon, person or document page to add it here.</div>';
+    if (!ids.length) return '<div class="row dim">Press ♥︎ on any page to add it here.</div>';
     const groupsOf = [["FAVOURITE GUNS", "#9cff6b", "tools"], ["FAVOURITE PERSON ENTRIES", "#4fd8ff", "bio"], ["FAVOURITE DOCUMENTS", "#ff79e0", "docs"]];
     return groupsOf.map(([title, c, sec]) => {
       const list = ids.map(id => byId.get(id)).filter(e => e.section === sec);
@@ -2007,7 +2007,7 @@
   function accountHTML() {
     if (!API) return "";
     return `<h4>"FOUND BY %" NUMBERS</h4>
-      <label class="chk"><input type="checkbox" id="anonShare"${settings.anonShare !== false ? " checked" : ""}> Count my finds in the anonymous "found by %" numbers (no name or account, just a random id for this browser)</label>`;
+      <label class="chk"><input type="checkbox" id="anonShare"${settings.anonShare !== false ? " checked" : ""}> Count my finds in the anonymous "found by %" numbers</label>`;
   }
   function wireAccount() {
     const el = $("#anonShare");
@@ -2080,7 +2080,7 @@
   function importHTML() {
     const res = ocr.found;
     return `<h4>IMPORT FROM SCREENSHOTS</h4>
-      <p>Screenshot your PDA in-game (weapon tiers, Biography, Documents) and drop the pictures here, or press Ctrl+V to paste one. Every name it can read is something you've unlocked; padlocks are skipped. You check the list before anything is marked.</p>
+      <p>Drop or paste screenshots of your in-game PDA. You check the list before anything is marked.</p>
       <label class="dropzone" id="ocrDrop"><input type="file" id="ocrFile" accept="image/*" multiple hidden>${ocr.busy ? `<span id="ocrMsg">${esc(ocr.msg)}</span>` : "<b>DROP SCREENSHOTS HERE</b> or click to choose"}</label>
       ${!ocr.busy && ocr.msg ? `<div class="msg" style="color:#ff8a7a">${esc(ocr.msg)}</div>` : ""}
       ${res ? (res.length ? `<div class="ocrres"><div class="ocrhead">Found <b>${res.length}</b> new${ocr.already ? ` · ${ocr.already} you already had` : ""}. Untick anything that's wrong:</div>
@@ -2316,9 +2316,9 @@
   }
   let admStats = null;
   function testingHTML() {
-    return `<details class="setupbox"><summary><b>TESTING</b> try parts of the site as a visitor sees them</summary>
+    return `<details class="setupbox"><summary><b>TESTING</b> </summary>
       <div class="btnrow"><button class="mini-btn" data-admboot="0">PLAY BOOT-UP SCREEN</button><button class="mini-btn" data-admboot="3000">PLAY AS A SLOW LOAD (3 S)</button><button class="mini-btn" data-admboot="8000">PLAY AS A VERY SLOW LOAD (8 S)</button></div>
-      <p class="dim">Plays the full boot-up screen with sound, even if it's turned off in SETTINGS. The slow loads hold the loading state first, like a visitor on a bad connection sees. Click or press a key to skip, same as normal.</p></details>`;
+      <p class="dim">Plays even if turned off in SETTINGS. Slow loads wait first, like a bad connection.</p></details>`;
   }
   function statsHTML() {
     if (admStats === null) { admStats = {}; api("GET", "/api/admin/stats").then(([st, r]) => { admStats = st === 200 ? r : { err: 1 }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
@@ -2642,7 +2642,7 @@
   function transferHTML() {
     if (!API) return "";
     return `<h4>MOVE TO ANOTHER DEVICE</h4>
-      <p>Make a transfer link here, then open it on your other phone or computer (or type the code there). It copies everything: finds, favourites, notes, counts and your loadout. Links last 24 hours.</p>
+      <p>Open the link (or type the code) on your other device. Lasts 24 hours.</p>
       ${xfer ? `<div class="xfer"><div class="xcode">${esc(xfer.code.slice(0, 4))}-${esc(xfer.code.slice(4))}</div><div id="xqr" class="xqr"></div>
           <div class="btnrow"><input id="xferOut" readonly value="${esc(xfer.link)}"><button class="pbtn" id="copyXfer">${I.share} COPY LINK</button></div>
           <p class="dim">Scan the QR code with your phone's camera, or send yourself the link. It's a snapshot: make a new one if you mark more here.</p></div>`
@@ -2704,7 +2704,7 @@
       <div class="cloud">
         <div class="dhead">Download Entries<span style="display:flex;width:18px">${I.download}</span></div>
         <div class="cloud-body">
-          <p>Your checkmarks are saved in this browser only. Download a backup file to keep them safe or to move them to another device or browser, then upload it there.</p>
+          <p>Progress is saved in this browser only. Keep a backup.</p>
           <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
@@ -2712,15 +2712,15 @@
           ${importHTML()}
           ${accountHTML()}
           <h4>MARK A LIST AS FOUND</h4>
-          <p>Paste names, one per line (from your notes, a friend, or a COPY AS TEXT list). Anything that matches an entry gets marked found. You can undo it with Ctrl+Z.</p>
+          <p>Paste names, one per line, to mark them found.</p>
           <textarea id="bulkIn" class="bulkin" rows="6" placeholder="AK74&#10;Plate Carrier Vest&#10;10rnd ADV Mag&#10;..."></textarea>
           <div class="btnrow"><button class="pbtn" id="bulkGo">MARK FOUND</button></div>
           <div class="msg" id="bulkMsg"></div>
           <h4>SHARE YOUR PDA</h4>
-          <p>A link that shows your checklist to anyone, read-only. It doesn't change as you find more, so send a new one later.</p>
+          <p>A read-only link to your checklist. Make a new one when you find more.</p>
           <div class="btnrow"><input id="shareOut" readonly value="${esc(shareLink())}"><button class="pbtn" id="copyShare">${I.share} COPY LINK</button></div>
           <h4>COMPARE WITH A FRIEND</h4>
-          <p>Paste a friend's share link to see what they have that you don't. Their entries get a small badge on your tiles.</p>
+          <p>Paste a friend's link to see what they have that you don't.</p>
           <div class="btnrow"><input id="friendIn" placeholder="paste their link here" value=""><button class="pbtn" id="doCompare">COMPARE</button>${friend ? '<button class="pbtn danger" id="stopCompare">STOP COMPARING</button>' : ""}</div>
           ${compareHTML()}
         </div>
@@ -2881,7 +2881,7 @@
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
     const kinds = ["Description", "Stats", "Picture", "Missing entry", "Wrong info", "Site bug", "Idea"];
     return `<form class="contrib" autocomplete="off" novalidate>
-      <p>Know a description, some stats, a missing weapon, or have a better picture? Send it here${formLive() ? " — no account needed. It goes straight to the site owner, who reviews it and adds it." : ". (This currently opens GitHub, which needs a free account.)"}</p>
+      <p>Send missing info or a better picture.${formLive() ? " No account needed." : " (Opens GitHub, which needs an account.)"}</p>
       <div class="frow"><label>WHAT IS IT?<select name="ckind">${kinds.map(k => `<option${k === draft.kind ? " selected" : ""}>${k}</option>`).join("")}</select></label>
         <label class="grow">WHICH ENTRY? <small>(optional)</small><input name="centry" list="centries" value="${esc(draft.entry)}" placeholder="start typing a name"><datalist id="centries">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label></div>
       <label>DETAILS<textarea name="ctext" rows="6" placeholder="Paste the description or stats, or describe what's wrong.">${esc(draft.text)}</textarea></label>
@@ -2912,7 +2912,7 @@
     const groups = helpWanted();
     if (!groups.length) return "";
     return `<h3>-=-=- HELP WANTED -=-=-</h3>
-      <p class="cat-note">The site doesn't have this info yet. If you have one of these in your PDA, press SEND next to it (screenshots or a video link are perfect).</p>
+      <p class="cat-note">Missing info. Have it? Press SEND.</p>
       ${groups.map(([title, list, what, kind]) => `<details class="helpw"><summary>${esc(title)} <small>${list.length}</small></summary><div class="helplist">${sortEntries(list).map(e =>
         `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></div>`).join("")}</div></details>`).join("")}`;
   }
@@ -2961,50 +2961,41 @@
   function renderManual() {
     screen.innerHTML = `
       <div class="manual">
-        <h3>-=-=- TRACKER GUIDE -=-=-</h3>
-        <h4>How do I mark something as found?</h4>
-        <p>Hover over a weapon, person or document and press the star in its corner (on a phone it's always showing). Or switch to the checklist view (&#9776; next to the search bar) and tick the boxes. Every stat page has a star too.</p>
-        <h4>I marked the wrong thing!</h4>
-        <p>Press UNDO on the message at the bottom of the screen, or Ctrl+Z. It works for whole tiers and tabs too.</p>
-        <h4>Can I mark lots at once?</h4>
-        <p>Mark one entry, then hold Shift and press the star on another: everything between them gets the same state. You can also click a TIER header, or click the Biography/Documents tab you're already on, to unlock the whole thing (it asks "ARE YOU SURE?" first).</p>
-        <h4>How do I see only what I'm missing?</h4>
-        <p>Use ALL / MISSING / FOUND next to the search bar. The WHAT'S LEFT tab lists every missing entry in the whole PDA in one place.</p>
-        <h4>How do I see stats?</h4>
-        <p>Click the weapon, person or document. Cards that hold several variants (like Robinson or Rogues) are one unlock; switch between variants with the tabs along the bottom. The arrows next to Preview flip through pictures.</p>
-        <h4>Searching</h4>
-        <p>Search finds names, and also stats: try "9x19mm", "tier 5" or "suppressor". Narrow it with the WEAPONS / PEOPLE / DOCUMENTS buttons.</p>
-        <h4>Favourites and notes</h4>
-        <p>Press the &#9829;&#xFE0E; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
-        <h4>Sharing and comparing</h4>
-        <p>CLOUD gives you a link anyone can open to see your PDA (read-only). Paste a friend's link there to see what they have that you don't.</p>
-        <h4>Logging a lot at once</h4>
-        <p>On any page, ★ FOUND + NEXT (or N) marks it and opens the next one you're missing in that category. NEXT MISSING (or M) skips ahead without marking. HIDE DONE next to the search bar hides tiers, tabs and categories you've finished.</p>
-        <h4>Comparing weapons</h4>
-        <p>Press COMPARE + on up to 3 weapon pages, then VIEW on the bar in the corner. The best value in each row is green and the worst is red.</p>
-        <h4>Sorting by stats and calibers</h4>
-        <p>In TOOLS, use SORT BY and CALIBER above the weapons. The blue CALIBERS button at the bottom of the categories lists every caliber and what fires it.</p>
-        <h4>Links, pictures and profiles</h4>
-        <p>LINK on any page copies a link straight to it. Click a picture to see it full size. SAVE PROFILES on the Profile tab keep separate checklists (for an alt account, say).</p>
-        <h4>Install it like an app</h4>
-        <p>On a phone, use your browser's "Add to Home Screen". On a computer, look for the install icon in the address bar. It then works offline too.</p>
-        <h4>Will I lose my progress?</h4>
-        <p>Progress is saved in this browser. Clearing site data or using a private window will lose it, so use CLOUD to download a backup now and then. The site reminds you after 25 new marks.</p>
-        <h3>-=-=- QUICK KEYS -=-=-</h3>
-        <div class="k">ARROW KEYS - MOVE BETWEEN ENTRIES</div>
-        <div class="k">SPACE - MARK FOUND / MISSING</div>
+        <h3>-=-=- GUIDE -=-=-</h3>
+        <h4>Mark something found</h4>
+        <p>Press the star on it. Shift + star marks a range.</p>
+        <h4>Mark a lot at once</h4>
+        <p>Click a TIER bar, or the tab you're on.</p>
+        <h4>Undo</h4>
+        <p>Ctrl+Z, or UNDO on the message at the bottom.</p>
+        <h4>See what's missing</h4>
+        <p>MISSING next to search, or the WHAT'S LEFT tab.</p>
+        <h4>Stats</h4>
+        <p>Click an entry. Cards with variants count as one find.</p>
+        <h4>Search</h4>
+        <p>Names or stats, like "9x19mm" or "tier 5". ENTER marks the top result.</p>
+        <h4>Keep going</h4>
+        <p>FOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.</p>
+        <h4>Compare weapons</h4>
+        <p>COMPARE + on up to 3 weapons, then VIEW.</p>
+        <h4>Share</h4>
+        <p>LINK copies a link to a page. CLOUD has a link to your whole PDA.</p>
+        <h4>Don't lose progress</h4>
+        <p>It's saved in this browser only. Back it up in CLOUD.</p>
+        <h4>Send info</h4>
+        <p>SUBMIT, or FIX? on any page. No account needed.</p>
+        <h3>-=-=- KEYS -=-=-</h3>
+        <div class="k">ARROWS - MOVE</div>
+        <div class="k">SPACE - MARK</div>
         <div class="k">ENTER - OPEN</div>
-        <div class="k">SHIFT + STAR - MARK A RANGE</div>
         <div class="k">CTRL + Z - UNDO</div>
         <div class="k">/ - SEARCH</div>
-        <div class="k">ESC - BACK / CLEAR SEARCH</div>
-        <div class="k">&#8592; &#8594; ON A PAGE - NEXT / PREVIOUS PICTURE</div>
-        <h4>Sending in info</h4>
-        <p>Use the SUBMIT tab (or FIX? on any page) to send descriptions, stats, pictures or bug reports. No account needed. The changelog is on that tab too.</p>
+        <div class="k">ESC - BACK</div>
         <h3>-=-=- ABOUT -=-=-</h3>
-        <p>A fan-made tracker for Once A Normal City. Not affiliated with the game's developers. Entries marked ??? are ones whose names aren't known yet.</p>
+        <p>Fan-made. Not affiliated with the game. ??? means the name isn't known yet.</p>
       </div>`;
   }
+
 
   let admForm = false;
   function renderSettings() {
@@ -3026,20 +3017,20 @@
         ${sw("lockedNames", "Show names on locked entries?")}
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
-        ${sw("light", "Light theme? (easier to read in daylight)")}
+        ${sw("light", "Light theme?")}
         ${sw("bootAnim", "Boot-up screen when the site opens?")}
         ${sw("pageAnim", "Slide between pages, like the in-game PDA?")}
         <div class="srow"><input type="range" id="tscale" min="80" max="140" step="10" value="${settings.textScale || 100}" aria-label="Text size"><span>Text size: <b id="tscalev">${settings.textScale || 100}</b>%</span></div>
-        ${sw("cbMode", "Colour-blind friendly marks? (adds a clear ✓ to everything found and DONE to finished tiers, so nothing relies on colour)")}
-        <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>
+        ${sw("cbMode", "Colour-blind friendly marks?")}
+        <div class="srow dim"></div>
         <h3>Checking off</h3>
         ${note("Safety nets for marking things.")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
-        ${sw("kbMode", "Keyboard mode? (always shows where you are, keeps your place; arrows move, SPACE marks, [ ] switch category, ? lists keys)")}
+        ${sw("kbMode", "Keyboard mode? (press ? for keys)")}
         <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">A quick walkthrough of the basics.</span></div>
         <h3>App</h3>
-        ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
-        <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
+        ${note("Works offline in its own window.")}
+        <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "Or use your browser's menu: Add to Home screen."}</span>`}</div>
         ${API ? `<h3>Admin</h3>${adminSess ? `<div class="srow"><span>Signed in as admin <b>${esc(adminSess.name)}</b>.</span><button class="pbtn" id="admOut">SIGN OUT</button></div>`
           : admForm ? `<form id="admLogin" class="accform" autocomplete="on">
             <input id="admName" name="username" autocomplete="username" placeholder="username" maxlength="40">
@@ -3047,7 +3038,7 @@
             <div class="btnrow"><button class="pbtn" type="submit">SIGN IN</button><button class="pbtn" type="button" id="admFormX">CANCEL</button><span class="msg" id="admMsg"></span></div></form>`
             : `<div class="srow"><button class="pbtn" id="admOpen">ADMIN SIGN-IN</button><span class="dim">For the people who run this site. Signing in shows the ADMIN tab.</span></div>`}` : ""}
         <h3>Data</h3>
-        ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
+        ${note("Saved in this browser only. Clearing browser data deletes it.")}
         <div class="srow"><button class="pbtn" id="bkNow">DOWNLOAD BACKUP</button><span class="dim">${sinceBackup ? `${sinceBackup} change${sinceBackup === 1 ? "" : "s"} since your last backup.` : "Backed up."} Upload it again in CLOUD.</span></div>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
