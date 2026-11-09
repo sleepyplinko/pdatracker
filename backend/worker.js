@@ -1,11 +1,9 @@
 /* =====================================================================
    PDA TRACKER — CLOUD BACKEND (Cloudflare Worker + D1)
    ---------------------------------------------------------------------
-   Accounts, cross-device sync, anonymous rarity stats and public
-   profile links. Needs a D1 database bound as "DB" (see README.md).
-
-   Passwords never reach this server: the site turns the password into
-   a key in the browser (PBKDF2), and here that key is salted + hashed.
+   No player accounts. This Worker handles: submissions from the SUBMIT
+   tab, admin sign-in (ADMIN_KEYS secret), info admins publish, and the
+   anonymous "found by X%" numbers. Needs a D1 database bound as "DB".
    ===================================================================== */
 
 const NAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -83,9 +81,11 @@ async function whoami(env, req) {
   const s = await env.DB.prepare("SELECT name FROM sessions WHERE token = ?").bind(await sha256(m[1])).first();
   return s ? s.name : null;
 }
-const meRow = (env, name) => env.DB.prepare("SELECT display, found, ver, share, public, updated FROM users WHERE name = ?").bind(name).first();
-/* admins are listed in the Worker's ADMINS variable, e.g. "Gabewant,OtherName" */
-const isAdmin = (env, name) => !!name && String(env.ADMINS || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean).includes(name.toLowerCase());
+/* admins sign in with a name + password set on the Worker as the secret ADMIN_KEYS:
+   "sleepyplinko=some-long-password,ForsakenFireFly=another-password" */
+const adminKeys = env => String(env.ADMIN_KEYS || "").split(",").map(x => x.trim()).filter(x => x.includes("=")).map(x => { const i = x.indexOf("="); return [x.slice(0, i).trim(), x.slice(i + 1)]; }).filter(([n, p]) => n && p.length >= 8);
+const isAdmin = (env, sess) => !!sess && sess.startsWith("admin:") && adminKeys(env).some(([n]) => n.toLowerCase() === sess.slice(6).toLowerCase());
+const shown = sess => String(sess || "").replace(/^admin:/, "");
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
 async function cachedJSON(ctx, url, ttl, make) {
   const cache = caches.default, key = new Request(url);
@@ -102,66 +102,8 @@ async function route(req, env, ctx) {
   const M = req.method;
 
   if (M === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", admins: String(env.ADMINS || "").split(",").map(x => x.trim()).filter(Boolean) });
+  if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", admins: adminKeys(env).map(([n]) => n) });
 
-  /* ---- create an account ---- */
-  if (path === "/api/register" && M === "POST") {
-    if (!(await rateLimit(env, req))) return err(429, "Too many tries. Wait a few minutes.");
-    const b = await body(req); if (!b) return err(400, "Bad request.");
-    const name = String(b.name || ""), key = String(b.key || "");
-    if (!NAME_RE.test(name)) return err(400, "Names are 3-20 letters, numbers or _.");
-    if (!/^[0-9a-f]{64}$/.test(key)) return err(400, "Bad key.");
-    const found = cleanIds(b.found || []) || [];
-    if (await env.DB.prepare("SELECT 1 FROM users WHERE name = ?").bind(name).first()) return err(409, "That name is taken.");
-    const salt = randomHex(16), t = now();
-    await env.DB.prepare("INSERT INTO users (name, display, salt, hash, found, ver, share, public, created, updated) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)")
-      .bind(name, name, salt, await sha256(salt + key), JSON.stringify(found), b.share === false ? 0 : 1, b.public === false ? 0 : 1, t, t).run();
-    return json({ token: await newSession(env, name), ...meOut(await meRow(env, name)) }, 201);
-  }
-
-  /* ---- log in ---- */
-  if (path === "/api/login" && M === "POST") {
-    if (!(await rateLimit(env, req))) return err(429, "Too many tries. Wait a few minutes.");
-    const b = await body(req); if (!b) return err(400, "Bad request.");
-    const name = String(b.name || ""), key = String(b.key || "");
-    const u = NAME_RE.test(name) && await env.DB.prepare("SELECT name, salt, hash FROM users WHERE name = ?").bind(name).first();
-    if (!u || !sameString(await sha256(u.salt + key), u.hash)) return err(401, "Wrong name or password.");
-    return json({ token: await newSession(env, u.name), ...meOut(await meRow(env, u.name)) });
-  }
-
-  /* ---- my account ---- */
-  if (path === "/api/me") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    if (M === "GET") { const u = await meRow(env, name); return u ? json(meOut(u)) : err(404, "Account not found."); }
-    if (M === "PUT") {
-      const b = await body(req); if (!b) return err(400, "Bad request.");
-      const u = await meRow(env, name); if (!u) return err(404, "Account not found.");
-      const sets = [], vals = [];
-      if ("found" in b) {
-        const found = cleanIds(b.found); if (!found) return err(400, "Bad found list.");
-        if (b.ver !== u.ver) return json({ conflict: true, ...meOut(u) }, 409);   // changed on another device: merge and retry
-        sets.push("found = ?", "ver = ver + 1"); vals.push(JSON.stringify(found));
-        const had = new Set(JSON.parse(u.found)), added = found.filter(x => !had.has(x));
-        if (added.length) {                                             // for friends' "recent finds"
-          const t = now(), st = added.length <= 5 ? added.map(id => env.DB.prepare("INSERT INTO activity (name, id, n, t) VALUES (?, ?, 1, ?)").bind(name, id, t))
-            : [env.DB.prepare("INSERT INTO activity (name, id, n, t) VALUES (?, '', ?, ?)").bind(name, added.length, t)];
-          st.push(env.DB.prepare("DELETE FROM activity WHERE t < ?").bind(t - 30 * 86400));
-          ctx.waitUntil(env.DB.batch(st).catch(() => {}));
-        }
-      }
-      if (typeof b.share === "boolean") { sets.push("share = ?"); vals.push(b.share ? 1 : 0); }
-      if (typeof b.public === "boolean") { sets.push("public = ?"); vals.push(b.public ? 1 : 0); }
-      if (!sets.length) return json(meOut(u));
-      sets.push("updated = ?"); vals.push(now());
-      await env.DB.prepare(`UPDATE users SET ${sets.join(", ")} WHERE name = ?`).bind(...vals, name).run();
-      return json(meOut(await meRow(env, name)));
-    }
-    if (M === "DELETE") {
-      await env.DB.batch([env.DB.prepare("DELETE FROM users WHERE name = ?").bind(name), env.DB.prepare("DELETE FROM sessions WHERE name = ?").bind(name),
-        env.DB.prepare("DELETE FROM friends WHERE name = ? OR friend = ?").bind(name, name), env.DB.prepare("DELETE FROM counts WHERE name = ?").bind(name), env.DB.prepare("DELETE FROM activity WHERE name = ?").bind(name)]);
-      return json({ deleted: true });
-    }
-  }
   if (path === "/api/logout" && M === "POST") {
     const m = (req.headers.get("Authorization") || "").match(/^Bearer ([0-9a-f]{64})$/);
     if (m) await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(await sha256(m[1])).run();
@@ -169,64 +111,39 @@ async function route(req, env, ctx) {
   }
 
 
-  /* ---- found counts (how many times you've found each thing) ---- */
-  if (path === "/api/counts") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    const row = await env.DB.prepare("SELECT data FROM counts WHERE name = ?").bind(name).first();
-    const cur = row ? JSON.parse(row.data) : {};
-    if (M === "GET") return json(cur);
-    if (M === "PUT") {
-      const b = await body(req); if (!b || (typeof b.counts !== "object" && typeof b.set !== "object")) return err(400, "Bad request.");
-      Object.entries(b.counts || {}).forEach(([id, n]) => { if (ID_RE.test(id) && Number.isInteger(n) && n >= 0 && n < 100000) cur[id] = Math.max(cur[id] || 0, n); });
-      if (b.set && typeof b.set === "object") Object.entries(b.set).forEach(([id, n]) => { if (ID_RE.test(id) && Number.isInteger(n) && n >= 0 && n < 100000) { if (n) cur[id] = n; else delete cur[id]; } });
-      if (Object.keys(cur).length > MAX_IDS) return err(400, "Too many.");
-      await env.DB.prepare("INSERT INTO counts (name, data) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET data = excluded.data").bind(name, JSON.stringify(cur)).run();
-      return json(cur);
-    }
+  /* ---- admin sign-in ---- */
+  if (path === "/api/admin/login" && M === "POST") {
+    if (!(await rateLimit(env, req, "a:", 10))) return err(429, "Too many tries. Wait a few minutes.");
+    const b = await body(req); if (!b) return err(400, "Bad request.");
+    const name = String(b.name || "").trim(), pass = String(b.password || "");
+    const hit = adminKeys(env).find(([n]) => n.toLowerCase() === name.toLowerCase());
+    const ok = hit && sameString(await sha256("pw:" + pass), await sha256("pw:" + hit[1]));
+    if (!ok) return err(401, "Wrong name or password.");
+    await env.DB.prepare("DELETE FROM sessions WHERE created < ?").bind(now() - 60 * 86400).run();
+    return json({ token: await newSession(env, "admin:" + hit[0]), name: hit[0] });
   }
 
-  /* ---- friends: saved list of other players' public profiles ---- */
-  if (path === "/api/friends") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    if (M === "GET") {
-      const rows = await env.DB.prepare("SELECT u.display AS name, u.found AS found, u.updated AS updated, u.public AS public FROM friends f JOIN users u ON u.name = f.friend WHERE f.name = ? ORDER BY f.created").bind(name).all();
-      return json((rows.results || []).map(r => r.public ? { name: r.name, found: JSON.parse(r.found), updated: r.updated } : { name: r.name, hidden: true }));
-    }
-    if (M === "POST") {
-      const b = await body(req); const f = String((b && b.name) || "");
-      if (!NAME_RE.test(f)) return err(400, "Names are 3-20 letters, numbers or _.");
-      if (f.toLowerCase() === name.toLowerCase()) return err(400, "That's you!");
-      const u = await env.DB.prepare("SELECT display, public FROM users WHERE name = ?").bind(f).first();
-      if (!u) return err(404, "No player with that name.");
-      if (!u.public) return err(403, "That player's profile is private.");
-      const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM friends WHERE name = ?").bind(name).first();
-      if (n && n.n >= 50) return err(400, "You can have up to 50 friends.");
-      await env.DB.prepare("INSERT OR IGNORE INTO friends (name, friend, created) VALUES (?, ?, ?)").bind(name, f, now()).run();
-      return json({ ok: true, name: u.display }, 201);
-    }
+  /* ---- anonymous "found by X%" numbers: each browser sends its list under a random id, no name ---- */
+  if (path === "/api/anon" && M === "PUT") {
+    const b = await body(req); if (!b || !/^[0-9a-f]{32}$/.test(String(b.device || ""))) return err(400, "Bad request.");
+    const found = cleanIds(b.found); if (!found) return err(400, "Bad found list.");
+    const known = await env.DB.prepare("SELECT 1 FROM anon WHERE device = ?").bind(b.device).first();
+    if (!known && !(await rateLimit(env, req, "n:", 5))) return err(429, "Slow down.");          // new browsers per IP
+    if (!found.length) { await env.DB.prepare("DELETE FROM anon WHERE device = ?").bind(b.device).run(); return json({ ok: true }); }
+    await env.DB.prepare("INSERT INTO anon (device, found, updated) VALUES (?, ?, ?) ON CONFLICT(device) DO UPDATE SET found = excluded.found, updated = excluded.updated").bind(b.device, JSON.stringify(found), now()).run();
+    return json({ ok: true });
   }
-  if (path === "/api/friends/activity" && M === "GET") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    const rows = await env.DB.prepare("SELECT u.display AS name, a.id AS id, a.n AS n, a.t AS t FROM friends f JOIN users u ON u.name = f.friend JOIN activity a ON a.name = f.friend WHERE f.name = ? AND u.public = 1 AND a.t > ? ORDER BY a.t DESC LIMIT 40").bind(name, now() - 14 * 86400).all();
-    return json(rows.results || []);
-  }
-  const fm = path.match(/^\/api\/friends\/([A-Za-z0-9_]{3,20})$/);
-  if (fm && M === "DELETE") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    await env.DB.prepare("DELETE FROM friends WHERE name = ? AND friend = ?").bind(name, fm[1]).run();
+  if (path === "/api/anon" && M === "DELETE") {
+    const b = await body(req); if (b && /^[0-9a-f]{32}$/.test(String(b.device || ""))) await env.DB.prepare("DELETE FROM anon WHERE device = ?").bind(b.device).run();
     return json({ ok: true });
   }
 
-  /* ---- leaderboard: public profiles, most found (optionally one category) ---- */
-  if (path === "/api/leaderboard" && M === "GET") {
-    const prefix = clip(url.searchParams.get("prefix") || "", 60);
-    if (prefix && !/^[tbd]\|[^%_\n]*$/.test(prefix)) return err(400, "Bad category.");
-    return cachedJSON(ctx, url.origin + "/api/leaderboard?prefix=" + encodeURIComponent(prefix), LB_TTL, async () => {
-      const rows = prefix
-        ? await env.DB.prepare("SELECT u.display AS name, COUNT(*) AS n FROM users u, json_each(u.found) j WHERE u.public = 1 AND j.value LIKE ? GROUP BY u.name ORDER BY n DESC, u.updated ASC LIMIT 50").bind(prefix + "%").all()
-        : await env.DB.prepare("SELECT display AS name, json_array_length(found) AS n FROM users WHERE public = 1 AND found != '[]' ORDER BY n DESC, updated ASC LIMIT 50").all();
-      return { prefix, rows: rows.results || [], at: now() };
-    });
+  /* ---- what happened to things you sent (by the private codes your browser kept) ---- */
+  if (path === "/api/substatus" && M === "GET") {
+    const toks = String(url.searchParams.get("t") || "").split(",").filter(t => /^[0-9a-f]{24}$/.test(t)).slice(0, 50);
+    if (!toks.length) return json([]);
+    const rows = await env.DB.prepare(`SELECT token, kind, entry, status, CASE WHEN status = 'new' THEN '' ELSE note END AS note, created FROM submissions WHERE token IN (${toks.map(() => "?").join(",")})`).bind(...toks).all();
+    return json(rows.results || []);
   }
 
   /* ---- submissions: anyone can send; admins read them ---- */
@@ -235,12 +152,11 @@ async function route(req, env, ctx) {
     if (b.botcheck) return json({ ok: true });                       // spam bot filled the hidden box
     const text = clip(b.text, 4000).trim(), link = clip(b.link, 500).trim();
     if (!text && !link) return err(400, "Write some details or add a link first.");
-    const subAcct = await whoami(env, req);
-    if (await isBlocked(env, req, subAcct)) return err(403, "You can't send info to this site.");
+    if (await isBlocked(env, req, "")) return err(403, "You can't send info to this site.");
     if (!(await rateLimit(env, req, "s:", SUBMIT_LIMIT))) return err(429, "You've sent a lot just now. Wait a few minutes.");
-    const account = (await whoami(env, req)) || "";
-    const r = await env.DB.prepare("INSERT INTO submissions (kind, entry, text, link, who, account, created) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .bind(clip(b.kind, 40) || "Other", clip(b.entry, 150), text, link, clip(b.name, 60), account, now()).run();
+    const account = "", token = randomHex(12);
+    const r = await env.DB.prepare("INSERT INTO submissions (kind, entry, text, link, who, account, created, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(clip(b.kind, 40) || "Other", clip(b.entry, 150), text, link, clip(b.name, 60), account, now(), token).run();
     if (r.meta && r.meta.last_row_id) await env.DB.prepare("INSERT OR REPLACE INTO subip (sub, ip) VALUES (?, ?)").bind(r.meta.last_row_id, await ipTag(req)).run();
     if (env.DISCORD_WEBHOOK) {                                        // optional ping, kept secret on the server
       ctx.waitUntil(fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
@@ -248,18 +164,13 @@ async function route(req, env, ctx) {
         allowed_mentions: { parse: ["everyone"] },
         embeds: [{ title: `${clip(b.kind, 40) || "Other"}${b.entry ? ": " + clip(b.entry, 150) : ""}`, description: (text + (link ? `\n\n${link}` : "")).slice(0, 3900), footer: { text: [clip(b.name, 60), account && "account: " + account].filter(Boolean).join(" · ") || "anonymous" } }] }) }).catch(() => {}));
     }
-    return json({ ok: true }, 201);
+    return json({ ok: true, token }, 201);
   }
-  if (path === "/api/mysubs" && M === "GET") {
-    const name = await whoami(env, req); if (!name) return err(401, "Logged out. Log in again.");
-    const rows = await env.DB.prepare("SELECT id, kind, entry, status, note, created FROM submissions WHERE account = ? ORDER BY created DESC LIMIT 50").bind(name).all();
-    return json(rows.results || []);
-  }
-
-  if (path === "/api/admin/check" && M === "GET") return json({ admin: isAdmin(env, await whoami(env, req)), announce: !!env.ANNOUNCE_WEBHOOK });
+  if (path === "/api/admin/check" && M === "GET") { const sess = await whoami(env, req); return json({ admin: isAdmin(env, sess), name: isAdmin(env, sess) ? shown(sess) : "", announce: !!env.ANNOUNCE_WEBHOOK }); }
   if (path.startsWith("/api/admin/")) {
-    const name = await whoami(env, req);
-    if (!isAdmin(env, name)) return err(403, "Admins only.");
+    const sess = await whoami(env, req);
+    if (!isAdmin(env, sess)) return err(403, "Admins only.");
+    const name = shown(sess);
     if (path === "/api/admin/submissions" && M === "GET") {
       const status = url.searchParams.get("status") || "new";
       const rows = await env.DB.prepare("SELECT * FROM submissions WHERE status = ? ORDER BY created DESC LIMIT 200").bind(status).all();
@@ -276,24 +187,25 @@ async function route(req, env, ctx) {
     if (sm && M === "DELETE") { await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true }); }
     /* what's set up on this Worker (shown on the admin page) */
     if (path === "/api/admin/setup" && M === "GET") {
-      const want = { users: 1, sessions: 1, attempts: 1, submissions: 2, overrides: 2, friends: 2, counts: 2, activity: 3, changes: 4, blocks: 4, subip: 4 };
+      const want = { sessions: 1, attempts: 1, submissions: 2, overrides: 2, changes: 4, blocks: 4, subip: 4, anon: 5 };
       const rows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
       const have = new Set((rows.results || []).map(r => r.name));
       const missing = Object.keys(want).filter(t => !have.has(t));
       const fix = missing.length ? [...new Set(missing.map(t => want[t] === 1 ? "schema.sql" : `schema-update-${want[t]}.sql`))].join(", then ") : "";
-      return json({ tables: { missing, fix }, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
+      const cols = (await env.DB.prepare("SELECT name FROM pragma_table_info('submissions')").all()).results || [];
+      if (have.has("submissions") && !cols.some(c => c.name === "token") && !missing.includes("anon")) { missing.push("submissions.token"); }
+      const fix2 = missing.includes("submissions.token") ? "schema-update-5.sql" : fix;
+      return json({ admins: adminKeys(env).length, tables: { missing, fix: fix2 }, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
     }
     /* numbers for the admin page */
     if (path === "/api/admin/stats" && M === "GET") {
       const wk = now() - 7 * 86400, day = now() - 86400;
       const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
-      const [users, active, active1, pub, share, subsWeek, subsNew, finds] = await Promise.all([
-        q("SELECT COUNT(*) AS n FROM users"), q("SELECT COUNT(*) AS n FROM users WHERE updated > ?", wk), q("SELECT COUNT(*) AS n FROM users WHERE updated > ?", day),
-        q("SELECT COUNT(*) AS n FROM users WHERE public = 1"), q("SELECT COUNT(*) AS n FROM users WHERE share = 1"),
+      const [all, active, active1, subsWeek, subsNew, avg] = await Promise.all([
+        q("SELECT COUNT(*) AS n FROM anon"), q("SELECT COUNT(*) AS n FROM anon WHERE updated > ?", wk), q("SELECT COUNT(*) AS n FROM anon WHERE updated > ?", day),
         q("SELECT COUNT(*) AS n FROM submissions WHERE created > ?", wk), q("SELECT COUNT(*) AS n FROM submissions WHERE status = 'new'"),
-        q("SELECT COALESCE(SUM(n), 0) AS n FROM activity WHERE t > ?", wk).catch(() => ({ n: 0 }))]);
-      const avg = await q("SELECT AVG(json_array_length(found)) AS n FROM users WHERE found != '[]'");
-      return json({ users: users.n, active7: active.n, active1: active1.n, public: pub.n, share: share.n, subsWeek: subsWeek.n, subsNew: subsNew.n, finds7: finds.n, avgFound: avg && avg.n ? Math.round(avg.n) : 0 });
+        q("SELECT AVG(json_array_length(found)) AS n FROM anon")]);
+      return json({ players: all.n, active7: active.n, active1: active1.n, subsWeek: subsWeek.n, subsNew: subsNew.n, avgFound: avg && avg.n ? Math.round(avg.n) : 0 });
     }
     /* change history + undo */
     if (path === "/api/admin/changes" && M === "GET") {
@@ -323,7 +235,7 @@ async function route(req, env, ctx) {
       const acct = sub ? sub.account || "" : NAME_RE.test(String(b.account || "")) ? String(b.account) : "";
       const ip = sub ? sub.ip || "" : "";
       if (!acct && !ip) return err(400, "Nothing to block: that submission has no account or address on record.");
-      if (acct && isAdmin(env, acct)) return err(400, "You can't block an admin.");
+
       await env.DB.prepare("INSERT INTO blocks (ip, account, note, by, created) VALUES (?, ?, ?, ?, ?)").bind(ip, acct, clip(b.note || (sub && sub.who) || "", 200), name, now()).run();
       if (b.sub && b.purge) {                                         // also hide everything else they sent
         if (ip) await env.DB.prepare("UPDATE submissions SET status = 'rejected' WHERE status = 'new' AND id IN (SELECT sub FROM subip WHERE ip = ?)").bind(ip).run();
@@ -400,22 +312,12 @@ async function route(req, env, ctx) {
 
   /* ---- rarity: how many sharing players have each entry ---- */
   if (path === "/api/rarity" && M === "GET") {
-    const cache = caches.default, key = new Request(url.origin + "/api/rarity");
-    const hit = await cache.match(key); if (hit) return hit;
-    const players = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE share = 1 AND found != '[]'").first();
-    const rows = await env.DB.prepare("SELECT j.value AS id, COUNT(*) AS n FROM users, json_each(users.found) AS j WHERE users.share = 1 GROUP BY j.value").all();
-    const counts = {}; (rows.results || []).forEach(r => { counts[r.id] = r.n; });
-    const res = json({ players: players ? players.n : 0, counts, at: now() }, 200, { "Cache-Control": `public, max-age=${RARITY_TTL}` });
-    ctx.waitUntil(cache.put(key, res.clone()));
-    return res;
-  }
-
-  /* ---- public profile ---- */
-  const pm = path.match(/^\/api\/u\/([A-Za-z0-9_]{3,20})$/);
-  if (pm && M === "GET") {
-    const u = await env.DB.prepare("SELECT display, found, updated FROM users WHERE name = ? AND public = 1").bind(pm[1]).first();
-    if (!u) return err(404, "No public profile with that name.");
-    return json({ name: u.display, found: JSON.parse(u.found), updated: u.updated });
+    return cachedJSON(ctx, url.origin + "/api/rarity", RARITY_TTL, async () => {
+      const players = await env.DB.prepare("SELECT COUNT(*) AS n FROM anon").first();
+      const rows = await env.DB.prepare("SELECT j.value AS id, COUNT(*) AS n FROM anon, json_each(anon.found) AS j GROUP BY j.value").all();
+      const counts = {}; (rows.results || []).forEach(r => { counts[r.id] = r.n; });
+      return { players: players ? players.n : 0, counts, at: now() };
+    });
   }
 
   return err(404, "Not found.");
@@ -424,6 +326,6 @@ async function route(req, env, ctx) {
 export default {
   async fetch(req, env, ctx) {
     try { return await route(req, env, ctx); }
-    catch (e) { return err(500, /no such table/.test(String(e && e.message)) ? "Database needs updating: run the newest schema-update SQL file in the D1 console." : "Server error."); }
+    catch (e) { return err(500, /no such (table|column)/.test(String(e && e.message)) ? "Database needs updating: run the newest schema-update SQL file in the D1 console." : "Server error."); }
   }
 };

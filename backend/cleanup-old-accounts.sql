@@ -1,0 +1,5 @@
+DELETE FROM sessions WHERE name NOT LIKE 'admin:%';
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS friends;
+DROP TABLE IF EXISTS counts;
+DROP TABLE IF EXISTS activity;

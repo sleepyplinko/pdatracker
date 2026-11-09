@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "No more accounts: your checklist stays in your browser (back it up from CLOUD), and the PLAYERS tab is gone",
+    "\"Found by %\" numbers now come from browsers sharing their finds anonymously (turn it off in CLOUD)",
+    "SUBMIT still shows what happened to what you sent, no account needed",
     "DAMAGE: a note that the ammo chart may be out of date in places; ammo corrected by the admins is marked \u270e",
     "Admins can correct or add ammo, and post a notice bar for everyone",
     "Swapped the colourful emojis for plain symbols that fit the PDA",

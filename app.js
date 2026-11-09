@@ -420,13 +420,9 @@
   function netBadge() { try { netBadge_(); } catch { /* still starting up */ } }
   function netBadge_() {
     const el = $("#netBadge"); if (!el) return;
-    let unsynced = 0;
-    if (acc && Array.isArray(acc.base)) { const b = new Set(acc.base), f = foundIds(); unsynced = f.filter(x => !b.has(x)).length + acc.base.filter(x => !found[x]).length; }
     const off = !navigator.onLine;
-    el.hidden = !off && !(unsynced && syncState && syncState.bad);
-    el.className = "netbadge" + (off ? " off" : "");
-    el.textContent = off ? (unsynced ? `OFFLINE · ${unsynced} NOT SYNCED` : "OFFLINE") : `${unsynced} NOT SYNCED`;
-    el.title = off ? "No connection. Everything is still saved in this browser" + (acc ? " and will sync when you're back online." : ".") : "Couldn't sync yet. It retries automatically.";
+    el.hidden = !off; el.className = "netbadge off"; el.textContent = "OFFLINE";
+    el.title = "No connection. Everything is still saved in this browser.";
   }
   window.addEventListener("online", () => netBadge());
   window.addEventListener("offline", () => netBadge());
@@ -450,8 +446,8 @@
   /* =====================================================================
      TOP TABS + SEARCH
      ===================================================================== */
-  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "players", "admin"];
-  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", players: "PLAYERS", admin: "ADMIN" };
+  const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
+  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
   /* the checklist tabs sit on top, everything else along the bottom */
   const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout", "damage"];
   let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
@@ -662,7 +658,7 @@
     if (query) return renderSearch();
     if (sinceView) return renderSince();
     ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, players: renderPlayers, admin: renderAdmin })[ui.tab]();
+       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, admin: renderAdmin })[ui.tab]();
   }
 
   /* =====================================================================
@@ -1946,75 +1942,41 @@
   let nagged = false;
 
   /* =====================================================================
-     CLOUD: accounts + sync, rarity, live profile links (backend/worker.js)
+     CLOUD (backend/worker.js): no player accounts. Anonymous "found by %"
+     numbers, submissions, and admin sign-in only.
      ===================================================================== */
   const API = (typeof PDA_CLOUD === "object" && PDA_CLOUD && String(PDA_CLOUD.api || "").replace(/\/+$/, "")) || "";
-  const KEY_ACC = pk("pda-account-v1");          // { name, token, base: [ids at last sync], ver, at }
-  let acc = API ? load(KEY_ACC, null) : null;
-  let syncState = { busy: false, msg: "", bad: false, timer: 0 };
+  const KEY_ADMIN = "pda-admin-v1";                 // { name, token } after an admin signs in
+  let adminSess = API ? load(KEY_ADMIN, null) : null;
+  try { localStorage.removeItem(pk("pda-account-v1")); } catch { /* old player accounts are gone */ }
   let rarity = API ? load("pda-rarity-v1", null) : null;    // { players, counts, at }
   const rarityOf = id => { if (!rarity || !rarity.players) return null; const t = trackOf(id); return (rarity.counts[t] || 0) / rarity.players; };
   async function api(method, path, data) {
-    const r = await fetch(API + path, { method, headers: { "Content-Type": "application/json", ...(acc && acc.token ? { Authorization: "Bearer " + acc.token } : {}) }, body: data ? JSON.stringify(data) : undefined });
+    const r = await fetch(API + path, { method, headers: { "Content-Type": "application/json", ...(adminSess && adminSess.token ? { Authorization: "Bearer " + adminSess.token } : {}) }, body: data ? JSON.stringify(data) : undefined });
     let j = null; try { j = await r.json(); } catch { /* ignore */ }
     return [r.status, j || {}];
   }
-  let serverInfo = API ? load("pda-server-v1", { uploads: false, admins: [] }) : { uploads: false, admins: [] };
-  const isAdminName = n => !!n && (serverInfo.admins || []).some(a => a.toLowerCase() === String(n).toLowerCase());
-  const adminTag = n => isAdminName(n) ? ' <b class="badm" title="Runs this site">ADMIN</b>' : "";
+  let serverInfo = API ? load("pda-server-v1", { admins: [] }) : { admins: [] };
   const amAdmin = () => BOTTOM_TABS.includes("admin");
-  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); if (["community", "players"].includes(ui.tab)) keepScroll(render); } } catch { /* offline */ } }
-
-  /* the password never leaves the browser: it's stretched into a key first */
-  async function passKey(name, pass) {
-    const enc = new TextEncoder();
-    const k = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
-    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: enc.encode("pda-tracker:" + name.toLowerCase()), iterations: 150000 }, k, 256);
-    return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, "0")).join("");
-  }
+  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); } } catch { /* offline */ } }
   const foundIds = () => Object.keys(found).filter(id => /^[tbd]\|/.test(id)).sort();
-  /* three-way merge: what the server has, plus what you added here, minus what you removed here */
-  function mergeFound(server, base, local) {
-    const B = new Set(base), L = new Set(local), out = new Set(server);
-    local.forEach(id => { if (!B.has(id)) out.add(id); });
-    base.forEach(id => { if (!L.has(id)) out.delete(id); });
-    return [...out].sort();
+
+  /* anonymous share for the "found by %" numbers: a random id for this browser, no name, can be turned off */
+  const KEY_DEVICE = pk("pda-device-v1");
+  let device = load(KEY_DEVICE, "");
+  if (!/^[0-9a-f]{32}$/.test(device)) { device = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join(""); save(KEY_DEVICE, device); }
+  let shareTimer = 0, lastShared = load(pk("pda-shared-v1"), "");
+  function scheduleSync(ms = 4000) {
+    setTimeout(netBadge, 0);
+    if (!API || viewOnly) return;
+    clearTimeout(shareTimer); shareTimer = setTimeout(shareFinds, ms);
   }
-  function applyServer(ids) {
-    const before = foundIds().join("\n");
-    found = {}; ids.forEach(id => { found[MOVED[id] || id] = 1; });
-    save(KEY_FOUND, found);
-    if (before !== ids.join("\n")) { updateCount(); keepScroll(render); renderTabs(); }
+  async function shareFinds() {
+    if (!API || viewOnly) return;
+    const ids = settings.anonShare === false ? [] : foundIds(), sig = ids.join("\n");
+    if (sig === lastShared) return;
+    try { const [st] = await api("PUT", "/api/anon", { device, found: ids }); if (st === 200) { lastShared = sig; save(pk("pda-shared-v1"), sig); } } catch { /* offline: try next time */ }
   }
-  function scheduleSync(ms = 2500) { setTimeout(netBadge, 0); if (!acc || viewOnly) return; clearTimeout(syncState.timer); syncState.timer = setTimeout(syncNow, ms); }
-  async function syncNow(quiet = true) {
-    if (!acc || syncState.busy || viewOnly) return;
-    syncState.busy = true;
-    try {
-      for (let tries = 0; tries < 3; tries++) {
-        let [st, me] = await api("GET", "/api/me");
-        if (st === 401) { acc = null; save(KEY_ACC, null); syncState.msg = "You were logged out. Log in again to keep syncing."; syncState.bad = true; break; }
-        if (st !== 200) throw new Error(me.error || "Couldn't reach the server.");
-        const merged = mergeFound(me.found, acc.base || [], foundIds());
-        if (merged.join("\n") !== me.found.join("\n")) {
-          [st, me] = await api("PUT", "/api/me", { found: merged, ver: me.ver });
-          if (st === 409) continue;                       // changed elsewhere meanwhile: redo the merge
-          if (st !== 200) throw new Error(me.error || "Couldn't save.");
-        }
-        if (!acc.at) { pullCounts(); checkAdmin(); }
-        acc.base = me.found; acc.ver = me.ver; acc.at = Date.now(); acc.share = me.share; acc.public = me.public; acc.name = me.name;
-        save(KEY_ACC, acc);
-        applyServer(me.found);
-        syncState.msg = ""; syncState.bad = false;
-        break;
-      }
-    } catch (e) { syncState.msg = (e && e.message) || "Sync failed. It'll retry."; syncState.bad = true; scheduleSync(30000); }
-    syncState.busy = false;
-    const sb = $("#syncStatus"); if (sb) sb.innerHTML = syncStatusHTML();
-    if (!quiet && !syncState.bad) toast("Synced.");
-  }
-  const syncStatusHTML = () => syncState.busy ? "Syncing…" : syncState.bad ? `<span style="color:#ff8a7a">${esc(syncState.msg)}</span>` : acc && acc.at ? `Synced ${ago(acc.at)}.` : "";
-  const profileURL = name => `${location.origin}${location.pathname}#u=${encodeURIComponent(name)}`;
   async function loadRarity(force) {
     if (!API) return;
     if (!force && rarity && Date.now() - rarity.got < 10 * 60000) return;
@@ -2024,74 +1986,22 @@
     const r = rarityOf(e.id); if (r == null) return "";
     const pct = Math.round(r * 1000) / 10;
     const tag = pct < 5 ? "VERY RARE" : pct < 20 ? "RARE" : pct < 50 ? "UNCOMMON" : "COMMON";
-    return `<div class="stat gap rarity" title="Out of ${rarity.players} players who share their progress"><i style="color:#7ad7ff">FOUND BY</i>: ${pct}% of players <span class="rtag r-${tag.replace(" ", "")}">${tag}</span></div>`;
+    return `<div class="stat gap rarity" title="Out of ${rarity.players} players who share their finds anonymously"><i style="color:#7ad7ff">FOUND BY</i>: ${pct}% of players <span class="rtag r-${tag.replace(" ", "")}">${tag}</span></div>`;
   }
   function accountHTML() {
     if (!API) return "";
-    if (!acc) return `<h4>ACCOUNT · SYNC BETWEEN DEVICES</h4>
-      <p>Make a free account and your checklist follows you to every phone and computer you log in on. Your password never leaves this browser.</p>
-      <form class="accform" id="accForm" autocomplete="on">
-        <input id="accName" name="username" autocomplete="username" placeholder="name (3-20 letters, numbers, _)" maxlength="20">
-        <input id="accPass" name="password" type="password" autocomplete="current-password" placeholder="password (8+ characters)">
-        <label class="chk"><input type="checkbox" id="accShare" checked> Count my finds in the anonymous "found by %" numbers</label>
-        <label class="chk"><input type="checkbox" id="accPublic" checked> Let people see my progress with a profile link</label>
-        <div class="btnrow"><button class="pbtn" type="submit" data-acc="login">LOG IN</button><button class="pbtn" type="submit" data-acc="register">CREATE ACCOUNT</button></div>
-        <div class="msg" id="accMsg"></div>
-      </form>`;
-    return `<h4>ACCOUNT · SYNC BETWEEN DEVICES</h4>
-      <p>Logged in as <b>${esc(acc.name)}</b>. Everything you mark is saved to your account and shows up on your other devices. <span id="syncStatus">${syncStatusHTML()}</span></p>
-      <div class="btnrow"><button class="pbtn" id="syncNow">SYNC NOW</button><button class="pbtn" id="accOut">LOG OUT</button></div>
-      <label class="chk"><input type="checkbox" id="accShare2"${acc.share !== false ? " checked" : ""}> Count my finds in the anonymous "found by %" numbers</label>
-      <label class="chk"><input type="checkbox" id="accPublic2"${acc.public !== false ? " checked" : ""}> Let people see my progress with a profile link</label>
-      ${acc.public !== false ? `<div class="btnrow"><input readonly id="liveLink" value="${esc(profileURL(acc.name))}"><button class="pbtn" id="copyLive">${I.share} COPY PROFILE LINK</button></div><p class="dim">This link always shows your current progress (unlike the share link below, which is a snapshot).</p>` : ""}
-      <div class="btnrow"><button class="pbtn danger" id="accDel">DELETE ACCOUNT</button><span class="dim" id="accDelMsg">Removes it from the server. Your progress stays in this browser.</span></div>`;
+    return `<h4>"FOUND BY %" NUMBERS</h4>
+      <label class="chk"><input type="checkbox" id="anonShare"${settings.anonShare !== false ? " checked" : ""}> Count my finds in the anonymous "found by %" numbers (no name or account, just a random id for this browser)</label>`;
   }
   function wireAccount() {
-    if (!API) return;
-    const f = $("#accForm");
-    if (f) f.onsubmit = async ev => {
-      ev.preventDefault();
-      const mode = (ev.submitter && ev.submitter.dataset.acc) || "login";
-      const name = $("#accName").value.trim(), pass = $("#accPass").value, msg = $("#accMsg");
-      if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) { msg.textContent = "Names are 3-20 letters, numbers or _."; play("warn"); return; }
-      if (pass.length < 8) { msg.textContent = "Use at least 8 characters for the password."; play("warn"); return; }
-      msg.textContent = mode === "login" ? "Logging in…" : "Creating your account…";
-      try {
-        const key = await passKey(name, pass);
-        const [st, r] = await api("POST", "/api/" + mode, mode === "register" ? { name, key, found: foundIds(), share: $("#accShare").checked, public: $("#accPublic").checked } : { name, key });
-        if (st !== 200 && st !== 201) { msg.textContent = r.error || "Something went wrong."; play("warn"); return; }
-        acc = { name: r.name, token: r.token, base: [], ver: r.ver, share: r.share, public: r.public };
-        if (mode === "register") { acc.base = r.found; acc.at = Date.now(); }
-        save(KEY_ACC, acc); play("confirm");
-        await syncNow();
-        if (mode === "login") { const s = !$("#accShare").checked ? false : null, p = !$("#accPublic").checked ? false : null; if (s === false || p === false) await api("PUT", "/api/me", { ...(s === false ? { share: false } : {}), ...(p === false ? { public: false } : {}) }); }
-        checkAdmin(); pullCounts(); friends = null; mySubs = null;
-        toast(mode === "login" ? `Logged in as ${acc.name}. Your progress here was merged with your account.` : `Account ${acc.name} created.`, { ms: 6000 });
-        loadRarity(true); keepScroll(render);
-      } catch { msg.textContent = "Couldn't reach the server. Check your connection."; play("warn"); }
-    };
-    const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
-    on("syncNow", () => { play("click"); syncNow(false); const sb = $("#syncStatus"); if (sb) sb.textContent = "Syncing…"; });
-    on("accOut", async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } acc = null; save(KEY_ACC, null); setAdmin(false); friends = null; activity = null; mySubs = null; toast("Logged out. Your progress stays in this browser."); keepScroll(render); });
-    const flag = (id, k) => { const el = $("#" + id); if (el) el.onchange = async () => { const [st, r] = await api("PUT", "/api/me", { [k]: el.checked }).catch(() => [0, {}]); if (st === 200) { acc.share = r.share; acc.public = r.public; save(KEY_ACC, acc); play("click"); keepScroll(render); } else { toast("Couldn't save that. Try again."); el.checked = !el.checked; } }; };
-    flag("accShare2", "share"); flag("accPublic2", "public");
-    on("copyLive", async () => { play("click"); try { await navigator.clipboard.writeText($("#liveLink").value); toast("Profile link copied."); } catch { $("#liveLink").select(); toast("Link selected. Press Ctrl+C to copy."); } });
-    on("accDel", async ev => {
-      const b = ev.currentTarget;
-      if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "CLICK AGAIN TO DELETE"; play("warn"); return; }
-      const [st] = await api("DELETE", "/api/me").catch(() => [0]);
-      if (st === 200) { acc = null; save(KEY_ACC, null); toast("Account deleted. Your progress stays in this browser."); keepScroll(render); } else toast("Couldn't delete it right now.");
-    });
+    const el = $("#anonShare");
+    if (el) el.onchange = () => { settings.anonShare = el.checked; save(KEY_SET, settings); play("click"); scheduleSync(100); toast(el.checked ? "Your finds count toward the numbers again." : "Your finds are no longer counted."); };
   }
-  async function openProfileLink(name) {
-    try {
-      const [st, r] = await api("GET", "/api/u/" + encodeURIComponent(name));
-      if (st !== 200) { toast(r.error || "That profile isn't available.", { ms: 6000 }); leaveView(); return; }
-      const set = {}; r.found.forEach(id => { set[MOVED[id] || id] = 1; });
-      viewOnly = { name: r.name, set, live: true };
-      renderTabs(); updateCount(); render();
-    } catch { toast("Couldn't load that profile."); }
+  async function openProfileLink() {
+    toast("Profile links were retired along with accounts. Ask for a share link from their CLOUD tab instead.", { ms: 7000 });
+    leaveView();
   }
+
 
   if (API) { const o = document.createElement("option"); o.value = "rare"; o.textContent = "RAREST FIRST"; $("#sortSel").appendChild(o); $("#sortSel").value = ui.sort; }
   else if (ui.sort === "rare") ui.sort = "found";
@@ -2250,30 +2160,12 @@
      ===================================================================== */
   const KEY_COUNTS = pk("pda-counts-v1");
   let counts = migrateIds(load(KEY_COUNTS, {}), KEY_COUNTS);
-  let countPush = {}, countTimer = 0;
   const countOf1 = id => counts[trackOf(id)] || (isFound(id) ? 1 : 0);
   function setCount(id, n) {
     const t = trackOf(id); n = Math.max(0, Math.min(99999, n | 0));
     if (n) counts[t] = n; else delete counts[t];
     save(KEY_COUNTS, counts);
     if (n && !isFound(id)) change([id], true);
-    if (acc) { countPush[t] = n; clearTimeout(countTimer); countTimer = setTimeout(pushCounts, 2000); }
-  }
-  async function pushCounts() {
-    if (!acc || !Object.keys(countPush).length) return;
-    const set = countPush; countPush = {};
-    try { const [st] = await api("PUT", "/api/counts", { set }); if (st !== 200) Object.assign(countPush, set); } catch { Object.assign(countPush, set); }
-  }
-  async function pullCounts() {
-    if (!acc) return;
-    try {
-      const [st, r] = await api("GET", "/api/counts"); if (st !== 200) return;
-      let changed = false, up = {};
-      Object.entries(r).forEach(([id, n]) => { if ((counts[id] || 0) < n) { counts[id] = n; changed = true; } });
-      Object.entries(counts).forEach(([id, n]) => { if ((r[id] || 0) < n) up[id] = n; });
-      if (changed) save(KEY_COUNTS, counts);
-      if (Object.keys(up).length) await api("PUT", "/api/counts", { counts: up });
-    } catch { /* ignore */ }
   }
   function countHTML(e) {
     if (e.unknown || viewOnly) return "";
@@ -2282,82 +2174,20 @@
   }
 
   /* =====================================================================
-     PLAYERS: friends + leaderboard
-     ===================================================================== */
-  let friends = null, friendsMsg = "", board = { scope: "", rows: null, msg: "" };
-  let activity = null, activityAt = 0;
-  async function loadActivity() {
-    activityAt = Date.now();
-    try { const [st, r] = await api("GET", "/api/friends/activity"); if (st === 200) activity = r; } catch { /* offline */ }
-    if (ui.tab === "players") keepScroll(render);
-  }
-  function activityHTML() {
-    if (!acc || !(friends || []).length || !(activity || []).length) return "";
-    const open = e => ({ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]);
-    return `<h3 class="ph3">RECENT FINDS //</h3><div class="frlist recent">${activity.map(a => {
-      const e = a.id && findEntry(a.id);
-      const what = !a.id ? `${a.n} things at once` : e ? `<button class="linkish" data-${open(e)}="${esc(e.id)}">${esc(e.name)}</button>${isFound(e.id) ? ' <span class="dim">(you have it)</span>' : ""}` : "something";
-      return `<div class="frrow"><b>${esc(a.name)}${adminTag(a.name)}</b><span>found ${what}</span><span class="dim">${esc(ago(a.t * 1000))}</span></div>`;
-    }).join("")}</div>`;
-  }
-  async function loadFriends() {
-    if (!acc) { friends = null; return; }
-    loadActivity();
-    try { const [st, r] = await api("GET", "/api/friends"); if (st === 200) friends = r; else friendsMsg = r.error || "Couldn't load friends."; } catch { friendsMsg = "Couldn't reach the server."; }
-    if (ui.tab === "players") keepScroll(render);
-  }
-  async function loadLB() {
-    try { const [st, r] = await api("GET", "/api/leaderboard" + (board.scope ? "?prefix=" + encodeURIComponent(board.scope) : "")); if (st === 200) { board.rows = r.rows; board.msg = ""; } else board.msg = r.error || "Couldn't load."; } catch { board.msg = "Couldn't reach the server."; }
-    if (ui.tab === "players") keepScroll(render);
-  }
-  function lbScopes() {
-    return [["", "EVERYTHING", entries], ...PDA_DATA.tools.map(c => [`t|${slug(c.name)}|`, c.name, c.items]),
-      ["b|", "BIOGRAPHY", entries.filter(e => e.section === "bio")], ["d|", "DOCUMENTS", entries.filter(e => e.section === "docs")]];
-  }
-  function renderPlayers() {
-    if (!API) { screen.innerHTML = '<div class="results"><p class="none">Players needs the cloud server.</p></div>'; return; }
-    if (friends === null && acc) { friends = []; loadFriends(); }
-    else if (acc && Date.now() - activityAt > 15000) loadActivity();
-    if (board.rows === null) { board.rows = []; loadLB(); }
-    const mine = new Set(Object.keys(found));
-    const fr = !acc ? `<p>Log in (CLOUD tab) to add friends and see their progress next to yours.</p>`
-      : `<form class="addfriend" id="addFriend"><input id="friendName" placeholder="their account name" maxlength="20" autocomplete="off"><button class="pbtn" type="submit">ADD FRIEND</button></form>
-        ${friendsMsg ? `<div class="msg" style="color:#ff8a7a">${esc(friendsMsg)}</div>` : ""}
-        ${(friends || []).length ? `<div class="frlist">${friends.map(f => {
-          if (f.hidden) return `<div class="frrow"><b>${esc(f.name)}</b><span class="dim">made their profile private</span><span></span><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></div>`;
-          const set = new Set(f.found.map(id => MOVED[id] || id)), n = entries.filter(e => set.has(e.id)).length, they = entries.filter(e => set.has(e.id) && !mine.has(e.id)).length, you = entries.filter(e => mine.has(e.id) && !set.has(e.id)).length;
-          return `<div class="frrow"><b>${esc(f.name)}${adminTag(f.name)}</b><span>${n} / ${entries.length} found ${pbar(n, entries.length)}</span><span class="dim">has ${they} you don't · you have ${you} they don't</span>
-            <span class="frbtns"><button class="mini-btn" data-frview="${esc(f.name)}">VIEW</button><button class="mini-btn" data-frcmp="${esc(f.name)}" title="Show their finds as badges on your tiles">COMPARE</button><button class="mini-btn" data-frdel="${esc(f.name)}">REMOVE</button></span></div>`;
-        }).join("")}</div>` : `<p class="dim">No friends added yet. Ask a friend for their account name (they need a public profile).</p>`}`;
-    const sc = lbScopes(), cur = sc.find(x => x[0] === board.scope) || sc[0], total = countOf(cur[2])[1];
-    const me = acc && acc.name ? acc.name.toLowerCase() : "";
-    const rows = (board.rows || []).map((r, i) => `<tr class="${r.name.toLowerCase() === me ? "me" : ""}"><td>${i + 1}</td><td><button class="linkish" data-frview="${esc(r.name)}">${esc(r.name)}</button>${adminTag(r.name)}</td><td>${r.n}</td><td>${total ? Math.round(r.n / total * 100) : 0}%</td></tr>`).join("");
-    screen.innerHTML = `<div class="results players">
-      <h3 class="ph3">FRIENDS //</h3>${fr}
-      ${activityHTML()}
-      <h3 class="ph3">LEADERBOARD //</h3>
-      <div class="lbbar"><select data-lbscope>${sc.map(([p, n]) => `<option value="${esc(p)}"${p === board.scope ? " selected" : ""}>${esc(n)}</option>`).join("")}</select><span class="dim">Players with a public profile. Updates every few minutes.</span></div>
-      ${board.msg ? `<div class="msg" style="color:#ff8a7a">${esc(board.msg)}</div>` : ""}
-      ${rows ? `<table class="ammotab lbtab"><thead><tr><th>#</th><th>PLAYER</th><th>FOUND</th><th>OF ${total}</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="dim">Nobody on the board yet.</p>'}
-    </div>`;
-    const f = $("#addFriend");
-    if (f) f.onsubmit = async ev => {
-      ev.preventDefault(); const n = $("#friendName").value.trim(); if (!n) return;
-      const [st, r] = await api("POST", "/api/friends", { name: n }).catch(() => [0, { error: "Couldn't reach the server." }]);
-      if (st === 201 || st === 200) { friendsMsg = ""; play("confirm"); toast(`Added ${r.name}.`); loadFriends(); } else { friendsMsg = r.error || "Couldn't add them."; play("warn"); keepScroll(render); }
-    };
-  }
-
-  /* =====================================================================
-     ADMIN: submissions + publishing info (only for names in the Worker's ADMINS)
+     ADMIN: submissions + publishing info (admins sign in with the Worker's ADMIN_KEYS)
      ===================================================================== */
   let adm = { status: "new", rows: null, counts: {}, msg: "", edit: null, announce: false, changes: null, blocks: null, ann: null };
   async function checkAdmin() {
-    if (!API || !acc) { setAdmin(false); return; }
-    try { const [st, r] = await api("GET", "/api/admin/check"); adm.announce = !!(r && r.announce); setAdmin(st === 200 && r.admin); } catch { /* keep */ }
+    if (!API || !adminSess) { setAdmin(false); return; }
+    try {
+      const [st, r] = await api("GET", "/api/admin/check"); adm.announce = !!(r && r.announce);
+      const ok = st === 200 && r.admin;
+      if (st === 200 && !ok) { adminSess = null; save(KEY_ADMIN, null); toast("Your admin sign-in ran out. Sign in again from SETTINGS."); }
+      setAdmin(ok);
+    } catch { /* offline: keep */ }
   }
   function setAdmin(on) {
-    const want = ["profile", "cloud", "manual", "settings", "community", ...(API ? ["players"] : []), ...(on ? ["admin"] : [])];
+    const want = ["profile", "cloud", "manual", "settings", "community", ...(on ? ["admin"] : [])];
     if (want.join() !== BOTTOM_TABS.join()) { BOTTOM_TABS = want; if (!on && ui.tab === "admin") ui.tab = "community"; renderTabs(); }
   }
   async function loadAdmin() {
@@ -2433,7 +2263,7 @@
   function blocksHTML() {
     if (adm.blocks === null) { adm.blocks = []; loadAdmin(); }
     if (!adm.blocks.length) return '<p class="dim">Nobody is blocked. Use BLOCK SENDER on a submission to stop someone spamming.</p>';
-    return `<div class="frlist">${adm.blocks.map(x => `<div class="frrow"><b>${x.account ? esc(x.account) : "anonymous sender"}</b><span class="dim">${x.byip ? "blocked by connection" : ""}${x.byip && x.account ? " + " : ""}${x.account ? "account" : ""}${x.note ? " · " + esc(x.note) : ""}</span><span class="dim">by ${esc(x.by)} · ${esc(ago(x.created * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admunblock="${x.id}">UNBLOCK</button></span></div>`).join("")}</div>`;
+    return `<div class="frlist">${adm.blocks.map(x => `<div class="frrow"><b>${x.account ? esc(x.account) : "sender"}</b><span class="dim">${x.byip ? "blocked by connection" : ""}${x.byip && x.account ? " + " : ""}${x.account ? "account" : ""}${x.note ? " · " + esc(x.note) : ""}</span><span class="dim">by ${esc(x.by)} · ${esc(ago(x.created * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admunblock="${x.id}">UNBLOCK</button></span></div>`).join("")}</div>`;
   }
   function setupHTML() {
     if (adm.setup === undefined) { adm.setup = null; api("GET", "/api/admin/setup").then(([st, r]) => { adm.setup = st === 200 ? r : { old: true }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
@@ -2486,7 +2316,7 @@
   let admStats = null;
   function statsHTML() {
     if (admStats === null) { admStats = {}; api("GET", "/api/admin/stats").then(([st, r]) => { admStats = st === 200 ? r : { err: 1 }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
-    const s = admStats; if (!s || s.users == null) return "";
+    const s = admStats; if (!s || s.players == null) return "";
     const real = entries.filter(e => !e.unknown);
     let rare = "", common = "";
     if (rarity && rarity.players) {
@@ -2494,8 +2324,8 @@
       const fmt = l => l.map(([e, r]) => `${esc(e.name)} <span class="dim">${Math.round(r * 100)}%</span>`).join(", ");
       rare = fmt(by.slice(0, 6)); common = fmt(by.slice(-6).reverse());
     }
-    return `<details class="setupbox statsbox"><summary><b>SITE STATS</b> ${s.users} accounts · ${s.active7} active this week · ${s.subsNew} submissions waiting</summary>
-      <div>${s.active1} active today · ${s.public} public profiles · ${s.share} share their finds · about ${s.avgFound} finds per account · ${s.finds7} things found this week · ${s.subsWeek} submissions this week</div>
+    return `<details class="setupbox statsbox"><summary><b>SITE STATS</b> ${s.players} players counted · ${s.active7} active this week · ${s.subsNew} submissions waiting</summary>
+      <div>${s.active1} active today · about ${s.avgFound} finds each · ${s.subsWeek} submissions this week. "Players" means browsers sharing their finds anonymously.</div>
       ${rare ? `<div><b>Rarest:</b> ${rare}</div><div><b>Most found:</b> ${common}</div>` : ""}
       <div class="btnrow"><button class="mini-btn" data-admbackup>DOWNLOAD BACKUP OF PUBLISHED INFO</button></div></details>`;
   }
@@ -2525,14 +2355,14 @@
     </div></div>`;
   }
   function renderAdmin() {
-    if (!API || !acc) { screen.innerHTML = '<div class="results"><p class="none">Log in with an admin account.</p></div>'; return; }
+    if (!API || !adminSess) { screen.innerHTML = '<div class="results"><p class="none">Sign in as an admin from SETTINGS.</p></div>'; return; }
     if (adm.rows === null) { adm.rows = []; loadAdmin(); }
     const st = ["new", "done", "rejected"];
     const list = (adm.rows || []).map(r => {
       const e = r.entry && entries.find(x => x.name.toLowerCase() === r.entry.toLowerCase());
       return `<div class="subcard"><div class="subhead"><b>#${r.id} · ${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(r.who || "anonymous")}${r.account ? ` (account ${esc(r.account)})` : ""} · ${new Date(r.created * 1000).toLocaleString()}</span></div>
         ${r.text ? `<div class="subtext">${esc(r.text)}</div>` : ""}${r.link ? `<div class="sublink">${safeLink(r.link)}</div>${isImgLink(r.link) ? `<a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer"><img class="subimg" src="${esc(r.link)}" alt="" loading="lazy"></a>` : ""}` : ""}
-        <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="${r.account ? `Note for ${esc(r.account)}, shown on their SUBMIT tab (optional, e.g. why it wasn't added)` : "Private note (they sent it without an account, so they won't see it)"}">
+        <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="Note the sender sees on their SUBMIT tab (optional, e.g. why it wasn't added)">
         <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
     const pubs = Object.entries(overrides).map(([id, o]) => {
@@ -2795,6 +2625,7 @@
   async function sendServer(d, botcheck) {
     const [st, r] = await api("POST", "/api/submit", { kind: d.kind, entry: d.entry, text: d.text, link: d.link, name: d.name, botcheck });
     if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st >= 400 && st < 500; throw e; }   // a "no" from the server (blocked, too many, bad input) is final
+    if (r.token && /^[0-9a-f]{24}$/.test(r.token)) { sentCodes = [r.token, ...sentCodes].slice(0, 50); save(KEY_SENT, sentCodes); }
   }
   const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
   const clip = (t, n) => { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
@@ -2827,19 +2658,21 @@
     if (!res.ok || j.success === false) throw new Error(j.message || res.status);
   }
   let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
+  /* what you sent: the server hands back a private code per submission, kept only in this browser */
+  const KEY_SENT = "pda-sent-v1";
+  let sentCodes = load(KEY_SENT, []);
   let mySubs = null;
   async function loadMySubs() {
-    if (!API || !acc) { mySubs = null; return; }
-    try { const [st, r] = await api("GET", "/api/mysubs"); if (st === 200) mySubs = r; } catch { /* offline */ }
+    if (!API || !sentCodes.length) { mySubs = []; return; }
+    try { const [st, r] = await api("GET", "/api/substatus?t=" + sentCodes.slice(0, 50).join(",")); if (st === 200) mySubs = r.sort((a, b) => b.created - a.created); } catch { /* offline */ }
     if (ui.tab === "community") keepScroll(render);
   }
   function mySubsHTML() {
     if (!hasServer()) return "";
-    if (!acc) return `<p class="cat-note">Log in from the CLOUD tab before sending, and you'll see here when what you sent gets added.</p>`;
     if (mySubs === null) { mySubs = []; loadMySubs(); }
     if (!mySubs.length) return "";
     const st = { new: ["WAITING", "#ffd23a"], done: ["ADDED", "#6cff6c"], rejected: ["NOT ADDED", "#ff7a7a"] };
-    return `<h3>-=-=- WHAT YOU SENT -=-=-</h3><div class="frlist mysubs">${mySubs.map(r => `<div class="frrow"><b>${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(new Date(r.created * 1000).toLocaleDateString())}</span><span class="substat" style="color:${(st[r.status] || st.new)[1]}">${(st[r.status] || st.new)[0]}</span>${r.note ? `<span class="subnote">${esc(r.note)}</span>` : ""}</div>`).join("")}</div>`;
+    return `<h3>-=-=- WHAT YOU SENT -=-=-</h3><p class="cat-note">Only this browser can see this list.</p><div class="frlist mysubs">${mySubs.map(r => `<div class="frrow"><b>${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(new Date(r.created * 1000).toLocaleDateString())}</span><span class="substat" style="color:${(st[r.status] || st.new)[1]}">${(st[r.status] || st.new)[0]}</span>${r.note ? `<span class="subnote">${esc(r.note)}</span>` : ""}</div>`).join("")}</div>`;
   }
   let formMsg = null;   // { ok, text }
   function contribHTML() {
@@ -2914,7 +2747,7 @@
       if (!sent) await sendW3F(d);
       window.__pdaLastSend = Date.now();
       formMsg = { ok: true, text: "Sent! Thanks — it'll be reviewed and added." };
-      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name }; if (acc) loadMySubs();
+      draft = { kind: d.kind, entry: "", text: "", link: "", name: d.name }; loadMySubs();
       play("confirm");
     } catch (err) {
       formMsg = { ok: false, text: err && err.user ? err.message : "Couldn't send right now. Check your connection and try again." };
@@ -3002,12 +2835,29 @@
         <h3>App</h3>
         ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
         <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
+        ${API ? `<h3>Admin</h3>${adminSess ? `<div class="srow"><span>Signed in as admin <b>${esc(adminSess.name)}</b>.</span><button class="pbtn" id="admOut">SIGN OUT</button></div>`
+          : `<details class="adminsign"><summary class="dim">Admin sign-in (for the people who run this site)</summary><form id="admLogin" class="accform" autocomplete="on">
+            <input id="admName" name="username" autocomplete="username" placeholder="admin name" maxlength="40">
+            <input id="admPass" name="password" type="password" autocomplete="current-password" placeholder="admin password">
+            <div class="btnrow"><button class="pbtn" type="submit">SIGN IN</button><span class="msg" id="admMsg"></span></div></form></details>`}` : ""}
         <h3>Data</h3>
         ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
         <div class="srow"><button class="pbtn" id="bkNow">DOWNLOAD BACKUP</button><span class="dim">${sinceBackup ? `${sinceBackup} change${sinceBackup === 1 ? "" : "s"} since your last backup.` : "Backed up."} Upload it again in CLOUD.</span></div>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
     $("#tourAgain").onclick = () => { play("click"); startTour(); };
+    const al = $("#admLogin");
+    if (al) al.onsubmit = async ev => {
+      ev.preventDefault(); const msg = $("#admMsg"); msg.textContent = "Signing in…";
+      try {
+        const [st, r] = await api("POST", "/api/admin/login", { name: $("#admName").value.trim(), password: $("#admPass").value });
+        if (st !== 200) { msg.textContent = r.error || "Couldn't sign in."; play("warn"); return; }
+        adminSess = { name: r.name, token: r.token }; save(KEY_ADMIN, adminSess); play("confirm");
+        await checkAdmin(); ui.tab = "admin"; persistUI(); renderTabs(); render(); toast(`Signed in as admin ${r.name}.`);
+      } catch { msg.textContent = "Couldn't reach the server."; play("warn"); }
+    };
+    const ao = $("#admOut");
+    if (ao) ao.onclick = async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } adminSess = null; save(KEY_ADMIN, null); setAdmin(false); toast("Signed out."); keepScroll(render); };
     $("#bkNow").onclick = () => { play("click"); doExport(); toast("Backup downloaded."); backupNag(); keepScroll(render); };
     const ts = $("#tscale");
     ts.addEventListener("input", () => { settings.textScale = +ts.value; $("#tscalev").textContent = ts.value; save(KEY_SET, settings); applyScale(); });
@@ -3128,9 +2978,6 @@
     { const row = t.closest("[data-dmgammo]"); if (row) { const d = ui.dmg = dmgState(); d.ammo = row.dataset.dmgammo; d.hits = ""; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-dmgcalc]"); if (b) { const d = ui.dmg = dmgState(); d.gun = b.dataset.dmgcalc; d.mode = 0; d.ammo = ""; d.hits = ""; detail = null; ui.tab = "damage"; persistUI(); play("click"); renderTabs(); render(); return; } }
     { const b = t.closest("[data-cnt]"); if (b) { const id = b.dataset.cntid; setCount(id, countOf1(id) + +b.dataset.cnt); play("click"); keepScroll(render); return; } }
-    { const b = t.closest("[data-frview]"); if (b) { play("open"); location.hash = "#u=" + encodeURIComponent(b.dataset.frview); return; } }
-    { const b = t.closest("[data-frcmp]"); if (b) { const f = (friends || []).find(x => x.name === b.dataset.frcmp); if (f) { const set = {}; f.found.forEach(id => { set[id] = 1; }); friend = { name: f.name, set }; save(KEY_FRIEND, friend); play("confirm"); toast(`Comparing with ${f.name}: their finds show as badges on your tiles.`); renderBanner(); } return; } }
-    { const b = t.closest("[data-frdel]"); if (b) { api("DELETE", "/api/friends/" + encodeURIComponent(b.dataset.frdel)).then(() => { play("unmarked"); loadFriends(); }).catch(() => toast("Couldn't remove.")); return; } }
     { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; adm.changes = null; adm.blocks = null; play("click"); render(); return; } }
     if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
     if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
@@ -3259,7 +3106,6 @@
     else if (sel.matches("[data-annupd]")) { adm.ann.update = sel.value; adm.ann.msg = ($("#annMsg") || {}).value || ""; keepScroll(render); return; }
     else if (sel.matches("[data-admimgi]")) { fixGifInput(sel); const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); if (pv) { const u = sel.value.trim(); pv.hidden = !/^https?:\/\/\S+$|^images\//.test(u); if (!pv.hidden) pv.src = u; } return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
-    else if (sel.matches("[data-lbscope]")) { board.scope = sel.value; board.rows = null; play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
     else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-lfound]")) { ui.loadFound = sel.checked; play("click"); persistUI(); keepScroll(render); return; }
@@ -3438,7 +3284,7 @@
   function renderBanner() {
     if (viewOnly) {
       bannerEl.hidden = false;
-      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>${adminTag(viewOnly.name)}'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
+      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
         <span><button data-b="compare">COMPARE WITH MINE</button><button data-b="exit">EXIT</button></span>`;
     } else if (friend) {
       const n = entries.filter(e => friend.set[e.id] && !found[e.id]).length;
@@ -3534,11 +3380,10 @@
   if (!API) checkSince();
   if (API) {
     applyOverrides(overrides);
-    setAdmin(!!acc && ui.tab === "admin");          // checkAdmin() confirms it
+    setAdmin(!!adminSess && ui.tab === "admin");     // checkAdmin() confirms it
     loadRarity(); loadOverrides().then(reloading => { if (!reloading) checkSince(); }); loadServerInfo();
-    if (acc) { syncNow(); pullCounts(); checkAdmin(); }
-    // pick up changes made on another device when you come back to this tab
-    document.addEventListener("visibilitychange", () => { if (!document.hidden && acc && (!acc.at || Date.now() - acc.at > 20000)) syncNow(); });
+    if (adminSess) checkAdmin();
+    scheduleSync(3000);
     window.addEventListener("online", () => scheduleSync(500));
     window.addEventListener("hashchange", () => { const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
   }

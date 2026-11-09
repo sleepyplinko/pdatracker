@@ -68,6 +68,23 @@ so there's no upload storage to set up.
      `ANNOUNCE_WEBHOOK`, paste the URL. Deploy.
    The button only shows up once this is set.
 
+## 7. No more player accounts (November 2026)
+The site no longer has player accounts, sync, friends or the leaderboard.
+Admins sign in with a password instead.
+1. D1 database `pda` → **Console**: paste [`schema-update-5.sql`](schema-update-5.sql), **Execute**.
+   (If it says the column `token` already exists, it was already run; that's fine.)
+2. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**.
+3. Worker → **Settings → Variables and Secrets → Add**: type **Secret**, name `ADMIN_KEYS`, value:
+
+       sleepyplinko=a-long-password-here,ForsakenFireFly=another-long-password
+
+   One `name=password` per admin, separated by commas. Passwords need 8+ characters;
+   use long random ones. Deploy. The old `ADMINS` variable isn't used any more and can be deleted.
+4. Sign in on the site: **SETTINGS → Admin sign-in** (at the bottom).
+5. Optional: paste [`cleanup-old-accounts.sql`](cleanup-old-accounts.sql) into the D1 console to delete
+   the old account data (names, password hashes, friends lists). Nobody loses progress: it was always
+   saved in each person's browser too.
+
 ## Notes
 - Blocking stores a one-way fingerprint of the sender's connection, never the
   address itself.
