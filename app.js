@@ -2315,6 +2315,11 @@
     </div></div>`;
   }
   let admStats = null;
+  function testingHTML() {
+    return `<details class="setupbox"><summary><b>TESTING</b> try parts of the site as a visitor sees them</summary>
+      <div class="btnrow"><button class="mini-btn" data-admboot="0">PLAY BOOT-UP SCREEN</button><button class="mini-btn" data-admboot="3000">PLAY AS A SLOW LOAD (3 S)</button><button class="mini-btn" data-admboot="8000">PLAY AS A VERY SLOW LOAD (8 S)</button></div>
+      <p class="dim">Plays the full boot-up screen with sound, even if it's turned off in SETTINGS. The slow loads hold the loading state first, like a visitor on a bad connection sees. Click or press a key to skip, same as normal.</p></details>`;
+  }
   function statsHTML() {
     if (admStats === null) { admStats = {}; api("GET", "/api/admin/stats").then(([st, r]) => { admStats = st === 200 ? r : { err: 1 }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
     const s = admStats; if (!s || s.players == null) return "";
@@ -2376,6 +2381,7 @@
       ${adminEditorHTML()}
       ${setupHTML()}
       ${statsHTML()}
+      ${testingHTML()}
       ${announceHTML()}
       <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="history" aria-pressed="${adm.status === "history"}">CHANGE HISTORY</button><button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
       ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
@@ -2494,11 +2500,13 @@
   ];
   let tourAt = -1, tourSnap = null, tourSeq = 0;
   const tourOpen = () => tourAt >= 0;
-  function runBoot() {
+  const BOOT_HTML = ($("#bootscr") || {}).outerHTML || "";
+  function runBoot(o = {}) {
+    if (o.force && !$("#bootscr") && BOOT_HTML) $(".window").insertAdjacentHTML("afterbegin", BOOT_HTML);
     const el = $("#bootscr");
     if (!el) return Promise.resolve();
     const reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (settings.bootAnim === false || reduced || viewOnly) { el.remove(); return Promise.resolve(); }
+    if (!o.force && (settings.bootAnim === false || reduced || viewOnly)) { el.remove(); return Promise.resolve(); }
     const log = $("#btLog"), bar = $("#btBar");
     const sec = list => countOf(list), all = countOf(entries);
     const rows = [
@@ -2524,8 +2532,8 @@
       const skip = e => { if (e.type === "keydown" && ["Shift", "Control", "Alt", "Meta"].includes(e.key)) return; finish(); };
       ["pointerdown", "keydown"].forEach(t => addEventListener(t, skip, true));
       const tick = () => { i++; draw(); timer = setTimeout(i < rows.length ? tick : finish, i < rows.length ? 115 : 380); };
-      el.classList.add("bt-run");
-      timer = setTimeout(tick, 180);
+      const start = () => { if (ended) return; el.classList.add("bt-run"); if (o.force) play("pdaOpen"); timer = setTimeout(tick, 180); };
+      if (o.hold) timer = setTimeout(start, o.hold); else start();
     });
   }
   function startTour(i = 0) {
@@ -3170,6 +3178,7 @@
         loadPick = null;
         if (change([...fixed.map(x => x.id), ...picked], true, `${p.name}'s gear`)) play("marked"); else { play("click"); toast("Nothing new to mark."); }
         keepScroll(render); return; } }
+    { const bb = t.closest("[data-admboot]"); if (bb && amAdmin()) { runBoot({ force: true, hold: +bb.dataset.admboot }); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const v = row.dataset.dmgammo, isB = v.startsWith("b."); dmgSet(isB ? "b.ammo" : "ammo", isB ? v.slice(2) : v); persistUI(); play("click"); keepScroll(render); return; } }
     if (t.closest("[data-dmgvs]")) { const d = ui.dmg = dmgState(); d.vs = !d.vs; if (d.vs && !d.b.gun && !d.b.ammo) d.b = { ...d.b, gun: d.gun, mode: d.mode, str: d.str }; persistUI(); play(d.vs ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgswap]")) { const d = ui.dmg = dmgState(); const keys = Object.keys(ATK_DEF), a = {}; keys.forEach(k => { a[k] = d[k]; d[k] = d.b[k]; }); d.b = a; persistUI(); play("switch"); keepScroll(render); return; }
