@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Address bar links open the page you're on",
     "Nicer Discord previews",
     "Boot-up screen (turn off in SETTINGS)",
     "New tour",
