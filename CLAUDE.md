@@ -54,8 +54,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - SUBMIT: send info without an account (status via token), HELP WANTED lists, changelog.
 - ADMIN: review submissions, edit/add entries and ammo via overrides, notice bar, announcements, change history with undo, blocking, stats.
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
-- Sounds: hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
+- Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 
 ## Open items
-- Category-hover sound: needs a clean single-hover recording from the owner.
-- `dmg.png`, `pk1.png`, `pk2.png` in the repo root are old test screenshots (can be deleted if the owner agrees).
+- None right now. (Hover sounds are final; transfer links work on the live Worker; old webhook scrubbed from git history on 2026-11-09, owner told to replace it in Discord if still used.)
