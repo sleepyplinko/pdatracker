@@ -28,7 +28,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - **Discord webhook** stays server-side in the Worker secret (`ANNOUNCE_WEBHOOK`), pings everyone. Never paste it into site code.
 - Keep share links (entry links: the address bar shows `…/pdatracker/e/<hash>/` while a page is open (`syncURL()` via replaceState; `<base>` tag in index.html keeps relative files working) and LINK copies the same; `#e=` still works; profile share `#v=`, damage calc `#dmg=`).
 - Credit **gluehesthar** (@iaminyourwallsiaminyourwalls on Discord) for the OANC Ammo Chart wherever ammo data shows.
-- **Rejected / not wanted:** completion rewards, "dropped by" or route features, weapon pictures (on hold), damage over distance/headshots (game has neither), weapon records page, NPC compare, recently viewed, document reading mode, public change history.
+- **Rejected / not wanted:** completion rewards, "dropped by" or route features, damage over distance/headshots (game has neither), weapon records page, NPC compare, recently viewed, document reading mode, public change history.
 - Gear has no WEIGHT in the game, so never flag it as missing weight.
 - Supershield math: blocked hits = `ss > B ? ceil((ss - B) / max(1, B)) : 0`; shown inline as "N supershield + M health = X hits to kill". (Owner had me undo a different change here once; don't touch without being asked.)
 
@@ -58,7 +58,8 @@ Read this first after any break or conversation summary. Update it whenever some
 - SUBMIT: send info without an account (status via token), HELP WANTED lists, changelog.
 - ADMIN: TESTING section (boot-up replays), review submissions, edit/add entries and ammo via overrides, notice bar, announcements, change history with undo, blocking, stats.
 - Boot-up screen (`#bootscr` in index.html, `runBoot()` in app.js): original design (owner chose not to copy the game), plays every load, ~1.6s: system-check lines with real progress counts, bar, READY, CRT collapse reveal. Skip by click/key; SETTINGS toggle `bootAnim`; skipped for reduced motion and share-view. Doubles as the loading screen. First-visit tour starts after it. ADMIN → TESTING replays it (`runBoot({ force, hold })`: normal, 3 s and 8 s slow-load).
-- Loading: sounds preload on first interaction; site preview image `images/og.jpg` (real screenshot).
+- Weapon pictures: owner started sending them (Skorpion first). Save as `images/tools/<name>.webp`, add `img:` to the entry. Discord cards fit gun pictures whole.
+- Loading: sounds preload on first interaction. Site Discord card `images/og.jpg` is drawn by `tools/previews.js` (logo, tagline, live TOOLS/PEOPLE/DOCUMENTS counts, 6 portraits); bump `?v=` on its og:image in index.html when the design changes.
 - Tour (`TOUR` in app.js): 10 short steps on the basics only (owner wants it brief, no over-explaining, no minor features). Spotlights real elements, switches tabs, opens Glock 18 as demo, arrow keys/Enter/Esc, restores the user's place, never marks anything. Auto-starts on a first visit; replay from SETTINGS. Only add a step for a feature that's essential.
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.

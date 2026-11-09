@@ -124,7 +124,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.45s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Skorpion", { stats: {
+        ["Skorpion", { img: "images/tools/skorpion.webp", stats: {
           "CALIBER TYPE": ".32 ACP | 9x19mm | 9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",

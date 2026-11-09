@@ -6,7 +6,7 @@ const TYPES = { ".js": "application/javascript", ".css": "text/css", ".html": "t
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clip = (s, n) => { s = String(s).split("\n").map(l => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n"); return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s; };
 const OUT = path.join(ROOT, "e"), MAN = path.join(OUT, "manifest.json");
-const VERSION = 3;
+const VERSION = 4;
 
 async function overrides() {
   if (!API || process.env.NO_OVERRIDES) return {};
@@ -83,7 +83,7 @@ const srv = http.createServer((q, r) => {
         const txt = x.text.replace(/\s+/g, " ").trim();
         c.innerHTML = `<div class="ogc-top"><b>PDA.exe</b><span>${e(x.sec)}</span></div>
           <div class="ogc-body">
-            ${x.img ? `<div class="ogc-pic"><img src="${e(x.img)}"></div>` : `<div class="ogc-pic ogc-ico"><img src="images/icons/${x.sec === "TOOLS" ? "tools" : x.sec === "BIOGRAPHY" ? "biography" : "manual"}.png"></div>`}
+            ${x.img ? `<div class="ogc-pic${x.sec === "TOOLS" ? " gun" : ""}"><img src="${e(x.img)}"></div>` : `<div class="ogc-pic ogc-ico"><img src="images/icons/${x.sec === "TOOLS" ? "tools" : x.sec === "BIOGRAPHY" ? "biography" : "manual"}.png"></div>`}
             <div class="ogc-info"><div class="ogc-name">// ${e(x.name.toUpperCase())}</div><div class="ogc-sub">${e(x.sub)}</div>
               ${x.stats.length ? `<div class="ogc-stats">${x.stats.map(([k, v, col]) => `<div><i style="color:${lift(col)}">${e(k)}</i>: ${e(v)}</div>`).join("")}</div>` : ""}
               ${txt ? `<div class="ogc-text${x.stats.length ? "" : " big"}">${e(txt)}</div>` : ""}</div></div>
@@ -96,6 +96,8 @@ const srv = http.createServer((q, r) => {
           .ogc-body { flex: 1; display: flex; gap: 26px; padding: 24px 26px 10px; min-height: 0; }
           .ogc-pic { width: 380px; flex: none; background: #1a1a1a; border: 2px solid #555; display: flex; align-items: center; justify-content: center; overflow: hidden; }
           .ogc-pic img { width: 100%; height: 100%; object-fit: cover; }
+          .ogc-pic.gun { width: 440px; background: #2a2a2a; }
+          .ogc-pic.gun img { object-fit: contain; }
           .ogc-ico { width: 260px; background: #141414; border-color: #333; }
           .ogc-ico img { width: 55%; height: auto; object-fit: contain; filter: invert(1); opacity: .22; }
           .ogc-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -133,6 +135,41 @@ const srv = http.createServer((q, r) => {
 `);
   }
   fs.writeFileSync(MAN, JSON.stringify(man));
+  const totals = await pg.evaluate(() => { const { entries } = window.__pda(); const n = sec => entries.filter(e => e.section === sec).length; return { tools: n("tools"), bio: n("bio"), docs: n("docs"), all: entries.length }; });
+  const pics = list.filter(x => x.sec === "BIOGRAPHY" && x.img && !/^https?:/.test(x.img)).map(x => x.img);
+  const pick = ["security-bot-c", "tony", "robinson", "bonecrab", "factory-king", "goat"].map(k => pics.find(p => p.includes(k))).filter(Boolean);
+  for (const p of pics) if (pick.length < 6 && !pick.includes(p)) pick.push(p);
+  await pg.evaluate(({ t, pick }) => {
+    const c = document.getElementById("ogcard");
+    c.innerHTML = `<div class="ogc-top"><b>PDA.exe</b><span>ONCE A NORMAL CITY</span></div>
+      <div class="ogs-body">
+        <div class="ogs-left">
+          <div class="ogs-logo">PDA<span>.exe</span></div>
+          <div class="ogs-tag">THE ONCE A NORMAL CITY<br>PDA CHECKLIST</div>
+          <div class="ogs-nums"><div><b>${t.tools}</b>TOOLS</div><div><b>${t.bio}</b>PEOPLE</div><div><b>${t.docs}</b>DOCUMENTS</div></div>
+          <div class="ogs-feat">&#9733;&#xFE0E; CHECK OFF &nbsp;·&nbsp; STATS &nbsp;·&nbsp; DAMAGE CALC</div>
+        </div>
+        <div class="ogs-grid">${pick.map(p => `<div><img src="${p}"></div>`).join("")}</div>
+      </div>
+      <div class="ogc-foot">SLEEPYPLINKO.GITHUB.IO/PDATRACKER</div>`;
+    let st = document.getElementById("ogsite");
+    if (!st) { st = document.createElement("style"); st.id = "ogsite"; document.head.appendChild(st); st.textContent = `
+      .ogs-body { flex: 1; display: flex; gap: 28px; padding: 26px 28px 18px; min-height: 0; }
+      .ogs-left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+      .ogs-logo { font-size: 112px; font-weight: 900; line-height: .95; color: #fff; letter-spacing: 2px; text-shadow: 0 0 22px rgba(255,255,255,.18); }
+      .ogs-logo span { color: #8a8a8a; }
+      .ogs-tag { margin-top: 14px; font-size: 26px; font-weight: 700; letter-spacing: 3px; color: #f3ee30; line-height: 1.25; }
+      .ogs-nums { display: flex; gap: 14px; margin-top: 26px; }
+      .ogs-nums div { flex: 1; border: 2px solid #4a4a4a; background: #151515; padding: 10px 12px; font-size: 17px; letter-spacing: 2px; color: #9a9a9a; display: flex; flex-direction: column; }
+      .ogs-nums b { font-size: 40px; color: #fff; letter-spacing: 0; }
+      .ogs-feat { margin-top: 20px; font-size: 19px; letter-spacing: 2px; color: #bdbdbd; }
+      .ogs-grid { width: 470px; flex: none; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 8px; }
+      .ogs-grid div { border: 2px solid #555; background: #1a1a1a; overflow: hidden; }
+      .ogs-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }`; }
+  }, { t: totals, pick });
+  await pg.waitForFunction(() => [...document.querySelectorAll("#ogcard img")].every(i => i.complete), null, { timeout: 15000 }).catch(() => {});
+  await pg.waitForTimeout(100);
+  await pg.screenshot({ path: path.join(ROOT, "images", "og.jpg"), type: "jpeg", quality: 86, clip: { x: 0, y: 0, width: 1200, height: 630 } });
   await b.close(); srv.close();
   console.log(`${list.length} preview pages, ${drawn} card images redrawn, ${Object.keys(ov).length} overrides applied`);
 });
