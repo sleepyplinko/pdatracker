@@ -11,6 +11,8 @@
 const NAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const ID_RE = /^[tbd]\|[^\n]{1,150}$/;
 const MAX_IDS = 3000;
+const OV_RE = /^(?:[tbd]\|[^\n]{1,150}|a\|[^\n]{1,150}|site\|notice)$/;   // things admins can publish info for
+const AMMO_KEYS = ["base", "mult", "spread", "proj", "pen", "shieldPierce", "fracture", "bleed", "saBypass", "ssBypass", "weakness", "statuses", "alert"];
 const RARITY_TTL = 300;            // seconds the rarity numbers are cached
 const AUTH_LIMIT = 20;             // login/register tries per IP per 10 minutes
 const SUBMIT_LIMIT = 6;            // submissions per IP per 10 minutes
@@ -281,6 +283,18 @@ async function route(req, env, ctx) {
       const fix = missing.length ? [...new Set(missing.map(t => want[t] === 1 ? "schema.sql" : `schema-update-${want[t]}.sql`))].join(", then ") : "";
       return json({ tables: { missing, fix }, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
     }
+    /* numbers for the admin page */
+    if (path === "/api/admin/stats" && M === "GET") {
+      const wk = now() - 7 * 86400, day = now() - 86400;
+      const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
+      const [users, active, active1, pub, share, subsWeek, subsNew, finds] = await Promise.all([
+        q("SELECT COUNT(*) AS n FROM users"), q("SELECT COUNT(*) AS n FROM users WHERE updated > ?", wk), q("SELECT COUNT(*) AS n FROM users WHERE updated > ?", day),
+        q("SELECT COUNT(*) AS n FROM users WHERE public = 1"), q("SELECT COUNT(*) AS n FROM users WHERE share = 1"),
+        q("SELECT COUNT(*) AS n FROM submissions WHERE created > ?", wk), q("SELECT COUNT(*) AS n FROM submissions WHERE status = 'new'"),
+        q("SELECT COALESCE(SUM(n), 0) AS n FROM activity WHERE t > ?", wk).catch(() => ({ n: 0 }))]);
+      const avg = await q("SELECT AVG(json_array_length(found)) AS n FROM users WHERE found != '[]'");
+      return json({ users: users.n, active7: active.n, active1: active1.n, public: pub.n, share: share.n, subsWeek: subsWeek.n, subsNew: subsNew.n, finds7: finds.n, avgFound: avg && avg.n ? Math.round(avg.n) : 0 });
+    }
     /* change history + undo */
     if (path === "/api/admin/changes" && M === "GET") {
       const rows = await env.DB.prepare("SELECT id, entry, before, after, by, what, t FROM changes ORDER BY id DESC LIMIT 150").all();
@@ -334,7 +348,7 @@ async function route(req, env, ctx) {
     }
     const om = path.match(/^\/api\/admin\/overrides\/(.+)$/);
     if (om) {
-      const id = decodeURIComponent(om[1]); if (!ID_RE.test(id)) return err(400, "Bad entry.");
+      const id = decodeURIComponent(om[1]); if (!OV_RE.test(id)) return err(400, "Bad entry.");
       if (M === "PUT") {
         const b = await body(req); if (!b || typeof b.data !== "object") return err(400, "Bad request.");
         const d = {}; const src = b.data;
@@ -343,6 +357,15 @@ async function route(req, env, ctx) {
         if (src.stats && typeof src.stats === "object") { d.stats = {}; Object.entries(src.stats).slice(0, 60).forEach(([k, v]) => { d.stats[clip(k, 40).toUpperCase()] = clip(v, 120); }); }
         if (typeof src.tier === "number" && src.tier >= 1 && src.tier <= 9) d.tier = src.tier;
         if (typeof src.update === "string" && src.update.trim()) d.update = clip(src.update.trim(), 40);
+        if (id.startsWith("a|")) {                                     // an ammo type's numbers
+          if (src.ammo && typeof src.ammo === "object") { d.ammo = {}; AMMO_KEYS.forEach(k => { if (src.ammo[k] != null) d.ammo[k] = clip(src.ammo[k], 40); }); }
+          if (src.ammoAdd && typeof src.ammoAdd === "object") { const c = clip(src.ammoAdd.caliber, 60).trim(), n = clip(src.ammoAdd.name, 80).trim(); if (!c || !n) return err(400, "New ammo needs a caliber and a name."); d.ammoAdd = { caliber: c, name: n }; }
+          if (typeof src.note === "string") d.note = clip(src.note, 300);
+        }
+        if (id === "site|notice") {                                    // the notice bar everyone sees
+          const t = clip(src.text, 400).trim(); if (!t) return err(400, "Write the notice first.");
+          d.notice = { text: t, level: ["info", "update", "warn"].includes(src.level) ? src.level : "info", id: randomHex(4) };
+        }
         const okUrl = u => typeof u === "string" && (/^https?:\/\/[^\s"'<>]{4,500}$/.test(u) || /^images\/[\w\-.\/]{1,200}$/.test(u));
         if (Array.isArray(src.imgs)) { const l = src.imgs.filter(okUrl).slice(0, 8); if (l.length) d.imgs = l; }
         else if (okUrl(src.img)) d.imgs = [src.img];

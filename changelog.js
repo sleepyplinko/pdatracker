@@ -10,6 +10,11 @@
    ===================================================================== */
 
 const PDA_CHANGELOG = [
+  { date: "2026-11-09", items: [
+    "DAMAGE: a note that the ammo chart may be out of date in places; ammo corrected by the admins is marked \u270e",
+    "Admins can correct or add ammo, and post a notice bar for everyone",
+    "Swapped the colourful emojis for plain symbols that fit the PDA",
+  ]},
   { date: "2026-11-08", items: [
     "Stats and descriptions for all Security Bots, VLTS Attendant and Fabricated Dummy",
     "New: Bonecrab (Hellion), with picture, stats and description",

@@ -615,12 +615,22 @@
     save(KEY_LAST, { t: Math.floor(Date.now() / 1000), ids });
     sinceBar();
   }
+  function noticeBar() {
+    const el = $("#noticebar"); if (!el) return;
+    const o = overrides && overrides["site|notice"], n = o && o.notice;
+    const gone = load("pda-notice-closed", "");
+    el.hidden = !n || gone === n.id;
+    if (el.hidden) return;
+    el.className = "noticebar " + (n.level || "info");
+    el.innerHTML = `<span>${{ info: "&#9432;", update: "&#10022;", warn: "&#9888;&#xFE0E;" }[n.level] || "&#9432;"} ${esc(n.text)}</span><button class="mini-btn" data-noticeclose>CLOSE</button>`;
+  }
+  document.addEventListener("click", e => { if (e.target.closest("[data-noticeclose]")) { const o = overrides["site|notice"]; if (o && o.notice) save("pda-notice-closed", o.notice.id); play("back"); noticeBar(); } });
   function sinceBar() {
     const el = $("#sincebar"); if (!el) return;
     el.hidden = !since || viewOnly;
     if (el.hidden) return;
     const n = since.newIds.length, u = since.updIds.length;
-    el.innerHTML = `<span>&#128276; Since your last visit: ${[n ? `<b>${n}</b> new entr${n === 1 ? "y" : "ies"}` : "", u ? `<b>${u}</b> updated page${u === 1 ? "" : "s"}` : ""].filter(Boolean).join(" and ")}.</span><button class="mini-btn go" data-sinceshow>SHOW ME</button><button class="mini-btn" data-sinceclose>DISMISS</button>`;
+    el.innerHTML = `<span>&#9656; Since your last visit: ${[n ? `<b>${n}</b> new entr${n === 1 ? "y" : "ies"}` : "", u ? `<b>${u}</b> updated page${u === 1 ? "" : "s"}` : ""].filter(Boolean).join(" and ")}.</span><button class="mini-btn go" data-sinceshow>SHOW ME</button><button class="mini-btn" data-sinceclose>DISMISS</button>`;
   }
   function renderSince() {
     const list = (ids, why) => ids.map(id => findEntry(id)).filter(Boolean).map(e => resultHTML(e, `${why} · ${contextOf(e)}`)).join("");
@@ -663,7 +673,7 @@
     const t = trackOf(e.id);
     const out = [];
     if (friend && !viewOnly && friend.set[t] && !found[t]) out.push(`<b class="bfr" title="${esc(friend.name || "Your friend")} has this and you don't">${esc((friend.name || "F").charAt(0).toUpperCase())}✓</b>`);
-    if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥</b>');
+    if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥︎</b>');
     if (e.update && e.update === latestUpdate) out.push(`<b class="bnew" title="New in ${esc(e.update)}">NEW</b>`);
     return out.length ? `<span class="badges">${out.join("")}</span>` : "";
   }
@@ -789,7 +799,7 @@
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
       const shownTiers = tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin);
       if (shownTiers.length > 2) body += `<div class="tierjump" role="navigation" aria-label="Jump to tier"><span>JUMP TO</span>${shownTiers.map(t => { const all = cat.items.filter(e => e.tier === +t), [f, n] = countOf(all); return `<button class="tj${f === n ? " done" : ""}" data-tierjump="${t}" title="Tier ${t}: ${f}/${n} found">T${t}</button>`; }).join("")}</div>`;
-      if (!settings.tierTip && !viewOnly) body += `<div class="tiptip">&#128161; Tip: click anywhere on a <b>TIER</b> bar to mark that whole tier found. <button class="mini-btn" data-tiptip>GOT IT</button></div>`;
+      if (!settings.tierTip && !viewOnly) body += `<div class="tiptip">&#9432; Tip: click anywhere on a <b>TIER</b> bar to mark that whole tier found. <button class="mini-btn" data-tiptip>GOT IT</button></div>`;
       tiers.filter(t => !ui.tierMin || +t >= +ui.tierMin).forEach(tier => {
         const all = cat.items.filter(e => e.tier === +tier);
         if (ui.hideDone && all.length && all.every(e => isFound(e.id))) { hiddenDone++; return; }
@@ -1393,7 +1403,30 @@
      ===================================================================== */
   const AMMO = (typeof PDA_AMMO === "object" && PDA_AMMO) || { groups: [] };
   const CAL_ALIAS = { "5 KG BIO-SLUG": ["8x25mm / .50 BC / Bio-slug", "5 KG-Somafluid Slug"] };
-  const ammoAll = AMMO.groups.flatMap((g, gi) => g.items.map((a, ai) => ({ ...a, key: gi + ":" + ai, caliber: g.caliber, section: g.section, notes: g.notes })));
+  /* admins can correct an ammo type's numbers (or add one) from the admin page; the chart itself is a community sheet */
+  const AMMO_ORIG = JSON.parse(JSON.stringify(AMMO.groups));
+  const AMMO_KEYS = [["base", "BASE DAMAGE"], ["mult", "DAMAGE MULT"], ["spread", "SPREAD MULT"], ["proj", "# OF PROJECTILES"], ["pen", "ARMOR PEN"], ["shieldPierce", "SHIELD PIERCING"], ["fracture", "FRACTURE"], ["bleed", "CAUSES BLEED"], ["saBypass", "SUPER ARMOR BYPASS"], ["ssBypass", "SUPERSHIELD BYPASS"], ["weakness", "CAUSES WEAKNESS"], ["statuses", "STATUSES"], ["alert", "ALERT RADIUS MULT"]];
+  const ammoId = (cal, name) => `a|${slug(cal)}|${slug(name)}`;
+  const ammoNum = v => { const m = String(v == null ? "" : v).replace(/(^|[^\w])[Oo](?=[.,]\d)/g, "$10").match(/-?(?:\d+(?:[.,]\d+)?|[.,]\d+)/); return m ? parseFloat(m[0].replace(",", ".").replace(/^(-?)\./, "$10.")) : null; };   // copes with "O.9x", ".65x", "0,9x"
+  const ammoFrac = v => { const n = ammoNum(v); if (n == null) return null; return /[%&]/.test(String(v)) || n > 1 ? n / 100 : n; };
+  const parseAmmo = (name, raw) => ({ name, raw, base: ammoNum(raw.base) || 0, mult: ammoNum(raw.mult) == null ? 1 : ammoNum(raw.mult), spreadMult: ammoNum(raw.spread) == null ? 1 : ammoNum(raw.spread),
+    proj: ammoNum(raw.proj) || 1, pen: ammoFrac(raw.pen) || 0, saBypass: ammoFrac(raw.saBypass) || 0, trueOnDirect: /\*/.test(raw.pen || "") });
+  let ammoAll = [];
+  function applyAmmoOv(ov) {
+    const groups = JSON.parse(JSON.stringify(AMMO_ORIG));
+    Object.entries(ov || {}).forEach(([id, o]) => {
+      if (!id.startsWith("a|") || !o) return;
+      if (o.ammoAdd) {
+        const g = groups.find(x => slug(x.caliber) === slug(o.ammoAdd.caliber)); if (!g || g.items.some(x => slug(x.name) === slug(o.ammoAdd.name))) return;
+        g.items.push(Object.assign(parseAmmo(o.ammoAdd.name, Object.assign(Object.fromEntries(AMMO_KEYS.map(([k]) => [k, ""])), o.ammo || {})), { edited: o.updated || 1, added: true, note: o.note || "" }));
+        return;
+      }
+      groups.forEach(g => g.items.forEach((a, i) => { if (ammoId(g.caliber, a.name) === id) g.items[i] = Object.assign(parseAmmo(a.name, Object.assign({}, a.raw, o.ammo || {})), { edited: o.updated || 1, note: o.note || "" }); }));
+    });
+    AMMO.groups = groups;
+    ammoAll = AMMO.groups.flatMap((g, gi) => g.items.map((a, ai) => ({ ...a, key: gi + ":" + ai, id: ammoId(g.caliber, a.name), caliber: g.caliber, section: g.section, notes: g.notes })));
+  }
+  applyAmmoOv(OV_CACHE);
   const ammoFor = cal => {
     if (CAL_ALIAS[cal]) { const [c, n] = CAL_ALIAS[cal]; return ammoAll.filter(a => a.caliber === c && (!n || a.name === n)); }
     return ammoAll.filter(a => a.caliber === cal);
@@ -1514,7 +1547,7 @@
     const cmpRows = !melee && pool.length > 1 ? pool.map(a => [a, shot(a)]).sort((x, y) => y[1].final - x[1].final).map(([a, s]) => {
       const kk = toKill(s.final, a), kb = kk && ss ? blocked(ssByp(a)) : 0;
       const k = kk ? (kb ? `${kk} <small class="dim">(${kb}+${kk - kb})</small>` : kk) : "—";
-      return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
+      return `<tr class="${ammo && a.key === ammo.key ? "on" : ""}" data-dmgammo="${esc(a.key)}"><td>${esc(a.name)}${a.edited ? ` <span class="aed" title="${esc(a.note ? "Corrected by the site's admins: " + a.note : "Corrected by the site's admins")}">✎</span>` : ""}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${k}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
     }).join("") : "";
 
     const ammoCard = ammo ? `<div class="ammocard"><b>${esc(ammo.name)}</b> <span class="dim">${esc(ammo.caliber)} · ${esc(ammo.section)}</span>
@@ -1523,7 +1556,8 @@
       ${ammo.notes && ammo.notes.length ? `<div class="dim">${ammo.notes.map(n => "* " + esc(n)).join("<br>")}</div>` : ""}</div>` : "";
 
     screen.innerHTML = `<div class="results dmgcalc">
-      <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)</div>
+      <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)
+        <div class="dim dnote">&#9888;&#xFE0E; The chart is kept up by the community, so some ammo may be out of date with the game. Treat hits-to-kill as a close estimate.${ammoAll.some(a => a.edited) ? " Ammo marked ✎ was corrected by the site's admins." : ""}</div></div>
       <div class="dgrid">
         <div class="dbox"><div class="dhead">Attacker</div><div class="dform">
           <label>WEAPON</label>${pickerHTML("dmggun", { label: "Weapon", placeholder: gun ? `${gun.name}  (type to change)` : "Type a weapon name…", onPick: v => setDmg("gun", v),
@@ -1673,7 +1707,7 @@
     }).join("");
     screen.innerHTML = `<div class="results">
       <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}
-        ${updSel}<span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#127922; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
+        ${updSel}<span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#9860;&#xFE0E; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
       ${ui.leftUpd ? "" : closestHTML()}
       ${body || `<div class="empty-cat"><b>${ui.leftUpd ? "ALL OF " + esc(ui.leftUpd.toUpperCase()) + " FOUND" : "EVERYTHING FOUND"}</b>Nice work.</div>`}</div>`;
   }
@@ -1823,7 +1857,7 @@
   const bulkKey = n => String(n).toLowerCase().replace(/[^a-z0-9$+]/g, "");
   function bulkMark(text) {
     const lines = String(text).split(/\r?\n/).map(l => l
-      .replace(/^\s*(?:[-*•★☆✓✔]|\d+[.)])\s*/, "")       // bullets / numbering
+      .replace(/^\s*(?:[-*•★☆✓✔︎]|\d+[.)])\s*/, "")       // bullets / numbering
       .replace(/^\d+\s*x\s+/i, "")                          // "2x AK74"
       .replace(/\s*\((?:t|tier)\s*\d+[^)]*\)\s*$/i, "")     // "(T3)" / "(Tier 3)"
       .trim()).filter(l => l && !/^(tools|biography|documents|pda)\b.*[›:]/i.test(l));
@@ -1856,7 +1890,7 @@
   }
   function favRows() {
     const ids = Object.keys(favs).filter(id => byId.has(id));
-    if (!ids.length) return '<div class="row dim">Press the ♥ on any weapon, person or document page to add it here.</div>';
+    if (!ids.length) return '<div class="row dim">Press the ♥︎ on any weapon, person or document page to add it here.</div>';
     const groupsOf = [["FAVOURITE GUNS", "#9cff6b", "tools"], ["FAVOURITE PERSON ENTRIES", "#4fd8ff", "bio"], ["FAVOURITE DOCUMENTS", "#ff79e0", "docs"]];
     return groupsOf.map(([title, c, sec]) => {
       const list = ids.map(id => byId.get(id)).filter(e => e.section === sec);
@@ -2189,6 +2223,7 @@
       if (Object.keys(o).some(k => !["update", "updated", "add"].includes(k))) e.community = o.updated || 1;
     });
     latestUpdate = updateTags()[0] || "";
+    applyAmmoOv(ov); noticeBar();
   }
   async function loadOverrides() {
     if (!API) return;
@@ -2375,11 +2410,18 @@
       <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
     </div></div>`;
   }
-  const entryName = id => { const e = findEntry(id); return e ? e.name : id.split("|").pop(); };
+  const entryName = id => {
+    if (id === "site|notice") return "Site notice";
+    if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return (a ? a.name : id.split("|").pop()) + " (ammo)"; }
+    const e = findEntry(id); return e ? e.name : id.split("|").pop();
+  };
   function changeSummary(c) {
     const a = c.after ? JSON.parse(c.after) : null, b = c.before ? JSON.parse(c.before) : null, src = a || b || {};
     const parts = [];
     if (src.add) parts.push("new entry");
+    if (src.ammoAdd) parts.push("new ammo");
+    if (JSON.stringify((a || {}).ammo) !== JSON.stringify((b || {}).ammo)) { const ks = new Set([...Object.keys((a || {}).ammo || {}), ...Object.keys((b || {}).ammo || {})]); parts.push([...ks].map(k => (AMMO_KEYS.find(x => x[0] === k) || [k, k])[1].toLowerCase()).join(", ")); }
+    if (JSON.stringify((a || {}).notice) !== JSON.stringify((b || {}).notice)) parts.push((a && a.notice) ? `"${a.notice.text.slice(0, 50)}"` : "notice");
     ["stats", "comment", "desc", "tier", "update", "imgs", "img"].forEach(k => { if (JSON.stringify((a || {})[k]) !== JSON.stringify((b || {})[k])) parts.push({ stats: "stats", comment: "comment", desc: "description", tier: "tier", update: "update tag", imgs: "pictures", img: "pictures" }[k]); });
     return [...new Set(parts)].join(", ") || "no visible change";
   }
@@ -2416,10 +2458,53 @@
       : `<p class="dim">Tag entries with an update first (ADDED IN UPDATE in the editor). Then you can post the list here.</p><div class="btnrow"><button class="pbtn" id="annCancel">CLOSE</button></div>`}
     </div></div>`;
   }
+  function ammoEditorHTML() {
+    const ed = adm.edit, isNew = ed.ammo === "";
+    const a = !isNew && ammoAll.find(x => x.id === ed.ammo);
+    const pub = !isNew && overrides[ed.ammo];
+    const items = ammoAll.map(x => ({ v: x.id, label: x.name, group: x.caliber }));
+    const cals = [...new Set(AMMO.groups.map(g => g.caliber))];
+    const raw = a ? a.raw : {};
+    return `<div class="dbox admedit"><div class="dhead">${isNew ? "Add an ammo type" : "Correct an ammo type"}</div><div class="dform">
+      ${isNew ? `<div class="frow"><label>CALIBER <select id="ammoCal">${cals.map(c => `<option${c === ed.cal ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></label><label class="grow">NAME <input id="ammoName" maxlength="80" placeholder="as the game shows it"></label></div>`
+        : `<label>AMMO</label>${pickerHTML("admammo", { items, placeholder: a ? `${a.name}  (type to change)` : "Type an ammo name…", onPick: v => { adm.edit.ammo = v; keepScroll(render); } })}`}
+      ${isNew || a ? `<div class="ammogrid">${AMMO_KEYS.map(([k, l]) => `<label>${l}<input data-ammof="${k}" maxlength="40" value="${esc(raw[k] || "")}"${a && AMMO_ORIG.some(g => g.items.some(i => ammoId(g.caliber, i.name) === a.id && i.raw[k] !== raw[k])) ? ' class="changed"' : ""}></label>`).join("")}</div>
+        <p class="dim">Type values like the chart does: 1.5x for multipliers, 0.25 or 25% for percentages, True/False, LVL 1 for bleed. Leave a box empty for "none". A * after armor pen means true damage on a direct hit.</p>
+        <label>NOTE <small>optional, shown when hovering the ✎ mark (e.g. "tested in game")</small><input id="ammoNote" maxlength="300" value="${esc((pub && pub.note) || "")}"></label>
+        <div class="btnrow"><button class="pbtn" id="ammoGo">${isNew ? "ADD AMMO" : "PUBLISH CORRECTION"}</button>${pub ? '<button class="pbtn danger" id="ammoUndo">BACK TO THE CHART\'S NUMBERS</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>` : ""}
+    </div></div>`;
+  }
+  function noticeEditorHTML() {
+    const o = overrides["site|notice"], n = (o && o.notice) || { text: "", level: "info" };
+    return `<div class="dbox admedit"><div class="dhead">Site notice</div><div class="dform">
+      <p class="dim">A bar at the top of the site for everyone (an update dropped, maintenance, a giveaway...). Each person can close it; publishing a new one shows it again.</p>
+      <label>MESSAGE<textarea id="noticeText" rows="3" maxlength="400">${esc(n.text)}</textarea></label>
+      <label>STYLE <select id="noticeLevel">${[["info", "Info (blue)"], ["update", "Update (green)"], ["warn", "Warning (yellow)"]].map(([v, l]) => `<option value="${v}"${v === n.level ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+      <div class="btnrow"><button class="pbtn" id="noticeGo">PUBLISH NOTICE</button>${o ? '<button class="pbtn danger" id="noticeOff">TAKE IT DOWN</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
+    </div></div>`;
+  }
+  let admStats = null;
+  function statsHTML() {
+    if (admStats === null) { admStats = {}; api("GET", "/api/admin/stats").then(([st, r]) => { admStats = st === 200 ? r : { err: 1 }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
+    const s = admStats; if (!s || s.users == null) return "";
+    const real = entries.filter(e => !e.unknown);
+    let rare = "", common = "";
+    if (rarity && rarity.players) {
+      const by = real.map(e => [e, (rarity.counts[e.id] || 0) / rarity.players]).sort((a, b) => a[1] - b[1]);
+      const fmt = l => l.map(([e, r]) => `${esc(e.name)} <span class="dim">${Math.round(r * 100)}%</span>`).join(", ");
+      rare = fmt(by.slice(0, 6)); common = fmt(by.slice(-6).reverse());
+    }
+    return `<details class="setupbox statsbox"><summary><b>SITE STATS</b> ${s.users} accounts · ${s.active7} active this week · ${s.subsNew} submissions waiting</summary>
+      <div>${s.active1} active today · ${s.public} public profiles · ${s.share} share their finds · about ${s.avgFound} finds per account · ${s.finds7} things found this week · ${s.subsWeek} submissions this week</div>
+      ${rare ? `<div><b>Rarest:</b> ${rare}</div><div><b>Most found:</b> ${common}</div>` : ""}
+      <div class="btnrow"><button class="mini-btn" data-admbackup>DOWNLOAD BACKUP OF PUBLISHED INFO</button></div></details>`;
+  }
   function readAddForm() { if (!adm.edit || !adm.edit.add) return; screen.querySelectorAll("[data-admadd]").forEach(el => { adm.edit.add[el.dataset.admadd] = el.value; }); }
   function adminEditorHTML() {
     const ed = adm.edit; if (!ed) return "";
     if (ed.add) return addEditorHTML();
+    if (ed.ammo !== undefined) return ammoEditorHTML();
+    if (ed.notice) return noticeEditorHTML();
     const e = ed.entry && findEntry(ed.entry);
     const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }));
     const isTool = e && e.section === "tools", isPerson = e && e.section === "bio";
@@ -2450,18 +2535,22 @@
         <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="${r.account ? `Note for ${esc(r.account)}, shown on their SUBMIT tab (optional, e.g. why it wasn't added)` : "Private note (they sent it without an account, so they won't see it)"}">
         <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
-    const pubs = Object.entries(overrides).map(([id, o]) => { const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: e ? e.group : (o.add ? o.add.group : ""), added: !!o.add, update: o.update, ok: !!e }; })
+    const pubs = Object.entries(overrides).map(([id, o]) => {
+      if (id === "site|notice") return { id, name: "SITE NOTICE", group: (o.notice && o.notice.text || "").slice(0, 60), ok: true, special: "notice" };
+      if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
+      const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: e ? e.group : (o.add ? o.add.group : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
       ${setupHTML()}
+      ${statsHTML()}
       ${announceHTML()}
       <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="history" aria-pressed="${adm.status === "history"}">CHANGE HISTORY</button><button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
       ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
       ${adm.status === "history" ? historyHTML() : adm.status === "blocked" ? blocksHTML() : (list || `<p class="dim">Nothing here.</p>`)}
       <h3 class="ph3">PUBLISHED //</h3>
-      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns"><button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button></span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
+      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns">${e.special === "notice" ? `<button class="mini-btn" data-admnotice>EDIT</button>` : e.special === "ammo" ? `<button class="mini-btn" data-admammo="${esc(e.id)}">EDIT</button>` : `<button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button>`}</span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
     </div>`;
     const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
     on("admCancel", () => { adm.edit = null; play("back"); keepScroll(render); });
@@ -2488,6 +2577,40 @@
       if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
       overrides[e.id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); applyOverrides(overrides);
       play("confirm"); toast(`Published for ${e.name}.`); adm.edit = null; loadAdmin();
+    });
+    const pubAmmo = async (id, data, msg) => {
+      const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return false; }
+      overrides[id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); applyOverrides(overrides);
+      play("confirm"); toast(msg); adm.edit = null; keepScroll(render); return true;
+    };
+    const ammoFields = () => Object.fromEntries([...screen.querySelectorAll("[data-ammof]")].map(i => [i.dataset.ammof, i.value.trim()]));
+    on("ammoGo", async () => {
+      const f = ammoFields(); if (!f.base || ammoNum(f.base) == null) { toast("Base damage has to be a number."); play("warn"); return; }
+      const note = $("#ammoNote").value.trim();
+      if (adm.edit.ammo === "") {
+        const cal = $("#ammoCal").value, name = $("#ammoName").value.trim(); if (!name) { toast("Type the ammo's name."); play("warn"); return; }
+        if (ammoAll.some(a => a.id === ammoId(cal, name))) { toast("That ammo is already in the chart. Use FIX AMMO to change it."); play("warn"); return; }
+        await pubAmmo(ammoId(cal, name), { ammoAdd: { caliber: cal, name }, ammo: f, note }, `Added ${name}.`);
+      } else {
+        const a = ammoAll.find(x => x.id === adm.edit.ammo);
+        const orig = AMMO_ORIG.flatMap(g => g.items.map(i => [ammoId(g.caliber, i.name), i])).find(([id]) => id === a.id);
+        const diff = {}; Object.entries(f).forEach(([k, v]) => { if (!orig || (orig[1].raw[k] || "") !== v) diff[k] = v; });
+        if (!Object.keys(diff).length && !note) { toast("Nothing changed from the chart."); play("warn"); return; }
+        await pubAmmo(a.id, { ammo: diff, note }, `Corrected ${a.name}. Everyone's calculator updates within a minute.`);
+      }
+    });
+    on("ammoUndo", async () => {
+      const id = adm.edit.ammo; const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(id)).catch(() => [0]);
+      if (st === 200) { delete overrides[id]; save("pda-overrides-v1", overrides); applyOverrides(overrides); play("deselect"); toast("Back to the chart's numbers."); adm.edit = null; keepScroll(render); } else toast("Couldn't remove it.");
+    });
+    on("noticeGo", async () => {
+      const text = $("#noticeText").value.trim(); if (!text) { toast("Write the notice first."); play("warn"); return; }
+      await pubAmmo("site|notice", { text, level: $("#noticeLevel").value }, "Notice is up. Everyone sees it within a minute.");
+    });
+    on("noticeOff", async () => {
+      const [st] = await api("DELETE", "/api/admin/overrides/site%7Cnotice").catch(() => [0]);
+      if (st === 200) { delete overrides["site|notice"]; save("pda-overrides-v1", overrides); noticeBar(); play("deselect"); toast("Notice taken down."); adm.edit = null; keepScroll(render); } else toast("Couldn't take it down.");
     });
     on("annCancel", () => { adm.ann = null; play("back"); keepScroll(render); });
     on("annGo", async () => {
@@ -2551,7 +2674,7 @@
     const snooze = load(KEY_SNOOZE, 0);
     const show = !viewOnly && sinceBackup >= 25 && sinceBackup >= snooze;
     el.hidden = !show;
-    if (show) el.innerHTML = `<span>&#9888; You've marked <b>${sinceBackup}</b> things since your last backup. Progress only lives in this browser.</span><button class="mini-btn go" data-bkdl>DOWNLOAD BACKUP</button><button class="mini-btn" data-bklater title="Remind me after 25 more">LATER</button>`;
+    if (show) el.innerHTML = `<span>&#9888;&#xFE0E; You've marked <b>${sinceBackup}</b> things since your last backup. Progress only lives in this browser.</span><button class="mini-btn go" data-bkdl>DOWNLOAD BACKUP</button><button class="mini-btn" data-bklater title="Remind me after 25 more">LATER</button>`;
   }
   document.addEventListener("click", e => {
     if (e.target.closest("[data-bkdl]")) { doExport(); toast("Backup downloaded."); backupNag(); }
@@ -2817,7 +2940,7 @@
         <h4>Searching</h4>
         <p>Search finds names, and also stats: try "9x19mm", "tier 5" or "suppressor". Narrow it with the WEAPONS / PEOPLE / DOCUMENTS buttons.</p>
         <h4>Favourites and notes</h4>
-        <p>Press the &#9829; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
+        <p>Press the &#9829;&#xFE0E; on any page to add it to USER FAVOURITES on your Profile. The My Notes tab at the bottom of any page is a private notepad for that entry.</p>
         <h4>Sharing and comparing</h4>
         <p>CLOUD gives you a link anyone can open to see your PDA (read-only). Paste a friend's link there to see what they have that you don't.</p>
         <h4>Logging a lot at once</h4>
@@ -3016,6 +3139,10 @@
         adm.edit = { sub, add: { section: "tools", name: b.dataset.admname || "", img: row && isImgLink(row.link) ? row.link : "", stats: row && row.kind === "Stats" ? row.text : "", desc: row && row.kind === "Description" ? row.text : "" } };
         play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
     { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
+    { const b = t.closest("[data-admammo]"); if (b) { adm.edit = { ammo: b.dataset.admammo || null }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
+    if (t.closest("[data-admammoadd]")) { adm.edit = { ammo: "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    if (t.closest("[data-admnotice]")) { adm.edit = { notice: true }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    if (t.closest("[data-admbackup]")) { play("click"); const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", kind: "published-info", at: new Date().toISOString(), overrides }, null, 1)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pda-published-info-${today()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
     if (t.closest("[data-admann]")) { adm.ann = { update: "", msg: "" }; play("click"); keepScroll(render); return; }
     if (t.closest("[data-admimgadd]")) { const box = $("#admImgs"); if (box) { box.insertAdjacentHTML("beforeend", imgRowHTML("")); play("click"); } return; }
     { const b = t.closest("[data-admimgdel]"); if (b) { const it = b.closest(".imgitem"); const box = $("#admImgs"); if (box && box.children.length > 1) it.remove(); else { const i = it.querySelector("input"); i.value = ""; const pv = it.querySelector("img"); pv.hidden = true; } play("unmarked"); return; } }

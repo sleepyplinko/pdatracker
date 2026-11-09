@@ -1139,3 +1139,18 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
   .cat:not([aria-selected="true"]):hover { --cs: .9; height: 52px; }
 }
 .tile:active, .card:active, .doc:active { transform: scale(.97); }
+
+/* ---------- site notice from the admins ---------- */
+.noticebar { display: flex; gap: 8px; align-items: center; margin: 0 6px 4px; padding: 7px 10px; border-radius: 6px; font-size: 14px; border: 1px solid; }
+.noticebar span { flex: 1; }
+.noticebar[hidden] { display: none; }
+.noticebar.info { background: #0e1e33; border-color: #4f8fe0; color: #d4e6ff; }
+.noticebar.update { background: #0e2a1c; border-color: #3fae6c; color: #c8f5d8; }
+.noticebar.warn { background: #3a2a06; border-color: #d0a030; color: #ffe2a0; }
+/* ---------- damage tab + ammo editor ---------- */
+.dnote { margin-top: 4px; font-size: 12px; }
+.aed { color: #ffd23a; cursor: help; }
+.ammogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px 10px; }
+.ammogrid label { font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
+.ammogrid input.changed { border-color: #ffd23a; box-shadow: 0 0 0 1px #ffd23a; }
+.statsbox div { margin-top: 4px; }
