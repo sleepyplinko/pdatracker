@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Stats and comments added for DEVILSPAWN-BFC, H&K HK416A5, H&K MP5 RIS, Military Kriss Vector, Military Striker-12, RPK-74M, UMP-45 and Warne Eclipse II",
     "Pages now slide in and out like the in-game PDA (you can turn this off in SETTINGS)",
     "CLOUD: move your PDA to another device with a transfer link, code or QR code (replace or combine)",
     "No more accounts: your checklist stays in your browser (back it up from CLOUD), and the PLAYERS tab is gone",

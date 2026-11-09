@@ -254,7 +254,24 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        "Warne Eclipse II"
+        ["Warne Eclipse II", { stats: {
+          "CALIBER TYPE": ".45ACP | 10x25mm",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.4x",
+          "AIM TIME": "0.65",
+          "SWITCH TIME": "0.75s",
+          "RPM": "275",
+          "ALERT RADIUS": "300",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "13",
+          "MINIMUM SPREAD": "0.75",
+          "SPREAD INCREMENT": "0.4",
+          "SPREAD DECREASE": "1.5/0.1s",
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
+        }, comment: "" }]
         ],
         3: [
         ["FN Five-Seven", { stats: {
@@ -781,9 +798,63 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        "UMP-45",
-        "H&K MP5 RIS",
-        ["DEVILSPAWN-BFC", {"special": true}]
+        ["UMP-45", { stats: {
+          "CALIBER TYPE": ".45ACP | .40 S&W",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.25x",
+          "AIM TIME": "1",
+          "SWITCH TIME": "0.1s",
+          "RPM": "600",
+          "ALERT RADIUS": "300",
+          "RELOAD MODIFIER": "0.8",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "20",
+          "MINIMUM SPREAD": "1",
+          "SPREAD INCREMENT": "0.05",
+          "SPREAD DECREASE": "0.05/0.1s",
+          "EQUIP TIME": "1s",
+          "WEIGHT": "1"
+        }, comment: "" }],
+        ["H&K MP5 RIS", { stats: {
+          "CALIBER TYPE": "9x19mm | 10x25mm",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.25x",
+          "AIM TIME": "1.2",
+          "SWITCH TIME": "0.12s",
+          "RPM": "650",
+          "ALERT RADIUS": "400",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "20",
+          "MINIMUM SPREAD": "0.3",
+          "SPREAD INCREMENT": "0.1",
+          "SPREAD DECREASE": "0.05/0.1s",
+          "EQUIP TIME": "0.75s",
+          "WEIGHT": "0.5"
+        }, comment: "Beloved submachine gun, it's has a really modular handguard except you can't really find the mods for it sadly, well maybe somewhere in the future." }],
+        ["DEVILSPAWN-BFC", { "special": true, stats: {
+          "CALIBER TYPE": ".45ACP | .40 S&W | 10x25mm",
+          "AUTO": "NO",
+          "BURST": "YES",
+          "BURST DELAY": "0.1s",
+          "BURST AMOUNT": "5",
+          "BURST VOLLEY": "1",
+          "STRENGTH": "1.25x",
+          "AIM TIME": "0.75",
+          "SWITCH TIME": "0.06s",
+          "RPM": "1000",
+          "ALERT RADIUS": "400",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "20",
+          "MINIMUM SPREAD": "2",
+          "SPREAD INCREMENT": "0.15",
+          "SPREAD DECREASE": "0.25/0.1s",
+          "EQUIP TIME": "1s",
+          "WEIGHT": "0.75"
+        }, comment: "Upgraded variant of the UZI. It is built and handcrafted with a rare exquisite iron. The gun could be seen around in black markets.. due to not being up to legal standards." }]
         ],
         4: [
         ["Spectre M4", { stats: {
@@ -861,7 +932,24 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "--" }],
-        "Military Kriss Vector",
+        ["Military Kriss Vector", { stats: {
+          "CALIBER TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.5x",
+          "AIM TIME": "0.5",
+          "SWITCH TIME": "0.05s",
+          "RPM": "900",
+          "ALERT RADIUS": "200",
+          "RELOAD MODIFIER": "0.25",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "16",
+          "MINIMUM SPREAD": "0",
+          "SPREAD INCREMENT": "0.15",
+          "SPREAD DECREASE": "0.05/0.1s",
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "1"
+        }, comment: "" }],
         "PP-19-01 Vityaz"
         ]
       }
@@ -1997,8 +2085,42 @@ const PDA_DATA = {
         "Dragunov SVD-M",
         "AK74M",
         "SIG MCX-SPEAR",
-        "H&K HK416A5",
-        "RPK-74M"
+        ["H&K HK416A5", { stats: {
+          "CALIBER TYPE": "5.45x39mm | 5.56x45mm NATO | .300 Blackout",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.15x",
+          "AIM TIME": "0.65",
+          "SWITCH TIME": "0.07s",
+          "RPM": "829.5",
+          "ALERT RADIUS": "200",
+          "RELOAD MODIFIER": "0.75",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "4",
+          "MINIMUM SPREAD": "1",
+          "SPREAD INCREMENT": "0.15",
+          "SPREAD DECREASE": "0.1/0.2s",
+          "EQUIP TIME": "0.65s",
+          "WEIGHT": "1.25"
+        }, comment: "--" }],
+        ["RPK-74M", { stats: {
+          "CALIBER TYPE": "5.45x39mm",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.6x",
+          "AIM TIME": "1",
+          "SWITCH TIME": "0.1s",
+          "RPM": "650",
+          "ALERT RADIUS": "600",
+          "RELOAD MODIFIER": "1.4",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "30",
+          "MINIMUM SPREAD": "3",
+          "SPREAD INCREMENT": "0.075",
+          "SPREAD DECREASE": "0.1/0.1s",
+          "EQUIP TIME": "1.5s",
+          "WEIGHT": "1.5"
+        }, comment: "" }]
         ]
       }
     },
@@ -2519,7 +2641,27 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, modes: [{"MODE": "Base", "CALIBER TYPE": "12/70", "AUTO": "YES", "BURST": "NO", "STRENGTH": "1.2x", "AIM TIME": "0.75", "SWITCH TIME": "0.08s", "RPM": "200", "ALERT RADIUS": "500", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Magazine-fed", "MAX SPREAD": "7", "MINIMUM SPREAD": "7", "SPREAD INCREMENT": "0", "SPREAD DECREASE": "0/0s", "EQUIP TIME": "1s"}], comment: "" }],
-        "Military Striker-12"
+        ["Military Striker-12", { stats: {
+          "CALIBER TYPE": "12/70",
+          "AUTO": "YES",
+          "BURST": "YES",
+          "BURST DELAY": "0.125s",
+          "BURST AMOUNT": "3",
+          "BURST VOLLEY": "2",
+          "STRENGTH": "0.9x",
+          "AIM TIME": "0.7",
+          "SWITCH TIME": "0.07s",
+          "RPM": "700",
+          "ALERT RADIUS": "600",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Manually-loaded",
+          "MAX SPREAD": "6.5",
+          "MINIMUM SPREAD": "0",
+          "SPREAD INCREMENT": "0.1",
+          "SPREAD DECREASE": "0.15/0.05s",
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "1"
+        }, comment: "The STRIKER-12 is a 12 gauge, 12 round revolver-type shotgun known for its unique, rotating fixed drum magazine powered by a clockwork spring that has to be manually winded by the shooter. It has a double-action trigger that both releases the firing pin and releasing the tension from the spring to rotate.\n\nThe STRIKER-12's biggest, obvious flaw, is it's long and drawn out reloading process. requiring the user to insert a new round while manually winding the mechanism to load the next round in.\n\nStill, the STRIKER-12's high capacity magazine, rapid fire capability from its drum-fed revolver action, and it's manageable recoil compared to other 12 gauge shotguns earns it the \"striker\" in STRIKER-12.\n [EPIC]," }]
         ]
       }
     },
