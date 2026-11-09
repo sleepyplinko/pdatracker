@@ -1124,3 +1124,12 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 @keyframes btoff { 0% { background: #050505; } 35% { background: #e8e8e8; clip-path: inset(48% 0 48% 0); } 100% { background: #e8e8e8; clip-path: inset(50% 0 50% 0); opacity: 0; } }
 @keyframes btoffin { to { opacity: 0; transform: scaleY(.02); } }
 @media (max-width: 700px) { .bt-logo { font-size: 40px; } .bt-sub { font-size: 11px; } .bt-log { font-size: 13px; } .bt-bar { height: 8px; } .bt-skip { font-size: 10px; } }
+
+.admh4 { margin: 12px 0 6px; font-size: 13px; letter-spacing: 1px; color: #ddd; }
+.dcembed { margin-top: 8px; max-width: 520px; background: #2b2d31; border-left: 4px solid var(--dc); border-radius: 4px; padding: 10px 14px 14px; font-family: "gg sans", "Noto Sans", Helvetica, Arial, sans-serif; color: #dbdee1; }
+.dcsite { font-size: 12px; color: #b5bac1; margin-bottom: 6px; }
+.dctitle { display: block; font-size: 16px; font-weight: 600; color: #00a8fc; text-decoration: none; margin-bottom: 6px; }
+.dctitle:hover { text-decoration: underline; }
+.dcdesc { font-size: 14px; line-height: 1.35; white-space: pre-line; margin-bottom: 10px; }
+.dcimg { display: block; width: 100%; border-radius: 4px; }
+.dcimg.small { width: 80px; }
