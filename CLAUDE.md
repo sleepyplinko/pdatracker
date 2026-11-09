@@ -16,6 +16,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - After changing names, pictures, stats, comments or descriptions in data: run `node tools/previews.js` to regenerate `e/<hash>/` link-preview pages.
 - Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
+- Site text (manual, changelog, help notes): incredibly short and simple. Changelog items are a few words each.
 - Replies short and plain. When suggesting ideas, give a few good ones; if the owner passes, don't push them.
 - From time to time, re-read this file and the code to stay current on what the owner wants.
 
