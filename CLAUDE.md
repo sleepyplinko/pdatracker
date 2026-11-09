@@ -26,7 +26,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - **No player accounts**, no PLAYERS tab. Progress lives in the browser; CLOUD has backup download/upload, transfer link/code/QR (24h, replace or combine), screenshot import, paste-a-list.
 - **Admin:** sign in from a button in SETTINGS with the shared ADMIN login; then the ADMIN tab appears. The password lives only in the Cloudflare Worker secret `ADMIN_KEYS` ("name=pass,..."), never in site code.
 - **Discord webhook** stays server-side in the Worker secret (`ANNOUNCE_WEBHOOK`), pings everyone. Never paste it into site code.
-- Keep share links (entry links: LINK copies `…/pdatracker/e/<hash>/` for Discord previews, `#e=` still works; profile share `#v=`, damage calc `#dmg=`).
+- Keep share links (entry links: the address bar shows `…/pdatracker/e/<hash>/` while a page is open (`syncURL()` via replaceState; `<base>` tag in index.html keeps relative files working) and LINK copies the same; `#e=` still works; profile share `#v=`, damage calc `#dmg=`).
 - Credit **gluehesthar** (@iaminyourwallsiaminyourwalls on Discord) for the OANC Ammo Chart wherever ammo data shows.
 - **Rejected / not wanted:** completion rewards, "dropped by" or route features, weapon pictures (on hold), damage over distance/headshots (game has neither), weapon records page, NPC compare, recently viewed, document reading mode, public change history.
 - Gear has no WEIGHT in the game, so never flag it as missing weight.

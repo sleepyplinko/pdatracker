@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  const ROOT = document.baseURI.replace(/[#?].*$/, "").replace(/index\.html$/, "");
+  const ROOT_PATH = new URL(ROOT).pathname;
+  const entryURL = id => { const e = byId.get(id); const t = (e && e.card && e.card.entry) ? e.card.entry.id : (e && e.trackId) || id; return `${ROOT}e/${h5(t)}/`; };
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
@@ -532,6 +535,13 @@
     lastNav = nav;
     renderAndRestore();
     finishTransition(ghost);
+    syncURL();
+  }
+  function syncURL() {
+    if (viewOnly || /^#(get|v|u|dmg)=/.test(location.hash)) return;
+    const e = detail && detail.type !== "compare" && byId.get(detail.id);
+    const want = e ? entryURL(e.id) : ROOT;
+    if (location.href !== want) try { history.replaceState(null, "", want); } catch {}
   }
   function renderAndRestore() {
     const vkBefore = lastVk, wy = window.scrollY;
@@ -1431,7 +1441,7 @@
     const o = { A: atk(d) };
     if (d.target) o.t = d.target; else o.n = [d.hp, d.def, d.sa, d.ss, d.sh];
     if (d.vs) o.B = atk(d.b);
-    return `${location.origin}${location.pathname}#dmg=${b64u(JSON.stringify(o))}`;
+    return `${ROOT}#dmg=${b64u(JSON.stringify(o))}`;
   }
   function readDmgLink(hash) {
     const m = /^#dmg=([A-Za-z0-9_-]+)$/.exec(hash || ""); if (!m) return false;
@@ -1941,7 +1951,7 @@
   Object.entries(MOVED).forEach(([o, n]) => { if (!byHash.has(h5(o))) byHash.set(h5(o), n); });
   function shareLink() {
     const codes = Object.keys(found).filter(id => byId.has(id)).map(h5).join("");
-    return `${location.origin}${location.pathname}#v=${encodeURIComponent(user || "")}.${codes}`;
+    return `${ROOT}#v=${encodeURIComponent(user || "")}.${codes}`;
   }
   function parseShare(str) {
     const m = String(str).match(/#v=([^.]*)\.([0-9a-z]*)/);
@@ -2638,7 +2648,7 @@
   });
 
   let xfer = null;
-  const xferLink = code => `${location.origin}${location.pathname}#get=${code}`;
+  const xferLink = code => `${ROOT}#get=${code}`;
   function transferHTML() {
     if (!API) return "";
     return `<h4>MOVE TO ANOTHER DEVICE</h4>
@@ -2695,7 +2705,7 @@
   }
   function checkTransferHash() {
     const m = location.hash.match(/^#get=([2-9A-Za-z]{8})$/); if (!m) return false;
-    history.replaceState(null, "", location.pathname + location.search);
+    history.replaceState(null, "", ROOT_PATH + location.search);
     fetchTransfer(m[1]); return true;
   }
 
@@ -3224,7 +3234,7 @@
     if (t.closest("[data-cmpclear]")) { ui.cmp = []; detail = null; play("back"); persistUI(); render(); return; }
     const lk = t.closest("[data-link]");
     if (lk) {
-      const url = `${location.origin}${location.pathname.replace(/index\.html$/, "")}e/${h5(lk.dataset.link)}/`;
+      const url = entryURL(lk.dataset.link);
       play("click");
       (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this page copied.")).catch(() => toast(url, { ms: 12000 }));
       return;
@@ -3478,7 +3488,7 @@
         <span><button data-b="show">SHOW</button><button data-b="stop">STOP</button></span>`;
     } else bannerEl.hidden = true;
   }
-  function leaveView() { viewOnly = null; try { history.replaceState(null, "", location.pathname + location.search); } catch { location.hash = ""; } }
+  function leaveView() { viewOnly = null; try { history.replaceState(null, "", ROOT_PATH + location.search); } catch { location.hash = ""; } }
   bannerEl.addEventListener("click", e => {
     const b = e.target.closest("[data-b]"); if (!b) return;
     play("click");
@@ -3542,7 +3552,7 @@
   else if (/^#u=/.test(location.hash) && API) { viewOnly = { name: decodeURIComponent(location.hash.slice(3)), set: {}, live: true }; openProfileLink(viewOnly.name); }
   else if (/^#dmg=/.test(location.hash)) {
     if (readDmgLink(location.hash)) persistUI(); else setTimeout(() => toast("That damage calculator link is broken or out of date."), 300);
-    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    try { history.replaceState(null, "", ROOT_PATH + location.search); } catch {}
   }
   else if (/^#e=/.test(location.hash)) {
     const id = byHash.get(location.hash.slice(3, 8));
@@ -3552,14 +3562,14 @@
       ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section];
       if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else ui.docs = e.groupIndex;
     }
-    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    try { history.replaceState(null, "", ROOT_PATH + location.search); } catch {}
   } else if (ui.detail && (ui.detail.type === "compare" || byId.has(ui.detail.id))) detail = ui.detail;
   if (PROF.active !== "Main") setTimeout(() => toast(`Using save profile "${PROF.active}". Switch it on the Profile tab.`), 300);
 
   window.addEventListener("hashchange", () => {
     if (!/^#dmg=/.test(location.hash)) return;
     if (readDmgLink(location.hash)) { persistUI(); renderTabs(); render(); } else toast("That damage calculator link is broken or out of date.");
-    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    try { history.replaceState(null, "", ROOT_PATH + location.search); } catch {}
   });
   renderTabs();
   updateCount();
