@@ -529,7 +529,7 @@
       e.preventDefault(); searchBox.focus(); searchBox.select();
     } else if (e.key === "Escape") {
       if (pendingTier) { cancelTier(); render(); }
-      else if (detail) { play("close"); detail = null; render(); }
+      else if (detail) { play(detail.type === "person" ? "bioClose" : "close"); detail = null; render(); }
       else if (query) { play("back"); clearSearch(); }
     }
   });
@@ -3195,7 +3195,7 @@
       if (+docs.dataset.docs === ui.docs) { askTier(`tab:docs:${ui.docs}`); keepScroll(render); return; }
       play("switch"); ui.docs = +docs.dataset.docs; persistUI(); render(); return;
     }
-    if (t.closest("#ret")) { play("close"); detail = null; render(); return; }
+    if (t.closest("#ret")) { play(detail && detail.type === "person" ? "bioClose" : "close"); detail = null; render(); return; }
   });
   screen.addEventListener("change", ev => {
     const sel = ev.target;
