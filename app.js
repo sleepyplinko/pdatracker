@@ -2511,6 +2511,69 @@
     else if (e.target.closest("[data-bklater]")) { save(KEY_SNOOZE, sinceBackup + 25); play("back"); backupNag(); }
   });
 
+  /* ---------- moving your PDA to another device ---------- */
+  let xfer = null;                                  // { code, link, expires } once made
+  const xferLink = code => `${location.origin}${location.pathname}#get=${code}`;
+  function transferHTML() {
+    if (!API) return "";
+    return `<h4>MOVE TO ANOTHER DEVICE</h4>
+      <p>Make a transfer link here, then open it on your other phone or computer (or type the code there). It copies everything: finds, favourites, notes, counts and your loadout. Links last 24 hours.</p>
+      ${xfer ? `<div class="xfer"><div class="xcode">${esc(xfer.code.slice(0, 4))}-${esc(xfer.code.slice(4))}</div><div id="xqr" class="xqr"></div>
+          <div class="btnrow"><input id="xferOut" readonly value="${esc(xfer.link)}"><button class="pbtn" id="copyXfer">${I.share} COPY LINK</button></div>
+          <p class="dim">Scan the QR code with your phone's camera, or send yourself the link. It's a snapshot: make a new one if you mark more here.</p></div>`
+        : `<div class="btnrow"><button class="pbtn" id="makeXfer">MAKE TRANSFER LINK</button></div>`}
+      <h4>GET FROM ANOTHER DEVICE</h4>
+      <div class="btnrow"><input id="xferIn" placeholder="transfer code (like K7Q3-M2PX) or link" maxlength="300"><button class="pbtn" id="getXfer">GET</button></div>`;
+  }
+  function wireTransfer() {
+    const mk = $("#makeXfer");
+    if (mk) mk.onclick = async () => {
+      mk.disabled = true; mk.textContent = "MAKING…";
+      try {
+        const [st, r] = await api("POST", "/api/transfer", { data: backupData() });
+        if (st !== 201) { toast(r.error || "Couldn't make a link right now."); play("warn"); mk.disabled = false; mk.textContent = "MAKE TRANSFER LINK"; return; }
+        xfer = { code: r.code, link: xferLink(r.code), expires: r.expires }; play("confirm"); keepScroll(render);
+      } catch { toast("Couldn't reach the server."); play("warn"); mk.disabled = false; mk.textContent = "MAKE TRANSFER LINK"; }
+    };
+    const cp = $("#copyXfer");
+    if (cp) cp.onclick = async () => { play("click"); try { await navigator.clipboard.writeText(xfer.link); toast("Transfer link copied."); } catch { $("#xferOut").select(); toast("Link selected. Press Ctrl+C to copy."); } };
+    const qr = $("#xqr"); if (qr && xfer) drawQR(qr, xfer.link);
+    const gt = $("#getXfer");
+    if (gt) gt.onclick = () => { const v = $("#xferIn").value.trim(); const m = v.match(/#get=([2-9A-Za-z]{8})/) || v.replace(/[\s-]/g, "").match(/^([2-9A-Za-z]{8})$/); if (!m) { toast("That doesn't look like a transfer code."); play("warn"); return; } fetchTransfer(m[1]); };
+  }
+  function drawQR(el, text) {
+    const go = () => { try { el.innerHTML = window.PDA_QR(text); } catch { el.remove(); } };
+    if (window.PDA_QR) return go();
+    const sc = document.createElement("script"); sc.src = "qr.js"; sc.onload = go; sc.onerror = () => el.remove(); document.head.appendChild(sc);
+  }
+  async function fetchTransfer(code) {
+    code = code.toUpperCase();
+    try {
+      const [st, r] = await api("GET", "/api/transfer/" + code);
+      if (st !== 200) { toast(r.error || "Couldn't get that transfer.", { ms: 7000 }); play("warn"); return; }
+      showTransferPrompt(r.data);
+    } catch { toast("Couldn't reach the server."); play("warn"); }
+  }
+  function showTransferPrompt(data) {
+    const inN = Object.keys((data && data.found) || {}).length, hereN = Object.keys(found).length;
+    let el = $("#xferdlg"); if (!el) { el = document.createElement("div"); el.id = "xferdlg"; document.body.appendChild(el); }
+    el.innerHTML = `<div class="tourbox" role="dialog" aria-label="Copy PDA"><div class="dhead">Copy a PDA onto this device</div>
+      <div class="tourbody"><p>The transfer has <b>${inN}</b> found. This device has <b>${hereN}</b>.</p>
+      <p><b>REPLACE</b> makes this device exactly like the other one. <b>COMBINE</b> keeps everything here and adds what the other device found.</p></div>
+      <div class="tourbtns"><button class="mini-btn" data-xno>CANCEL</button><button class="mini-btn" data-xdo="merge">COMBINE</button><button class="mini-btn go" data-xdo="replace">REPLACE</button></div></div>`;
+    el.hidden = false; play("open");
+    el.onclick = ev => {
+      const d = ev.target.closest("[data-xdo]");
+      if (d) { try { const n = applyBackup(data, d.dataset.xdo); play("confirm"); toast(`Done: this device now has ${n} found.`, { ms: 6000 }); } catch { toast("That transfer couldn't be read."); play("warn"); } el.hidden = true; keepScroll(render); return; }
+      if (ev.target.closest("[data-xno]") || ev.target === el) { el.hidden = true; play("back"); }
+    };
+  }
+  function checkTransferHash() {
+    const m = location.hash.match(/^#get=([2-9A-Za-z]{8})$/); if (!m) return false;
+    history.replaceState(null, "", location.pathname + location.search);
+    fetchTransfer(m[1]); return true;
+  }
+
   function renderCloud(msg = "", bad = false) {
     screen.innerHTML = `
       <div class="cloud">
@@ -2520,6 +2583,7 @@
           <div class="btnrow"><button class="pbtn" id="exp">${I.download} DOWNLOAD BACKUP</button>
           <button class="pbtn" id="imp">${I.upload} UPLOAD BACKUP</button></div>
           <div class="msg" id="cmsg" style="${bad ? "color:#ff7a7a" : ""}">${esc(msg)}</div>
+          ${transferHTML()}
           ${importHTML()}
           ${accountHTML()}
           <h4>MARK A LIST AS FOUND</h4>
@@ -2537,7 +2601,7 @@
         </div>
       </div>`;
     $("#exp").onclick = () => { play("click"); doExport(); $("#cmsg").textContent = "Backup downloaded."; };
-    wireAccount(); wireImport();
+    wireAccount(); wireImport(); wireTransfer();
     $("#bulkGo").onclick = () => {
       const r = bulkMark($("#bulkIn").value);
       if (!r) return;
@@ -2557,22 +2621,37 @@
     };
     const stop = $("#stopCompare"); if (stop) stop.onclick = () => { friend = null; save(KEY_FRIEND, null); play("back"); render(); };
   }
+  const backupData = () => ({ app: "onc-pda-tracker", v: 3, user, found, favs, notes, log: history_, counts, loadout });
+  /* put a backup (file or transfer) onto this device: "replace" copies it exactly, "merge" adds it to what's here */
+  function applyBackup(data, mode) {
+    if (!data || typeof data.found !== "object") throw new Error("not a backup");
+    const inFound = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) inFound[MOVED[k] || k] = 1; });
+    if (mode === "merge") {
+      found = Object.assign({}, found, inFound);
+      if (data.favs && typeof data.favs === "object") { favs = Object.assign({}, data.favs, favs); save(KEY_FAV, favs); }
+      if (data.notes && typeof data.notes === "object") { Object.entries(data.notes).forEach(([k, v]) => { if (v && !notes[k]) notes[k] = v; }); save(KEY_NOTES, notes); }
+      if (data.counts && typeof data.counts === "object") { Object.entries(data.counts).forEach(([k, v]) => { counts[k] = Math.max(counts[k] || 0, +v || 0); }); save(KEY_COUNTS, counts); }
+      if (data.loadout && Array.isArray(data.loadout.items) && !loadout.items.length) { loadout = data.loadout; save(KEY_LOAD, loadout); }
+      if (!user && typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
+    } else {
+      found = inFound;
+      if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
+      favs = data.favs && typeof data.favs === "object" ? data.favs : {}; save(KEY_FAV, favs);
+      notes = data.notes && typeof data.notes === "object" ? data.notes : {}; save(KEY_NOTES, notes);
+      counts = data.counts && typeof data.counts === "object" ? data.counts : {}; save(KEY_COUNTS, counts);
+      if (data.loadout && Array.isArray(data.loadout.items)) { loadout = data.loadout; save(KEY_LOAD, loadout); }
+      if (Array.isArray(data.log)) { history_ = data.log.slice(0, 60); save(KEY_LOG, history_); }
+    }
+    undoStack.length = 0; sinceBackup = 0; save(KEY_SINCE, 0);
+    save(KEY_FOUND, found); updateCount(); renderTabs(); scheduleSync();
+    return Object.keys(found).length;
+  }
   $("#importFile").addEventListener("change", async ev => {
     const file = ev.target.files[0]; ev.target.value = "";
     if (!file) return;
     try {
-      const data = JSON.parse(await file.text());
-      if (!data || typeof data.found !== "object") throw new Error();
-      found = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) found[MOVED[k] || k] = 1; });
-      if (typeof data.user === "string") { user = data.user; save(KEY_USER, user); }
-      if (data.favs && typeof data.favs === "object") { favs = data.favs; save(KEY_FAV, favs); }
-      if (data.notes && typeof data.notes === "object") { notes = data.notes; save(KEY_NOTES, notes); }
-      if (data.counts && typeof data.counts === "object") { counts = data.counts; save(KEY_COUNTS, counts); }
-      if (data.loadout && Array.isArray(data.loadout.items)) { loadout = data.loadout; save(KEY_LOAD, loadout); }
-      if (Array.isArray(data.log)) { history_ = data.log.slice(0, 60); save(KEY_LOG, history_); }
-      undoStack.length = 0; sinceBackup = 0; save(KEY_SINCE, 0);
-      save(KEY_FOUND, found); updateCount(); scheduleSync(); play("confirm");
-      renderCloud(`Restored ${Object.keys(found).length} entries.`);
+      const n = applyBackup(JSON.parse(await file.text()), "replace"); play("confirm");
+      renderCloud(`Restored ${n} entries.`);
     } catch {
       play("warn");
       renderCloud("That file isn't a PDA backup.", true);
@@ -2804,6 +2883,7 @@
       </div>`;
   }
 
+  let admForm = false;
   function renderSettings() {
     const sw = (key, text) => `
       <div class="srow"><div class="onoff">
@@ -2836,23 +2916,26 @@
         ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
         <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
         ${API ? `<h3>Admin</h3>${adminSess ? `<div class="srow"><span>Signed in as admin <b>${esc(adminSess.name)}</b>.</span><button class="pbtn" id="admOut">SIGN OUT</button></div>`
-          : `<details class="adminsign"><summary class="dim">Admin sign-in (for the people who run this site)</summary><form id="admLogin" class="accform" autocomplete="on">
-            <input id="admName" name="username" autocomplete="username" placeholder="admin name" maxlength="40">
-            <input id="admPass" name="password" type="password" autocomplete="current-password" placeholder="admin password">
-            <div class="btnrow"><button class="pbtn" type="submit">SIGN IN</button><span class="msg" id="admMsg"></span></div></form></details>`}` : ""}
+          : admForm ? `<form id="admLogin" class="accform" autocomplete="on">
+            <input id="admName" name="username" autocomplete="username" placeholder="username" maxlength="40">
+            <input id="admPass" name="password" type="password" autocomplete="current-password" placeholder="password">
+            <div class="btnrow"><button class="pbtn" type="submit">SIGN IN</button><button class="pbtn" type="button" id="admFormX">CANCEL</button><span class="msg" id="admMsg"></span></div></form>`
+            : `<div class="srow"><button class="pbtn" id="admOpen">ADMIN SIGN-IN</button><span class="dim">For the people who run this site. Signing in shows the ADMIN tab.</span></div>`}` : ""}
         <h3>Data</h3>
         ${note("Everything is saved in this browser only. Clearing your browser data deletes it, so keep a backup.")}
         <div class="srow"><button class="pbtn" id="bkNow">DOWNLOAD BACKUP</button><span class="dim">${sinceBackup ? `${sinceBackup} change${sinceBackup === 1 ? "" : "s"} since your last backup.` : "Backed up."} Upload it again in CLOUD.</span></div>
         <div class="srow"><button class="pbtn danger" id="reset">RESET ALL PROGRESS</button><span id="rmsg" style="font-size:13px;color:#aaa"></span></div>
       </div>`;
     $("#tourAgain").onclick = () => { play("click"); startTour(); };
+    const ao2 = $("#admOpen"); if (ao2) ao2.onclick = () => { admForm = true; play("click"); keepScroll(render); const n = $("#admName"); if (n) n.focus(); };
+    const ax = $("#admFormX"); if (ax) ax.onclick = () => { admForm = false; play("back"); keepScroll(render); };
     const al = $("#admLogin");
     if (al) al.onsubmit = async ev => {
       ev.preventDefault(); const msg = $("#admMsg"); msg.textContent = "Signing in…";
       try {
         const [st, r] = await api("POST", "/api/admin/login", { name: $("#admName").value.trim(), password: $("#admPass").value });
         if (st !== 200) { msg.textContent = r.error || "Couldn't sign in."; play("warn"); return; }
-        adminSess = { name: r.name, token: r.token }; save(KEY_ADMIN, adminSess); play("confirm");
+        adminSess = { name: r.name, token: r.token }; save(KEY_ADMIN, adminSess); admForm = false; play("confirm");
         await checkAdmin(); ui.tab = "admin"; persistUI(); renderTabs(); render(); toast(`Signed in as admin ${r.name}.`);
       } catch { msg.textContent = "Couldn't reach the server."; play("warn"); }
     };
@@ -3385,9 +3468,11 @@
     if (adminSess) checkAdmin();
     scheduleSync(3000);
     window.addEventListener("online", () => scheduleSync(500));
-    window.addEventListener("hashchange", () => { const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
+    if (checkTransferHash()) settings.tourDone = settings.tourDone || "later";
+    window.addEventListener("hashchange", () => { if (checkTransferHash()) return; const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
   }
   // first visit: short tour (not when opening someone's share link)
   if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
+  if (settings.tourDone === "later") settings.tourDone = false;         // opened a transfer link: skip the tour this once
 
 })();

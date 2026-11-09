@@ -1154,3 +1154,12 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .ammogrid label { font-size: 11px; display: flex; flex-direction: column; gap: 2px; }
 .ammogrid input.changed { border-color: #ffd23a; box-shadow: 0 0 0 1px #ffd23a; }
 .statsbox div { margin-top: 4px; }
+
+/* ---------- move to another device ---------- */
+.xfer { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.xcode { font: 800 30px var(--font); letter-spacing: .12em; color: #fff; background: #111; border: 1px solid #666; border-radius: 6px; padding: 4px 14px; }
+.xqr { background: #fff; padding: 8px; border-radius: 6px; line-height: 0; }
+.xqr img, .xqr canvas { display: block; }
+#xferdlg { position: fixed; inset: 0; z-index: 210; padding: 16px; background: rgba(0,0,0,.6); display: grid; place-items: center; }
+#xferdlg[hidden] { display: none; }
+.xqr svg { width: 168px; height: 168px; display: block; }

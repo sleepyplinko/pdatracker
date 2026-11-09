@@ -138,6 +138,25 @@ async function route(req, env, ctx) {
     return json({ ok: true });
   }
 
+  /* ---- moving a PDA to another device: a short code that holds a copy for 24 hours ---- */
+  if (path === "/api/transfer" && M === "POST") {
+    if (!(await rateLimit(env, req, "x:", 10))) return err(429, "You've made a lot of transfer links just now. Wait a few minutes.");
+    const b = await body(req); if (!b || typeof b.data !== "object" || !b.data) return err(400, "Bad request.");
+    const data = JSON.stringify(b.data); if (data.length > 150000) return err(413, "That PDA is too big to send this way. Use DOWNLOAD BACKUP instead.");
+    const ABC = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; const rnd = crypto.getRandomValues(new Uint8Array(8));
+    const code = [...rnd].map(x => ABC[x % ABC.length]).join("");
+    await env.DB.batch([env.DB.prepare("DELETE FROM transfers WHERE created < ?").bind(now() - 86400),
+      env.DB.prepare("INSERT INTO transfers (code, data, created) VALUES (?, ?, ?)").bind(code, data, now())]);
+    return json({ code, expires: now() + 86400 }, 201);
+  }
+  const xm = path.match(/^\/api\/transfer\/([2-9A-Za-z]{8})$/);
+  if (xm && M === "GET") {
+    if (!(await rateLimit(env, req, "y:", 30))) return err(429, "Too many tries. Wait a few minutes.");
+    const row = await env.DB.prepare("SELECT data, created FROM transfers WHERE code = ? AND created > ?").bind(xm[1].toUpperCase(), now() - 86400).first();
+    if (!row) return err(404, "That code doesn't exist or has expired (codes last 24 hours).");
+    return json({ data: JSON.parse(row.data), created: row.created });
+  }
+
   /* ---- what happened to things you sent (by the private codes your browser kept) ---- */
   if (path === "/api/substatus" && M === "GET") {
     const toks = String(url.searchParams.get("t") || "").split(",").filter(t => /^[0-9a-f]{24}$/.test(t)).slice(0, 50);
@@ -187,7 +206,7 @@ async function route(req, env, ctx) {
     if (sm && M === "DELETE") { await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true }); }
     /* what's set up on this Worker (shown on the admin page) */
     if (path === "/api/admin/setup" && M === "GET") {
-      const want = { sessions: 1, attempts: 1, submissions: 2, overrides: 2, changes: 4, blocks: 4, subip: 4, anon: 5 };
+      const want = { sessions: 1, attempts: 1, submissions: 2, overrides: 2, changes: 4, blocks: 4, subip: 4, anon: 5, transfers: 6 };
       const rows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
       const have = new Set((rows.results || []).map(r => r.name));
       const missing = Object.keys(want).filter(t => !have.has(t));

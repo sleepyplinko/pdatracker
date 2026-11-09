@@ -18,3 +18,4 @@ CREATE TABLE IF NOT EXISTS anon (device TEXT PRIMARY KEY, found TEXT NOT NULL DE
 CREATE INDEX IF NOT EXISTS anon_updated ON anon(updated);
 ALTER TABLE submissions ADD COLUMN token TEXT NOT NULL DEFAULT '';
 CREATE INDEX IF NOT EXISTS submissions_token ON submissions(token);
+CREATE TABLE IF NOT EXISTS transfers (code TEXT PRIMARY KEY, data TEXT NOT NULL, created INTEGER NOT NULL);

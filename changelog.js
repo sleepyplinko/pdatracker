@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "CLOUD: move your PDA to another device with a transfer link, code or QR code (replace or combine)",
     "No more accounts: your checklist stays in your browser (back it up from CLOUD), and the PLAYERS tab is gone",
     "\"Found by %\" numbers now come from browsers sharing their finds anonymously (turn it off in CLOUD)",
     "SUBMIT still shows what happened to what you sent, no account needed",
