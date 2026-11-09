@@ -2473,29 +2473,135 @@
     });
   }
 
+  const tourDemo = () => {
+    const g = byId.get("t|pistols|glock 18");
+    if (g) return g.id;
+    const e = PDA_DATA.tools[0].items.find(x => x.stats && !x.unknown);
+    return e ? e.id : PDA_DATA.tools[0].items[0].id;
+  };
+  const near = (sel, up) => () => { const el = screen.querySelector(sel) || document.querySelector(sel); return el && up ? el.closest(up) : el; };
   const TOUR = [
-    ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
-    ["Mark what you've found", "Hover over (or tap) any tile and press its <b>&#9733; star</b> to mark it found. Click the tile itself to open its page with stats and comments."],
-    ["Unlock a whole tier at once", "Click anywhere on a <b>TIER</b> bar (or a Biography / Documents tab you're already on) to mark everything in it as found. It asks first, and clicking a finished bar again locks it all."],
-    ["Search marks things too", "Type a name in the search bar and press <b>ENTER</b> to mark the top match as found, without leaving the page. Made a mistake? <b>Ctrl+Z</b> undoes it."],
-    ["See what's left", "<b>WHAT'S LEFT</b> lists everything you're still missing. <b>MISSING</b> next to the search bar hides what you already have."],
-    ["Keep a backup", "Your progress lives only in this browser. Download a backup in <b>CLOUD</b> (or from the reminder bar) so you never lose it. That's it, have fun!"]
+    { h: "Welcome to PDA.exe", p: "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. This tour points at the real buttons as it goes. It doesn't change anything you've marked.<br><br>Use <b>NEXT</b> and <b>BACK</b> (or the arrow keys). <b>Esc</b> leaves the tour any time." },
+    { sec: "TABS", h: "Checklist tabs", tab: "tools", el: () => $("#tabs"), p: "<b>TOOLS</b> is every weapon, item and piece of gear. <b>BIOGRAPHY</b> is people, <b>DOCUMENTS</b> is locations and notes. <b>WHAT'S LEFT</b>, <b>LOADOUT</b> and <b>DAMAGE</b> are helpers. Scroll the bar sideways on small screens." },
+    { sec: "TABS", h: "Everything else", tab: "tools", el: () => $("#tabs2"), p: "<b>PROFILE</b> (your progress), <b>CLOUD</b> (backups and moving devices), <b>MANUAL</b> (help), <b>SETTINGS</b> and <b>SUBMIT</b> (send in missing info)." },
+    { sec: "TOOLS", h: "Categories", tab: "tools", el: near(".cat", ".cats, .catlist, nav, aside, div"), p: "Pick a category, just like in the game. Each shows how many you've found. <b>CALIBERS</b> at the bottom groups guns by the ammo they take." },
+    { sec: "TOOLS", h: "Mark what you've found", tab: "tools", el: near(".tile"), force: true, p: "Press the <b>&#9733;&#xFE0E; star</b> in a tile's corner to mark it found; press again to unmark. <b>Shift-click</b> a second star to mark everything in between. Click the tile itself to open its page.<br><br>On a phone, <b>swipe right</b> across a tile to mark it and <b>left</b> to unmark." },
+    { sec: "TOOLS", h: "A whole tier at once", tab: "tools", el: near(".tier-head.clickable"), p: "Click anywhere on a <b>TIER</b> bar to mark every entry in it. It asks first. Click a finished bar to lock it all again." },
+    { sec: "TOOLS", h: "Sort, filter and jump", tab: "tools", el: near("[data-tsort]", "div"), p: "Sort a category by any stat (RPM, strength, weight...), show only one <b>caliber</b> or tier, and use <b>T1–T5</b> to jump straight to a tier." },
+    { sec: "SEARCH", h: "Search", tab: "tools", el: () => $("#search"), p: "Finds weapons, people and documents, and forgives typos (\"glok\", \"kriss vectr\") and missing dots (\"556\"). Press <b>ENTER</b> to mark the top result found without leaving the page, <b>Shift+ENTER</b> to open it. Press <b>/</b> anywhere to jump here." },
+    { sec: "SEARCH", h: "Views and filters", tab: "tools", el: () => $(".viewtools"), p: "Grid like the game, a <b>checklist</b> view, or a <b>compact</b> grid. <b>HIDE DONE</b> hides finished tiers and tabs. <b>ALL / MISSING / FOUND</b> filters every page." },
+    { sec: "ENTRY PAGE", h: "An entry's page", detail: true, el: () => $("#star"), p: "Every weapon, person and document has a page with the in-game stats and comment. Hover a stat name to see what it means. The big star marks it found." },
+    { sec: "ENTRY PAGE", h: "Keep going", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>&#9733;&#xFE0E; FOUND + NEXT</b> marks this one and opens the next one you're missing (key: <b>N</b>). <b>NEXT MISSING</b> skips ahead without marking." },
+    { sec: "ENTRY PAGE", h: "More options", detail: true, el: () => { const d = screen.querySelector("summary") && screen.querySelector("summary").closest("details"); if (!d) return null; d.open = true; return d.querySelector(":scope > :not(summary)") || d; }, p: "<b>DAMAGE CALC</b> opens the damage calculator with this weapon. <b>COMPARE +</b> adds it to a side-by-side comparison. <b>LINK</b> copies a link that shows the entry's name and picture when pasted in Discord. <b>FIX?</b> sends a correction." },
+    { sec: "ENTRY PAGE", h: "Favourites", detail: true, el: near(".favbtn"), p: "The <b>&#9829;&#xFE0E;</b> adds a page to <b>USER FAVOURITES</b> on your Profile." },
+    { sec: "ENTRY PAGE", h: "Times found", detail: true, el: near("[data-cnt='1']", "div"), p: "Count how many times you've found something with <b>+</b> and <b>−</b>." },
+    { sec: "ENTRY PAGE", h: "Your notes", detail: true, el: near("[data-btab='notes']"), p: "<b>My Notes</b> is a private notepad on every page, saved in your browser." },
+    { sec: "ENTRY PAGE", h: "Going back", detail: true, el: () => $("#ret"), p: "<b>RETURN</b> (or <b>Esc</b>) goes back to the list, right where you were." },
+    { sec: "BIOGRAPHY", h: "People", tab: "biography", el: near(".subtabs"), p: "People are grouped like in the game. Clicking the tab you're already on marks the whole group (it asks first). <b>ALL</b> shows everyone." },
+    { sec: "BIOGRAPHY", h: "Cards with variants", tab: "biography", el: near(".card"), force: true, p: "A card with <b>×4</b> holds several variants that count as one find. Open it and flip between them with the tabs at the bottom. A person's page also has <b>MARK THEIR GEAR FOUND</b> for the weapon and magazine they carried." },
+    { sec: "WHAT'S LEFT", h: "What's left", tab: "missing", el: near("[data-random]", "div"), p: "Everything you're still missing in one list, with <b>ALMOST DONE</b> categories at the top. <b>&#9860;&#xFE0E; RANDOM</b> opens something you haven't found (key: <b>R</b>). <b>COPY AS TEXT</b> and <b>PRINT</b> make a list to take with you." },
+    { sec: "LOADOUT", h: "Loadout planner", tab: "loadout", el: near("[data-pk='load']"), p: "Type to add weapons, gear and ammo and see how much carry weight you're using. Gear that adds carry weight raises the limit." },
+    { sec: "DAMAGE", h: "Damage calculator", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, its ammo and a target to see damage per hit, <b>hits to kill</b> and time to kill, with supershield, shield, superarmor and defense worked in. Ammo data is from the OANC Ammo Chart by <b>gluehesthar</b>." },
+    { sec: "DAMAGE", h: "Compare and share", tab: "damage", el: () => $(".dtools"), p: "<b>COMPARE TWO LOADOUTS</b> puts a second weapon next to the first and says which wins. Below the result, the ammo table ranks the <b>best ammo</b> for your target. <b>COPY LINK TO THIS</b> shares your exact setup." },
+    { sec: "PROFILE", h: "Profile", tab: "profile", el: near("#profSel", ".rows"), p: "<b>Save profiles</b> keep separate checklists, like one for an alt account. Your Profile also shows progress per section, a progress graph, favourites, and everything you found <b>this run</b> (COPY LIST, NEW RUN)." },
+    { sec: "CLOUD", h: "Back it up", tab: "cloud", el: near("#exp", "div"), p: "Your progress lives only in this browser. <b>DOWNLOAD BACKUP</b> saves a file you can upload again later. A reminder bar shows up after you've made a lot of changes." },
+    { sec: "CLOUD", h: "Move to another device", tab: "cloud", el: near("#makeXfer", "div"), p: "<b>MAKE TRANSFER LINK</b> gives you a link, a code and a QR code. Open it on your other phone or computer and choose <b>REPLACE</b> or <b>COMBINE</b>. Links last 24 hours." },
+    { sec: "CLOUD", h: "Mark lots at once", tab: "cloud", el: () => $("#ocrDrop"), p: "Drop or paste <b>screenshots of your in-game PDA</b> and it marks what it can read (you check the list first). Further down you can paste a list of names to mark them all." },
+    { sec: "CLOUD", h: "Found by %", tab: "cloud", el: near("#anonShare", "label, div"), p: "Pages show how many players found each entry. Your finds are shared anonymously to work that out; switch it off here if you'd rather not." },
+    { sec: "SUBMIT", h: "Send in info", tab: "community", el: near("[data-contrib]", "form"), p: "Know a missing stat, description or picture? Send it here, no account needed. This page shows whether it was added. <b>HELP WANTED</b> below lists everything the site is still missing." },
+    { sec: "SETTINGS", h: "Make it yours", tab: "settings", el: near("[data-set='pageAnim']", ".srow"), p: "Sounds and volume, the page slide, light theme, old-monitor <b>CRT</b> effect, text size, colour-blind friendly marks, asking before unmarking, and <b>keyboard mode</b> (press <b>?</b> for every key)." },
+    { sec: "SETTINGS", h: "See this again", tab: "settings", el: () => $("#tourAgain"), p: "Replay this tour here any time. <b>INSTALL AS AN APP</b> puts PDA.exe on your home screen, and it works offline." },
+    { h: "That's everything", p: "Made a mistake? <b>Ctrl+Z</b> or the <b>UNDO</b> on the message at the bottom puts it back. The <b>MANUAL</b> tab answers the rest. Happy hunting!" }
   ];
+  let tourAt = -1, tourSnap = null, tourSeq = 0;
+  const tourOpen = () => tourAt >= 0;
   function startTour(i = 0) {
-    let el = $("#tour"); if (!el) { el = document.createElement("div"); el.id = "tour"; document.body.appendChild(el); }
-    const [h, p] = TOUR[i];
-    el.innerHTML = `<div class="tourbox" role="dialog" aria-label="${esc(h)}"><div class="dhead">${esc(h)}<span>${i + 1} / ${TOUR.length}</span></div>
-      <div class="tourbody"><p>${p}</p></div>
-      <div class="tourbtns"><button class="mini-btn" data-tourskip>${i === TOUR.length - 1 ? "CLOSE" : "SKIP"}</button>${i ? `<button class="mini-btn" data-tourgo="${i - 1}">BACK</button>` : ""}${i < TOUR.length - 1 ? `<button class="mini-btn go" data-tourgo="${i + 1}">NEXT</button>` : `<button class="mini-btn go" data-tourskip>GOT IT</button>`}</div></div>`;
-    el.hidden = false;
+    if (!tourOpen()) {
+      tourSnap = { tab: ui.tab, detail, cat: ui.cat, bio: ui.bio };
+      if (query) clearSearch(false);
+      cancelTier();
+    }
+    tourGo(i);
   }
+  function tourGo(i) {
+    const s = TOUR[i]; if (!s) return endTour();
+    tourAt = i; const seq = ++tourSeq;
+    let el = $("#tour"); if (!el) { el = document.createElement("div"); el.id = "tour"; el.innerHTML = '<div class="tour-spot"></div><div class="tourbox" role="dialog"></div>'; document.body.appendChild(el); }
+    el.hidden = false;
+    document.querySelectorAll(".tour-force").forEach(x => x.classList.remove("tour-force"));
+    const want = s.detail ? { type: "tool", id: tourDemo() } : null;
+    const tab = s.tab || (s.detail ? "tools" : ui.tab);
+    let moved = false;
+    if (s.tab || s.detail) {
+      if (ui.tab !== tab) { ui.tab = tab; moved = true; }
+      if (tab === "tools" && !s.detail && ui.cat !== 0 && i <= 8) { ui.cat = 0; moved = true; }
+      if (tab === "biography" && ui.bio == null) ui.bio = 0;
+      const same = (!detail && !want) || (detail && want && detail.id === want.id);
+      if (!same) { detail = want; moved = true; }
+      if (moved) { renderTabs(); render(); }
+    }
+    setTimeout(() => { if (seq === tourSeq) tourShow(s, i); }, moved && settings.pageAnim !== false ? 380 : 30);
+  }
+  function tourShow(s, i) {
+    const root = $("#tour"), spot = root.querySelector(".tour-spot"), box = root.querySelector(".tourbox");
+    const last = i === TOUR.length - 1;
+    box.setAttribute("aria-label", s.h);
+    box.innerHTML = `<div class="dhead">${s.sec ? `<span class="tsec">${esc(s.sec)}</span>` : ""}${esc(s.h)}<span>${i + 1} / ${TOUR.length}</span></div>
+      <div class="tourbar"><i style="width:${((i + 1) / TOUR.length * 100).toFixed(1)}%"></i></div>
+      <div class="tourbody"><p>${s.p}</p></div>
+      <div class="tourbtns"><button class="mini-btn" data-tourskip>${last ? "CLOSE" : "SKIP TOUR"}</button>${i ? `<button class="mini-btn" data-tourgo="${i - 1}">BACK</button>` : ""}${last ? `<button class="mini-btn go" data-tourskip>GOT IT</button>` : `<button class="mini-btn go" data-tourgo="${i + 1}">NEXT</button>`}</div>`;
+    let t = null; try { t = s.el ? s.el() : null; } catch { t = null; }
+    if (t && !(t.getClientRects().length)) t = null;
+    if (t && s.force) { const f = t.closest(".tile, .card") || t; f.classList.add("tour-force"); }
+    if (t) t.scrollIntoView({ block: t.getBoundingClientRect().height > innerHeight * 0.3 ? "start" : "center", inline: "nearest" });
+    root.classList.toggle("free", !t);
+    requestAnimationFrame(() => tourPlace(t));
+    const go = box.querySelector(".go"); if (go) go.focus({ preventScroll: true });
+  }
+  function tourPlace(t) {
+    const root = $("#tour"); if (!root || root.hidden) return;
+    const spot = root.querySelector(".tour-spot"), box = root.querySelector(".tourbox");
+    const W = innerWidth, H = innerHeight, m = 8, bw = box.offsetWidth, bh = box.offsetHeight;
+    if (!t) { spot.style.display = "none"; Object.assign(box.style, { left: Math.max(m, (W - bw) / 2) + "px", top: Math.max(m, (H - bh) / 2) + "px" }); return; }
+    const r = t.getBoundingClientRect(), pad = 6;
+    const sx = Math.max(2, r.left - pad), sy = Math.max(2, r.top - pad), sw = Math.min(W - 4, r.right + pad) - sx, sh = Math.min(H - 4, r.bottom + pad) - sy;
+    Object.assign(spot.style, { display: "block", left: sx + "px", top: sy + "px", width: sw + "px", height: sh + "px" });
+    let top = sy + sh + 12 + bh <= H - m ? sy + sh + 12 : sy - 12 - bh >= m ? sy - 12 - bh : null;
+    let left;
+    if (top == null) {
+      if (sx + sw + 12 + bw <= W - m) { left = sx + sw + 12; top = Math.min(Math.max(m, sy), H - bh - m); }
+      else if (sx - 12 - bw >= m) { left = sx - 12 - bw; top = Math.min(Math.max(m, sy), H - bh - m); }
+      else { top = H - bh - m; left = (W - bw) / 2; }
+    } else left = Math.min(Math.max(m, sx + sw / 2 - bw / 2), W - bw - m);
+    Object.assign(box.style, { left: left + "px", top: top + "px" });
+  }
+  function endTour() {
+    const root = $("#tour"); if (root) root.hidden = true;
+    document.querySelectorAll(".tour-force").forEach(x => x.classList.remove("tour-force"));
+    if (tourOpen() && tourSnap) {
+      const d = screen.querySelector("details[open] > summary"); if (d) d.parentNode.open = false;
+      ui.tab = tourSnap.tab; ui.cat = tourSnap.cat; ui.bio = tourSnap.bio; detail = tourSnap.detail;
+      persistUI(); renderTabs(); render();
+    }
+    tourAt = -1; tourSnap = null; tourSeq++;
+    settings.tourDone = true; save(KEY_SET, settings);
+  }
+  addEventListener("resize", () => { if (tourOpen()) { const s = TOUR[tourAt]; let t = null; try { t = s.el ? s.el() : null; } catch {} tourPlace(t && t.getClientRects().length ? t : null); } });
   document.addEventListener("click", e => {
     const aq = e.target.closest("[data-admquick]");
     if (aq && amAdmin()) { play("click"); adm.edit = { entry: aq.dataset.admquick }; ui.tab = "admin"; detail = null; cancelTier(); persistUI(); if (query) clearSearch(false); renderTabs(); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
-    const g = e.target.closest("[data-tourgo]"); if (g) { play("click"); startTour(+g.dataset.tourgo); return; }
-    if (e.target.closest("[data-tourskip]") || e.target.id === "tour") { const el = $("#tour"); if (el) el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); play("back"); }
+    const g = e.target.closest("[data-tourgo]"); if (g) { play("click"); tourGo(+g.dataset.tourgo); return; }
+    if (e.target.closest("[data-tourskip]")) { play("back"); endTour(); }
   });
-  document.addEventListener("keydown", e => { const el = $("#tour"); if (el && !el.hidden && e.key === "Escape") { el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); } });
+  document.addEventListener("keydown", e => {
+    if (!tourOpen()) return;
+    const k = e.key;
+    if (k === "Escape") { endTour(); play("back"); }
+    else if (k === "ArrowRight" || (k === "Enter" && !e.target.closest("[data-tourskip],[data-tourgo]"))) { if (tourAt < TOUR.length - 1) { play("click"); tourGo(tourAt + 1); } else { play("back"); endTour(); } }
+    else if (k === "ArrowLeft") { if (tourAt > 0) { play("click"); tourGo(tourAt - 1); } }
+    else if (k === "Tab" || k === "Enter" || k === " ") return;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
 
   const KEY_SNOOZE = pk("pda-backup-snooze-v1");
   function backupNag() {
@@ -2908,7 +3014,7 @@
         ${note("Safety nets for marking things.")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
         ${sw("kbMode", "Keyboard mode? (always shows where you are, keeps your place; arrows move, SPACE marks, [ ] switch category, ? lists keys)")}
-        <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">The quick walkthrough from your first visit.</span></div>
+        <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">A guided walkthrough that points out every feature.</span></div>
         <h3>App</h3>
         ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
         <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
