@@ -1172,3 +1172,16 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 @keyframes pgOut { to { transform: translateX(105%); } }
 @keyframes pgIn { from { transform: translateX(-105%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pg-ghost { display: none; } #screen.pg-in { animation: none; } }
+
+/* damage calculator: share / compare / best ammo */
+.dtools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.dtools .mini-btn.on { background: #4a2a2a; border-color: #ff7a7a; color: #ffd0d0; }
+.dgrid2 { grid-template-columns: 1fr 1fr; }
+.dverdict { margin: 4px 0 0; padding: 8px 12px; border: 1px solid #6a6a6a; background: rgba(20,20,20,.85); font-weight: 800; font-size: 16px; color: #ffd23a; }
+.dbox.dwin { border-color: #5ccf6b; box-shadow: 0 0 0 1px #5ccf6b inset; }
+.dbest { margin-top: 6px; padding: 6px 8px; border: 1px dashed #8a7a3a; color: #ffe08a; }
+.dbest .mini-btn { margin-left: 6px; }
+.bestchip { display: inline-block; padding: 0 4px; border: 1px solid #5ccf6b; color: #5ccf6b; font-size: 10px; font-weight: 800; letter-spacing: .5px; vertical-align: 1px; }
+.ammotab tr.best td { color: #c9f5cf; }
+.ammotab tr[data-dmgammo] { cursor: pointer; }
+@media (max-width: 1000px) { .dgrid2 { grid-template-columns: 1fr; } }

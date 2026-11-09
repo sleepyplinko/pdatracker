@@ -11,6 +11,9 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "DAMAGE: COMPARE TWO LOADOUTS puts a second weapon and ammo next to the first against the same target, and says which one wins",
+    "DAMAGE: the ammo table now ranks the best ammo for your target first (fewest hits to kill), with time to kill, and the result suggests a better ammo when there is one",
+    "DAMAGE: COPY LINK TO THIS shares the calculator set up exactly as you have it",
     "New sounds recorded straight from the game: tool hover, and leaving a BIOGRAPHY page (now louder; it replaces the old leave sound everywhere, including unmarking)",
     "Stats and comments added for DEVILSPAWN-BFC, H&K HK416A5, H&K MP5 RIS, Military Kriss Vector, Military Striker-12, RPK-74M, UMP-45 and Warne Eclipse II",
     "Pages now slide in and out like the in-game PDA (you can turn this off in SETTINGS)",
