@@ -2641,7 +2641,7 @@
       mk.disabled = true; mk.textContent = "MAKING…";
       try {
         const [st, r] = await api("POST", "/api/transfer", { data: backupData() });
-        if (st !== 201) { toast(r.error || "Couldn't make a link right now."); play("warn"); mk.disabled = false; mk.textContent = "MAKE TRANSFER LINK"; return; }
+        if (st !== 201) { toast(st === 404 ? "Transfer links aren't switched on yet: the site's server needs updating (an admin has to deploy the newest worker.js)." : r.error || "Couldn't make a link right now.", { ms: 8000 }); play("warn"); mk.disabled = false; mk.textContent = "MAKE TRANSFER LINK"; return; }
         xfer = { code: r.code, link: xferLink(r.code), expires: r.expires }; play("confirm"); keepScroll(render);
       } catch { toast("Couldn't reach the server."); play("warn"); mk.disabled = false; mk.textContent = "MAKE TRANSFER LINK"; }
     };
@@ -2660,7 +2660,7 @@
     code = code.toUpperCase();
     try {
       const [st, r] = await api("GET", "/api/transfer/" + code);
-      if (st !== 200) { toast(r.error || "Couldn't get that transfer.", { ms: 7000 }); play("warn"); return; }
+      if (st !== 200) { toast(st === 404 && /^Not found\.?$/.test(r.error || "") ? "Transfer links aren't switched on yet: the site's server needs updating (an admin has to deploy the newest worker.js)." : r.error || "Couldn't get that transfer.", { ms: 8000 }); play("warn"); return; }
       showTransferPrompt(r.data);
     } catch { toast("Couldn't reach the server."); play("warn"); }
   }
