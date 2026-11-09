@@ -1,20 +1,12 @@
-/* =====================================================================
-   PDA TRACKER — CLOUD BACKEND (Cloudflare Worker + D1)
-   ---------------------------------------------------------------------
-   No player accounts. This Worker handles: submissions from the SUBMIT
-   tab, admin sign-in (ADMIN_KEYS secret), info admins publish, and the
-   anonymous "found by X%" numbers. Needs a D1 database bound as "DB".
-   ===================================================================== */
-
 const NAME_RE = /^[A-Za-z0-9_]{3,20}$/;
 const ID_RE = /^[tbd]\|[^\n]{1,150}$/;
 const MAX_IDS = 3000;
-const OV_RE = /^(?:[tbd]\|[^\n]{1,150}|a\|[^\n]{1,150}|site\|notice)$/;   // things admins can publish info for
+const OV_RE = /^(?:[tbd]\|[^\n]{1,150}|a\|[^\n]{1,150}|site\|notice)$/;
 const AMMO_KEYS = ["base", "mult", "spread", "proj", "pen", "shieldPierce", "fracture", "bleed", "saBypass", "ssBypass", "weakness", "statuses", "alert"];
-const RARITY_TTL = 300;            // seconds the rarity numbers are cached
-const AUTH_LIMIT = 20;             // login/register tries per IP per 10 minutes
-const SUBMIT_LIMIT = 6;            // submissions per IP per 10 minutes
-const LB_TTL = 300;                // seconds the leaderboard is cached
+const RARITY_TTL = 300;
+const AUTH_LIMIT = 20;
+const SUBMIT_LIMIT = 6;
+const LB_TTL = 300;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +22,7 @@ const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, 
 const sha256 = async s => hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
 const randomHex = n => hex(crypto.getRandomValues(new Uint8Array(n)));
 const now = () => Math.floor(Date.now() / 1000);
-function sameString(a, b) {                       // constant-time compare
+function sameString(a, b) {
   if (a.length !== b.length) return false;
   let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return d === 0;
@@ -45,7 +37,7 @@ function cleanIds(list) {
   const out = [...new Set(list.filter(x => typeof x === "string" && ID_RE.test(x)))];
   return out.length > MAX_IDS ? null : out.sort();
 }
-/* a one-way fingerprint of the sender's IP, so spammers can be blocked without storing addresses */
+
 async function ipTag(req) {
   const ip = req.headers.get("CF-Connecting-IP") || "local";
   const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("pda-block:" + ip));
@@ -81,8 +73,7 @@ async function whoami(env, req) {
   const s = await env.DB.prepare("SELECT name FROM sessions WHERE token = ?").bind(await sha256(m[1])).first();
   return s ? s.name : null;
 }
-/* admins sign in with a name + password set on the Worker as the secret ADMIN_KEYS:
-   "sleepyplinko=some-long-password,ForsakenFireFly=another-password" */
+
 const adminKeys = env => String(env.ADMIN_KEYS || "").split(",").map(x => x.trim()).filter(x => x.includes("=")).map(x => { const i = x.indexOf("="); return [x.slice(0, i).trim(), x.slice(i + 1)]; }).filter(([n, p]) => n && p.length >= 8);
 const isAdmin = (env, sess) => !!sess && sess.startsWith("admin:") && adminKeys(env).some(([n]) => n.toLowerCase() === sess.slice(6).toLowerCase());
 const shown = sess => String(sess || "").replace(/^admin:/, "");
@@ -110,8 +101,6 @@ async function route(req, env, ctx) {
     return json({ ok: true });
   }
 
-
-  /* ---- admin sign-in ---- */
   if (path === "/api/admin/login" && M === "POST") {
     if (!(await rateLimit(env, req, "a:", 10))) return err(429, "Too many tries. Wait a few minutes.");
     const b = await body(req); if (!b) return err(400, "Bad request.");
@@ -123,12 +112,11 @@ async function route(req, env, ctx) {
     return json({ token: await newSession(env, "admin:" + hit[0]), name: hit[0] });
   }
 
-  /* ---- anonymous "found by X%" numbers: each browser sends its list under a random id, no name ---- */
   if (path === "/api/anon" && M === "PUT") {
     const b = await body(req); if (!b || !/^[0-9a-f]{32}$/.test(String(b.device || ""))) return err(400, "Bad request.");
     const found = cleanIds(b.found); if (!found) return err(400, "Bad found list.");
     const known = await env.DB.prepare("SELECT 1 FROM anon WHERE device = ?").bind(b.device).first();
-    if (!known && !(await rateLimit(env, req, "n:", 5))) return err(429, "Slow down.");          // new browsers per IP
+    if (!known && !(await rateLimit(env, req, "n:", 5))) return err(429, "Slow down.");
     if (!found.length) { await env.DB.prepare("DELETE FROM anon WHERE device = ?").bind(b.device).run(); return json({ ok: true }); }
     await env.DB.prepare("INSERT INTO anon (device, found, updated) VALUES (?, ?, ?) ON CONFLICT(device) DO UPDATE SET found = excluded.found, updated = excluded.updated").bind(b.device, JSON.stringify(found), now()).run();
     return json({ ok: true });
@@ -138,7 +126,6 @@ async function route(req, env, ctx) {
     return json({ ok: true });
   }
 
-  /* ---- moving a PDA to another device: a short code that holds a copy for 24 hours ---- */
   if (path === "/api/transfer" && M === "POST") {
     if (!(await rateLimit(env, req, "x:", 10))) return err(429, "You've made a lot of transfer links just now. Wait a few minutes.");
     const b = await body(req); if (!b || typeof b.data !== "object" || !b.data) return err(400, "Bad request.");
@@ -157,7 +144,6 @@ async function route(req, env, ctx) {
     return json({ data: JSON.parse(row.data), created: row.created });
   }
 
-  /* ---- what happened to things you sent (by the private codes your browser kept) ---- */
   if (path === "/api/substatus" && M === "GET") {
     const toks = String(url.searchParams.get("t") || "").split(",").filter(t => /^[0-9a-f]{24}$/.test(t)).slice(0, 50);
     if (!toks.length) return json([]);
@@ -165,10 +151,9 @@ async function route(req, env, ctx) {
     return json(rows.results || []);
   }
 
-  /* ---- submissions: anyone can send; admins read them ---- */
   if (path === "/api/submit" && M === "POST") {
     const b = await body(req); if (!b) return err(400, "Bad request.");
-    if (b.botcheck) return json({ ok: true });                       // spam bot filled the hidden box
+    if (b.botcheck) return json({ ok: true });
     const text = clip(b.text, 4000).trim(), link = clip(b.link, 500).trim();
     if (!text && !link) return err(400, "Write some details or add a link first.");
     if (await isBlocked(env, req, "")) return err(403, "You can't send info to this site.");
@@ -177,7 +162,7 @@ async function route(req, env, ctx) {
     const r = await env.DB.prepare("INSERT INTO submissions (kind, entry, text, link, who, account, created, token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
       .bind(clip(b.kind, 40) || "Other", clip(b.entry, 150), text, link, clip(b.name, 60), account, now(), token).run();
     if (r.meta && r.meta.last_row_id) await env.DB.prepare("INSERT OR REPLACE INTO subip (sub, ip) VALUES (?, ?)").bind(r.meta.last_row_id, await ipTag(req)).run();
-    if (env.DISCORD_WEBHOOK) {                                        // optional ping, kept secret on the server
+    if (env.DISCORD_WEBHOOK) {
       ctx.waitUntil(fetch(env.DISCORD_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         content: "@everyone new PDA submission",
         allowed_mentions: { parse: ["everyone"] },
@@ -204,7 +189,7 @@ async function route(req, env, ctx) {
       return json({ ok: true });
     }
     if (sm && M === "DELETE") { await env.DB.prepare("DELETE FROM submissions WHERE id = ?").bind(+sm[1]).run(); return json({ ok: true }); }
-    /* what's set up on this Worker (shown on the admin page) */
+
     if (path === "/api/admin/setup" && M === "GET") {
       const want = { sessions: 1, attempts: 1, submissions: 2, overrides: 2, changes: 4, blocks: 4, subip: 4, anon: 5, transfers: 6 };
       const rows = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
@@ -216,7 +201,7 @@ async function route(req, env, ctx) {
       const fix2 = missing.includes("submissions.token") ? "schema-update-5.sql" : fix;
       return json({ admins: adminKeys(env).length, tables: { missing, fix: fix2 }, ping: !!env.DISCORD_WEBHOOK, announce: !!env.ANNOUNCE_WEBHOOK });
     }
-    /* numbers for the admin page */
+
     if (path === "/api/admin/stats" && M === "GET") {
       const wk = now() - 7 * 86400, day = now() - 86400;
       const q = (sql, ...b) => env.DB.prepare(sql).bind(...b).first();
@@ -226,7 +211,7 @@ async function route(req, env, ctx) {
         q("SELECT AVG(json_array_length(found)) AS n FROM anon")]);
       return json({ players: all.n, active7: active.n, active1: active1.n, subsWeek: subsWeek.n, subsNew: subsNew.n, avgFound: avg && avg.n ? Math.round(avg.n) : 0 });
     }
-    /* change history + undo */
+
     if (path === "/api/admin/changes" && M === "GET") {
       const rows = await env.DB.prepare("SELECT id, entry, before, after, by, what, t FROM changes ORDER BY id DESC LIMIT 150").all();
       return json(rows.results || []);
@@ -242,7 +227,7 @@ async function route(req, env, ctx) {
       await env.DB.prepare("DELETE FROM changes WHERE t < ?").bind(now() - 180 * 86400).run();
       return json({ ok: true, entry: c.entry, data: c.before == null ? null : JSON.parse(c.before) });
     }
-    /* blocking spammers */
+
     if (path === "/api/admin/blocks" && M === "GET") {
       const rows = await env.DB.prepare("SELECT id, account, note, by, created, ip != '' AS byip FROM blocks ORDER BY id DESC").all();
       return json(rows.results || []);
@@ -256,7 +241,7 @@ async function route(req, env, ctx) {
       if (!acct && !ip) return err(400, "Nothing to block: that submission has no account or address on record.");
 
       await env.DB.prepare("INSERT INTO blocks (ip, account, note, by, created) VALUES (?, ?, ?, ?, ?)").bind(ip, acct, clip(b.note || (sub && sub.who) || "", 200), name, now()).run();
-      if (b.sub && b.purge) {                                         // also hide everything else they sent
+      if (b.sub && b.purge) {
         if (ip) await env.DB.prepare("UPDATE submissions SET status = 'rejected' WHERE status = 'new' AND id IN (SELECT sub FROM subip WHERE ip = ?)").bind(ip).run();
         if (acct) await env.DB.prepare("UPDATE submissions SET status = 'rejected' WHERE status = 'new' AND account = ?").bind(acct).run();
       }
@@ -264,7 +249,7 @@ async function route(req, env, ctx) {
     }
     const bm = path.match(/^\/api\/admin\/blocks\/(\d+)$/);
     if (bm && M === "DELETE") { await env.DB.prepare("DELETE FROM blocks WHERE id = ?").bind(+bm[1]).run(); return json({ ok: true }); }
-    /* post a "new entries" message to Discord */
+
     if (path === "/api/admin/announce" && M === "POST") {
       if (!env.ANNOUNCE_WEBHOOK) return err(501, "Set ANNOUNCE_WEBHOOK on the Worker first (see the README).");
       const b = await body(req); const upd = clip(b && b.update, 40).trim(); if (!upd) return err(400, "Pick an update.");
@@ -288,19 +273,19 @@ async function route(req, env, ctx) {
         if (src.stats && typeof src.stats === "object") { d.stats = {}; Object.entries(src.stats).slice(0, 60).forEach(([k, v]) => { d.stats[clip(k, 40).toUpperCase()] = clip(v, 120); }); }
         if (typeof src.tier === "number" && src.tier >= 1 && src.tier <= 9) d.tier = src.tier;
         if (typeof src.update === "string" && src.update.trim()) d.update = clip(src.update.trim(), 40);
-        if (id.startsWith("a|")) {                                     // an ammo type's numbers
+        if (id.startsWith("a|")) {
           if (src.ammo && typeof src.ammo === "object") { d.ammo = {}; AMMO_KEYS.forEach(k => { if (src.ammo[k] != null) d.ammo[k] = clip(src.ammo[k], 40); }); }
           if (src.ammoAdd && typeof src.ammoAdd === "object") { const c = clip(src.ammoAdd.caliber, 60).trim(), n = clip(src.ammoAdd.name, 80).trim(); if (!c || !n) return err(400, "New ammo needs a caliber and a name."); d.ammoAdd = { caliber: c, name: n }; }
           if (typeof src.note === "string") d.note = clip(src.note, 300);
         }
-        if (id === "site|notice") {                                    // the notice bar everyone sees
+        if (id === "site|notice") {
           const t = clip(src.text, 400).trim(); if (!t) return err(400, "Write the notice first.");
           d.notice = { text: t, level: ["info", "update", "warn"].includes(src.level) ? src.level : "info", id: randomHex(4) };
         }
         const okUrl = u => typeof u === "string" && (/^https?:\/\/[^\s"'<>]{4,500}$/.test(u) || /^images\/[\w\-.\/]{1,200}$/.test(u));
         if (Array.isArray(src.imgs)) { const l = src.imgs.filter(okUrl).slice(0, 8); if (l.length) d.imgs = l; }
         else if (okUrl(src.img)) d.imgs = [src.img];
-        if (src.add && typeof src.add === "object") {                  // a brand-new entry that isn't in data.js
+        if (src.add && typeof src.add === "object") {
           const a = src.add, sec = ["tools", "bio", "docs"].includes(a.section) ? a.section : "";
           const nm = clip(a.name, 80).trim(), grp = clip(a.group, 60).trim();
           if (!sec || !nm || nm === "???" || !grp) return err(400, "New entries need a section, group and name.");
@@ -322,14 +307,12 @@ async function route(req, env, ctx) {
     }
   }
 
-  /* ---- published info (stats / comments / descriptions added from the admin page) ---- */
   if (path === "/api/overrides" && M === "GET") {
     const rows = await env.DB.prepare("SELECT id, data, updated FROM overrides").all();
     const out = {}; (rows.results || []).forEach(r => { out[r.id] = { ...JSON.parse(r.data), updated: r.updated }; });
     return json(out, 200, { "Cache-Control": "public, max-age=60" });
   }
 
-  /* ---- rarity: how many sharing players have each entry ---- */
   if (path === "/api/rarity" && M === "GET") {
     return cachedJSON(ctx, url.origin + "/api/rarity", RARITY_TTL, async () => {
       const players = await env.DB.prepare("SELECT COUNT(*) AS n FROM anon").first();

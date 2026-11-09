@@ -1,17 +1,3 @@
-/* =====================================================================
-   PDA TRACKER — WHICH MAGAZINES GO WITH WHICH GUNS
-   ---------------------------------------------------------------------
-   NAMED: a magazine whose name clearly points at one gun (or one gun
-   family). This is only what the names say, not a tested list of what
-   fits in-game. Magazines with vague names (STANAG, AR10, ADV, AW, ...)
-   are left out on purpose. Add or fix lines as you learn more:
-
-     "30rnd AK74 Mag": ["AK74", "AK74M"],
-
-   The site also adds pairs it can see in the PDA itself: a person whose
-   loadout has that gun loaded with that magazine.
-   ===================================================================== */
-
 const PDA_AMMO_LINKS = {
   "20rnd TEC-9 Mag": ["TEC-9"], "10rnd TEC-9 Mag": ["TEC-9"], "30rnd TEC-9 Mag": ["TEC-9"], "72rnd TEC-9 Drum Mag": ["TEC-9"],
   "20rnd MICRO UZI Mag": ["Micro Uzi"], "25rnd MICRO UZI Mag": ["Micro Uzi"], "40rnd MICRO UZI Mag": ["Micro Uzi"],

@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>PDA.exe</title>
+<script>
+  const p = location.pathname, m = p.match(/^(.*?\/)e\/([0-9a-z]{5})\/?$/);
+  location.replace(m ? m[1] + "#e=" + m[2] : (p.match(/^\/[^/]+\//) || ["/"])[0]);
+</script>
+</head><body style="background:#0a0a0a;color:#ddd;font-family:monospace"><a href="/pdatracker/" style="color:#ddd">Open PDA.exe</a></body></html>

@@ -1,37 +1,16 @@
-/* =====================================================================
-   PDA TRACKER — ENTRY LIST
-   ---------------------------------------------------------------------
-   This is the only file you need to edit to add or fix entries.
-
-   Weapons:   ["NAME"]                      a normal entry
-              ["NAME", { special: true }]   red highlighted entry
-              ["NAME", { stats: {...}, comment: "..." }]  adds a stat page
-              "???"                          an entry whose name you
-                                             don't know yet (shows as ???)
-   People:    see the BIOGRAPHY section below (P / G shorthand)
-   Documents: ["NAME"]
-
-   Every entry gets its checkmark saved by NAME, so if you rename an
-   entry, anyone who had it marked will need to re-mark it.
-   ===================================================================== */
-
-/* ---------- shorthand used in the biography list below ---------- */
 const P  = (name, base = {}, skills = {}, loadout = []) => ({ name, base, skills, loadout });
 const G  = (name, members) => ({ name, members });
-const W  = (x) => ["Weapon", x];                        // weapon
+const W  = (x) => ["Weapon", x];
 const WR = (...xs) => xs.length === 1 ? ["Weapon", xs[0] + " (Random)"]
-                                      : xs.map(x => ["Weapon", x + " (Random)"]);   // random weapon(s)
-const A  = (x) => ["Ammo Loaded", x];                   // ammo
-const M  = (x) => ["Magazine Loaded", x];               // magazine
+                                      : xs.map(x => ["Weapon", x + " (Random)"]);
+const A  = (x) => ["Ammo Loaded", x];
+const M  = (x) => ["Magazine Loaded", x];
 
-/* skill sets many enemies share */
 const STD   = { Strength: "0.2x", "Aim Time Multiplier": "2.35x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "0.3x" };
 const ROGUE = { "Aim Time Multiplier": "1.9x", "Aim Slowdown": "0.5x" };
 const ROGUE_LOADOUT = WR("Kitchen Knife", "Frying Pan", "Hammer", "Pipe", "Ice Pick", "Crowbar");
 
 const PDA_DATA = {
-
-  /* ---------------- TOOLS (weapons and items) ---------------- */
   tools: [
     {
       name: "PISTOLS",
@@ -4015,16 +3994,6 @@ const PDA_DATA = {
     }
   ],
 
-  /* ---------------- BIOGRAPHY (people) ----------------
-     Each person is written like this:
-       P("Name", { Health: "90", Speed: "1", ... },      <- base stats
-                 { Strength: "0.2x", ... },              <- SKILLS
-                 [ W("Weapon"), A("Ammo"), M("Mag") ])   <- LOADOUT
-     A card that holds several people (like Robinson) is written as
-       G("Card name", [ P(...), P(...) ])
-     The whole card is one unlock; every person inside it becomes viewable.
-     Health is in HP, Speed is the in-game speed number, Defense and
-     resistances are percentages. Leave a stat out if it isn't shown. */
   biography: [
     { name: "Scavengers", color: "#f3c98b", bg: "#2a1d0e", entries: [
       Object.assign(G("Miners", [
@@ -4261,7 +4230,6 @@ const PDA_DATA = {
     ]}
   ],
 
-  /* ---------------- DOCUMENTS ---------------- */
   documents: [
     { name: "Locations", kind: "location", entries: [
       "Wooden Cottage", "Watchtower", "Creepy Glass", "Doe's House", "Metrostation",

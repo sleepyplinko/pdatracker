@@ -1,17 +1,4 @@
-/* =====================================================================
-   PDA TRACKER — BIOGRAPHY DESCRIPTIONS
-   ---------------------------------------------------------------------
-   The text in each person's "Description" box, keyed by the card name
-   (or a single person's name). A variant with its own entry here uses
-   that; otherwise it uses its card's.
-
-   Leave a blank line between paragraphs. A card with no entry
-   shows "No description on file."
-   Use a backtick ` string so quotes and apostrophes don't need escaping.
-   ===================================================================== */
-
 const PDA_DESC = {
-
 "Miners": `[ One search result found ]
 
 ayyy sum girl named dorothea just left all these stuff for us to use. pretty helpful considering i was planning on starting a gang. got all my buddies and gals here, we're thinking we could take down tofuu yeah. haven't thought of a name yet tho
@@ -27,7 +14,6 @@ however, tony doesn't let that be an issue. he has a lot of connections, despite
 he goes around districts, competing in golfing contests. though only at the middle point of his career, he's been starting to gather up significant wins, unlike before. he was a bit laughed at when he started, losing a lot, but i think that's how it is when you're new to something.
 
 he is trying to make a name for himself in the golfing industry, using his trusty golf club given to him by his father. not bad at all i'd say, jealous of him even.`,
-
 
 "Robinson": `the robinson family is very known for their services done all over the city. rarely do they appear in the news headlines of doing something memorable but if you stuck long enough in the city, like me, you'd know them. they're a nice bunch.
 
@@ -59,8 +45,6 @@ Takes a lot of pride in his rank, making quite a hassle out of small situations 
 
 Although all of the members give him all the loot found, it's never something really great. Especially since it's in the city that has been looted by everyone. He usually tells them to find better loot. They never do.`,
 
-
-
 "G.O.A.T": `[ One search result found on a BookedMyFace page under WC's official account ]
 
 Bartholomew if you're reading this pleaasee can I get hired? I have a clan of skilled scavengers, that I have armed with my own personal belongings please! We could be allies. Come on! Do you want fanart?? I can draw with bullet holes!
@@ -73,8 +57,6 @@ Shut up. You remind me of my son.
 CHECK BIO FOR FREE E3K FURNITURES WIN FREE FURNITURE PRODUCTS TODAY
 
 DONT MISS OUT!`,
-
-
 
 "Howard Carter": `Designer and gunsmith of a niche company by the name of "Carter's leads". He no longer owns it since he's grown too old to make guns, and the position was instead given to his daughter. Not alot is known about him, since he isn't a very outgoing person..`,
 
@@ -111,7 +93,6 @@ Many concerns were raised about this idea, numerous thinking that this type of p
 
 However, despite its massive success in Outposts, it is still a relatively underproduced troop, as too many of them could cause a great decline in rifle ammo. In the case of this ever happening, a prevention was thought of: the technique needing them to fire in bursts instead of the whole magazine at once. Regardless of the favorability within this change, it was not realized. With their ability to push forward, they make an excellent choice to be brought alongside expeditions, permitting clear, aggressive rushes. Though, a better variant accomplishes this role much better.`,
 
-
 "Citizen Sniper": `Contrary to popular belief, despite the Citizen faction taking itself very seriously, they do have their own methods to enjoy themselves. One of the most known is their monthly aim contest. In this competition, many Citizens can battle with each other from the same rank to see who has the more superior aim. The winners within each group are congratulated and may receive rewards, such as an improved arsenal, and the most important gift: respect from Citizens. However, in other cases, they may be promoted to Snipers. It's not necessary to win a contest to become a sniper, but this feat of marksmanship boosts your chances.
 
 Thankfully though, due to this, their training isn't very ample, as they'll have proven exceptional steady aim and patience with regualr weaponry, so they are just taught how to utilize their rifles. However, they are taught one tactic to make sure they stand out from a basic sniper: when aiming at an enemy, they will still fire even if the target goes out of their sight. Besides this, they are provided with goggles that assist them with seeing in the dark, giving them an advantage in unilluminated areas or during the night. They're one of the main motives that intruders are kept away during night-time, as they spot any one of them and stop them in their tracks quickly. However, as of recently, less raiders have come during the night because of their extraordinary expertise, doing more harm than good for them and making the demand for snipers lower.
@@ -120,7 +101,6 @@ During the day, they don't do much work, as most of it is handled on the field b
 
 Make no mistake, though, just because they sit in their tower the whole day definitely does not mean they cannot still be deadly if you're unprepared for them. After all, the feeling of a sniper scope watching you at all times isn't pleasant.`,
 
-
 "Citizen Bodyguard": `A more recent division of the Citizens created after many noticed a common flaw in attacks: rushing in alone. Many Citizens believe they're armed and trained well enough to take out any foe, but that isn't always the case. Therefore to prevent less casualties and losses of equipment, it was decided to create an alternative variant of the Scout, henceforth: the Bodyguard.
 
 The Citizen Bodyguard sticks close to an ally and fights alongside it, providing supportive fire or proving use as a distraction, as fighting two different enemies at the same time can be difficult. However, as obvious as it may be, they are very weak by themselves, barely outmatching the Scout's level. The only reason this is so is due to their improved armor and occasional superior magazines. However, despite this statement, their help is appreciated nonetheless.
@@ -128,7 +108,6 @@ The Citizen Bodyguard sticks close to an ally and fights alongside it, providing
 You won't typically see them in missions or outside of Citizen Outposts, as they're not needed in other fields as much as these places. Even so, the more advanced forces of the Citizens don't wish to be seen around them, as they believe it makes them seem weak and unfit for such position, requiring assistance from them. Despite their expendable aspect, they are still very much underproduced, yet still kept around. This brings the question of why they are still here, considering the fact that they don't seem wanted.
 
 Many Citizens think that these troops are unnecessary, as they prove no use outside of combat, unlike other ranks. Their only purpose is to assist people and, unlike a more developed tactic such as a combat medic, they only fire a pesky Beretta. Despite stating so, they continue to occasionally prove use, which is what leads to them still being kept around. Hilariously, when no ally is nearby, they will sprint to the nearest Citizen controlled site.`,
-
 
 "Citizen Bat": `Despite the idea of the Citizen Rogue already being rather pointless, as you exchange a formidable, long-ranged firearm for a limited bludgeon, a more developed iteration of existed prior to it. Strange enough, it was originally meant to be scrapped entirely, as the investments in time and training were considered far too much for its lackluster potential, but it seemed to have held enough merit in some overseer's heart that the idea was ultimately implemented.
 
@@ -164,8 +143,6 @@ He was last seen on a scouting run around Frieden and it's areas, carrying a rad
 
 Rats are typically distinguished from mice by their size. Usually the common name of a large muroid rodent will include the word "rat", while a smaller muroid's name will include "mouse". The common terms rat and mouse are not taxonomically specific. There are 56 known species of rats in the world.`,
 
-
-
 "Martin": `An outlaw merchant found across multiple districts. Famous for selling firearms, items and goods illegally across districts under the name "Martin's 101 Rads" as a code name, most of their profits come from transferring and selling foreign items to their non-native districts. Although they go under the name "Martin", it is unknown whether or not if Martin is a nickname or an alias.
 
 On May 21st 2018, Martin was caught in the metrostation of Bayak for illegally entering a train from the back, they were immediately recognized and arrested on the spot out in public and was taken to the local police station. Upon reaching the destination, Martin was no where to be seen at the back seat of the car. Police officers claimed that the man had "mysteriously vanished" and that they were attentive on Martin's presence.
@@ -185,7 +162,6 @@ City: Harnicia
 Post Code: 92871`,
 
 "Forest Dwellers": `None available`,
-
 
 "Monolithic Guardian": `[INFORMATION MISSING]`,
 
@@ -310,5 +286,4 @@ The Velris family would then be a major discussion of conspiracy theory for awhi
 "Monolithic Psycho": `[INFORMATION MISSING]`,
 
 "Monolithic Soldier": `[INFORMATION MISSING]`
-
 };

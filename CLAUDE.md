@@ -13,6 +13,8 @@ Read this first after any break or conversation summary. Update it whenever some
 - When given a video, pull the data out frame by frame (crop the stats/comment panels at full resolution) instead of guessing.
 - Actually implement and push changes; don't just describe them or hand over files. Test in a browser (Playwright) before saying something works. I can't reach the live site from the sandbox, so say so instead of claiming it's live-verified.
 - Every push: bump `pda-tracker-vN` in `sw.js`, and add a changelog line at the top of the newest date block in `changelog.js`.
+- After changing names, pictures, stats, comments or descriptions in data: run `node tools/previews.js` to regenerate `e/<hash>/` link-preview pages.
+- Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
 - Replies short and plain. When suggesting ideas, give a few good ones; if the owner passes, don't push them.
 - From time to time, re-read this file and the code to stay current on what the owner wants.
@@ -23,7 +25,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - **No player accounts**, no PLAYERS tab. Progress lives in the browser; CLOUD has backup download/upload, transfer link/code/QR (24h, replace or combine), screenshot import, paste-a-list.
 - **Admin:** sign in from a button in SETTINGS with the shared ADMIN login; then the ADMIN tab appears. The password lives only in the Cloudflare Worker secret `ADMIN_KEYS` ("name=pass,..."), never in site code.
 - **Discord webhook** stays server-side in the Worker secret (`ANNOUNCE_WEBHOOK`), pings everyone. Never paste it into site code.
-- Keep share links (entry links `#e=`, profile share `#v=`, damage calc `#dmg=`).
+- Keep share links (entry links: LINK copies `…/pdatracker/e/<hash>/` for Discord previews, `#e=` still works; profile share `#v=`, damage calc `#dmg=`).
 - Credit **gluehesthar** (@iaminyourwallsiaminyourwalls on Discord) for the OANC Ammo Chart wherever ammo data shows.
 - **Rejected / not wanted:** completion rewards, "dropped by" or route features, weapon pictures (on hold), damage over distance/headshots (game has neither), weapon records page, NPC compare, recently viewed, document reading mode, public change history.
 - Gear has no WEIGHT in the game, so never flag it as missing weight.
@@ -41,7 +43,8 @@ Read this first after any break or conversation summary. Update it whenever some
 | `app.js` | All logic (render, tabs, damage calc, loadout, cloud, admin, sounds) |
 | `style.css`, `index.html` | Look and page shell; background `images/bg/patio.jpg` |
 | `qr.js` | QR generator (`window.PDA_QR(text)` → SVG) for transfer codes |
-| `sw.js` | Offline cache, network-first. Bump version every push |
+| `sw.js` | Offline cache, cache-first (instant repeat loads). Page auto-reloads when a new version activates (or shows an UPDATED bar if the user is mid-use). Bump version every push |
+| `tools/previews.js` | Generates `e/<hash>/index.html`: OG/Discord previews per entry (name, picture, stats/comment), JS-redirect to `#e=`. `404.html` covers entries without a page |
 | `backend/` | Cloudflare Worker + D1 (`worker.js`, schema updates, README with setup steps 1–8) |
 
 ## Features (as of 2026-11-09)
@@ -53,6 +56,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - LOADOUT planner with carry weight. PROFILE: save profiles, progress, favourites, this run.
 - SUBMIT: send info without an account (status via token), HELP WANTED lists, changelog.
 - ADMIN: review submissions, edit/add entries and ammo via overrides, notice bar, announcements, change history with undo, blocking, stats.
+- Loading: PDA-style boot screen in `#screen` until first render; sounds preload on first interaction; site preview image `images/og.jpg` (real screenshot).
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 

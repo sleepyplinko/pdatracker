@@ -1,14 +1,3 @@
-/* =====================================================================
-   PDA TRACKER — AMMO CHART (used by the DAMAGE calculator)
-   ---------------------------------------------------------------------
-   Copied from "OANC Ammo Chart. The one that's maintained":
-   https://docs.google.com/spreadsheets/d/1mYZNMzwVYPd5Bts4Goy7LZol-SsWZl5navPDvob-PEw/edit
-   Credit: gluehesthar (@iaminyourwallsiaminyourwalls on Discord), the
-   original spreadsheet creator, who put most of these ammo types in.
-
-   "raw" holds every cell exactly as the sheet has it; the numbers next
-   to it are those cells read as numbers for the calculator.
-   ===================================================================== */
 const PDA_AMMO = {
  "credit": "gluehesthar (@iaminyourwallsiaminyourwalls on Discord), original creator of the OANC Ammo Chart",
  "url": "https://docs.google.com/spreadsheets/d/1mYZNMzwVYPd5Bts4Goy7LZol-SsWZl5navPDvob-PEw/edit",
