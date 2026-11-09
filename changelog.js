@@ -1,16 +1,8 @@
-/* =====================================================================
-   PDA TRACKER — CHANGELOG
-   ---------------------------------------------------------------------
-   Shown in the SUBMIT tab. Newest first. Add a block at the top when
-   you add entries, pictures or features:
-
-     { date: "YYYY-MM-DD", items: ["Added every SMG", "Pictures for ..."] },
-
-   Leave the list empty ([]) to hide the CHANGELOG section entirely.
-   ===================================================================== */
-
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Faster loading: after your first visit the site opens almost instantly, even on slow connections, and updates itself when there's a new version",
+    "A PDA boot screen shows while the site loads",
+    "Links from LINK now show the entry's name, picture and stats when pasted in Discord",
     "Security Bot C has a new animated portrait",
     "DAMAGE: COMPARE TWO LOADOUTS puts a second weapon and ammo next to the first against the same target, and says which one wins",
     "DAMAGE: the ammo table now ranks the best ammo for your target first (fewest hits to kill), with time to kill, and the result suggests a better ammo when there is one",

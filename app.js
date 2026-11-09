@@ -1,14 +1,9 @@
-/* =====================================================================
-   PDA.exe tracker — app logic.
-   Entries live in data.js, sound files are set in sounds.js.
-   ===================================================================== */
 (() => {
   "use strict";
 
-  /* ---------- storage (wrapped: private windows can throw) ---------- */
   const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
-  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
-  /* save profiles: "Main" uses the original keys, others get "@Name" on the end */
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
   const KEY_PROF  = "pda-profiles-v1";
   const PROF = Object.assign({ active: "Main", list: ["Main"] }, load(KEY_PROF, {}));
   if (!PROF.list.includes(PROF.active)) PROF.active = "Main";
@@ -24,7 +19,7 @@
   const KEY_FRIEND= pk("pda-friend-v1");
   const KEY_SINCE = pk("pda-since-backup-v1");
   const KEY_PROG  = pk("pda-progress-v1");
-  const KEY_LOAD  = pk("pda-loadout-v2");      // { items: [[entry id, count]], base: "" }      // { "2026-11-06": 42, ... } found count per day
+  const KEY_LOAD  = pk("pda-loadout-v2");
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
@@ -34,10 +29,10 @@
                                 sort: "found", compact: false, hideDone: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
   if (!Array.isArray(ui.cmp)) ui.cmp = [];
   if (!ui.scroll || typeof ui.scroll !== "object") ui.scroll = {};
-  if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";   // old "hide found" setting
+  if (!("filter" in savedUI) && settings.hideFound) ui.filter = "missing";
   let favs     = load(KEY_FAV, {});
   let notes    = load(KEY_NOTES, {});
-  /* entries that moved to another tab keep their progress (old id -> new id) */
+
   const MOVED = { "b|miscellaneous|wc emissary": "b|wc|wc emissary", "b|miscellaneous|wc speedster": "b|wc|wc speedster" };
   const migrateIds = (obj, key) => {
     let ch = false;
@@ -47,29 +42,26 @@
   };
   migrateIds(found, KEY_FOUND); migrateIds(favs, KEY_FAV); migrateIds(notes, KEY_NOTES);
   let history_ = load(KEY_LOG, []);
-  let friend   = load(KEY_FRIEND, null);      // { name, set } from a friend's share link
+  let friend   = load(KEY_FRIEND, null);
   let sinceBackup = load(KEY_SINCE, 0);
   let progress = load(KEY_PROG, {});
   let loadout  = load(KEY_LOAD, null);
   if (!loadout || !Array.isArray(loadout.items)) loadout = { items: [], base: "" };
-  const BASE_CARRY = 5;                          // everyone starts with 5 carry weight
+  const BASE_CARRY = 5;
   const baseCarry = () => { const n = parseFloat(loadout.base); return isNaN(n) ? BASE_CARRY : n; };
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-  // this browser tab's session: what you had when you opened the site
+
   let sessionStart = null;
-  try { sessionStart = JSON.parse(sessionStorage.getItem("pda-session-" + PROF.active)); } catch { /* ignore */ }
-  let viewOnly = null;                        // { name, set } while looking at someone's share link
+  try { sessionStart = JSON.parse(sessionStorage.getItem("pda-session-" + PROF.active)); } catch {}
+  let viewOnly = null;
   const undoStack = [];
-  let lastStar = null;                        // { id, on } for shift-click ranges
+  let lastStar = null;
   let user     = load(KEY_USER, "");
-  let detail   = null;      // { type: "tool" | "person" | "doc", id }
+  let detail   = null;
   let query    = "";
-  let pendingTier = null;   // "catIndex|tier" while its "are you sure?" is showing
+  let pendingTier = null;
   let pendingTimer = 0;
 
-  /* =====================================================================
-     SOUND
-     ===================================================================== */
   const SFX = (typeof PDA_SOUNDS === "object" && PDA_SOUNDS) || {};
   const pools = {};
   function play(name) {
@@ -89,24 +81,25 @@
       a.volume = Math.max(0, Math.min(1, (def.volume ?? 1) * settings.volume / 100));
       a.currentTime = 0;
       const p = a.play(); if (p && p.catch) p.catch(() => {});
-    } catch { /* browsers block sound until the first click; ignore */ }
+    } catch {}
   }
-  /* the PDA "turning on": browsers only allow sound after the first click/key, so it waits for that if it has to */
+
   (() => {
     let done = false;
     const go = () => { if (done || !settings.sound) return; done = true; play("pdaOpen"); };
-    try { const d = SFX.pdaOpen; if (d && d.file && settings.sound) { const a = new Audio(d.file); a.volume = Math.max(0, Math.min(1, (d.volume ?? 1) * settings.volume / 100)); a.play().then(() => { done = true; }).catch(() => {}); } } catch { /* ignore */ }
+    try { const d = SFX.pdaOpen; if (d && d.file && settings.sound) { const a = new Audio(d.file); a.volume = Math.max(0, Math.min(1, (d.volume ?? 1) * settings.volume / 100)); a.play().then(() => { done = true; }).catch(() => {}); } } catch {}
     ["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, go, { once: true, capture: true }));
   })();
-  // preload the files so the first hover isn't late
-  window.addEventListener("load", () => Object.keys(SFX).forEach(k => { if (SFX[k].file) { const a = new Audio(); a.preload = "auto"; a.src = SFX[k].file; } }));
+
+  const preloadSfx = () => { ["pointerdown", "keydown", "mousemove", "touchstart"].forEach(t => removeEventListener(t, preloadSfx, true)); Object.keys(SFX).forEach(k => { if (SFX[k].file) { const x = new Audio(); x.preload = "auto"; x.src = SFX[k].file; } }); };
+  ["pointerdown", "keydown", "mousemove", "touchstart"].forEach(t => addEventListener(t, preloadSfx, { capture: true, passive: true }));
 
   const HOVERABLE = "[data-hidedone], .pg-hit, .hbtn, .mini-btn, .xbtn, .lbnav, .cmpbar button, .zoomable, .favbtn, .btab, .chip-btn, .viewtools button, .sres-ic, .tabbtn, .tab, .cat, .tile, .card, .doc, .subtab, .pbtn, .return, .star, .estar, .hstar, .arrow, .linkish, .tier-btn, .tier-yes, .tier-no, .onoff button, .sres-main, .sres-star, .mtab, .clear-search";
   let lastHover = null, lastHoverAt = 0;
   let overX = -1, overY = -1;
   document.addEventListener("pointerover", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
-    // the page redrawing under a still mouse isn't a hover: only count it when the mouse moved
+
     const still = e.clientX === overX && e.clientY === overY; overX = e.clientX; overY = e.clientY;
     if (still) { lastHover = e.target.closest(HOVERABLE); return; }
     const el = e.target.closest(HOVERABLE);
@@ -122,9 +115,6 @@
     if (el && !el.contains(e.relatedTarget)) lastHover = null;
   });
 
-  /* =====================================================================
-     DATA → ENTRIES (each with a stable id)
-     ===================================================================== */
   const slug = s => String(s).toLowerCase().replace(/\s+/g, " ").trim();
   const entries = [];
   const byId = new Map();
@@ -132,8 +122,6 @@
   const norm = raw => Array.isArray(raw) ? { name: raw[0], ...(raw[1] || {}) }
                     : typeof raw === "string" ? { name: raw } : { ...raw };
 
-  /* entries added from the admin page: the last copy from the server is slotted
-     into the data before anything is built (loadOverrides reloads if it changes) */
   const OV_CACHE = (typeof PDA_CLOUD === "object" && PDA_CLOUD && PDA_CLOUD.api) ? load("pda-overrides-v1", {}) : {};
   const addedSig = ov => JSON.stringify(Object.entries(ov || {}).filter(([, o]) => o && o.add).map(([id, o]) => [id, o.add]).sort());
   const ADDED_SIG = addedSig(OV_CACHE);
@@ -143,13 +131,13 @@
     const a = o && o.add; if (!a || !SEC_DATA[a.section]) return;
     const g = SEC_DATA[a.section]().find(x => slug(x.name) === slug(a.group)); if (!g) return;
     const all = a.section === "tools" ? Object.values(g.tiers).flat() : g.entries;
-    if (all.some(r => slug(norm(r).name) === slug(a.name))) return;          // data.js has it now
+    if (all.some(r => slug(norm(r).name) === slug(a.name))) return;
     const raw = [a.name, { added: true }];
     const newId = `${SEC_LETTER[a.section]}|${slug(g.name)}|${slug(a.name)}`;
     const m = a.replace && a.replace.match(/^[tbd]\|[^|]+\|(?:(\d+)\|)?\?\?\?(\d+)$/);
     let list = a.section === "tools" ? (g.tiers[m && m[1] ? m[1] : a.tier] = g.tiers[m && m[1] ? m[1] : a.tier] || []) : g.entries;
     if (m && list[+m[2]] !== undefined && norm(list[+m[2]]).name === "???") {
-      list[+m[2]] = raw;                                                       // fills a ??? slot
+      list[+m[2]] = raw;
       if (found[a.replace] && !found[newId]) { found[newId] = 1; save(KEY_FOUND, found); }
     } else list.push(raw);
   });
@@ -166,9 +154,7 @@
     });
   });
 
-  // Biography: a "card" is either one person or a group of variants (members).
-  // A card is ONE unlock. Unlocking it lets you view every variant inside it.
-  const people = [];        // every person page (single people + every variant)
+  const people = [];
   PDA_DATA.biography.forEach((g, gi) => {
     g.cards = g.entries.map((raw, i) => {
       const r = norm(raw);
@@ -176,9 +162,9 @@
       const cardId = `b|${slug(g.name)}|${unknown ? "???" + i : slug(r.name)}`;
       if (Array.isArray(r.members)) {
         const card = { kind: "group", name: r.name, img: r.img, desc: r.desc, members: [] };
-        // the tracked entry for the whole card
+
         card.entry = add({ name: r.name, id: cardId, section: "bio", group: g.name, groupIndex: gi, card, isCard: true });
-        // the variants: viewable pages that share the card's checkmark
+
         card.members = r.members.map(m => {
           const v = { ...norm(m), id: `${cardId}|${slug(norm(m).name)}`, trackId: cardId,
                       section: "bio", group: g.name, groupIndex: gi, card };
@@ -205,20 +191,16 @@
     });
   });
 
-  // a variant's checkmark is its card's checkmark
   const trackOf   = id => { const e = byId.get(id); return (e && e.trackId) || id; };
   const isFound   = id => !!(viewOnly ? viewOnly.set : found)[trackOf(id)];
   const cardFound = c => isFound(c.entry.id);
-  // older saves tracked each variant separately: fold those into their card
+
   people.forEach(v => { if (v.trackId) { const old = `${v.trackId.replace(/\|[^|]*$/, "")}|${slug(v.card.name)}|${slug(v.name)}`; if (found[old]) { found[v.trackId] = 1; delete found[old]; } } });
   const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
   const label     = e => e.unknown ? "???" : e.name;
 
-
-
-  /* ---------- sorting: found A→Z first, then locked A→Z, ??? last ---------- */
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
-  /* when something was last marked found (for "recently found" sorting) */
+
   function foundAt(id) {
     if (!isFound(id)) return 0;
     const t = trackOf(id);
@@ -248,7 +230,6 @@
 
   const passFilter = on => ui.filter === "all" || (ui.filter === "missing" ? !on : on);
 
-  /* every mark/unmark goes through here: saves, logs, offers undo */
   function change(ids, on, what) {
     if (viewOnly) { play("warn"); toast("This is someone else's PDA. Press EXIT at the top to go back to yours."); return false; }
     const before = { ...found };
@@ -282,9 +263,6 @@
     return on;
   }
 
-  /* =====================================================================
-     ICONS
-     ===================================================================== */
   const I = {
     profile: '<img class="tabimg" src="images/icons/profile.png" alt="" draggable="false">',
     cloud:   '<img class="tabimg" src="images/icons/cloud.png" alt="" draggable="false">',
@@ -315,7 +293,7 @@
     download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"/></svg>',
     upload:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 15V3M7 8l5-5 5 5M4 20h16"/></svg>'
   };
-  /* small icons for the enemy stat rows (Material Design Icons, Apache 2.0; burst + fist from Font Awesome Free, CC BY 4.0) */
+
   const SI = {
     heart: { vb: "0 0 24 24", b: '<path d="m12 21.35-1.45-1.32C5.4 15.36 2 12.27 2 8.5 2 5.41 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.41 22 8.5c0 3.77-3.4 6.86-8.55 11.53z"/>' },
     run: { vb: "0 0 24 24", b: '<path d="M16.5 5.5a2 2 0 0 0 2-2 2 2 0 0 0-2-2 2 2 0 0 0-2 2 2 2 0 0 0 2 2m-3.6 13.9 1-4.4 2.1 2v6h2v-7.5l-2.1-2 .6-3A7.3 7.3 0 0 0 22 13v-2c-1.76.03-3.4-.89-4.3-2.4l-1-1.6c-.36-.6-1-1-1.7-1-.3 0-.5.1-.8.1L9 8.3V13h2V9.6l1.8-.7-1.6 8.1-4.9-1-.4 2zM4 9a1 1 0 0 1-1-1 1 1 0 0 1 1-1h3v2zm1-4a1 1 0 0 1-1-1 1 1 0 0 1 1-1h5v2zm-2 8a1 1 0 0 1-1-1 1 1 0 0 1 1-1h4v2z"/>' },
@@ -337,7 +315,6 @@
     ammo: { vb: "0 0 24 24", b: '<path d="M6 3h4v18H6z"/><path d="M6 17h12v4H6z"/>' }
   };
   const STAT = {
-    // base stats
     "Health":               { c: "#ff4848", i: "heart",   u: "HP", tip: "How much damage the entity can take." },
     "Speed":                { c: "#8ef0c8", i: "run",     u: "⇅",  tip: "Describes the enemie's speed. (Formula is their walk speed divided by 16)" },
     "Defense":              { c: "#8a8a8a", i: "shieldO", u: "%",  tip: "Subtracts the damage dealt with the enemy's defense percentage. May be subtract with some bludgeons or ammo types. Mostly bypassed with explosives." },
@@ -349,7 +326,7 @@
     "Explosive Resistance": { c: "#ff5a3a", i: "blast",   u: "%",  tip: "Subtracts incoming explosive damage by resistance's percentage." },
     "Stun Resistance":      { c: "#ffd04a", i: "bolt",    u: "%",  tip: "Subtracts incoming stun by resistance's percentage." },
     "Fracture Immunity":    { c: "#ffe7b0", i: "bone",    u: "",   tip: "Can't have their bones fractured." },
-    // skills
+
     "Suppressor":           { c: "#33c9ff", i: "mute",    u: "",   tip: "Entity will not cancel aim regardless of their target going back to cover." },
     "Pre-Aim":              { c: "#38f0a0", i: "aim",     u: " Range", tip: "How close you need to be before the entity starts aiming early." },
     "Strength":             { c: "#e01b1b", i: "fist",    u: "",   tip: "The damage multiplier for the entity's weapon." },
@@ -357,7 +334,7 @@
     "Reload Speed Multiplier": { c: "#a24dff", i: "reload", u: "", tip: "The multiplier for the entity's reload speed." },
     "Aim Slowdown":         { c: "#8a7dff", i: "ff",      u: "",   tip: "The multiplier for the entity's speed upon aiming down." },
     "Attack Slowdown":      { c: "#8a7dff", i: "swing",   u: "",   tip: "The multiplier for the entity's speed while attacking." },
-    // loadout
+
     "Weapon":               { c: "#f3ee30", i: "gun",     u: "",   tip: "The primary or secondary the entity uses. If firearm is specified and no magazine & bullet type specified, then the magazine & ammo are random." },
     "Ammo Loaded":          { c: "#f0a050", i: "ammo",    u: "",   tip: "The bullet type the entity's weapon is loaded with." },
     "Magazine Loaded":      { c: "#f3ee30", i: "ammo",    u: "",   tip: "The magazine the entity's weapon is loaded with." },
@@ -374,9 +351,6 @@
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
 
-  /* ---------- images ----------
-     An entry can have  img: "images/a.webp"
-     or several:        imgs: ["images/a.webp", { src: "images/b.webp", caption: "hover text" }]  */
   function imagesOf(...objs) {
     for (const o of objs) {
       if (!o) continue;
@@ -385,7 +359,7 @@
     }
     return [];
   }
-  let imgIndex = 0;          // which image the open page is showing
+  let imgIndex = 0;
   let curImgs = [];
   function previewHTML(imgs, fallback) {
     curImgs = imgs;
@@ -400,7 +374,6 @@
     return `<span class="arrows"><button class="arrow" data-img="-1" title="Previous image">&#9664;</button><button class="arrow" data-img="1" title="Next image">&#9654;</button></span>`;
   }
 
-  /* ---------- helpers ---------- */
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fit = (name, base = 22) => {
@@ -416,8 +389,8 @@
     $("#titleCount").textContent = `DATABANKS ${f} / ${t}`;
     if (typeof netBadge === "function") netBadge();
   }
-  /* "OFFLINE" / "NOT SYNCED" next to the counter */
-  function netBadge() { try { netBadge_(); } catch { /* still starting up */ } }
+
+  function netBadge() { try { netBadge_(); } catch {} }
   function netBadge_() {
     const el = $("#netBadge"); if (!el) return;
     const off = !navigator.onLine;
@@ -426,7 +399,7 @@
   }
   window.addEventListener("online", () => netBadge());
   window.addEventListener("offline", () => netBadge());
-  /* installing the site as an app */
+
   let installEvt = null;
   const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -437,18 +410,15 @@
     b.hidden = !installEvt || isStandalone() || settings.hideInstall;
   }
   async function doInstall() {
-    if (installEvt) { play("click"); installEvt.prompt(); try { await installEvt.userChoice; } catch { /* ignore */ } installEvt = null; installBtn(); return; }
+    if (installEvt) { play("click"); installEvt.prompt(); try { await installEvt.userChoice; } catch {} installEvt = null; installBtn(); return; }
     play("click");
     toast(isIOS ? "In Safari, tap the Share button, then \"Add to Home Screen\"." : "Use your browser's menu: \"Install app\" or \"Add to Home screen\".", { ms: 9000 });
   }
   document.addEventListener("click", e => { if (e.target.closest("#installBtn, [data-install]")) doInstall(); });
 
-  /* =====================================================================
-     TOP TABS + SEARCH
-     ===================================================================== */
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
   const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
-  /* the checklist tabs sit on top, everything else along the bottom */
+
   const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout", "damage"];
   let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
   const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
@@ -456,18 +426,18 @@
     [["#tabs", TOP_TABS], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
       const el = $(sel), x = el.scrollLeft;
       el.innerHTML = list.map(tabBtn).join("");
-      el.scrollLeft = x;                       // don't jump back to the start
+      el.scrollLeft = x;
       const a = el.querySelector('[aria-selected="true"]'); if (a) revealInStrip(a);
     });
   }
-  /* scroll a sideways strip just enough to show el, without moving the page */
+
   function revealInStrip(el) {
     const s = el.parentElement; if (!s || s.scrollWidth <= s.clientWidth) return;
     const l = el.offsetLeft - s.offsetLeft, r = l + el.offsetWidth;
     if (l < s.scrollLeft) s.scrollLeft = l - 8;
     else if (r > s.scrollLeft + s.clientWidth) s.scrollLeft = r - s.clientWidth + 8;
   }
-  /* scroll a list just enough to show el, without moving the page */
+
   function revealInList(el) {
     const s = el.closest(SCROLLERS); if (!s) return;
     const er = el.getBoundingClientRect(), sr = s.getBoundingClientRect();
@@ -502,7 +472,7 @@
       renderTabs(); render();
     }, 90);
   });
-  /* quick-mark: Enter in the search box marks the best missing match as found */
+
   searchBox.addEventListener("keydown", e => {
     if (e.key !== "Enter" || e.isComposing) return;
     e.preventDefault();
@@ -516,7 +486,7 @@
     if (e.shiftKey) { play("click"); clearSearch(false); openEntry(x); return; }
     if (isFound(x.id)) { play("warn"); toast(`${x.name} is already found.`); return; }
     if (change([x.id], true)) play("marked");
-    searchBox.select();                      // ready for the next name
+    searchBox.select();
     query = searchBox.value.trim(); renderTabs(); render();
   });
   function clearSearch(rerender = true) {
@@ -534,13 +504,10 @@
     }
   });
 
-  /* =====================================================================
-     MAIN RENDER
-     ===================================================================== */
   const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : ui.tab === "documents" ? ui.docs : ""}`;
   let keeping = false;
   let lastVk = null;
-  /* page transition like the game's PDA: the old page slides off to the right, the new one slides in from the left */
+
   const navSig = () => query ? "search" : sinceView ? "since" : `${ui.tab}|${detail ? detail.type + ":" + detail.id : ""}`;
   let lastNav = null;
   function startTransition() {
@@ -567,7 +534,6 @@
     finishTransition(ghost);
   }
   function renderAndRestore() {
-    // re-drawing the same page (marking, favouriting, switching notes...) keeps every scroll position
     const vkBefore = lastVk, wy = window.scrollY;
     const same = vkBefore !== null && vkBefore === viewKey();
     const before = same ? [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop) : null;
@@ -587,7 +553,7 @@
       if (el && document.activeElement !== el && !(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))) el.focus({ preventScroll: true });
     }
   }
-  /* ---------- phone swipes: across a tile marks (right) / unmarks (left) it; anywhere else switches category ---------- */
+
   let swipe = null;
   screen.addEventListener("touchstart", e => {
     if (e.touches.length !== 1) { swipe = null; return; }
@@ -621,9 +587,9 @@
   screen.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest("[data-entry]"); if (el) kbFocus = el.dataset.entry; });
   function applyScale() { document.documentElement.style.setProperty("--uiz", String((settings.textScale || 100) / 100)); }
   applyScale();
-  /* ---------- since your last visit ---------- */
-  const KEY_LAST = pk("pda-lastvisit-v1");        // { t, ids } from the last time the site was opened
-  let since = null, sinceView = false;           // { newIds, updIds }
+
+  const KEY_LAST = pk("pda-lastvisit-v1");
+  let since = null, sinceView = false;
   function checkSince() {
     const prev = load(KEY_LAST, null);
     const ids = entries.filter(e => !e.unknown).map(e => e.id);
@@ -677,7 +643,7 @@
     if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
       let e = byId.get(detail.id);
-      if (e.isCard) e = e.card.members[0];    // a group card opens on its first variant
+      if (e.isCard) e = e.card.members[0];
       return detail.type === "tool" ? renderToolDetail(e) : detail.type === "doc" ? renderDocDetail(e) : renderPersonDetail(e);
     }
     detail = null;
@@ -687,10 +653,6 @@
        tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, admin: renderAdmin })[ui.tab]();
   }
 
-  /* =====================================================================
-     TOOLS
-     ===================================================================== */
-  /* little tags on tiles/cards: NEW, friend has it, favourite */
   function badges(e) {
     const t = trackOf(e.id);
     const out = [];
@@ -701,13 +663,11 @@
   }
   const pbar = (f, t) => `<span class="pbar"><i style="width:${t ? Math.round(f / t * 100) : 0}%"></i></span>`;
 
-  /* the star that appears on hover: the only way to mark/unmark from a list */
   function hstar(id, name) {
     const on = isFound(id);
     return `<span class="hstar${on ? " on" : ""}" data-star="${esc(id)}" role="button" tabindex="0" aria-pressed="${on}" aria-label="${on ? "Unmark" : "Mark"} ${esc(name)} as found" title="${on ? "Found: click to unmark" : "Click to mark as found"}">${I.star(on)}</span>`;
   }
-  /* font size that fills a tile the way the game does */
-  /* like the game: the name fills the tile width; long names wrap onto two balanced lines */
+
   function tileLines(name) {
     const w = String(name).split(" ");
     if (name.length <= 12 || w.length < 2) return [name];
@@ -747,18 +707,17 @@
     return `<div class="tier-head clickable${allFound ? " complete" : ""}" data-tier="${key}" role="button" tabindex="0" title="Click anywhere on this bar to ${allFound ? "lock" : "unlock"} every entry in tier ${tier}"><span class="tier-btn">TIER ${tier}<span class="tier-hint">${allFound ? "click the bar to lock all" : "click the bar to unlock all"}</span></span><small>${f}/${t}</small>${pbar(f, t)}</div>`;
   }
 
-  /* ---------- weapon stats as numbers ---------- */
   const NUM_STATS = ["DAMAGE", "DEFENSE BYPASS", "STRENGTH", "AIM TIME", "SWITCH TIME", "SWING TIME", "RPM", "ALERT RADIUS", "RANGE", "RELOAD MODIFIER", "MAX SPREAD", "MINIMUM SPREAD", "SPREAD INCREMENT", "SPREAD DECREASE", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "EQUIP TIME", "SHIELD DURABILITY", "DEFENSE INCREASE", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "SUPER SHIELD INCREASE", "WEIGHT"];
   const HIGHER_BETTER = new Set(["DAMAGE", "DEFENSE BYPASS", "STRENGTH", "RPM", "RANGE", "SPREAD DECREASE", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "SHIELD DURABILITY", "DEFENSE INCREASE", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "SUPER SHIELD INCREASE"]);
   const statNum = (e, k) => {
     const v = e.stats && e.stats[k]; if (v == null) return null;
-    const m = String(v).match(/^\s*([\d.]+)\s*\/\s*([\d.]+)/);          // "1.5/0.1s" → amount per second
+    const m = String(v).match(/^\s*([\d.]+)\s*\/\s*([\d.]+)/);
     if (m) return parseFloat(m[1]) / parseFloat(m[2]);
     const n = parseFloat(String(v)); return isNaN(n) ? null : n;
   };
   const calibersOf = e => String((e.stats && e.stats["CALIBER TYPE"]) || "").split("|").map(x => x.trim()).filter(Boolean);
   const allTools = () => entries.filter(e => e.section === "tools");
-  /* the "type" filter: caliber for guns, gear type for gear */
+
   const typesOf = e => { const c = calibersOf(e); return c.length ? c : (e.stats && e.stats["GEAR TYPE"] ? [e.stats["GEAR TYPE"]] : []); };
 
   function statBarHTML(cat) {
@@ -801,7 +760,6 @@
     let body = "", hiddenDone = 0;
     const tiers = Object.keys(cat.tiers).sort((a, b) => a - b);
     if (tiers.length && (ui.tsort || ui.cal)) {
-      // stat sort / caliber filter: one flat list
       let list = cat.items.filter(e => !e.unknown && passFilter(isFound(e.id)));
       if (ui.cal) list = list.filter(e => typesOf(e).includes(ui.cal));
       if (ui.tierMin) list = list.filter(e => e.tier >= +ui.tierMin);
@@ -853,7 +811,6 @@
     }).join("") + `<button class="cat calcat" data-cat="-1" aria-selected="${ui.cat === -1}" style="--cn:8"><span class="cl">CALIBERS</span></button>`;
   }
 
-  /* the "unlock this whole tab" bar under Biography / Documents sub-tabs */
   function tabBarHTML(kind, idx, items, name) {
     const [f, t] = countOf(items);
     const key = `tab:${kind}:${idx}`;
@@ -886,7 +843,6 @@
     cancelTier();
   }
 
-  /* colours copied from the game's weapon stat page */
   const TOOL_STAT_COLORS = {
     "CALIBER TYPE": "#ff2a2a", "AUTO": "#ff8a3a", "BURST": "#ff8a3a", "BURST DELAY": "#ff8a3a",
     "BURST AMOUNT": "#ff8a3a", "BURST VOLLEY": "#ff8a3a", "STRENGTH": "#ff4fa0", "AIM TIME": "#35d6ff",
@@ -899,12 +855,12 @@
     "GEAR TYPE": "#8a8aff", "DEFENSE INCREASE": "#ff9a40", "SHIELD DURABILITY": "#35d6ff",
     "CARRY WEIGHT INCREASE": "#7ae07a", "QUICK SLOT INCREASE": "#ff4a5a", "SUPER SHIELD INCREASE": "#ff3a3a"
   };
-  /* blank lines between stat groups, laid out like each kind of page in the game */
+
   const gapsFor = s => s["GEAR TYPE"] ? new Set(["TIER"])
     : s["DAMAGE"] ? new Set(["WEIGHT"])
     : s["CALIBER TYPE"] ? new Set(["MAX SPREAD", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "EQUIP TIME", "WEIGHT"])
     : new Set();
-  /* the next entry you haven't found, after this one, in the same category / tab */
+
   function siblingsOf(e) {
     if (e.section === "tools") return PDA_DATA.tools[e.catIndex].items.slice().sort((a, b) => a.tier - b.tier || collator.compare(label(a), label(b)));
     if (e.section === "bio") return PDA_DATA.biography[e.groupIndex].cards.map(c => c.entry).sort((a, b) => collator.compare(a.name, b.name));
@@ -925,13 +881,13 @@
     const got = isFound(base.id), nx = nextMissing(base);
     return `<span class="flow">${!got && !viewOnly ? `<button class="hbtn go" data-marknext="${esc(base.id)}" title="Mark this as found and open the next missing one (N)">&#9733; FOUND + NEXT</button>` : ""}${nx ? `<button class="hbtn" data-next="${esc(nx.id)}" title="Next missing: ${esc(nx.name)} (M)">NEXT MISSING &#9654;</button>` : '<span class="flowdone">ALL FOUND HERE</span>'}</span>`;
   };
-  /* rarely-used page buttons tucked behind a ⋯ menu */
+
   const moreMenu = inner => `<details class="more"><summary title="More: link, fix, compare...">⋯</summary><div class="morebox">${inner}</div></details>`;
   document.addEventListener("click", e => { document.querySelectorAll("details.more[open]").forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
   const linkBtn = id => `<button class="hbtn" data-link="${esc(id)}" title="Copy a link straight to this page">LINK</button>`;
   const suggestBtn = id => `<button class="hbtn" data-suggest="${esc(id)}" title="Send a fix or missing info for this entry (no account needed)">FIX?</button>`;
   const favBtn = id => `<button class="favbtn${favs[id] ? " on" : ""}" data-fav="${esc(id)}" title="${favs[id] ? "Remove from favourites" : "Add to favourites (shows on your Profile)"}">${I.heart(!!favs[id])}</button>`;
-  /* bottom box with two tabs: the game's text, and your own notes */
+
   function bottomBox(first, textHTML, noteId) {
     const nt = ui.btab === "notes";
     const has = !!(notes[noteId] || "").trim();
@@ -940,7 +896,6 @@
   }
   const paras = t => esc(t).split(/\n\s*\n/).map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
 
-  /* magazine <-> gun links: from ammo-links.js (names) and from people's loadouts (seen in the PDA) */
   let ammoCache = null;
   const ammoLinks = () => ammoCache || (ammoCache = (() => {
     const byName = new Map(entries.filter(x => x.section === "tools" && !x.unknown).map(x => [slug(x.name), x]));
@@ -980,7 +935,7 @@
     const block = s => Object.entries(s).filter(([k]) => k !== "WEIGHT").map(([k, v]) => line(k, v, gaps.has(k))).join("");
     const dash = '<div class="stat">--------</div>';
     let statHTML = block(st);
-    /* weapons with more than one firing mode list each mode, split by dashes like the game */
+
     if (e.modes && e.modes.length) statHTML += dash + e.modes.map(block).join(dash) + dash;
     if (st.WEIGHT != null) statHTML += line("WEIGHT", st.WEIGHT, gaps.has("WEIGHT"));
     statHTML += line("TIER", `TIER ${e.tier}`, gaps.has("TIER") || !e.stats);
@@ -1005,9 +960,6 @@
       </div>`;
   }
 
-  /* =====================================================================
-     WEAPON COMPARISON
-     ===================================================================== */
   function renderCompare() {
     const list = ui.cmp.map(id => byId.get(id)).filter(Boolean);
     if (!list.length) { detail = null; return render(); }
@@ -1054,16 +1006,12 @@
     render();
   });
 
-  /* people whose loadout mentions this weapon name */
   const loadName = s => slug(String(s).replace(/\s*\(Random\)\s*$/i, ""));
   function whoCarries(name) {
     const n = slug(name);
     return people.filter(e => (e.loadout || []).some(([k, v]) => k === "Weapon" && loadName(v) === n));
   }
 
-  /* =====================================================================
-     BIOGRAPHY
-     ===================================================================== */
   const ALL_BIO = { name: "Everyone", color: "#ffffff", bg: "#1a1a1a" };
   function renderBio() {
     const groups = PDA_DATA.biography;
@@ -1108,12 +1056,9 @@
     return `<div class="erow" style="--rc:${s.c}" ${s.tip ? `data-tip="${esc(s.tip)}"` : ""}><span class="ei">${icon}</span><span class="ek">${esc(key)}:</span> <span class="ev">${esc(v)}</span></div>`;
   }
 
-  /* the people in the current Biography tab, in on-screen order (for the < > arrows) */
-
-  /* the PDA tool entry a loadout line points at (weapons and magazines) */
   const loadTool = (k, v) => (k === "Weapon" || k === "Magazine Loaded")
     ? entries.find(t => t.section === "tools" && !t.unknown && slug(t.name) === loadName(v)) : null;
-  let loadPick = null;                         // person id whose "which random one?" picker is open
+  let loadPick = null;
   function loadoutParts(e) {
     const fixed = [], random = [];
     (e.loadout || []).forEach(([k, v]) => { const t = loadTool(k, v); if (!t) return;
@@ -1207,9 +1152,6 @@
       </div>`;
   }
 
-  /* =====================================================================
-     DOCUMENTS
-     ===================================================================== */
   const DOC_TAB = { location: ["var(--cyan)", "#0a2a2e"], note: ["var(--doc-yellow)", "#24230a"], misc: ["#fff", "#1c1c1c"] };
   function docHTML(e) {
     const got = isFound(e.id);
@@ -1239,9 +1181,6 @@
     screen.innerHTML = `<div class="subwrap"><div class="subtabs" role="tablist">${tabs}</div>${tabBarHTML("docs", ui.docs, g.items, g.name)}<div class="cards${ui.view === "list" ? " aslist" : ""}">${html || none}</div></div>`;
   }
 
-  /* =====================================================================
-     SEARCH
-     ===================================================================== */
   function contextOf(e) {
     if (e.section === "tools") return `TOOLS › ${e.group} › TIER ${e.tier}`;
     if (e.section === "bio") return `BIOGRAPHY › ${e.group}${e.card && e.card.kind === "group" ? " › " + e.card.name : ""}`;
@@ -1253,23 +1192,23 @@
     if (n.startsWith(q)) return 1;
     if (n.split(/[\s\-.'&]+/).some(w => w.startsWith(q))) return 2;
     if (n.includes(q)) return 3;
-    // loose match: letters in order ("mp5k" finds "H&K MP5K", "bfc" finds "DEVILSPAWN-BFC")
+
     const compact = n.replace(/[^a-z0-9]/g, ""), cq = q.replace(/[^a-z0-9]/g, "");
     if (cq && compact.includes(cq)) return 4;
-    // typos: "glok" finds Glock, "kriss vectr" finds KRISS Vector (1 slip for short words, 2 for long)
-    if ((cq.match(/[a-z]/g) || []).length >= 3) {      // typos only for words, never numbers ("556" isn't "55rnd")
+
+    if ((cq.match(/[a-z]/g) || []).length >= 3) {
       const allow = cq.length >= 7 ? 2 : 1;
       const words = n.split(/[\s\-.'&]+/).map(w => w.replace(/[^a-z0-9]/g, "")).filter(Boolean);
-      // try the name from each word onwards, so "kriss vectr" finds "Military Kriss Vector"
+
       for (let i = 0; i < words.length; i++) {
         const tail = words.slice(i).join("");
         const d = Math.min(typoDist(cq, tail.slice(0, cq.length)), typoDist(cq, tail));
-        if (d <= allow) return 5 + i * 0.1 + d * 0.01;            // earlier in the name ranks higher
+        if (d <= allow) return 5 + i * 0.1 + d * 0.01;
       }
     }
     return -1;
   }
-  /* edit distance with swapped letters counting as one slip */
+
   function typoDist(a, b) {
     if (Math.abs(a.length - b.length) > 2) return 9;
     const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
@@ -1281,7 +1220,7 @@
     }
     return d[a.length][b.length];
   }
-  /* stat text each entry can be found by ("9x19mm", "tier 5", "health: 90hp") */
+
   function haystack(e) {
     if (e._hay) return e._hay;
     const out = [];
@@ -1342,16 +1281,8 @@
     </div>`;
   }
 
-  /* =====================================================================
-     WHAT'S LEFT — every missing entry in one place
-     ===================================================================== */
-
-
-  /* =====================================================================
-     SEARCH PICKER: type to filter, arrows + Enter or click to pick
-     ===================================================================== */
-  const PICKERS = {};                 // key -> { items: [{ v, label, group, sub, star }], onPick, keepOpen, chips }
-  const pkState = {};                 // key -> { chip, hi }
+  const PICKERS = {};
+  const pkState = {};
   const pkFold = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9$+.]+/g, " ").trim();
   function pickerHTML(key, cfg) {
     PICKERS[key] = cfg;
@@ -1368,7 +1299,7 @@
       const toks = (it._t || (it._t = pkFold(it.label + " " + (it.alias || "")).split(" ")));
       let sc = 0;
       for (const w of words) {
-        if (toks.includes(w)) continue;                        // whole word: best
+        if (toks.includes(w)) continue;
         if (toks.some(x => x.startsWith(w))) { sc += 1; continue; }
         if (toks.join(" ").includes(w)) { sc += 3; continue; }
         return;
@@ -1420,16 +1351,13 @@
     if (o) { e.preventDefault(); pkPick(r, o.dataset.pkv); }
   });
 
-  /* =====================================================================
-     DAMAGE CALCULATOR — ammo data from the OANC Ammo Chart (ammo.js)
-     ===================================================================== */
   const AMMO = (typeof PDA_AMMO === "object" && PDA_AMMO) || { groups: [] };
   const CAL_ALIAS = { "5 KG BIO-SLUG": ["8x25mm / .50 BC / Bio-slug", "5 KG-Somafluid Slug"] };
-  /* admins can correct an ammo type's numbers (or add one) from the admin page; the chart itself is a community sheet */
+
   const AMMO_ORIG = JSON.parse(JSON.stringify(AMMO.groups));
   const AMMO_KEYS = [["base", "BASE DAMAGE"], ["mult", "DAMAGE MULT"], ["spread", "SPREAD MULT"], ["proj", "# OF PROJECTILES"], ["pen", "ARMOR PEN"], ["shieldPierce", "SHIELD PIERCING"], ["fracture", "FRACTURE"], ["bleed", "CAUSES BLEED"], ["saBypass", "SUPER ARMOR BYPASS"], ["ssBypass", "SUPERSHIELD BYPASS"], ["weakness", "CAUSES WEAKNESS"], ["statuses", "STATUSES"], ["alert", "ALERT RADIUS MULT"]];
   const ammoId = (cal, name) => `a|${slug(cal)}|${slug(name)}`;
-  const ammoNum = v => { const m = String(v == null ? "" : v).replace(/(^|[^\w])[Oo](?=[.,]\d)/g, "$10").match(/-?(?:\d+(?:[.,]\d+)?|[.,]\d+)/); return m ? parseFloat(m[0].replace(",", ".").replace(/^(-?)\./, "$10.")) : null; };   // copes with "O.9x", ".65x", "0,9x"
+  const ammoNum = v => { const m = String(v == null ? "" : v).replace(/(^|[^\w])[Oo](?=[.,]\d)/g, "$10").match(/-?(?:\d+(?:[.,]\d+)?|[.,]\d+)/); return m ? parseFloat(m[0].replace(",", ".").replace(/^(-?)\./, "$10.")) : null; };
   const ammoFrac = v => { const n = ammoNum(v); if (n == null) return null; return /[%&]/.test(String(v)) || n > 1 ? n / 100 : n; };
   const parseAmmo = (name, raw) => ({ name, raw, base: ammoNum(raw.base) || 0, mult: ammoNum(raw.mult) == null ? 1 : ammoNum(raw.mult), spreadMult: ammoNum(raw.spread) == null ? 1 : ammoNum(raw.spread),
     proj: ammoNum(raw.proj) || 1, pen: ammoFrac(raw.pen) || 0, saBypass: ammoFrac(raw.saBypass) || 0, trueOnDirect: /\*/.test(raw.pen || "") });
@@ -1455,7 +1383,7 @@
   };
   const xnum = v => { const n = parseFloat(String(v == null ? "" : v).replace(",", ".")); return isNaN(n) ? null : n; };
   const fmt2 = n => n == null || !isFinite(n) ? "—" : String(Math.round(n * 100) / 100);
-  /* every way a weapon can fire: its base stats plus any extra modes (e.g. underslung) */
+
   function fireModes(e) {
     if (!e || !e.stats) return [];
     const list = [e.stats, ...(e.modes || [])];
@@ -1465,17 +1393,17 @@
       strength: xnum(s.STRENGTH) || 1, rpm: xnum(s.RPM) }));
   }
   const dmgWeapons = () => allTools().filter(e => !e.unknown && fireModes(e).some(m => m.melee || m.cals.length));
-  /* "Advanced Scavengers (Master)" for a variant, plain name otherwise */
+
   const tgtName = p => { const c = p.card; return c && c.kind === "group" && c.members && c.members.length > 1 && c.name && c.name !== p.name ? `${c.name} (${p.name})` : p.name; };
-  const dmgTargets = () => people.filter(p => p.base && p.base.Health != null && isFinite(+p.base.Health));   // not the unkillable ones
-  /* the rules, in order: superarmor bypass → superarmor → defense penetration → defense */
+  const dmgTargets = () => people.filter(p => p.base && p.base.Health != null && isFinite(+p.base.Health));
+
   function calcHit({ dmg, sa, saBypass, def, pen, trueDmg }) {
     const effSA = trueDmg ? 0 : Math.max(0, sa - saBypass * 100);
     const afterSA = dmg > 0 ? dmg / Math.pow(dmg, effSA / 100) : 0;
     const effDef = trueDmg ? 0 : Math.min(100, Math.max(0, def * (1 - Math.min(1, pen))));
     return { effSA, afterSA, effDef, final: afterSA * (1 - effDef / 100) };
   }
-  /* attacker settings live on ui.dmg (loadout A) and ui.dmg.b (loadout B, for the side-by-side view) */
+
   const ATK_DEF = { gun: "", mode: 0, ammo: "", str: true, hits: "", direct: true, custom: "" };
   function dmgState() {
     const d = ui.dmg || (ui.dmg = {});
@@ -1483,7 +1411,7 @@
     out.b = Object.assign({ ...ATK_DEF }, d.b || {});
     return out;
   }
-  /* "b.gun" → loadout B's gun; anything else → loadout A / the target */
+
   function dmgSet(k, v) {
     const d = ui.dmg = dmgState();
     const s = k.startsWith("b.") ? d.b : d, key = k.replace(/^b\./, "");
@@ -1495,7 +1423,6 @@
   }
   function setDmg(k, v) { dmgSet(k, v); persistUI(); play("marked"); keepScroll(render); }
 
-  /* ---- share link: #dmg=<base64url JSON> ---- */
   const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))));
   function dmgLink() {
@@ -1526,18 +1453,16 @@
     const weapons = dmgWeapons();
     const vs = !!d.vs;
 
-    /* ---- the target (shared by both loadouts) ---- */
     const tgt = d.target && people.find(p => p.id === d.target);
     const tb = tgt ? tgt.base : null;
     const hp = tb ? +tb.Health : xnum(d.hp) || 0;
     const def = tb ? +(tb.Defense || 0) : xnum(d.def) || 0;
     const sa = tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0;
-    const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));   // each hit knocks 1 off and does no damage
+    const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
 
-    /* ---- everything about one loadout against the target ---- */
     function attack(s) {
       const gun = s.gun && byId.get(s.gun);
       const modes = fireModes(gun);
@@ -1547,7 +1472,7 @@
       let ammo = pool.find(a => a.key === s.ammo) || null;
       if (!ammo && pool.length && mode) ammo = pool[0];
       const strength = mode && !melee && s.str ? mode.strength : 1;
-      /* one shot with a given ammo */
+
       const shot = a => {
         if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; }
         if (!a) { const dmg = xnum(s.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
@@ -1556,9 +1481,9 @@
         const dmg = per * proj;
         return { per, proj, dmg, ...calcHit({ dmg, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct }) };
       };
-      /* supershield: a hit with bypass B goes through if supershield ≤ B, otherwise it's blocked and knocks max(1, B) off */
+
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
-      /* shield: while it lasts, half of each hit goes to the shield and half to health. Explosives and bludgeons ignore it */
+
       const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
       const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket/i.test(a.caliber) || /rocket/i.test(a.name));
       const ignoresShield = a => isBludgeon || isExplosive(a);
@@ -1574,14 +1499,14 @@
         return { n, sh: shHits };
       }
       const toKill = (f, a) => { const k = healthHits(f, a); return k ? blocked(ssByp(a)) + k.n : null; };
-      /* time to kill: guns from RPM; melee from SWING TIME (a burst is several swings in a row) */
+
       const rpm = mode && mode.rpm;
       const swing = melee ? xnum(mode.s["SWING TIME"]) : null;
       const burstN = melee && mode.s.BURST === "YES" ? Math.max(1, xnum(mode.s["BURST AMOUNT"]) || 1) : 1;
       const ttkOf = n => n && rpm ? (n - 1) * 60 / rpm : n && swing ? (n - 1) * swing : null;
       const r = (mode || !gun) ? shot(ammo) : null;
       const htk = r ? toKill(r.final, ammo) : null;
-      /* every ammo that fits, best first: fewest hits to kill, then most damage */
+
       const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), k = toKill(sh.final, a); return { a, s: sh, k, kb: k && ss ? blocked(ssByp(a)) : 0 }; })
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
@@ -1594,7 +1519,6 @@
     const step = (k, v, note = "") => `<div class="stat"><i style="color:#c8a0ff">${k}</i>: ${v}${note ? ` <span class="dim">${note}</span>` : ""}</div>`;
     const aName = X => X.gun ? X.gun.name + (X.modes.length > 1 && X.mode ? ` (${X.mode.label})` : "") : X.ammo ? X.ammo.name : "Custom damage";
 
-    /* ---- attacker form (pfx "" for A, "b." for B) ---- */
     function attackerBox(X, pfx, title) {
       const s = X.s, kB = pfx ? "B" : "";
       return `<div class="dbox"><div class="dhead">${title}${pfx ? `<span class="hright"><button class="hbtn" data-dmgswap title="Swap loadout A and B">SWAP A ⇄ B</button></span>` : ""}</div><div class="dform">
@@ -1619,7 +1543,6 @@
       ${ammo.notes && ammo.notes.length ? `<div class="dim">${ammo.notes.map(n => "* " + esc(n)).join("<br>")}</div>` : ""}</div>` : "";
     }
 
-    /* ---- the result for one loadout ---- */
     function resultHTML(X, pfx, title, win) {
       const { r, ammo, melee, strength, htk, ttk, nBlocked, shInfo, rpm, swing, burstN } = X;
       let steps = "";
@@ -1634,7 +1557,7 @@
         const penP = melee ? (xnum(X.mode.s["DEFENSE BYPASS"]) || 0) : ammo ? (ammo.pen || 0) * 100 : 0;
         steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && X.s.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
       }
-      /* nudge towards a better ammo when there is one */
+
       const best = X.ranked.length && X.bestK != null && htk != null && X.bestK < htk ? X.ranked[0] : null;
       const tip = best ? `<div class="dbest">Best ammo here: <b>${esc(best.a.name)}</b>, ${best.k} hit${best.k === 1 ? "" : "s"} to kill <button class="mini-btn" data-dmgammo="${pfx}${esc(best.a.key)}">USE IT</button></div>` : "";
       return `<div class="dbox dres${win ? " dwin" : ""}"><div class="dhead">${title}${win ? '<span class="hright"><span class="chip status-found">BETTER</span></span>' : ""}</div><div class="stats">
@@ -1647,7 +1570,6 @@
         </div></div>`;
     }
 
-    /* ---- best ammo table for one loadout ---- */
     function bestTable(X, pfx, title) {
       if (!X.ranked.length) return "";
       const rows = X.ranked.map(({ a, s, k, kb }) => {
@@ -1659,7 +1581,6 @@
       return `<div class="dbox"><div class="dhead">${title}<span class="hright dim">best first · click a row to use it</span></div><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>TIME TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
     }
 
-    /* ---- who wins: fewer hits, then faster, then more damage per hit ---- */
     let winA = false, winB = false, verdict = "";
     if (vs && A.r && B.r) {
       const ka = A.htk, kb = B.htk, ta = A.ttk, tb2 = B.ttk, hit = A.melee && B.melee ? "hit" : "shot";
@@ -1713,9 +1634,6 @@
     }).join("");
   }
 
-  /* =====================================================================
-     LOADOUT PLANNER: carry anything (duplicates too); space is carry weight
-     ===================================================================== */
   const LOAD_SUMS = ["CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "DEFENSE INCREASE", "SHIELD DURABILITY", "SUPER SHIELD INCREASE"];
   const KEY_STATS = ["CALIBER TYPE", "DAMAGE", "STRENGTH", "RPM", "GEAR TYPE", "DEFENSE INCREASE", "SHIELD DURABILITY", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE"];
   const num = v => { const n = parseFloat(String(v)); return isNaN(n) ? 0 : n; };
@@ -1782,7 +1700,6 @@
       LOAD_SUMS.filter(k => sums[k] != null).map(k => `\nTOTAL ${k}: ${fmtN(sums[k])}`).join("");
   }
 
-  /* tiers / tabs you're closest to finishing */
   function closestHTML() {
     const groups = [];
     PDA_DATA.tools.forEach(c => Object.keys(c.tiers).forEach(t => groups.push([`${c.name} · TIER ${t}`, c.items.filter(e => e.tier === +t)])));
@@ -1866,7 +1783,6 @@
     w.document.close();
   }
 
-  /* ---------- progress over time ---------- */
   function snapProgress() {
     const [f] = countOf(entries);
     progress[today()] = f;
@@ -1890,9 +1806,6 @@
       <text x="${L}" y="${H - 5}" class="pg-ax">${days[0]}</text><text x="${W - R}" y="${H - 5}" class="pg-ax" text-anchor="end">${days[days.length - 1]}</text></svg></div>`;
   }
 
-  /* =====================================================================
-     PROFILE / CLOUD / MANUAL / SETTINGS
-     ===================================================================== */
   function renderProfile() {
     const [f, t] = countOf(entries);
     const pct = t ? Math.round(f / t * 100) : 0;
@@ -1949,7 +1862,7 @@
     const del = $("#profDel");
     if (del) del.onclick = () => {
       if (!del.dataset.armed) { del.dataset.armed = 1; del.textContent = "CLICK AGAIN TO DELETE"; play("warn"); return; }
-      ["pda-found-v1", "pda-user-v1", "pda-fav-v1", "pda-notes-v1", "pda-log-v1", "pda-friend-v1", "pda-since-backup-v1"].forEach(k => { try { localStorage.removeItem(`${k}@${PROF.active}`); } catch { /* ignore */ } });
+      ["pda-found-v1", "pda-user-v1", "pda-fav-v1", "pda-notes-v1", "pda-log-v1", "pda-friend-v1", "pda-since-backup-v1"].forEach(k => { try { localStorage.removeItem(`${k}@${PROF.active}`); } catch {} });
       PROF.list = PROF.list.filter(x => x !== PROF.active); PROF.active = "Main"; save(KEY_PROF, PROF); location.reload();
     };
     $("#uname").addEventListener("input", ev => {
@@ -1959,13 +1872,12 @@
     });
   }
 
-  /* bulk paste: match pasted lines to entry names */
   const bulkKey = n => String(n).toLowerCase().replace(/[^a-z0-9$+]/g, "");
   function bulkMark(text) {
     const lines = String(text).split(/\r?\n/).map(l => l
-      .replace(/^\s*(?:[-*•★☆✓✔︎]|\d+[.)])\s*/, "")       // bullets / numbering
-      .replace(/^\d+\s*x\s+/i, "")                          // "2x AK74"
-      .replace(/\s*\((?:t|tier)\s*\d+[^)]*\)\s*$/i, "")     // "(T3)" / "(Tier 3)"
+      .replace(/^\s*(?:[-*•★☆✓✔︎]|\d+[.)])\s*/, "")
+      .replace(/^\d+\s*x\s+/i, "")
+      .replace(/\s*\((?:t|tier)\s*\d+[^)]*\)\s*$/i, "")
       .trim()).filter(l => l && !/^(tools|biography|documents|pda)\b.*[›:]/i.test(l));
     if (!lines.length) { play("warn"); toast("Paste some names first."); return null; }
     const idx = new Map();
@@ -1976,7 +1888,7 @@
     if (uniq.length) { change(uniq, true, "a pasted list"); play("marked"); } else play(miss.length ? "warn" : "click");
     return { marked: uniq.length, already, miss };
   }
-  /* everything checked off since the site was opened in this tab */
+
   function sessionFinds() {
     const before = new Set((sessionStart && sessionStart.ids) || []);
     return Object.keys(found).filter(id => !before.has(id) && byId.has(id)).map(id => byId.get(id));
@@ -2024,10 +1936,9 @@
     }).join("");
   }
 
-  /* ---------- share links: #v=<name>.<5-char code per found entry> ---------- */
   const h5 = id => { let h = 0x811c9dc5; for (const ch of id) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36).padStart(7, "0").slice(-5); };
   const byHash = new Map(entries.map(e => [h5(e.id), e.id]));
-  Object.entries(MOVED).forEach(([o, n]) => { if (!byHash.has(h5(o))) byHash.set(h5(o), n); });   // old share links
+  Object.entries(MOVED).forEach(([o, n]) => { if (!byHash.has(h5(o))) byHash.set(h5(o), n); });
   function shareLink() {
     const codes = Object.keys(found).filter(id => byId.has(id)).map(h5).join("");
     return `${location.origin}${location.pathname}#v=${encodeURIComponent(user || "")}.${codes}`;
@@ -2037,7 +1948,7 @@
     if (!m) return null;
     const set = {};
     for (let i = 0; i + 5 <= m[2].length; i += 5) { const id = byHash.get(m[2].slice(i, i + 5)); if (id) set[id] = 1; }
-    let name = ""; try { name = decodeURIComponent(m[1]); } catch { /* ignore */ }
+    let name = ""; try { name = decodeURIComponent(m[1]); } catch {}
     return { name, set };
   }
   function doExport() {
@@ -2051,27 +1962,22 @@
   }
   let nagged = false;
 
-  /* =====================================================================
-     CLOUD (backend/worker.js): no player accounts. Anonymous "found by %"
-     numbers, submissions, and admin sign-in only.
-     ===================================================================== */
   const API = (typeof PDA_CLOUD === "object" && PDA_CLOUD && String(PDA_CLOUD.api || "").replace(/\/+$/, "")) || "";
-  const KEY_ADMIN = "pda-admin-v1";                 // { name, token } after an admin signs in
+  const KEY_ADMIN = "pda-admin-v1";
   let adminSess = API ? load(KEY_ADMIN, null) : null;
-  try { localStorage.removeItem(pk("pda-account-v1")); } catch { /* old player accounts are gone */ }
-  let rarity = API ? load("pda-rarity-v1", null) : null;    // { players, counts, at }
+  try { localStorage.removeItem(pk("pda-account-v1")); } catch {}
+  let rarity = API ? load("pda-rarity-v1", null) : null;
   const rarityOf = id => { if (!rarity || !rarity.players) return null; const t = trackOf(id); return (rarity.counts[t] || 0) / rarity.players; };
   async function api(method, path, data) {
     const r = await fetch(API + path, { method, headers: { "Content-Type": "application/json", ...(adminSess && adminSess.token ? { Authorization: "Bearer " + adminSess.token } : {}) }, body: data ? JSON.stringify(data) : undefined });
-    let j = null; try { j = await r.json(); } catch { /* ignore */ }
+    let j = null; try { j = await r.json(); } catch {}
     return [r.status, j || {}];
   }
   let serverInfo = API ? load("pda-server-v1", { admins: [] }) : { admins: [] };
   const amAdmin = () => BOTTOM_TABS.includes("admin");
-  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); } } catch { /* offline */ } }
+  async function loadServerInfo() { try { const [st, r] = await api("GET", "/api"); if (st === 200) { serverInfo = r; save("pda-server-v1", r); } } catch {} }
   const foundIds = () => Object.keys(found).filter(id => /^[tbd]\|/.test(id)).sort();
 
-  /* anonymous share for the "found by %" numbers: a random id for this browser, no name, can be turned off */
   const KEY_DEVICE = pk("pda-device-v1");
   let device = load(KEY_DEVICE, "");
   if (!/^[0-9a-f]{32}$/.test(device)) { device = [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, "0")).join(""); save(KEY_DEVICE, device); }
@@ -2085,12 +1991,12 @@
     if (!API || viewOnly) return;
     const ids = settings.anonShare === false ? [] : foundIds(), sig = ids.join("\n");
     if (sig === lastShared) return;
-    try { const [st] = await api("PUT", "/api/anon", { device, found: ids }); if (st === 200) { lastShared = sig; save(pk("pda-shared-v1"), sig); } } catch { /* offline: try next time */ }
+    try { const [st] = await api("PUT", "/api/anon", { device, found: ids }); if (st === 200) { lastShared = sig; save(pk("pda-shared-v1"), sig); } } catch {}
   }
   async function loadRarity(force) {
     if (!API) return;
     if (!force && rarity && Date.now() - rarity.got < 10 * 60000) return;
-    try { const [st, r] = await api("GET", "/api/rarity"); if (st === 200) { rarity = { ...r, got: Date.now() }; save("pda-rarity-v1", rarity); if (detail) keepScroll(render); } } catch { /* offline */ }
+    try { const [st, r] = await api("GET", "/api/rarity"); if (st === 200) { rarity = { ...r, got: Date.now() }; save("pda-rarity-v1", rarity); if (detail) keepScroll(render); } } catch {}
   }
   function rarityHTML(e) {
     const r = rarityOf(e.id); if (r == null) return "";
@@ -2112,14 +2018,9 @@
     leaveView();
   }
 
-
   if (API) { const o = document.createElement("option"); o.value = "rare"; o.textContent = "RAREST FIRST"; $("#sortSel").appendChild(o); $("#sortSel").value = ui.sort; }
   else if (ui.sort === "rare") ui.sort = "found";
 
-
-  /* =====================================================================
-     IMPORT FROM SCREENSHOTS: read names off PDA screenshots (tesseract.js)
-     ===================================================================== */
   const OCR_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
   let ocr = { busy: false, msg: "", found: null, already: 0 };
   let ocrWorker = null;
@@ -2133,7 +2034,7 @@
     await ocrWorker.setParameters({ tessedit_pageseg_mode: "11" });
     return ocrWorker;
   }
-  /* two versions of each screenshot: as-is (people / documents) and only the brightest pixels (white tile names) */
+
   async function prepImage(file) {
     const url = URL.createObjectURL(file);
     try {
@@ -2207,15 +2108,11 @@
     if (files.length) { e.preventDefault(); importShots(files); }
   });
 
-
-  /* =====================================================================
-     PUBLISHED INFO: stats / comments / descriptions added on the admin page
-     ===================================================================== */
   let overrides = API ? load("pda-overrides-v1", {}) : {};
   let latestUpdate = "";
-  const origInfo = new Map();         // entry object -> its original fields
+  const origInfo = new Map();
   const findEntry = id => { id = MOVED[id] || id; return byId.get(id) || people.find(p => p.id === id) || null; };
-  /* the newest update tag: entries with it get a NEW badge */
+
   function updateTags() {
     const seen = new Map();
     entries.concat(people).forEach(e => { if (e.update && !seen.has(e.update)) seen.set(e.update, 0); });
@@ -2231,7 +2128,7 @@
       origInfo.set(e, { stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       if (o.stats && Object.keys(o.stats).length) {
         const st = { ...(e.stats || {}), ...o.stats };
-        if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }       // weight stays last, like the game
+        if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }
         e.stats = st;
       }
       if (typeof o.comment === "string") e.comment = o.comment;
@@ -2252,12 +2149,12 @@
       if (st !== 200) return;
       if (JSON.stringify(r) === JSON.stringify(overrides)) return;
       overrides = r; save("pda-overrides-v1", r);
-      if (addedSig(r) !== ADDED_SIG) {                 // entries were added or removed: they need a fresh start
+      if (addedSig(r) !== ADDED_SIG) {
         if (!touched || adm.reloadAfter) { location.reload(); return true; }
         toast("New entries were added to the site. Reload the page to see them.");
       }
       applyOverrides(r); keepScroll(render);
-    } catch { /* offline: keep the cached copy */ }
+    } catch {}
   }
   let touched = false;
   document.addEventListener("pointerdown", () => { touched = true; }, { once: true, capture: true });
@@ -2265,9 +2162,6 @@
   const communityHTML = e => !e ? "" : (amAdmin() && !viewOnly ? `<div class="stat gap"><button class="mini-btn go" data-admquick="${esc(e.id)}">EDIT AS ADMIN${e.section !== "tools" ? " / ADD PICTURE" : ""}</button></div>` : "") + (e.update ? `<div class="stat gap"><i style="color:#ff9cf0">ADDED IN</i>: ${esc(e.update)}</div>` : "") +
     (e.community ? `<div class="stat${e.update ? "" : " gap"}"><i style="color:#8de08d">COMMUNITY</i>: <span class="dim">some info here was sent in by players and approved</span></div>` : "");
 
-  /* =====================================================================
-     FOUND COUNTS: how many times you've picked something up
-     ===================================================================== */
   const KEY_COUNTS = pk("pda-counts-v1");
   let counts = migrateIds(load(KEY_COUNTS, {}), KEY_COUNTS);
   const countOf1 = id => counts[trackOf(id)] || (isFound(id) ? 1 : 0);
@@ -2283,9 +2177,6 @@
     return `<div class="stat gap timesfound"><i style="color:#f3c400">TIMES FOUND</i>: <button class="mini-btn" data-cnt="-1" data-cntid="${esc(e.id)}" title="One less"${n ? "" : " disabled"}>−</button> <b>${n}</b> <button class="mini-btn" data-cnt="1" data-cntid="${esc(e.id)}" title="Found it again">+</button></div>`;
   }
 
-  /* =====================================================================
-     ADMIN: submissions + publishing info (admins sign in with the Worker's ADMIN_KEYS)
-     ===================================================================== */
   let adm = { status: "new", rows: null, counts: {}, msg: "", edit: null, announce: false, changes: null, blocks: null, ann: null };
   async function checkAdmin() {
     if (!API || !adminSess) { setAdmin(false); return; }
@@ -2294,7 +2185,7 @@
       const ok = st === 200 && r.admin;
       if (st === 200 && !ok) { adminSess = null; save(KEY_ADMIN, null); toast("Your admin sign-in ran out. Sign in again from SETTINGS."); }
       setAdmin(ok);
-    } catch { /* offline: keep */ }
+    } catch {}
   }
   function setAdmin(on) {
     const want = ["profile", "cloud", "manual", "settings", "community", ...(on ? ["admin"] : [])];
@@ -2312,8 +2203,8 @@
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
   let imgRowN = 0;
   const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
-  const upBtn = () => "";   // pictures are added by link only
-  /* turn GIF-site page links into the actual GIF file ("" + a hint when that can't be done) */
+  const upBtn = () => "";
+
   function gifLink(u) {
     u = String(u || "").trim(); let m;
     if ((m = u.match(/^https?:\/\/(?:www\.)?giphy\.com\/(?:gifs|stickers|embed)\/(?:[\w-]*-)?([A-Za-z0-9]{8,})\/?(?:[?#].*)?$/))) return { url: `https://media.giphy.com/media/${m[1]}/giphy.gif` };
@@ -2511,7 +2402,7 @@
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
-      if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;      // keep it an added entry
+      if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return; }
       if (adm.edit.sub) await api("PUT", "/api/admin/submissions/" + adm.edit.sub, { status: "done" }).catch(() => {});
@@ -2582,7 +2473,6 @@
     });
   }
 
-  /* first-visit tour */
   const TOUR = [
     ["Welcome to PDA.exe", "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. Here's the 30-second version."],
     ["Mark what you've found", "Hover over (or tap) any tile and press its <b>&#9733; star</b> to mark it found. Click the tile itself to open its page with stats and comments."],
@@ -2607,7 +2497,6 @@
   });
   document.addEventListener("keydown", e => { const el = $("#tour"); if (el && !el.hidden && e.key === "Escape") { el.hidden = true; settings.tourDone = true; save(KEY_SET, settings); } });
 
-  /* a bar that stays put once you've marked 25+ things without backing up */
   const KEY_SNOOZE = pk("pda-backup-snooze-v1");
   function backupNag() {
     const el = $("#backupbar"); if (!el) return;
@@ -2621,8 +2510,7 @@
     else if (e.target.closest("[data-bklater]")) { save(KEY_SNOOZE, sinceBackup + 25); play("back"); backupNag(); }
   });
 
-  /* ---------- moving your PDA to another device ---------- */
-  let xfer = null;                                  // { code, link, expires } once made
+  let xfer = null;
   const xferLink = code => `${location.origin}${location.pathname}#get=${code}`;
   function transferHTML() {
     if (!API) return "";
@@ -2722,7 +2610,7 @@
       play("click");
       const inp = $("#shareOut");
       try { await navigator.clipboard.writeText(inp.value); toast("Share link copied."); }
-      catch { inp.select(); try { document.execCommand("copy"); } catch { /* ignore */ } toast("Link selected. Press Ctrl+C to copy."); }
+      catch { inp.select(); try { document.execCommand("copy"); } catch {} toast("Link selected. Press Ctrl+C to copy."); }
     };
     $("#doCompare").onclick = () => {
       const f = parseShare($("#friendIn").value);
@@ -2732,7 +2620,7 @@
     const stop = $("#stopCompare"); if (stop) stop.onclick = () => { friend = null; save(KEY_FRIEND, null); play("back"); render(); };
   }
   const backupData = () => ({ app: "onc-pda-tracker", v: 3, user, found, favs, notes, log: history_, counts, loadout });
-  /* put a backup (file or transfer) onto this device: "replace" copies it exactly, "merge" adds it to what's here */
+
   function applyBackup(data, mode) {
     if (!data || typeof data.found !== "object") throw new Error("not a backup");
     const inFound = {}; Object.keys(data.found).forEach(k => { if (data.found[k]) inFound[MOVED[k] || k] = 1; });
@@ -2797,9 +2685,7 @@
     if (!log.length) return "";
     return `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>`;
   }
-  /* =====================================================================
-     SUBMIT tab: contribution form + changelog
-     ===================================================================== */
+
   const FORM = (typeof PDA_FORM === "object" && PDA_FORM) || {};
   const webhookURL = (() => {
     if (FORM.discordWebhook) return FORM.discordWebhook;
@@ -2813,7 +2699,7 @@
   const formLive = () => hasServer() || hasDiscord() || hasW3F();
   async function sendServer(d, botcheck) {
     const [st, r] = await api("POST", "/api/submit", { kind: d.kind, entry: d.entry, text: d.text, link: d.link, name: d.name, botcheck });
-    if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st >= 400 && st < 500; throw e; }   // a "no" from the server (blocked, too many, bad input) is final
+    if (st !== 200 && st !== 201) { const e = new Error(r.error || "server " + st); e.user = st >= 400 && st < 500; throw e; }
     if (r.token && /^[0-9a-f]{24}$/.test(r.token)) { sentCodes = [r.token, ...sentCodes].slice(0, 50); save(KEY_SENT, sentCodes); }
   }
   const KIND_COLOR = { "Description": 0x4fd8ff, "Stats": 0xffe14d, "Picture": 0xff79e0, "Missing entry": 0x6cff6c, "Wrong info": 0xff8a3c, "Site bug": 0xff3b3b, "Idea": 0xb48aff };
@@ -2828,7 +2714,7 @@
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: "PDA Tracker",
-        // ping only the site owner; anything visitors type can't ping anyone
+
         content: /^\d{5,25}$/.test(FORM.pingUserId || "") ? `<@${FORM.pingUserId}> new submission` : undefined,
         allowed_mentions: { parse: [], users: /^\d{5,25}$/.test(FORM.pingUserId || "") ? [FORM.pingUserId] : [] },
         embeds: [{ title: clip(`${d.kind}${d.entry ? ": " + d.entry : ""}`, 250), description: clip(d.text || "(no details)", 4000),
@@ -2847,13 +2733,13 @@
     if (!res.ok || j.success === false) throw new Error(j.message || res.status);
   }
   let draft = { kind: "Description", entry: "", text: "", link: "", name: "" };
-  /* what you sent: the server hands back a private code per submission, kept only in this browser */
+
   const KEY_SENT = "pda-sent-v1";
   let sentCodes = load(KEY_SENT, []);
   let mySubs = null;
   async function loadMySubs() {
     if (!API || !sentCodes.length) { mySubs = []; return; }
-    try { const [st, r] = await api("GET", "/api/substatus?t=" + sentCodes.slice(0, 50).join(",")); if (st === 200) mySubs = r.sort((a, b) => b.created - a.created); } catch { /* offline */ }
+    try { const [st, r] = await api("GET", "/api/substatus?t=" + sentCodes.slice(0, 50).join(",")); if (st === 200) mySubs = r.sort((a, b) => b.created - a.created); } catch {}
     if (ui.tab === "community") keepScroll(render);
   }
   function mySubsHTML() {
@@ -2863,7 +2749,7 @@
     const st = { new: ["WAITING", "#ffd23a"], done: ["ADDED", "#6cff6c"], rejected: ["NOT ADDED", "#ff7a7a"] };
     return `<h3>-=-=- WHAT YOU SENT -=-=-</h3><p class="cat-note">Only this browser can see this list.</p><div class="frlist mysubs">${mySubs.map(r => `<div class="frrow"><b>${esc(r.kind)}${r.entry ? ": " + esc(r.entry) : ""}</b><span class="dim">${esc(new Date(r.created * 1000).toLocaleDateString())}</span><span class="substat" style="color:${(st[r.status] || st.new)[1]}">${(st[r.status] || st.new)[0]}</span>${r.note ? `<span class="subnote">${esc(r.note)}</span>` : ""}</div>`).join("")}</div>`;
   }
-  let formMsg = null;   // { ok, text }
+  let formMsg = null;
   function contribHTML() {
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
     const kinds = ["Description", "Stats", "Picture", "Missing entry", "Wrong info", "Site bug", "Idea"];
@@ -2879,7 +2765,7 @@
         ${formMsg ? `<span class="fmsg ${formMsg.ok ? "ok" : "bad"}">${esc(formMsg.text)}</span>` : ""}</div>
     </form>`;
   }
-  /* entries the site has no info for yet, so visitors know what to send */
+
   function helpWanted() {
     const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && !e.stats && e.comment === undefined);
     const bios = entries.filter(e => e.section === "bio" && !e.unknown);
@@ -2887,7 +2773,7 @@
     const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
     const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
-    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);   // gear has no weight in the game
+    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);
     const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
     return [["UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
@@ -2927,7 +2813,7 @@
     }
     if (sending) return;
     if (Date.now() - (window.__pdaLastSend || 0) < 15000) { formMsg = { ok: false, text: "Just sent one! Wait a few seconds before sending another." }; play("warn"); return keepScroll(render); }
-    if (f.botcheck.checked) return;               // spam bot filled the hidden box
+    if (f.botcheck.checked) return;
     sending = true; formMsg = { ok: true, text: "Sending…" }; keepScroll(render);
     try {
       let sent = false;
@@ -3051,7 +2937,7 @@
       } catch { msg.textContent = "Couldn't reach the server."; play("warn"); }
     };
     const ao = $("#admOut");
-    if (ao) ao.onclick = async () => { play("back"); try { await api("POST", "/api/logout"); } catch { /* ignore */ } adminSess = null; save(KEY_ADMIN, null); setAdmin(false); toast("Signed out."); keepScroll(render); };
+    if (ao) ao.onclick = async () => { play("back"); try { await api("POST", "/api/logout"); } catch {} adminSess = null; save(KEY_ADMIN, null); setAdmin(false); toast("Signed out."); keepScroll(render); };
     $("#bkNow").onclick = () => { play("click"); doExport(); toast("Backup downloaded."); backupNag(); keepScroll(render); };
     const ts = $("#tscale");
     ts.addEventListener("input", () => { settings.textScale = +ts.value; $("#tscalev").textContent = ts.value; save(KEY_SET, settings); applyScale(); });
@@ -3073,9 +2959,6 @@
     };
   }
 
-  /* =====================================================================
-     CLICKS
-     ===================================================================== */
   const SCROLLERS = "#grid, .cards, .results, .erows, .manual, .settings, .profile, .cloud-body";
   function keepScroll(fn) {
     const sc = screen.querySelector(SCROLLERS);
@@ -3086,7 +2969,7 @@
     const s2 = screen.querySelector(SCROLLERS);
     if (s2) s2.scrollTop = y;
   }
-  // remember scroll position per page
+
   let scrollTimer = 0;
   screen.addEventListener("scroll", ev => {
     const t = ev.target; if (!t.matches || !t.matches(SCROLLERS)) return;
@@ -3100,7 +2983,7 @@
   }, true);
   function flash(id) {
     const el = screen.querySelector(`[data-entry="${CSS.escape(id)}"]`);
-    if (el) el.classList.add("flash");     // stay where you are; don't chase the entry if it moved
+    if (el) el.classList.add("flash");
   }
   const openDetail = (type, id) => { play("open"); imgIndex = 0; detail = { type, id }; render(); };
 
@@ -3115,7 +2998,6 @@
     doStar(id, shift);
   }
   function doStar(id, shift) {
-    // shift-click: give everything between the last star and this one the same state
     if (shift && lastStar && !detail) {
       const order = [...screen.querySelectorAll("[data-entry]")].map(el => trackOf(el.dataset.entry));
       const a = order.indexOf(trackOf(lastStar.id)), b = order.indexOf(trackOf(id));
@@ -3136,10 +3018,9 @@
 
   screen.addEventListener("click", ev => {
     const t = ev.target;
-    // anything other than the YES/NO buttons cancels a pending tier prompt
+
     if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs]")) { cancelTier(); }
 
-    // the star is checked first, so pressing it never also opens the entry under it
     const star = t.closest("[data-star]");
     if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
 
@@ -3206,7 +3087,7 @@
     { const b = t.closest("[data-admunblock]"); if (b) { api("DELETE", "/api/admin/blocks/" + b.dataset.admunblock).then(() => { play("click"); toast("Unblocked."); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("unmarked"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
-    if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } play("confirm"); toast("New run started."); keepScroll(render); return; }
+    if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch {} play("confirm"); toast("New run started."); keepScroll(render); return; }
     if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("unmarked"); render(); toast("Loadout cleared."); } return; }
     if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
@@ -3223,7 +3104,7 @@
     if (t.closest("[data-cmpclear]")) { ui.cmp = []; detail = null; play("back"); persistUI(); render(); return; }
     const lk = t.closest("[data-link]");
     if (lk) {
-      const url = `${location.origin}${location.pathname}#e=${h5(lk.dataset.link)}`;
+      const url = `${location.origin}${location.pathname.replace(/index\.html$/, "")}e/${h5(lk.dataset.link)}/`;
       play("click");
       (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this page copied.")).catch(() => toast(url, { ms: 12000 }));
       return;
@@ -3271,7 +3152,7 @@
     const cat = t.closest("[data-cat]");
     if (cat) { play(+cat.dataset.cat === ui.cat ? "click" : "switch"); if (ui.cat !== +cat.dataset.cat) ui.cal = ""; ui.cat = +cat.dataset.cat;
       { const nc = PDA_DATA.tools[ui.cat]; if (nc && ui.tsort && !nc.items.some(e => statNum(e, ui.tsort) != null)) { ui.tsort = ""; ui.tmin = ""; ui.tmax = ""; } } persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
-    // clicking the sub-tab that's already open asks to unlock (or lock) the whole tab
+
     const bio = t.closest("[data-bio]");
     if (bio) {
       if (+bio.dataset.bio === ui.bio) { askTier(`tab:bio:${ui.bio}`); keepScroll(render); return; }
@@ -3305,13 +3186,13 @@
     else return;
     play("click"); persistUI(); render();
   });
-  // clicking a star shouldn't focus it (focusing scrolls the list to it)
+
   screen.addEventListener("keydown", ev => { const th = ev.target.closest && ev.target.closest(".tier-head[data-tier]"); if (th && (ev.key === "Enter" || ev.key === " ") && ev.target === th) { ev.preventDefault(); askTier(th.dataset.tier); keepScroll(render); } });
   screen.addEventListener("mousedown", ev => { if (ev.target.closest && ev.target.closest(".hstar, .sres-star, .sres-ic, .tile, .card, .doc, .subtab, .cat")) ev.preventDefault(); });
   screen.addEventListener("submit", ev => { if (!ev.target.matches("form.contrib")) return; ev.preventDefault(); submitForm(ev.target); });
-  // keep the form's text if you switch tabs
+
   screen.addEventListener("input", ev => { const f = ev.target.closest && ev.target.closest("form.contrib"); if (f) readForm(f); });
-  // notes save as you type
+
   screen.addEventListener("input", ev => {
     const ta = ev.target.closest && ev.target.closest("[data-note]");
     if (!ta) return;
@@ -3320,9 +3201,6 @@
     save(KEY_NOTES, notes);
   });
 
-  /* =====================================================================
-     KEYBOARD: arrows move, Space marks, Enter opens, Ctrl+Z undoes
-     ===================================================================== */
   function moveFocus(key) {
     const els = [...screen.querySelectorAll("[data-entry]")].filter(el => el.offsetParent);
     if (!els.length) return;
@@ -3382,7 +3260,6 @@
     }
   });
 
-  /* phones: swipe the picture to change image, swipe the stats to change variant */
   let sw0 = null;
   screen.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse") sw0 = { x: e.clientX, y: e.clientY, t: e.target }; });
   screen.addEventListener("pointerup", e => {
@@ -3399,9 +3276,6 @@
     }
   });
 
-  /* =====================================================================
-     TOOLBAR (grid/list + all/missing/found), TOASTS, SHARED-LINK BANNER
-     ===================================================================== */
   function syncToolbar() {
     const ss = $("#sortSel"); if (ss) ss.value = ui.sort;
     document.querySelectorAll("[data-compact]").forEach(b => b.setAttribute("aria-pressed", !!ui.compact));
@@ -3421,7 +3295,6 @@
 
   $("#sortSel").addEventListener("change", e => { ui.sort = e.target.value; play("click"); persistUI(); keepScroll(render); });
 
-  /* ---------- "?" keyboard shortcut list ---------- */
   const KEYS = [["← ↑ → ↓", "Move between entries"], ["SPACE", "Mark found / missing"], ["ENTER", "Open"], ["SHIFT + STAR", "Mark a range"],
     ["CTRL + Z", "Undo"], ["/", "Search"], ["ESC", "Back / clear search / close"], ["← →  on a page", "Previous / next picture"], ["R", "Random missing entry"], ["F", "Same as SPACE"], ["[  ]", "Previous / next category or tab"], ["N  on a page", "Mark found + open next missing"], ["M  on a page", "Next missing"], ["?", "This list"]];
   const keysEl = document.createElement("div"); keysEl.className = "lightbox keysbox"; keysEl.hidden = true; document.body.appendChild(keysEl);
@@ -3434,7 +3307,6 @@
   keysEl.addEventListener("click", e => { if (e.target.closest("[data-kclose]") || !e.target.closest(".keys")) { keysEl.hidden = true; play("back"); } });
   document.addEventListener("keydown", e => { if (!keysEl.hidden && e.key === "Escape") { e.stopImmediatePropagation(); keysEl.hidden = true; } }, true);
 
-  /* ---------- picture lightbox ---------- */
   const lb = document.createElement("div"); lb.className = "lightbox"; lb.hidden = true; document.body.appendChild(lb);
   function drawLightbox() {
     const n = curImgs.length; if (!n) return closeLightbox();
@@ -3497,9 +3369,6 @@
     persistUI(); updateCount(); renderTabs(); render();
   });
 
-  /* =====================================================================
-     HOVER TEXT (stats + images) — small black box like the game's
-     ===================================================================== */
   const tipEl = document.createElement("div");
   tipEl.className = "tip"; tipEl.setAttribute("role", "tooltip");
   document.body.appendChild(tipEl);
@@ -3521,7 +3390,7 @@
     if (tipFor) placeTip(ev.clientX, ev.clientY);
   });
   document.addEventListener("pointerleave", () => { tipFor = null; tipEl.classList.remove("on"); });
-  // phones: tap a stat to show its text, tap elsewhere to hide
+
   document.addEventListener("pointerdown", ev => {
     if (ev.pointerType === "mouse") return;
     const el = ev.target.closest && ev.target.closest("[data-tip]");
@@ -3530,14 +3399,12 @@
   });
   screen.addEventListener("scroll", () => { tipFor = null; tipEl.classList.remove("on"); }, true);
 
-  /* mouse wheel scrolls the sideways strips (character tabs, variant tabs, phone categories) */
   screen.addEventListener("wheel", e => {
     const strip = e.target.closest(".subtabs, .mtabs, .cats");
     if (!strip || strip.scrollWidth <= strip.clientWidth + 1) return;
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { strip.scrollLeft += e.deltaY; e.preventDefault(); }
   }, { passive: false });
-  // keep the open sub-tab in view
-  // keep sideways strips (character tabs, categories on phones) where they were, and the open one in view
+
   let stripX = { sub: 0, cats: 0 };
   screen.addEventListener("scroll", e => {
     if (e.target.classList && e.target.classList.contains("subtabs")) stripX.sub = e.target.scrollLeft;
@@ -3549,14 +3416,13 @@
     if (ct && ct.scrollWidth > ct.clientWidth) { ct.scrollLeft = stripX.cats; const a = ct.querySelector('[aria-selected="true"]'); if (a) revealInStrip(a); }
   }).observe(screen, { childList: true });
 
-  /* ---------- go ---------- */
-  if (!sessionStart || !Array.isArray(sessionStart.ids)) { sessionStart = { f: countOf(entries)[0], t: (sessionStart && sessionStart.t) || Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch { /* ignore */ } }
+  if (!sessionStart || !Array.isArray(sessionStart.ids)) { sessionStart = { f: countOf(entries)[0], t: (sessionStart && sessionStart.t) || Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch {} }
   if (Object.keys(found).length && !progress[today()]) snapProgress();
   if (/^#v=/.test(location.hash)) viewOnly = parseShare(location.hash);
   else if (/^#u=/.test(location.hash) && API) { viewOnly = { name: decodeURIComponent(location.hash.slice(3)), set: {}, live: true }; openProfileLink(viewOnly.name); }
   else if (/^#dmg=/.test(location.hash)) {
     if (readDmgLink(location.hash)) persistUI(); else setTimeout(() => toast("That damage calculator link is broken or out of date."), 300);
-    try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
   }
   else if (/^#e=/.test(location.hash)) {
     const id = byHash.get(location.hash.slice(3, 8));
@@ -3566,15 +3432,14 @@
       ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section];
       if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else ui.docs = e.groupIndex;
     }
-    try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
-  } else if (ui.detail && (ui.detail.type === "compare" || byId.has(ui.detail.id))) detail = ui.detail;   // reopen where you left off
+    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+  } else if (ui.detail && (ui.detail.type === "compare" || byId.has(ui.detail.id))) detail = ui.detail;
   if (PROF.active !== "Main") setTimeout(() => toast(`Using save profile "${PROF.active}". Switch it on the Profile tab.`), 300);
 
-  /* a damage calculator link pasted into a tab that's already open */
   window.addEventListener("hashchange", () => {
     if (!/^#dmg=/.test(location.hash)) return;
     if (readDmgLink(location.hash)) { persistUI(); renderTabs(); render(); } else toast("That damage calculator link is broken or out of date.");
-    try { history.replaceState(null, "", location.pathname + location.search); } catch { /* ignore */ }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
   });
   renderTabs();
   updateCount();
@@ -3583,7 +3448,7 @@
   if (!API) checkSince();
   if (API) {
     applyOverrides(overrides);
-    setAdmin(!!adminSess && ui.tab === "admin");     // checkAdmin() confirms it
+    setAdmin(!!adminSess && ui.tab === "admin");
     loadRarity(); loadOverrides().then(reloading => { if (!reloading) checkSince(); }); loadServerInfo();
     if (adminSess) checkAdmin();
     scheduleSync(3000);
@@ -3591,8 +3456,7 @@
     if (checkTransferHash()) settings.tourDone = settings.tourDone || "later";
     window.addEventListener("hashchange", () => { if (checkTransferHash()) return; const m = location.hash.match(/^#u=(.+)$/); if (m) { detail = null; viewOnly = { name: decodeURIComponent(m[1]), set: {}, live: true }; openProfileLink(viewOnly.name); } });
   }
-  // first visit: short tour (not when opening someone's share link)
-  if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
-  if (settings.tourDone === "later") settings.tourDone = false;         // opened a transfer link: skip the tour this once
 
+  if (!settings.tourDone && !viewOnly && !Object.keys(found).length) setTimeout(() => startTour(), 400);
+  if (settings.tourDone === "later") settings.tourDone = false;
 })();

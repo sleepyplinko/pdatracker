@@ -1,5 +1,3 @@
-/* Inconsolata: the font the game's PDA uses (Roblox "Code"). Self-hosted, see fonts/Inconsolata-OFL.txt */
-/* Fixed-weight copies of Inconsolata (the variable font drew some letters wrong in Safari) */
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-400.woff?v=3") format("woff"); font-weight: 400; font-stretch: 100%; font-display: swap; }
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-500.woff?v=3") format("woff"); font-weight: 500; font-stretch: 100%; font-display: swap; }
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600.woff?v=3") format("woff"); font-weight: 600; font-stretch: 100%; font-display: swap; }
@@ -8,11 +6,6 @@
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-900.woff?v=3") format("woff"); font-weight: 900; font-stretch: 100%; font-display: swap; }
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-800-85.woff?v=3") format("woff"); font-weight: 800; font-stretch: 85%; font-display: swap; }
 @font-face { font-family: "Inconsolata"; src: url("fonts/inconsolata-600-88.woff?v=3") format("woff"); font-weight: 600; font-stretch: 88%; font-display: swap; }
-/* =====================================================================
-   PDA.exe — Once A Normal City tracker
-   Styled after the in-game PDA: see-through black window, glossy grey
-   tabs, yellow striped categories, white tier pills, big outlined text.
-   ===================================================================== */
 
 :root {
   --font: "Inconsolata", ui-monospace, "Consolas", monospace;
@@ -22,12 +15,12 @@
   --cyan: #4ff0ff;
   --doc-yellow: #f4ee3c;
   --red: #ff3b3b;
-  /* the light grey "glossy" bars used everywhere in the game */
+
   --bar: linear-gradient(#ffffff 0%, #f1f1f1 45%, #d2d2d2 100%);
   --tile: linear-gradient(#f7f7f7 0%, #e2e2e2 40%, #cfcfcf 60%, #bcbcbc 100%);
-  /* tile text sizes (shrink on phones) */
+
   --tf-xl: 44px; --tf-l: 36px; --tf-m: 28px; --tf-s: 22px; --tf-xs: 17px;
-  /* white text with the dark outline the game uses */
+
   --outline: -1px -1px 0 #555, 1px -1px 0 #555, -1px 1px 0 #555, 1px 1px 0 #555, 0 2px 2px rgba(0,0,0,.35);
 }
 
@@ -43,7 +36,6 @@ body {
   overflow-x: hidden;
 }
 
-/* The in-game world behind the PDA: dusk sky with power lines */
 .sky {
   position: fixed; inset: 0; z-index: -1;
   background:
@@ -54,22 +46,19 @@ body {
     radial-gradient(120% 80% at 50% 0%, #c25a28 0%, #8a3018 34%, #4a120c 64%, #1a0505 100%);
 }
 .sky::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.35) 100%); }
-/* blurred in-game picture behind the PDA (images/bg/patio.jpg); the sky above shows if it can't load */
+
 .bgimg { position: absolute; inset: 0; background: url("images/bg/patio.jpg?v=2") center / cover no-repeat; transform: scale(1.04); filter: brightness(1.15) saturate(1.05); }
 .sky { background-color: #120a06; }
 
 button { font-family: inherit; cursor: pointer; }
 button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
-/* =====================================================================
-   WINDOW
-   ===================================================================== */
 .pda { width: min(1180px, 100%); }
 
 .titlebar {
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   height: 28px; padding: 0 14px;
-  margin: 0 12px -2px;                       /* sits just above the window, slightly inset like in game */
+  margin: 0 12px -2px;
   background: var(--bar);
   color: #111; font-size: 20px; font-weight: 600;
   border-radius: 2px 2px 0 0;
@@ -86,7 +75,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   box-shadow: 0 10px 40px rgba(0,0,0,.55);
 }
 
-/* ---------------- top tabs ---------------- */
 .tabs {
   display: flex; gap: 6px;
   padding: 5px 6px;
@@ -113,7 +101,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .tab[data-tab="profile"] { background: linear-gradient(#f4f6b2, #d6dc84); }
 .tab[data-tab="cloud"]   { background: linear-gradient(#a6f3f6, #70d4da); }
 .tab[data-tab="manual"]  { background: linear-gradient(#bfbaf8, #9690e6); }
-/* the site's own tabs: same pastel recipe as the game's three (hsl ~80%/83% to ~58%/67%), hues spread around the wheel */
+
 .tab[data-tab="missing"]   { background: linear-gradient(hsl(95, 70%, 83%), hsl(95, 48%, 64%)); }
 .tab[data-tab="loadout"]   { background: linear-gradient(hsl(140, 62%, 83%), hsl(140, 44%, 63%)); }
 .tab[data-tab="damage"]    { background: linear-gradient(hsl(28, 85%, 83%), hsl(28, 66%, 66%)); }
@@ -123,7 +111,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .tab:hover { filter: brightness(1.06); }
 .tab[aria-selected="true"] { filter: brightness(.86); box-shadow: inset 0 2px 5px rgba(0,0,0,.45); }
 
-/* ---------------- search (not in the game, kept minimal) ---------------- */
 .searchbar { display: flex; align-items: center; gap: 6px; padding: 6px 14px 0; }
 .sicon { width: 16px; height: 16px; color: #8a8a8a; flex: 0 0 auto; display: flex; }
 .sicon svg { width: 100%; height: 100%; }
@@ -137,7 +124,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 #search::-webkit-search-cancel-button { display: none; }
 .clear-search { height: 28px; padding: 0 14px; border: 0; border-radius: 4px; background: #c51616; color: #fff; font: italic 700 12px var(--font); }
 
-/* ---------------- screen ---------------- */
 .screen {
   height: min(70vh, 640px);
   min-height: 380px;
@@ -147,7 +133,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 
 .footer { margin: 10px 0 0; font-size: 11px; color: rgba(255,255,255,.45); text-align: center; }
 
-/* shared light header bar ("Preview", "Statistics", "Enemy Data", ...) */
 .dhead {
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
   padding: 0 6px; height: 22px; flex: 0 0 auto;
@@ -156,9 +141,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .return { height: 16px; padding: 0 16px; border: 0; background: #c51616; color: #fff; font-size: 11px; font-style: italic; font-weight: 700; }
 .return:hover { filter: brightness(1.15); }
 
-/* =====================================================================
-   HOVER STAR (marks found / not found)
-   ===================================================================== */
 .hstar {
   position: absolute; top: 4px; right: 4px; z-index: 2;
   width: 28px; height: 28px; padding: 2px;
@@ -175,9 +157,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .hstar.on { color: #ffe23a; }
 @media (hover: none) { .hstar { opacity: .9; transform: none; } }
 
-/* =====================================================================
-   TOOLS
-   ===================================================================== */
 .tools { display: grid; grid-template-columns: 280px 1fr; gap: 10px; height: 100%; }
 
 .cats {
@@ -281,7 +260,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .empty-cat b { color: #ddd; font-size: 20px; letter-spacing: .05em; }
 .cat-note { margin: 2px 0 6px; font-size: 12px; color: #b0b0b0; font-style: italic; }
 
-/* ---------------- weapon stat page ---------------- */
 .detail {
   height: 100%; display: grid; gap: 8px;
   grid-template-columns: minmax(170px, 32%) 1fr;
@@ -304,9 +282,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .linkish:hover { color: #fff; text-decoration-style: solid; }
 .stat .linkish { color: #fff; font-style: normal; }
 
-/* =====================================================================
-   SUB-TABS (biography + documents)
-   ===================================================================== */
 .subwrap { display: flex; flex-direction: column; height: 100%; border: 1px solid #e6e6e6; border-radius: 6px; overflow: hidden; }
 .subtabs { display: flex; gap: 3px; padding: 4px 4px 0; overflow-x: auto; flex: 0 0 auto; border-bottom: 1px solid #e6e6e6; scrollbar-width: none; }
 .subtabs::-webkit-scrollbar { display: none; }
@@ -329,7 +304,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   scrollbar-width: thin; scrollbar-color: #666 transparent;
 }
 
-/* person card */
 .card, .doc {
   position: relative; display: flex; flex-direction: column; padding: 0;
   text-align: center; min-height: max-content;
@@ -351,7 +325,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .card .count { position: absolute; top: 5px; left: 5px; padding: 0 5px; border-radius: 3px; background: rgba(0,0,0,.8); color: var(--c); font-size: 13px; font-weight: 800; line-height: 18px; }
 .card:hover, .doc:hover { filter: brightness(1.18); }
 
-/* document tile */
 .doc { border: 1px solid var(--dc); background: var(--dbg); color: var(--dc); }
 .doc .pic { height: var(--pich, 200px); display: grid; place-items: center; }
 .doc .pic svg { width: 62%; }
@@ -364,9 +337,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .doc.missing .sub { display: none; font-size: 10px; color: #777; }
 .show-locked-names .doc.missing .sub { display: block; }
 
-/* =====================================================================
-   PERSON / DOCUMENT PAGE  (Preview · Enemy Data · Description)
-   ===================================================================== */
 .pdetail {
   height: 100%; display: grid; gap: 8px;
   grid-template-columns: minmax(200px, 30%) 1fr;
@@ -435,9 +405,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .desc p { margin: 0 0 10px; text-indent: 3em; text-align: justify; }
 .desc p.none { text-indent: 0; color: #777; font-style: italic; }
 
-/* =====================================================================
-   SEARCH RESULTS
-   ===================================================================== */
 .results { height: 100%; overflow-y: auto; padding: 8px 10px; background: rgba(40,40,40,.75); border: 1px solid #5a5a5a; border-radius: 6px; scrollbar-width: thin; scrollbar-color: #888 transparent; }
 .sgroup { margin-bottom: 8px; }
 .sgroup .tier-head { margin-top: 2px; }
@@ -461,9 +428,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .sres-star svg { width: 100%; height: 100%; }
 .sres-main:hover, .sres-star:hover { filter: brightness(1.15); }
 
-/* =====================================================================
-   PROFILE / CLOUD / MANUAL / SETTINGS
-   ===================================================================== */
 .profile { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-content: start; height: 100%; overflow-y: auto; }
 .avatar { display: flex; flex-direction: column; }
 .avatar .uname { height: 22px; background: var(--bar); color: #5a5a10; font-size: 14px; text-align: center; line-height: 22px; }
@@ -502,9 +466,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .onoff button.off[aria-pressed="true"] { background: #b81e1e; color: #fff; }
 #vol { width: 200px; accent-color: #1c8f1c; }
 
-/* =====================================================================
-   SMALLER SCREENS
-   ===================================================================== */
 @media (max-width: 1000px) {
   :root { --tf-xl: 34px; --tf-l: 28px; --tf-m: 22px; --tf-s: 17px; --tf-xs: 14px; }
   .tab { min-width: 160px; height: 48px; font-size: 18px; }
@@ -544,9 +505,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
   .avatar { width: 130px; }
 }
 
-/* =====================================================================
-   HOVER TEXT — the game's small black box with italic text
-   ===================================================================== */
 .tip {
   position: fixed; z-index: 50; pointer-events: none;
   max-width: 280px; padding: 4px 7px;
@@ -559,18 +517,13 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .preview img[data-tip] { cursor: help; }
 .stat[data-tip]:hover i { text-decoration: underline dotted; text-underline-offset: 3px; }
 
-/* image counter + disabled arrows */
 .imgcount { position: absolute; left: 6px; bottom: 6px; padding: 0 5px; border-radius: 3px; background: rgba(0,0,0,.7); color: #eee; font-size: 12px; font-weight: 700; }
 .arrow:disabled { opacity: .3; cursor: default; }
 .arrow:disabled:hover { color: #111; }
 .detail .dhead .arrows { margin-left: auto; }
 
-/* weapon comment uses the same paragraph box as descriptions */
 .comment .desc p { text-indent: 0; text-align: left; }
 
-/* =====================================================================
-   "UNLOCK ENTIRE TAB" bar (Biography / Documents)
-   ===================================================================== */
 .tabbar {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 3px 8px; flex: 0 0 auto; flex-wrap: wrap;
@@ -588,10 +541,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 }
 .tabbar.confirm b { color: #a10e0e; }
 
-/* =====================================================================
-   QUALITY OF LIFE
-   ===================================================================== */
-/* view + filter buttons next to search */
 .viewtools { display: flex; align-items: center; gap: 3px; flex: 0 0 auto; }
 .viewtools button {
   height: 28px; min-width: 32px; padding: 0 9px; border: 1px solid #555; border-radius: 5px;
@@ -602,7 +551,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .viewtools button:hover { filter: brightness(1.2); }
 .vsep { width: 1px; height: 20px; background: #555; margin: 0 4px; }
 
-/* progress bars */
 .pbar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0,0,0,.35); pointer-events: none; }
 .pbar i { display: block; height: 100%; background: #6cff6c; transition: width .25s; }
 .cat .pbar { left: 4px; right: 4px; bottom: 3px; border-radius: 2px; }
@@ -618,7 +566,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .leftsum { position: relative; padding: 8px 10px 12px; margin-bottom: 8px; background: rgba(0,0,0,.4); border: 1px solid #444; border-radius: 6px; font-size: 15px; }
 .leftsum b { font-size: 20px; color: #fff; }
 
-/* badges */
 .badges { position: absolute; left: 4px; bottom: 4px; display: flex; gap: 3px; z-index: 2; pointer-events: none; }
 .sres-name .badges { position: static; display: inline-flex; margin-left: 8px; vertical-align: middle; }
 .badges b { font: 800 10px/14px var(--font); padding: 0 4px; border-radius: 3px; text-shadow: none; letter-spacing: .04em; }
@@ -628,7 +575,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .card .badges { bottom: 46px; }
 .doc .badges { bottom: 46px; }
 
-/* checklist view */
 .list { display: flex; flex-direction: column; gap: 2px; padding: 4px; background: rgba(110,110,110,.25); border-radius: 6px; }
 .list .sres, .cards.aslist .sres { margin-bottom: 0; }
 .cards.aslist { display: flex; flex-direction: column; gap: 2px; }
@@ -637,13 +583,11 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .sres-ic:hover { background: rgba(255,255,255,.15); }
 .sres-main:focus-visible, .tile:focus-visible, .card:focus-visible, .doc:focus-visible { outline: 3px solid var(--cyan); outline-offset: 1px; }
 
-/* search chips */
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
 .chip-btn { height: 26px; padding: 0 12px; border: 1px solid #555; border-radius: 13px; background: #111; color: #bbb; font-weight: 700; font-size: 12px; }
 .chip-btn[aria-pressed="true"] { background: var(--bar); color: #111; }
 .chips-note { font-size: 11px; color: #888; margin-left: 6px; }
 
-/* favourites + notes */
 .favbtn { width: 20px; height: 18px; padding: 0; border: 0; background: none; color: #a33; }
 .favbtn svg { width: 100%; height: 100%; }
 .favbtn.on { color: #ff2a55; }
@@ -658,18 +602,15 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 }
 .notes:focus { box-shadow: inset 0 0 0 1px #e6e18a; }
 
-/* profile extras */
 .row.dim, .dim { color: #888; }
 .row .when { display: inline-block; min-width: 92px; color: #888; font-size: 12px; }
 
-/* cloud: share + compare */
 .cloud-body { overflow-y: auto; }
 .cloud-body h4 { margin: 10px 0 0; font-size: 17px; letter-spacing: .04em; }
 .btnrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
 .btnrow input { flex: 1; min-width: 200px; height: 34px; padding: 0 10px; background: #111; color: #eee; border: 1px solid #555; border-radius: 5px; font: 13px var(--font); }
 .compare { width: 100%; }
 
-/* toasts */
 .toast {
   position: fixed; left: 50%; bottom: 18px; z-index: 60; transform: translate(-50%, 20px);
   display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 24px);
@@ -683,7 +624,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .toast button { height: 26px; padding: 0 12px; border: 1px solid #888; border-radius: 4px; background: var(--bar); color: #111; font: 800 12px var(--font); }
 .toast button[data-t="x"] { padding: 0 8px; background: none; color: #aaa; border-color: transparent; font-size: 16px; }
 
-/* shared-link / compare banner */
 .banner {
   display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
   margin: 2px 12px 4px; padding: 6px 10px; border-radius: 6px;
@@ -692,7 +632,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 }
 .banner button { height: 26px; margin-left: 6px; padding: 0 12px; border: 1px solid #9ab; border-radius: 4px; background: var(--bar); color: #111; font: 800 12px var(--font); }
 
-/* phones: bigger targets */
 @media (hover: none) {
   .hstar { width: 36px; height: 36px; padding: 4px; }
   .sres-main { height: 46px; }
@@ -715,13 +654,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 
 .card .pic img.dimpic { filter: grayscale(.6) brightness(.55); }
 
-/* =====================================================================
-   ROUND 2: sort, compact, stat bar, compare, lightbox, profiles, contribute
-   ===================================================================== */
 #sortSel { height: 28px; padding: 0 6px; background: #151515; color: #ddd; border: 1px solid #555; border-radius: 5px; font: 700 11px var(--font); }
 .viewtools button[data-compact] { font-size: 15px; padding: 0 7px; }
 
-/* compact grid */
 .screen.compact .tile { height: 48px; }
 .screen.compact .tile .tname { font-size: min(var(--tf-s), 20px) !important; }
 .screen.compact .tile.locked .lock { width: 24px; height: 24px; }
@@ -731,7 +666,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .screen.compact .hstar { width: 22px; height: 22px; }
 .screen.compact .tier-head { min-height: 24px; font-size: 18px; margin: 6px 0 4px; }
 
-/* stat sort + caliber filter bar */
 .statbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 8px; padding: 6px 8px; background: rgba(0,0,0,.35); border: 1px solid #444; border-radius: 6px; font: 700 12px var(--font); color: #aaa; }
 .statbar select, .contrib select, .profrow select { height: 26px; margin-left: 6px; background: #111; color: #eee; border: 1px solid #555; border-radius: 4px; font: 700 12px var(--font); }
 .mini-btn { height: 26px; padding: 0 10px; border: 1px solid #888; border-radius: 4px; background: var(--bar); color: #111; font: 800 11px var(--font); }
@@ -740,13 +674,11 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .mini-btn:disabled { opacity: .6; cursor: default; }
 .cat.calcat { background: repeating-linear-gradient(180deg, #7ad8ff 0 3px, #5ac0ea 3px 6px); border-color: #3a8ab0; text-shadow: -2px -2px 0 #1a4a6a, 2px -2px 0 #1a4a6a, -2px 2px 0 #1a4a6a, 2px 2px 0 #1a4a6a; }
 
-/* header buttons on pages */
 .hbtn { height: 16px; padding: 0 7px; border: 1px solid #777; border-radius: 3px; background: #fff; color: #222; font: 800 10px var(--font); letter-spacing: .03em; }
 .hbtn:hover { background: #e6e18a; }
 .hbtn.on { background: #1c8f1c; color: #fff; border-color: #0a5a0a; }
 .dhead .hright { gap: 5px; }
 
-/* comparison */
 .cmpwrap { height: 100%; }
 .cmpscroll { flex: 1; overflow: auto; padding: 8px; }
 table.cmp { border-collapse: collapse; width: 100%; font-size: 15px; font-style: italic; }
@@ -763,7 +695,6 @@ table.cmp td.worst { color: #ff6a6a; }
 .cmpbar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cmpbar button { height: 24px; padding: 0 10px; border: 1px solid #9ab; border-radius: 4px; background: var(--bar); color: #111; font: 800 11px var(--font); }
 
-/* lightbox */
 .zoomable { cursor: zoom-in; }
 .lightbox { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(0,0,0,.88); }
 .lightbox[hidden] { display: none; }
@@ -775,7 +706,6 @@ table.cmp td.worst { color: #ff6a6a; }
 .lbclose { position: fixed; top: 12px; right: 14px; width: 40px; height: 40px; border: 1px solid #666; border-radius: 6px; background: rgba(20,20,20,.8); color: #fff; font-size: 24px; }
 .lbcount { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); color: #ccc; font: 700 13px var(--font); }
 
-/* profiles + contribute */
 .profrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .profrow input { height: 26px; padding: 0 8px; background: #111; color: #eee; border: 1px solid #555; border-radius: 4px; font: 13px var(--font); }
 .profrow select { margin-left: 0; }
@@ -792,9 +722,6 @@ table.cmp td.worst { color: #ff6a6a; }
   .hbtn { height: 20px; }
 }
 
-/* =====================================================================
-   ROUND 3: what's left buttons, progress chart, changelog, keys, CRT
-   ===================================================================== */
 .leftbtns { float: right; display: inline-flex; gap: 6px; margin-top: -2px; }
 .statbar input[type=number] { width: 70px; height: 26px; margin: 0 4px; padding: 0 6px; background: #111; color: #eee; border: 1px solid #555; border-radius: 4px; font: 12px var(--font); }
 table.cmp td.carried { font-size: 13px; font-style: normal; }
@@ -819,7 +746,6 @@ table.cmp td.carried { font-size: 13px; font-style: normal; }
 .keysbox td { padding: 6px 14px; color: #eee; border-left: 1px solid #333; }
 .keysbox tr + tr { border-top: 1px solid #222; }
 
-/* old-monitor effect */
 body.crt .window { position: relative; }
 body.crt .window::after {
   content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5; border-radius: 8px;
@@ -834,7 +760,6 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 @media (prefers-reduced-motion: reduce) { body.crt .window::after { animation: none; } }
 @media (max-width: 700px) { .leftbtns { float: none; display: flex; margin-top: 6px; } }
 
-/* SUBMIT tab */
 .community { text-align: left; }
 .community h3 { text-align: center; }
 .contrib label { display: flex; flex-direction: column; gap: 4px; font: 700 12px var(--font); letter-spacing: .04em; color: #c8cbff; font-style: normal; }
@@ -847,7 +772,6 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .fmsg { font: 700 13px var(--font); }
 .fmsg.ok { color: #8fef8f; } .fmsg.bad { color: #ff7a7a; }
 
-/* two tab rows: checklist on top, the rest along the bottom, no sideways scrolling on wide screens */
 .tabs .tab { flex: 1 1 0; min-width: 150px; }
 .tabs.bottom { border-bottom: 0; border-top: 1px solid #e6e6e6; }
 .tabs.bottom .tab { height: 44px; font-size: 18px; }
@@ -857,19 +781,16 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
   .tabs.bottom .tab { height: 40px; font-size: 15px; }
 }
 
-/* sticky tier headers while scrolling a category */
 #grid .tier-head, .results .sgroup > .tier-head { position: sticky; top: -8px; z-index: 3; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
 #grid .statbar { position: relative; z-index: 4; }
 .viewtools button[data-hidedone] { font-size: 11px; padding: 0 8px; }
 
-/* next missing / found + next */
 .flow { display: inline-flex; gap: 5px; margin-right: 6px; padding-right: 6px; border-right: 1px solid #aaa; }
 .hbtn.go { background: #1c8f1c; color: #fff; border-color: #0a5a0a; }
 .hbtn.go:hover { background: #26b026; }
 .flowdone { font: 800 10px var(--font); color: #127a12; align-self: center; }
 @media (max-width: 700px) { .dhead { height: auto; min-height: 22px; flex-wrap: wrap; } .flow { border-right: 0; } }
 
-/* ---------- loadout planner ---------- */
 .ladd { display: flex; gap: 8px; margin: 8px 0; }
 .ladd select { flex: 1; min-width: 0; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 6px; font: inherit; font-size: 14px; }
 .lspace .stats { padding: 10px 12px; }
@@ -910,7 +831,6 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .helprow .linkish { text-align: left; }
 .helprow .dim { color: #999; font-size: 12px; }
 
-/* ---------- phone fixes ---------- */
 @media (max-width: 700px) {
   .searchbar { flex-wrap: wrap; }
   .searchbar #search { flex: 1 1 200px; min-width: 0; }
@@ -928,7 +848,6 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
   .stats h2 { font-size: 22px; overflow-wrap: anywhere; }
 }
 
-/* ---------- damage calculator ---------- */
 .dmgcalc a { color: #9ad0ff; }
 .dgrid { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 8px; margin: 8px 0; }
 .dform { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
@@ -956,18 +875,17 @@ body.crt .screen { text-shadow: 0 0 2px rgba(180,255,200,.25); }
 .dmgcalc .dim { color: #999; font-size: 12px; }
 @media (max-width: 1000px) { .dgrid { grid-template-columns: 1fr; } }
 
-/* ---------- ⋯ menu on item pages ---------- */
 details.more { position: relative; display: inline-block; }
 details.more > summary { list-style: none; cursor: pointer; height: 16px; min-width: 26px; padding: 0 6px; border: 1px solid #555; border-radius: 3px; background: #ddd; color: #111; font-weight: 900; line-height: 14px; text-align: center; user-select: none; }
 details.more > summary::-webkit-details-marker { display: none; }
 details.more[open] > summary { background: #fff; }
 .morebox { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; display: flex; flex-direction: column; gap: 4px; padding: 6px; background: #1a1a1a; border: 1px solid #555; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.6); min-width: 140px; }
 .morebox .hbtn { width: 100%; text-align: left; }
-/* ---------- backup bar ---------- */
+
 .backupbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 6px 4px; padding: 6px 10px; background: #3a2a06; border: 1px solid #b8862a; border-radius: 6px; color: #ffe2a0; font-size: 13px; }
 .backupbar span { flex: 1 1 260px; }
 .backupbar[hidden] { display: none; }
-/* ---------- tour ---------- */
+
 #tour { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
 #tour[hidden] { display: none; }
 .tourbox { width: min(440px, 100%); background: #141414; border: 2px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.7); }
@@ -975,10 +893,9 @@ details.more[open] > summary { background: #fff; }
 .tourbody { padding: 14px 16px 6px; color: #eee; font-size: 15px; line-height: 1.45; }
 .tourbody b { color: #f3ee30; }
 .tourbtns { display: flex; gap: 6px; justify-content: flex-end; padding: 8px 12px 12px; }
-/* ---------- settings notes ---------- */
+
 .snote { font-size: 12px; color: #9a9a9a; font-style: italic; padding: 0 12px 4px; }
 
-/* ---------- account / rarity ---------- */
 .accform { display: flex; flex-direction: column; gap: 6px; max-width: 460px; }
 .accform input:not([type=checkbox]), #liveLink { background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 7px 8px; font: inherit; font-size: 14px; }
 .cloud .chk { display: flex; gap: 6px; align-items: center; font-size: 13px; margin: 3px 0; cursor: pointer; }
@@ -987,14 +904,12 @@ details.more[open] > summary { background: #fff; }
 .r-UNCOMMON { background: #7ad7ff; color: #111; } .r-COMMON { background: #555; color: #eee; }
 .erarity { padding: 4px 12px; } .erarity .stat { font-size: 14px; color: #eee; }
 
-/* ---------- screenshot import ---------- */
 .dropzone { box-sizing: border-box; width: 100%; display: grid; place-items: center; min-height: 90px; margin: 6px 0; border: 2px dashed #777; border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; padding: 10px; }
 .dropzone.over, .dropzone:hover { border-color: #f3ee30; color: #fff; background: rgba(243,238,48,.06); }
 .ocrres { border: 1px solid #444; border-radius: 6px; padding: 8px 10px; background: #141414; margin: 6px 0; }
 .ocrlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 12px; max-height: 320px; overflow-y: auto; margin: 6px 0; }
 .ocrlist .dim { color: #999; font-size: 11px; }
 
-/* ---------- search picker ---------- */
 .picker { position: relative; flex: 1; min-width: 0; }
 .pk-in { width: 100%; box-sizing: border-box; background: #0c0c0c; color: #eee; border: 1px solid #666; border-radius: 5px; padding: 8px 10px; font: inherit; font-size: 14px; }
 .pk-in:focus { outline: none; border-color: #f3ee30; box-shadow: 0 0 0 2px rgba(243,238,48,.2); }
@@ -1018,7 +933,6 @@ details.more[open] > summary { background: #fff; }
 
 .tiptip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 6px; padding: 6px 10px; border: 1px dashed #b8a64a; border-radius: 6px; background: rgba(243,238,48,.07); color: #eee; font-size: 13px; }
 
-/* ---------- text drawn like the game's PDA (Inconsolata, regular weight, thin outline, sized to fit) ---------- */
 .cat { container-type: inline-size; font-weight: 500; font-stretch: 100%; letter-spacing: 0;
   color: #fff; text-shadow: -1.5px -1.5px 0 #6e6e6e, 1.5px -1.5px 0 #6e6e6e, -1.5px 1.5px 0 #6e6e6e, 1.5px 1.5px 0 #6e6e6e, 0 2px 1px rgba(0,0,0,.25); }
 .cat[aria-selected="true"] { --cs: 1.15; }
@@ -1030,7 +944,6 @@ details.more[open] > summary { background: #fff; }
 .tname[style*="--tl:2"] { --tmax: 25px; }
 @media (max-width: 700px) { .cat, .cat[aria-selected="true"] { container-type: normal; } .cat .cl { font-size: 22px; } }
 
-/* ---------- players / admin / closest / counts ---------- */
 .ph3 { color: #f3ee30; margin: 14px 0 6px; letter-spacing: .05em; }
 .addfriend { display: flex; gap: 8px; max-width: 460px; }
 .addfriend input { flex: 1; background: #0c0c0c; color: #eee; border: 1px solid #555; border-radius: 4px; padding: 7px 8px; font: inherit; }
@@ -1051,9 +964,9 @@ details.more[open] > summary { background: #fff; }
 .closerow { display: grid; grid-template-columns: minmax(200px, auto) 60px 1fr; gap: 4px 12px; padding: 5px 8px; border-bottom: 1px solid #2a2a2a; font-size: 14px; align-items: baseline; }
 .timesfound .mini-btn { height: 20px; padding: 0 7px; }
 @media (max-width: 700px) { .frrow { grid-template-columns: 1fr auto; } .frrow > span:nth-child(3) { grid-column: 1 / -1; } .closerow { grid-template-columns: 1fr auto; } .closerow > span:last-child { grid-column: 1 / -1; } }
-/* ---------- keyboard mode ---------- */
+
 body.kbmode [data-entry]:focus { outline: 3px solid #f3ee30 !important; outline-offset: 2px; z-index: 2; position: relative; }
-/* ---------- light theme: flip the dark panels, keep the game-coloured pieces as they are ---------- */
+
 body.light { background: #e9e4dc; }
 body.light .sky { filter: brightness(1.6) saturate(.6); opacity: .55; }
 body.light .window { filter: invert(1) hue-rotate(180deg); background: rgba(0,0,0,.9); }
@@ -1088,25 +1001,24 @@ body.light .footer { color: rgba(0,0,0,.5); }
 .setupbox div { margin-top: 4px; }
 .subimg[hidden] { display: none; }
 
-/* ---------- since your last visit ---------- */
 .sincebar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 6px 4px; padding: 6px 10px; background: #0e2a1c; border: 1px solid #3fae6c; border-radius: 6px; color: #c8f5d8; font-size: 13px; }
 .sincebar span { flex: 1 1 260px; }
 .sincebar[hidden] { display: none; }
-/* ---------- title bar: install + offline ---------- */
+
 .titlebar .count { display: flex; gap: 8px; align-items: center; }
 .installbtn { font: 800 10px var(--font); padding: 2px 7px; border: 1px solid #444; border-radius: 3px; background: linear-gradient(hsl(213, 85%, 85%), hsl(213, 60%, 70%)); color: #111; cursor: pointer; }
 .installbtn[hidden], .netbadge[hidden] { display: none; }
 .netbadge { font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 3px; background: #f0c040; color: #111; }
 .netbadge.off { background: #d23a3a; color: #fff; }
-/* ---------- jump-to-tier row (sticks to the top; tier bars stick just under it) ---------- */
+
 .tierjump { position: sticky; top: -8px; z-index: 5; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; padding: 5px 6px; background: #111; border: 1px solid #333; border-radius: 6px; }
 .tierjump span { font-size: 11px; font-weight: 800; color: #888; margin-right: 4px; }
 .tierjump .tj { font: 800 12px var(--font); min-width: 34px; height: 24px; border: 1px solid #888; border-radius: 4px; background: var(--bar); color: #111; cursor: pointer; }
 .tierjump .tj.done { background: linear-gradient(#fff6c8, #ffd94a); }
 #grid.hasjump .tier-head { top: 30px; }
-/* ---------- text size ---------- */
+
 .pda { zoom: var(--uiz, 1); }
-/* ---------- colour-blind friendly marks ---------- */
+
 body.cb .tile:not(.locked), body.cb .card:not(.missing), body.cb .doc:not(.missing) { position: relative; }
 body.cb .tile:not(.locked)::before, body.cb .card:not(.missing)::before, body.cb .doc:not(.missing)::before {
   content: "✓"; position: absolute; top: 5px; left: 5px; z-index: 4; width: 22px; height: 22px; display: grid; place-items: center;
@@ -1115,16 +1027,13 @@ body.cb .tile.locked, body.cb .card.missing, body.cb .doc.missing { background-i
 body.cb .tier-head.complete .tier-btn::after { content: "  ✓ DONE"; }
 body.cb .cat.complete .cl::after, body.cb .subtab.complete::after { content: " ✓"; }
 body.cb .tierjump .tj.done::after { content: "✓"; }
-/* ---------- swipe feedback ---------- */
+
 @keyframes slideL { from { transform: translateX(28px); opacity: .5; } to { transform: none; opacity: 1; } }
 @keyframes slideR { from { transform: translateX(-28px); opacity: .5; } to { transform: none; opacity: 1; } }
 #screen.slide-l { animation: slideL .18s ease-out; }
 #screen.slide-r { animation: slideR .18s ease-out; }
 @media (prefers-reduced-motion: reduce) { #screen.slide-l, #screen.slide-r { animation: none; } }
 
-/* ---------- hovering, like the game's PDA ----------
-   Categories: the hovered one widens to fill the column, gets a bit taller with bigger text, and pushes its
-   neighbours aside (smaller than the selected one). Tiles and cards: grow slightly and sit on top, no colour change. */
 @media (hover: hover) {
   .cat:hover { filter: none; }
   .cat:not([aria-selected="true"]):hover { margin: 0 -2px; height: 61px; --cs: 1.1; border-color: #d8d04a; z-index: 2; }
@@ -1140,14 +1049,13 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 }
 .tile:active, .card:active, .doc:active { transform: scale(.97); }
 
-/* ---------- site notice from the admins ---------- */
 .noticebar { display: flex; gap: 8px; align-items: center; margin: 0 6px 4px; padding: 7px 10px; border-radius: 6px; font-size: 14px; border: 1px solid; }
 .noticebar span { flex: 1; }
 .noticebar[hidden] { display: none; }
 .noticebar.info { background: #0e1e33; border-color: #4f8fe0; color: #d4e6ff; }
 .noticebar.update { background: #0e2a1c; border-color: #3fae6c; color: #c8f5d8; }
 .noticebar.warn { background: #3a2a06; border-color: #d0a030; color: #ffe2a0; }
-/* ---------- damage tab + ammo editor ---------- */
+
 .dnote { margin-top: 4px; font-size: 12px; }
 .aed { color: #ffd23a; cursor: help; }
 .ammogrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px 10px; }
@@ -1155,7 +1063,6 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .ammogrid input.changed { border-color: #ffd23a; box-shadow: 0 0 0 1px #ffd23a; }
 .statsbox div { margin-top: 4px; }
 
-/* ---------- move to another device ---------- */
 .xfer { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .xcode { font: 800 30px var(--font); letter-spacing: .12em; color: #fff; background: #111; border: 1px solid #666; border-radius: 6px; padding: 4px 14px; }
 .xqr { background: #fff; padding: 8px; border-radius: 6px; line-height: 0; }
@@ -1164,7 +1071,6 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 #xferdlg[hidden] { display: none; }
 .xqr svg { width: 168px; height: 168px; display: block; }
 
-/* ---------- page transition (old page out to the right, new page in from the left) ---------- */
 .window { position: relative; }
 .pg-ghost { position: absolute; z-index: 5; pointer-events: none; margin: 0; box-sizing: border-box; }
 .pg-ghost.pg-out { animation: pgOut .13s cubic-bezier(.5, 0, 1, .6) forwards; }
@@ -1173,7 +1079,6 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 @keyframes pgIn { from { transform: translateX(-105%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pg-ghost { display: none; } #screen.pg-in { animation: none; } }
 
-/* damage calculator: share / compare / best ammo */
 .dtools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .dtools .mini-btn.on { background: #4a2a2a; border-color: #ff7a7a; color: #ffd0d0; }
 .dgrid2 { grid-template-columns: 1fr 1fr; }
@@ -1185,3 +1090,15 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .ammotab tr.best td { color: #c9f5cf; }
 .ammotab tr[data-dmgammo] { cursor: pointer; }
 @media (max-width: 1000px) { .dgrid2 { grid-template-columns: 1fr; } }
+
+.boot { height: 100%; min-height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #d8d8d8; letter-spacing: 2px; }
+.boot-t { font-size: 28px; font-weight: 800; }
+.boot-bar { width: min(320px, 70%); height: 10px; border: 1px solid #8a8a8a; overflow: hidden; }
+.boot-bar i { display: block; height: 100%; width: 35%; background: #d8d8d8; animation: bootbar 1.1s ease-in-out infinite; }
+.boot-s { font-size: 12px; color: #9a9a9a; animation: bootblink 1s steps(2) infinite; }
+@keyframes bootbar { from { transform: translateX(-110%); } to { transform: translateX(300%); } }
+@keyframes bootblink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .boot-bar i, .boot-s { animation: none; } }
+.updbar { padding: 6px 10px; background: #1f2a1f; border-bottom: 1px solid #5ccf6b; color: #c9f5cf; font-size: 13px; }
+.updbar[hidden] { display: none; }
+.updbar button { margin-left: 8px; }
