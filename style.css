@@ -1121,3 +1121,21 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 #screen.slide-l { animation: slideL .18s ease-out; }
 #screen.slide-r { animation: slideR .18s ease-out; }
 @media (prefers-reduced-motion: reduce) { #screen.slide-l, #screen.slide-r { animation: none; } }
+
+/* ---------- hovering, like the game's PDA ----------
+   Categories: the hovered one widens to fill the column, gets a bit taller with bigger text, and pushes its
+   neighbours aside (smaller than the selected one). Tiles and cards: grow slightly and sit on top, no colour change. */
+@media (hover: hover) {
+  .cat:hover { filter: none; }
+  .cat:not([aria-selected="true"]):hover { margin: 0 -2px; height: 61px; --cs: 1.1; border-color: #d8d04a; z-index: 2; }
+  .tile:hover, .card:hover, .doc:hover { filter: none; transform: scale(1.035); z-index: 3; }
+  .tile:hover .tname { text-shadow: var(--outline), 0 0 1px rgba(0,0,0,.3); }
+  .card, .doc { transition: transform .08s; }
+  .tab:hover { filter: none; transform: scale(1.025); z-index: 2; }
+  .tab { transition: transform .08s; }
+  .subtab:hover { filter: brightness(1.12); }
+}
+@media (hover: hover) and (max-width: 1000px) {
+  .cat:not([aria-selected="true"]):hover { --cs: .9; height: 52px; }
+}
+.tile:active, .card:active, .doc:active { transform: scale(.97); }
