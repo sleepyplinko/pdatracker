@@ -2326,9 +2326,35 @@
   }
   let admStats = null;
   function testingHTML() {
-    return `<details class="setupbox"><summary><b>TESTING</b> </summary>
+    return `<details class="setupbox" data-admtest${adm.testOpen ? " open" : ""}><summary><b>TESTING</b> </summary>
       <div class="btnrow"><button class="mini-btn" data-admboot="0">PLAY BOOT-UP SCREEN</button><button class="mini-btn" data-admboot="3000">PLAY AS A SLOW LOAD (3 S)</button><button class="mini-btn" data-admboot="8000">PLAY AS A VERY SLOW LOAD (8 S)</button></div>
-      <p class="dim">Plays even if turned off in SETTINGS. Slow loads wait first, like a bad connection.</p></details>`;
+      <p class="dim">Plays even if turned off in SETTINGS. Slow loads wait first, like a bad connection.</p>
+      <h4 class="admh4">DISCORD PREVIEW</h4>
+      ${pickerHTML("admprev", { placeholder: adm.prev && adm.prev.label ? `${adm.prev.label}  (type to change)` : "Type an entry, or pick Main site…", onPick: v => loadPreview(v),
+        items: [{ v: "", label: "Main site", group: "" }, ...entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }))] })}
+      ${adm.prev ? previewHTML(adm.prev) : `<p class="dim">Shows what Discord will show, from the live preview files. New cards appear after the daily update.</p>`}</details>`;
+  }
+  document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches("[data-admtest]")) adm.testOpen = e.target.open; }, true);
+  async function loadPreview(id) {
+    const e = id && byId.get(id);
+    const url = id ? entryURL(id) : ROOT;
+    adm.prev = { label: e ? e.name : "Main site", url, loading: true };
+    keepScroll(render);
+    try {
+      const r = await fetch(url + (url.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status === 404 ? "No preview yet. It's made in the next daily update." : "Couldn't load it (" + r.status + ").");
+      const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+      const m = k => { const el = doc.querySelector(`meta[property="${k}"], meta[name="${k}"]`); return el ? el.getAttribute("content") : ""; };
+      if (!m("og:title")) throw new Error("No preview yet. It's made in the next daily update.");
+      adm.prev = { label: adm.prev.label, url, site: m("og:site_name"), title: m("og:title"), desc: m("og:description"), img: m("og:image"), color: (doc.querySelector('meta[name="theme-color"]') || {}).content || "#202225", big: m("twitter:card") === "summary_large_image" };
+    } catch (err) { adm.prev = { label: adm.prev.label, url, err: err.message || "Couldn't load it." }; }
+    if (ui.tab === "admin") keepScroll(render);
+  }
+  function previewHTML(p) {
+    if (p.loading) return '<p class="dim">Loading…</p>';
+    if (p.err) return `<p class="dim">${esc(p.err)}</p>`;
+    const img = p.img ? p.img + (p.img.includes("?") ? "&" : "?") + "t=" + Date.now() : "";
+    return `<div class="dcembed" style="--dc:${esc(p.color)}"><div class="dcsite">${esc(p.site)}</div><a class="dctitle" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.title)}</a>${p.desc ? `<div class="dcdesc">${esc(p.desc)}</div>` : ""}${img ? `<img class="dcimg${p.big ? "" : " small"}" src="${esc(img)}" alt="">` : ""}</div>`;
   }
   function statsHTML() {
     if (admStats === null) { admStats = {}; api("GET", "/api/admin/stats").then(([st, r]) => { admStats = st === 200 ? r : { err: 1 }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
