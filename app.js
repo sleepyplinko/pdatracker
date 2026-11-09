@@ -28,7 +28,7 @@
   const REPO = "https://github.com/sleepyplinko/pdatracker";
 
   let found    = load(KEY_FOUND, {});
-  let settings = Object.assign({ lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
+  let settings = Object.assign({ pageAnim: true, lockedNames: false, missingPics: true, hideFound: false, confirmUnmark: false, crt: false, sound: true, hoverSound: true, volume: 70 }, load(KEY_SET, {}));
   const savedUI = load(KEY_UI, {});
   let ui       = Object.assign({ tab: "tools", cat: 0, bio: 0, docs: 0, view: "grid", filter: "all", stype: "all", btab: "desc",
                                 sort: "found", compact: false, hideDone: false, tmin: "", tmax: "", tierMin: "", tsort: "", cal: "", cmp: [], scroll: {}, detail: null }, savedUI);
@@ -540,7 +540,33 @@
   const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : ui.tab === "documents" ? ui.docs : ""}`;
   let keeping = false;
   let lastVk = null;
+  /* page transition like the game's PDA: the old page slides off to the right, the new one slides in from the left */
+  const navSig = () => query ? "search" : sinceView ? "since" : `${ui.tab}|${detail ? detail.type + ":" + detail.id : ""}`;
+  let lastNav = null;
+  function startTransition() {
+    if (settings.pageAnim === false || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || !screen.firstChild) return null;
+    const ghost = screen.cloneNode(true);
+    ghost.removeAttribute("id"); ghost.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+    ghost.classList.add("pg-ghost"); ghost.setAttribute("aria-hidden", "true"); ghost.inert = true;
+    Object.assign(ghost.style, { top: screen.offsetTop + "px", left: screen.offsetLeft + "px", width: screen.offsetWidth + "px", height: screen.offsetHeight + "px" });
+    const from = [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop);
+    screen.parentNode.insertBefore(ghost, screen);
+    [...ghost.querySelectorAll(SCROLLERS)].forEach((el, i) => { if (from[i]) el.scrollTop = from[i]; });
+    return ghost;
+  }
+  function finishTransition(ghost) {
+    if (!ghost) return;
+    screen.classList.remove("pg-in"); void screen.offsetWidth; screen.classList.add("pg-in");
+    ghost.classList.add("pg-out");
+    setTimeout(() => { ghost.remove(); screen.classList.remove("pg-in"); }, 340);
+  }
   function render() {
+    const nav = navSig(), ghost = lastNav !== null && nav !== lastNav && !keeping ? startTransition() : null;
+    lastNav = nav;
+    renderAndRestore();
+    finishTransition(ghost);
+  }
+  function renderAndRestore() {
     // re-drawing the same page (marking, favouriting, switching notes...) keeps every scroll position
     const vkBefore = lastVk, wy = window.scrollY;
     const same = vkBefore !== null && vkBefore === viewKey();
@@ -2904,6 +2930,7 @@
         ${sw("missingPics", "Show pictures of people you haven't found yet?")}
         ${sw("crt", "Old monitor (CRT) effect?")}
         ${sw("light", "Light theme? (easier to read in daylight)")}
+        ${sw("pageAnim", "Slide between pages, like the in-game PDA?")}
         <div class="srow"><input type="range" id="tscale" min="80" max="140" step="10" value="${settings.textScale || 100}" aria-label="Text size"><span>Text size: <b id="tscalev">${settings.textScale || 100}</b>%</span></div>
         ${sw("cbMode", "Colour-blind friendly marks? (adds a clear ✓ to everything found and DONE to finished tiers, so nothing relies on colour)")}
         <div class="srow dim">To hide found or missing entries, use the ALL / MISSING / FOUND buttons next to the search bar.</div>

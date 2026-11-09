@@ -1163,3 +1163,12 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 #xferdlg { position: fixed; inset: 0; z-index: 210; padding: 16px; background: rgba(0,0,0,.6); display: grid; place-items: center; }
 #xferdlg[hidden] { display: none; }
 .xqr svg { width: 168px; height: 168px; display: block; }
+
+/* ---------- page transition (old page out to the right, new page in from the left) ---------- */
+.window { position: relative; }
+.pg-ghost { position: absolute; z-index: 5; pointer-events: none; margin: 0; box-sizing: border-box; }
+.pg-ghost.pg-out { animation: pgOut .13s cubic-bezier(.5, 0, 1, .6) forwards; }
+#screen.pg-in { animation: pgIn .26s cubic-bezier(.15, .85, .25, 1) .05s both; }
+@keyframes pgOut { to { transform: translateX(105%); } }
+@keyframes pgIn { from { transform: translateX(-105%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pg-ghost { display: none; } #screen.pg-in { animation: none; } }
