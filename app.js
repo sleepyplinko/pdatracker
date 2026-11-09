@@ -2481,37 +2481,16 @@
   };
   const near = (sel, up) => () => { const el = screen.querySelector(sel) || document.querySelector(sel); return el && up ? el.closest(up) : el; };
   const TOUR = [
-    { h: "Welcome to PDA.exe", p: "A checklist for everything in the Once A Normal City PDA: weapons, people and documents. This tour points at the real buttons as it goes. It doesn't change anything you've marked.<br><br>Use <b>NEXT</b> and <b>BACK</b> (or the arrow keys). <b>Esc</b> leaves the tour any time." },
-    { sec: "TABS", h: "Checklist tabs", tab: "tools", el: () => $("#tabs"), p: "<b>TOOLS</b> is every weapon, item and piece of gear. <b>BIOGRAPHY</b> is people, <b>DOCUMENTS</b> is locations and notes. <b>WHAT'S LEFT</b>, <b>LOADOUT</b> and <b>DAMAGE</b> are helpers. Scroll the bar sideways on small screens." },
-    { sec: "TABS", h: "Everything else", tab: "tools", el: () => $("#tabs2"), p: "<b>PROFILE</b> (your progress), <b>CLOUD</b> (backups and moving devices), <b>MANUAL</b> (help), <b>SETTINGS</b> and <b>SUBMIT</b> (send in missing info)." },
-    { sec: "TOOLS", h: "Categories", tab: "tools", el: near(".cat", ".cats, .catlist, nav, aside, div"), p: "Pick a category, just like in the game. Each shows how many you've found. <b>CALIBERS</b> at the bottom groups guns by the ammo they take." },
-    { sec: "TOOLS", h: "Mark what you've found", tab: "tools", el: near(".tile"), force: true, p: "Press the <b>&#9733;&#xFE0E; star</b> in a tile's corner to mark it found; press again to unmark. <b>Shift-click</b> a second star to mark everything in between. Click the tile itself to open its page.<br><br>On a phone, <b>swipe right</b> across a tile to mark it and <b>left</b> to unmark." },
-    { sec: "TOOLS", h: "A whole tier at once", tab: "tools", el: near(".tier-head.clickable"), p: "Click anywhere on a <b>TIER</b> bar to mark every entry in it. It asks first. Click a finished bar to lock it all again." },
-    { sec: "TOOLS", h: "Sort, filter and jump", tab: "tools", el: near("[data-tsort]", "div"), p: "Sort a category by any stat (RPM, strength, weight...), show only one <b>caliber</b> or tier, and use <b>T1–T5</b> to jump straight to a tier." },
-    { sec: "SEARCH", h: "Search", tab: "tools", el: () => $("#search"), p: "Finds weapons, people and documents, and forgives typos (\"glok\", \"kriss vectr\") and missing dots (\"556\"). Press <b>ENTER</b> to mark the top result found without leaving the page, <b>Shift+ENTER</b> to open it. Press <b>/</b> anywhere to jump here." },
-    { sec: "SEARCH", h: "Views and filters", tab: "tools", el: () => $(".viewtools"), p: "Grid like the game, a <b>checklist</b> view, or a <b>compact</b> grid. <b>HIDE DONE</b> hides finished tiers and tabs. <b>ALL / MISSING / FOUND</b> filters every page." },
-    { sec: "ENTRY PAGE", h: "An entry's page", detail: true, el: () => $("#star"), p: "Every weapon, person and document has a page with the in-game stats and comment. Hover a stat name to see what it means. The big star marks it found." },
-    { sec: "ENTRY PAGE", h: "Keep going", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>&#9733;&#xFE0E; FOUND + NEXT</b> marks this one and opens the next one you're missing (key: <b>N</b>). <b>NEXT MISSING</b> skips ahead without marking." },
-    { sec: "ENTRY PAGE", h: "More options", detail: true, el: () => { const d = screen.querySelector("summary") && screen.querySelector("summary").closest("details"); if (!d) return null; d.open = true; return d.querySelector(":scope > :not(summary)") || d; }, p: "<b>DAMAGE CALC</b> opens the damage calculator with this weapon. <b>COMPARE +</b> adds it to a side-by-side comparison. <b>LINK</b> copies a link that shows the entry's name and picture when pasted in Discord. <b>FIX?</b> sends a correction." },
-    { sec: "ENTRY PAGE", h: "Favourites", detail: true, el: near(".favbtn"), p: "The <b>&#9829;&#xFE0E;</b> adds a page to <b>USER FAVOURITES</b> on your Profile." },
-    { sec: "ENTRY PAGE", h: "Times found", detail: true, el: near("[data-cnt='1']", "div"), p: "Count how many times you've found something with <b>+</b> and <b>−</b>." },
-    { sec: "ENTRY PAGE", h: "Your notes", detail: true, el: near("[data-btab='notes']"), p: "<b>My Notes</b> is a private notepad on every page, saved in your browser." },
-    { sec: "ENTRY PAGE", h: "Going back", detail: true, el: () => $("#ret"), p: "<b>RETURN</b> (or <b>Esc</b>) goes back to the list, right where you were." },
-    { sec: "BIOGRAPHY", h: "People", tab: "biography", el: near(".subtabs"), p: "People are grouped like in the game. Clicking the tab you're already on marks the whole group (it asks first). <b>ALL</b> shows everyone." },
-    { sec: "BIOGRAPHY", h: "Cards with variants", tab: "biography", el: near(".card"), force: true, p: "A card with <b>×4</b> holds several variants that count as one find. Open it and flip between them with the tabs at the bottom. A person's page also has <b>MARK THEIR GEAR FOUND</b> for the weapon and magazine they carried." },
-    { sec: "WHAT'S LEFT", h: "What's left", tab: "missing", el: near("[data-random]", "div"), p: "Everything you're still missing in one list, with <b>ALMOST DONE</b> categories at the top. <b>&#9860;&#xFE0E; RANDOM</b> opens something you haven't found (key: <b>R</b>). <b>COPY AS TEXT</b> and <b>PRINT</b> make a list to take with you." },
-    { sec: "LOADOUT", h: "Loadout planner", tab: "loadout", el: near("[data-pk='load']"), p: "Type to add weapons, gear and ammo and see how much carry weight you're using. Gear that adds carry weight raises the limit." },
-    { sec: "DAMAGE", h: "Damage calculator", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, its ammo and a target to see damage per hit, <b>hits to kill</b> and time to kill, with supershield, shield, superarmor and defense worked in. Ammo data is from the OANC Ammo Chart by <b>gluehesthar</b>." },
-    { sec: "DAMAGE", h: "Compare and share", tab: "damage", el: () => $(".dtools"), p: "<b>COMPARE TWO LOADOUTS</b> puts a second weapon next to the first and says which wins. Below the result, the ammo table ranks the <b>best ammo</b> for your target. <b>COPY LINK TO THIS</b> shares your exact setup." },
-    { sec: "PROFILE", h: "Profile", tab: "profile", el: near("#profSel", ".rows"), p: "<b>Save profiles</b> keep separate checklists, like one for an alt account. Your Profile also shows progress per section, a progress graph, favourites, and everything you found <b>this run</b> (COPY LIST, NEW RUN)." },
-    { sec: "CLOUD", h: "Back it up", tab: "cloud", el: near("#exp", "div"), p: "Your progress lives only in this browser. <b>DOWNLOAD BACKUP</b> saves a file you can upload again later. A reminder bar shows up after you've made a lot of changes." },
-    { sec: "CLOUD", h: "Move to another device", tab: "cloud", el: near("#makeXfer", "div"), p: "<b>MAKE TRANSFER LINK</b> gives you a link, a code and a QR code. Open it on your other phone or computer and choose <b>REPLACE</b> or <b>COMBINE</b>. Links last 24 hours." },
-    { sec: "CLOUD", h: "Mark lots at once", tab: "cloud", el: () => $("#ocrDrop"), p: "Drop or paste <b>screenshots of your in-game PDA</b> and it marks what it can read (you check the list first). Further down you can paste a list of names to mark them all." },
-    { sec: "CLOUD", h: "Found by %", tab: "cloud", el: near("#anonShare", "label, div"), p: "Pages show how many players found each entry. Your finds are shared anonymously to work that out; switch it off here if you'd rather not." },
-    { sec: "SUBMIT", h: "Send in info", tab: "community", el: near("[data-contrib]", "form"), p: "Know a missing stat, description or picture? Send it here, no account needed. This page shows whether it was added. <b>HELP WANTED</b> below lists everything the site is still missing." },
-    { sec: "SETTINGS", h: "Make it yours", tab: "settings", el: near("[data-set='pageAnim']", ".srow"), p: "Sounds and volume, the page slide, light theme, old-monitor <b>CRT</b> effect, text size, colour-blind friendly marks, asking before unmarking, and <b>keyboard mode</b> (press <b>?</b> for every key)." },
-    { sec: "SETTINGS", h: "See this again", tab: "settings", el: () => $("#tourAgain"), p: "Replay this tour here any time. <b>INSTALL AS AN APP</b> puts PDA.exe on your home screen, and it works offline." },
-    { h: "That's everything", p: "Made a mistake? <b>Ctrl+Z</b> or the <b>UNDO</b> on the message at the bottom puts it back. The <b>MANUAL</b> tab answers the rest. Happy hunting!" }
+    { h: "Welcome to PDA.exe", p: "A checklist for the Once A Normal City PDA. Quick tour: <b>NEXT</b> to continue, <b>Esc</b> to leave." },
+    { h: "Sections", tab: "tools", el: () => $("#tabs"), p: "Weapons in <b>TOOLS</b>, people in <b>BIOGRAPHY</b>, locations and notes in <b>DOCUMENTS</b>." },
+    { h: "Mark it found", tab: "tools", el: near(".tile"), force: true, p: "Press the <b>&#9733;&#xFE0E;</b> on a tile. On a phone you can also swipe right across it. Click the tile to see its stats." },
+    { h: "Whole tier", tab: "tools", el: near(".tier-head.clickable"), p: "Click a <b>TIER</b> bar to mark everything in it." },
+    { h: "Search", tab: "tools", el: () => $("#search"), p: "Type a name and press <b>ENTER</b> to mark it found." },
+    { h: "On a page", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>FOUND + NEXT</b> marks this and opens the next one you're missing." },
+    { h: "What's left", tab: "missing", el: near("[data-random]", "div"), p: "Everything you still need, in one list." },
+    { h: "Damage", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, ammo and target to see hits to kill." },
+    { h: "Save your progress", tab: "cloud", el: near("#exp", "div"), p: "Progress is stored in this browser only. Download a backup, or use a transfer link to move it to another device." },
+    { h: "Done", p: "<b>Ctrl+Z</b> undoes a mistake. Replay this tour in <b>SETTINGS</b>." }
   ];
   let tourAt = -1, tourSnap = null, tourSeq = 0;
   const tourOpen = () => tourAt >= 0;
@@ -3014,7 +2993,7 @@
         ${note("Safety nets for marking things.")}
         ${sw("confirmUnmark", "Ask before unmarking something?")}
         ${sw("kbMode", "Keyboard mode? (always shows where you are, keeps your place; arrows move, SPACE marks, [ ] switch category, ? lists keys)")}
-        <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">A guided walkthrough that points out every feature.</span></div>
+        <div class="srow"><button class="pbtn" id="tourAgain">SHOW THE TOUR AGAIN</button><span class="dim">A quick walkthrough of the basics.</span></div>
         <h3>App</h3>
         ${note("Put PDA.exe on your home screen or desktop. It opens in its own window and works offline.")}
         <div class="srow">${isStandalone() ? '<span class="dim">You\'re using the installed app.</span>' : `<button class="pbtn" data-install>INSTALL AS AN APP</button><span class="dim">${installEvt ? "Your browser supports one-click install." : isIOS ? "On iPhone/iPad: Safari → Share → Add to Home Screen." : "If nothing happens, use your browser's menu: Install app / Add to Home screen."}</span>`}</div>
