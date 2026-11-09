@@ -13,7 +13,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - When given a video, pull the data out frame by frame (crop the stats/comment panels at full resolution) instead of guessing.
 - Actually implement and push changes; don't just describe them or hand over files. Test in a browser (Playwright) before saying something works. I can't reach the live site from the sandbox, so say so instead of claiming it's live-verified.
 - Every push: bump `pda-tracker-vN` in `sw.js`, and add a changelog line at the top of the newest date block in `changelog.js`.
-- After changing names, pictures, stats, comments or descriptions in data: run `node tools/previews.js` to regenerate `e/<hash>/` link-preview pages.
+- Previews regenerate on GitHub (daily + on data pushes); locally run `node tools/previews.js` if needed. Owner wants the site to look good when posted on Discord.
 - Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
 - Site text (manual, changelog, help notes): incredibly short and simple. Changelog items are a few words each.
@@ -45,7 +45,7 @@ Read this first after any break or conversation summary. Update it whenever some
 | `style.css`, `index.html` | Look and page shell; background `images/bg/patio.jpg` |
 | `qr.js` | QR generator (`window.PDA_QR(text)` → SVG) for transfer codes |
 | `sw.js` | Offline cache, cache-first (instant repeat loads). Page auto-reloads when a new version activates (or shows an UPDATED bar if the user is mid-use). Bump version every push |
-| `tools/previews.js` | Generates `e/<hash>/index.html`: OG/Discord previews per entry (name, picture, stats/comment), JS-redirect to `#e=`. `404.html` covers entries without a page |
+| `tools/previews.js` | Generates `e/<hash>/index.html` + `card.jpg` (1200×630 PDA-style card: picture, name, key stats in game colours, comment/description) for Discord large-image previews; applies live admin overrides from the Worker (`NO_OVERRIDES=1` to skip); only redraws changed entries (`e/manifest.json`, bump `VERSION` to redraw all). `.github/workflows/previews.yml` runs it daily, on data pushes, and by hand (Actions → Discord previews → Run). `404.html` covers entries without a page |
 | `backend/` | Cloudflare Worker + D1 (`worker.js`, schema updates, README with setup steps 1–8) |
 
 ## Features (as of 2026-11-09)

@@ -1,0 +1,29 @@
+name: Discord previews
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["data.js", "descriptions.js", "images/**", "tools/previews.js"]
+permissions:
+  contents: write
+concurrency:
+  group: previews
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i --no-save --no-package-lock playwright@1.48.2 && npx playwright install --with-deps chromium
+      - run: node tools/previews.js
+      - run: |
+          git add -A e
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Update Discord previews"
+          git pull --rebase origin main
+          git push
