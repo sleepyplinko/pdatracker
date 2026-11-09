@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Security Bot C has a new animated portrait",
     "DAMAGE: COMPARE TWO LOADOUTS puts a second weapon and ammo next to the first against the same target, and says which one wins",
     "DAMAGE: the ammo table now ranks the best ammo for your target first (fewest hits to kill), with time to kill, and the result suggests a better ammo when there is one",
     "DAMAGE: COPY LINK TO THIS shares the calculator set up exactly as you have it",

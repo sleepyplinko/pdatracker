@@ -4170,7 +4170,7 @@ const PDA_DATA = {
         [W("H&K MP7A1"), A("4.6x30mm JSP SX")]), { img: "images/people/security-bot-b.webp" }),
       Object.assign(P("Security Bot C", { Health: 125, Speed: 1, Defense: 50, Shield: 50, Supershield: 5, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 25 },
         { "Pre-Aim": 45, Strength: "0.4x", "Aim Time Multiplier": "1.25x", "Attack Slowdown": "0.5x" },
-        [W("AK12"), A("5.45x39mm BP gs"), M("40rnd AK Mag")]), { imgs: ["images/people/security-bot-c-anim.webp", "images/people/security-bot-c.webp"] }),
+        [W("AK12"), A("5.45x39mm BP gs"), M("40rnd AK Mag")]), { imgs: ["images/people/security-bot-c-anim2.webp", "images/people/security-bot-c.webp"] }),
       Object.assign(P("Security Bot D", { Health: 125, Speed: 1, Defense: 50, Shield: 50, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 10 },
         { Suppressor: "true", "Pre-Aim": 35, Strength: "0.4x", "Aim Time Multiplier": "1.35x", "Aim Slowdown": "0.75x", "Attack Slowdown": "0.25x" },
         [W("AAC HONEY BADGER"), A(".300 Blackout BCP FMJ"), M("30rnd GEN M3 STANAG")]), { img: "images/people/security-bot-d.webp" }),
