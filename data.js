@@ -4020,8 +4020,27 @@ const PDA_DATA = {
         [W("KONSTANTINOV"), A("7.62x39mm MAI AP"), M("73rnd ProMag Drum")]), { img: "images/people/benjamin-tarkovsky.webp" })
     ]},
     { name: "Robot", color: "#4a63ff", bg: "#0b0f2a", entries: [
-      ["Security Bot A", { img: "images/people/security-bot-a.webp" }], ["Security Bot B", { img: "images/people/security-bot-b.webp" }], ["Security Bot C", { imgs: ["images/people/security-bot-c-anim.webp", "images/people/security-bot-c.webp"] }], ["Security Bot D", { img: "images/people/security-bot-d.webp" }],
-      ["Security Bot E", { img: "images/people/security-bot-e.webp" }], ["VLTS Attendant", { img: "images/people/vlts-attendant.webp" }], "Fabricated Dummy"
+      Object.assign(P("Security Bot A", { Health: 100, Speed: 1, Defense: 50, Shield: 25, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 10 },
+        { "Pre-Aim": 40, Strength: "0.45x", "Aim Time Multiplier": "1.5x", "Attack Slowdown": "0x" },
+        [W("RUGER P345"), A(".45ACP Match FMJ"), M("8rnd P345 Mag")]), { img: "images/people/security-bot-a.webp" }),
+      Object.assign(P("Security Bot B", { Health: 100, Speed: 0.9, Defense: 50, Shield: 50, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 15 },
+        { "Pre-Aim": 35, Strength: "0.4x", "Aim Time Multiplier": "1.25x", "Attack Slowdown": "0.5x" },
+        [W("H&K MP7A1"), A("4.6x30mm JSP SX")]), { img: "images/people/security-bot-b.webp" }),
+      Object.assign(P("Security Bot C", { Health: 125, Speed: 1, Defense: 50, Shield: 50, Supershield: 5, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 25 },
+        { "Pre-Aim": 45, Strength: "0.4x", "Aim Time Multiplier": "1.25x", "Attack Slowdown": "0.5x" },
+        [W("AK12"), A("5.45x39mm BP gs"), M("40rnd AK Mag")]), { imgs: ["images/people/security-bot-c-anim.webp", "images/people/security-bot-c.webp"] }),
+      Object.assign(P("Security Bot D", { Health: 125, Speed: 1, Defense: 50, Shield: 50, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 10 },
+        { Suppressor: "true", "Pre-Aim": 35, Strength: "0.4x", "Aim Time Multiplier": "1.35x", "Aim Slowdown": "0.75x", "Attack Slowdown": "0.25x" },
+        [W("AAC HONEY BADGER"), A(".300 Blackout BCP FMJ"), M("30rnd GEN M3 STANAG")]), { img: "images/people/security-bot-d.webp" }),
+      Object.assign(P("Security Bot E", { Health: 200, Speed: 1.2, Defense: 50, Shield: 125, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 20 },
+        { "Pre-Aim": 35, Strength: "0.45x", "Aim Time Multiplier": "1.5x", "Attack Slowdown": "0x" },
+        [W("AAC HONEY BADGER"), A(".300 Blackout BCP FMJ"), M("30rnd GEN M3 STANAG")]), { img: "images/people/security-bot-e.webp" }),
+      Object.assign(P("VLTS Attendant", { Health: 200, Speed: 1, Defense: 50, Supershield: 2, "Super Armour": 20, "Bleed Resistance": 100, "Explosive Resistance": 30 },
+        { "Pre-Aim": 40, Strength: "0.4x", "Aim Time Multiplier": "1.35x", "Aim Slowdown": "0.75x", "Attack Slowdown": "0.25x" },
+        [W("MARE'S LEG (Random)"), A(".410 Dove"), W(".44 MAGNUM (Random)"), A(".44 LFN"), W("DEAGLE .44 (Random)"), A(".44 LFN")]), { img: "images/people/vlts-attendant.webp" }),
+      P("Fabricated Dummy", { Health: 35, Speed: 1 },
+        { Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "1.75x", "Aim Slowdown": "0.3x" },
+        [])
     ]},
     { name: "Animals", color: "#d6ef5a", bg: "#1e2509", entries: [
       Object.assign(P("Rat", { Health: 5, Speed: 3.1 },
@@ -4037,10 +4056,26 @@ const PDA_DATA = {
         [W("WyrmlingBite")]), { img: "images/people/wyrmling.webp" }),
       P("Hellbender", { Health: 150, Speed: 0.5, "Super Armour": -30, "Burn Resistance": -10 },
         { Strength: "0.5x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "1.4x", "Attack Slowdown": "0.3x" },
-        [W("Spinal-lance")])
+        [W("Spinal-lance")]),
+      Object.assign(P("Bonecrab", { Health: 500, Speed: 1.3, Defense: 75, Shield: 150, "Super Armour": 10, "Burn Resistance": 100 },
+        {},
+        [W("Crab's Claws")]), { img: "images/people/bonecrab.webp" })
     ]},
     { name: "Velris", color: "#e08a8a", bg: "#241010", entries: [
-      ["Velris Family", { img: "images/people/velris-family.webp" }]
+      Object.assign(G("Velris Family", [
+        P("Marcus Velris", { Health: 500, Speed: 1.2, Defense: 50, Shield: 75, Supershield: 2, "Burn Resistance": 60 },
+          { Suppressor: "true", Strength: "0.6x", "Aim Time Multiplier": "1.7x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "0.425x" },
+          [W("Bearded Axe"), W("DEVILSPAWN-BFC"), A("10x25mm FMJ"), M("30rnd Augmented Uzi Mag")]),
+        P("Lena Velris", { Health: 120, Speed: 0.9, Defense: 15, Shield: 50, "Burn Resistance": 60 },
+          { Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Reload Speed Multiplier": "1.5x", "Attack Slowdown": "0.8x" },
+          [W("MP-412 REX"), A(".357 HP")]),
+        P("Michael Velris", { Health: 100, Speed: 1.1, Shield: 50, "Burn Resistance": 60 },
+          { Strength: "0.2x", "Aim Time Multiplier": "2.35x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "0.3x" },
+          [W("Atuned Skewer")]),
+        P("Elvira Velris", { Health: 150, Speed: 1.4, Shield: 50, "Burn Resistance": 60 },
+          { "Pre-Aim": 40, Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Reload Speed Multiplier": "1.5x", "Attack Slowdown": "0.8x" },
+          [W("Dagger")])
+      ]), { img: "images/people/velris-family.webp" })
     ]},
     { name: "WC", color: "#9ad7ff", bg: "#0e1820", entries: [
       P("WC Emissary", { Health: 325, Speed: 1.6, Defense: 70, Shield: 400, Supershield: 2, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },

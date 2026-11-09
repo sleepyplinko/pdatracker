@@ -11,6 +11,10 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-08", items: [
+    "Stats and descriptions for all Security Bots, VLTS Attendant and Fabricated Dummy",
+    "New: Bonecrab (Hellion), with picture, stats and description",
+    "Velris Family split into Marcus, Lena, Michael and Elvira, each with stats",
+    "Gear no longer shows up as \"missing weight\" (gear has no weight in the game)",
     "Weapon and category hover sound pitched down to match the game",
     "Hovering works like the game: categories widen and push the others aside, tiles grow slightly",
     "Tony has his PDA photo",

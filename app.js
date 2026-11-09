@@ -2742,7 +2742,7 @@
     const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
     const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
-    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && e.stats && e.stats.WEIGHT == null);
+    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);   // gear has no weight in the game
     const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
     return [["UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
