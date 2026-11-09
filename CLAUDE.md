@@ -57,7 +57,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - SUBMIT: send info without an account (status via token), HELP WANTED lists, changelog.
 - ADMIN: review submissions, edit/add entries and ammo via overrides, notice bar, announcements, change history with undo, blocking, stats.
 - Loading: PDA-style boot screen in `#screen` until first render; sounds preload on first interaction; site preview image `images/og.jpg` (real screenshot).
-- Tour (`TOUR` in app.js): 31-step guided walkthrough that switches tabs, opens Glock 18 as the demo page and spotlights real elements (yellow box + dimmed page), arrow keys/Enter/Esc, restores the user's tab/page after, never marks anything. Auto-starts on a first visit; replay from SETTINGS. **When adding a feature, add or update a tour step.**
+- Tour (`TOUR` in app.js): 10 short steps on the basics only (owner wants it brief, no over-explaining, no minor features). Spotlights real elements, switches tabs, opens Glock 18 as demo, arrow keys/Enter/Esc, restores the user's place, never marks anything. Auto-starts on a first visit; replay from SETTINGS. Only add a step for a feature that's essential.
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 

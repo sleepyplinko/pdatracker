@@ -1,6 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
-    "New guided tour: it walks you through every tab and feature, pointing at the actual buttons (replay it in SETTINGS)",
+    "New guided tour that points at the actual buttons (replay it in SETTINGS)",
     "Faster loading: after your first visit the site opens almost instantly, even on slow connections, and updates itself when there's a new version",
     "A PDA boot screen shows while the site loads",
     "Links from LINK now show the entry's name, picture and stats when pasted in Discord",
