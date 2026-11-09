@@ -11,6 +11,7 @@
 
 const PDA_CHANGELOG = [
   { date: "2026-11-08", items: [
+    "Weapon and category hover sound pitched down to match the game",
     "Hovering works like the game: categories widen and push the others aside, tiles grow slightly",
     "Tony has his PDA photo",
   ]},

@@ -9,7 +9,7 @@
 
 const PDA_SOUNDS = {
   // ---- all sounds are from the game (sounds/game/) ----
-  hoverTool:   { file: "sounds/game/tool-hover.mp3",      volume: 1 },  // mouse onto a weapon / document tile
+  hoverTool:   { file: "sounds/game/tool-hover.mp3?v=2",      volume: 1 },  // mouse onto a weapon / document tile
   hoverPerson: { file: "sounds/game/person-hover.mp3",    volume: 1 },  // mouse onto a person card
   hoverTab:    { file: "sounds/game/hover-tab-list.mp3",  volume: 1 },  // mouse onto a tab, category or sub-tab
   switch:      { file: "sounds/game/category-switch.mp3", volume: 1 },  // picking a category or sub-tab
