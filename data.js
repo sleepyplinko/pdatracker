@@ -3896,9 +3896,9 @@ const PDA_DATA = {
           { "Pre-Aim": 90, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "2.5x" },
           [W("Pickaxe")])
       ]), { img: "images/people/miners.webp" }),
-      P("Tony", { Health: 220, Speed: 1.2, Defense: 40, "Super Armour": 12 },
+      Object.assign(P("Tony", { Health: 220, Speed: 1.2, Defense: 40, "Super Armour": 12 },
         { "Aim Time Multiplier": "1.25x", "Aim Slowdown": "1.25x" },
-        [W("Golf Club")]),
+        [W("Golf Club")]), { img: "images/people/tony.webp" }),
       Object.assign(G("Scavengers", [
         P("Artist",      { Health: 100, Speed: 1.3 }, STD, [WR("Electric Guitar")]),
         P("Chilly",      { Health: 100, Speed: 0.9 }, STD, WR("H&K MP5K", "MP-412 REX", "SKORPION", "SERBU SUPER SHORTY")),

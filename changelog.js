@@ -10,6 +10,9 @@
    ===================================================================== */
 
 const PDA_CHANGELOG = [
+  { date: "2026-11-08", items: [
+    "Tony has his PDA photo",
+  ]},
   { date: "2026-11-07", items: [
     "Security Bot C has an animated picture (the old photo is second)",
     "GIFs work as pictures for people and documents; Giphy and Imgur page links are turned into the GIF itself automatically",
