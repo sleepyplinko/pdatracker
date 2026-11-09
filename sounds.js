@@ -15,11 +15,11 @@ const PDA_SOUNDS = {
   switch:      { file: "sounds/game/category-switch.mp3", volume: 1 },  // picking a category or sub-tab
   transition:  { file: "sounds/game/transition.mp3",      volume: 1 },  // switching main tab (TOOLS, BIOGRAPHY, ...)
   open:        { file: "sounds/game/person-open.mp3",     volume: 1 },  // opening an entry's page
-  close:       { file: "sounds/game/person-close.mp3",    volume: 1 },  // leaving an entry's page
+  close:       { file: "sounds/game/bio-close.mp3?v=2",    volume: 1 },  // leaving an entry's page
   bioClose:    { file: "sounds/game/bio-close.mp3?v=2",       volume: 1 },  // leaving a BIOGRAPHY page (recorded in-game)
   pdaOpen:     { file: "sounds/game/category-switch.mp3", volume: 1 },  // the site starting up (same file as in the game)
   marked:      { file: "sounds/game/person-open.mp3",     volume: 1 },  // marking something as found
-  unmarked:    { file: "sounds/game/person-close.mp3",    volume: 1 },  // marking something as not found
+  unmarked:    { file: "sounds/game/bio-close.mp3?v=2",    volume: 1 },  // marking something as not found
   warn:        { file: "sounds/game/warning.mp3",         volume: 1 },  // "are you sure?" prompts and errors
   hover:       { file: "sounds/game/misc.mp3",            volume: 1 },  // mouse onto any other button
   click:       { file: "sounds/game/misc.mp3",            volume: 1 },  // ordinary buttons and toggles
