@@ -1529,7 +1529,7 @@
       const burstN = melee && mode.s.BURST === "YES" ? Math.max(1, xnum(mode.s["BURST AMOUNT"]) || 1) : 1;
       const sm = mode ? mode.s : {};
       const hasBurst = !melee && sm.BURST === "YES", hasAuto = sm.AUTO === "YES";
-      const useBurst = hasBurst && (!hasAuto || s.fire === "burst");
+      const useBurst = hasBurst;
       const bAmt = Math.max(1, Math.round(xnum(sm["BURST AMOUNT"]) || 1)), bDelay = Math.max(0, xnum(sm["BURST DELAY"]) || 0);
       const ttkOf = n => {
         if (!n) return null;
@@ -1558,7 +1558,6 @@
             items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier })))] })}
           ${X.gun ? `<button class="mini-btn" data-open-tool="${esc(X.gun.id)}">OPEN ${esc(X.gun.name.toUpperCase())}</button>` : ""}
           ${X.modes.length > 1 ? `<label>MODE <select data-dmg="${pfx}mode">${X.modes.map(m => opt(m.i, X.mode.i, m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))).join("")}</select></label>` : ""}
-          ${X.hasBurst && X.hasAuto ? `<label>FIRE <select data-dmg="${pfx}fire">${opt("auto", X.useBurst ? "burst" : "auto", "AUTO")}${opt("burst", X.useBurst ? "burst" : "auto", `BURST (${X.bAmt} shots, ${fmt2(X.bDelay)}s between)`)}</select></label>` : ""}
           ${X.melee ? `<p class="cat-note">Melee: uses the weapon's DAMAGE, with its DEFENSE BYPASS as defense penetration.</p>`
             : X.pool.length ? `<label>AMMO</label>${pickerHTML("dmgammo" + kB, { label: "Ammo", placeholder: X.ammo ? `${X.ammo.name}  (type to change)` : "Type an ammo name…", onPick: v => setDmg(pfx + "ammo", v), chips: true,
                 items: X.pool.map(a => ({ v: a.key, label: a.name, group: a.caliber, star: !!(X.ammo && a.key === X.ammo.key), sub: `${fmt2(a.base * (a.mult == null ? 1 : a.mult))} dmg${a.proj > 1 ? " ×" + a.proj : ""}${a.pen ? " · " + fmt2(a.pen * 100) + "% pen" : ""}` })) })}`
