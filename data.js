@@ -2168,7 +2168,24 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "SIG MCX-SPEAR",
+        ["SIG MCX-SPEAR", { stats: {
+          "CALIBER TYPE": "6.8x51mm",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1x",
+          "AIM TIME": "1.5",
+          "SWITCH TIME": "0.15s",
+          "RPM": "125",
+          "ALERT RADIUS": "750",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "3",
+          "MINIMUM SPREAD": "0.25",
+          "SPREAD INCREMENT": "0.5",
+          "SPREAD DECREASE": "0.25/0.15s",
+          "EQUIP TIME": "1.5s",
+          "WEIGHT": "1.25"
+        }, comment: "" }],
         ["H&K HK416A5", { img: "images/tools/handk-hk416a5.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm | 5.56x45mm NATO | .300 Blackout",
           "AUTO": "YES",
