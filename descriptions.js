@@ -293,5 +293,228 @@ The Velris family would then be a major discussion of conspiracy theory for awhi
 
 "Monolithic Psycho": `[INFORMATION MISSING]`,
 
-"Monolithic Soldier": `[INFORMATION MISSING]`
+"Monolithic Soldier": `[INFORMATION MISSING]`,
+
+"Citizen Rogue": `As promising as a gun can be, it comes with several drawbacks. Needing to load the right ammo type, requiring a magazine for it to fire more than a shot, demanding recoil control and the competence to aim. Everything previously mentioned brings a certain complexity to this weaponry, one that many dislike. Due to this, the Citizen Scouts that struggle with these aspects, or the Rogues that have displayed their power in battle, may opt to become a Citizen Rogue, employing a much more straightforward method of combat.
+
+Wielding a typical hammer used for construction and provided with a reliable vest, they exchange their ranged firepower for a more aggressive, close quarters strength. They provide the opportunity for their allies to push in, as they rush into the frontlines, distracting the adversary from the incoming threats. Due to this, their training requires plenty of building up their speed and brawn, as with the right expertise, they can be just as deadly as ranged threats.
+
+Because of how difficult their training can get at times, they think of themselves higher than others. Their ego is further bloated by the fact that they don a vest while utilizing a melee, compared to the Scouts who don't have one while possessing Glocks. However, they still understand the idea that they must work as a team with their allies, otherwise they'd be worthless going alone. Their attitude is unappreciated by most Citizens, as they can get very irritating at times. This is further demonstrated as a result of them nicknaming themselves 'Alphas'. Not to get confused with a higher rank, they usually say that to sound cooler.
+
+Many believe that whoever becomes a Citizen Rogue wastes their opportunity, turning into a weak troop that falters alone. On top of this, their role clashes with the Citizen Assaults, further confusing their purpose. These many concerns were brought up to the overseers, but as there weren't any reported incidents of this troop bringing no value on the field, they were kept. Though, it was strange as their original iteration was already on the verge of being considered unnecessary, as ranged troops showed superiority.`,
+
+"Citizen Scout": `As the state of the world worsens, many decided to join factions for their own safety. The most known is the Citizen Faction, as their ever growing expansion dominates a lot of other clans. Despite this success, their quantity was increasing too much, many being unable to receive proper training or be trusted with advanced gear. Therefore, many were given all different types of orders at Outposts to help out, eventually them turning into Citizen Scouts.
+
+This troop is a poor jack of all trades, unable to truly accomplish any of its roles. However, they may still be of use at times, whether it be as a distraction or fetch quests. Wielding a dinky Glock, they take great honor in their one and only gun, as it's too early for them to receive vests or a more improved firearm. Many Scouts wish for their situation to get better, so they feel more confident with superior gear, but it will most likely never. They are sent alongside scouting missions with Citizen Escorts, or expeditions to inferior zones, as to not risk any harm. Alternatively, they simply guard Outposts with Guards and Assaults, but usually treated differently as they aren't as interesting as them.
+
+However, despite all the negligence from allies and higher-ups, they are the backbone of the Citizen faction. Nonetheless, their cooperation with other allies in combat is helpful, providing fire and pushing forwards to make sure the coast is clear. Their mere Glock is still a dangerous firearm, even if they are unproperly trained or it's less preferable than other guns. In the case that a Scout has connections with a more advanced troop, they may rarely receive a better magazine and better ammo.
+
+When finding loot during exploration, they aren't allowed to keep it for themselves, only to secure it, guard it and bring it later to their designated Outpost for storage. Much of the credit of all the Citizen's treasury goes to the Scouts, as they have a keen eye on searching for items, since it's what they're most appreciated for. Apart from that, they're laughed at a lot, either it be due to their inexperience or inability to speak correctly. It's unfortunate that this is their fate.
+
+They admire the day they get promoted, impatiently waiting for it.`,
+
+"Doe": `despite the many celebrities within the city, such as nick the dummy, ms. doe is probably the most known one. known for her perfected shooting antics, no other could hold comeptition to her.
+
+most of her life previous to the military is unknown and she prefers keeping it that way. many have questioned her about it but she refuses to properly say anything, giving vague answers to them. many have their theories about her, most popular being that she was surrounded by an environment that included a lot of firearms. easy to believe this but too convenient.
+
+she got into the military around the time she finished college. at the start, many were skeptical as her documents didn't prove much and she didn't look the most intimidating either. although she didn't care about such aspects, focusing on her training the most. she really wanted to use guns though. constantly asking other cadets when they will receive firearms training.
+
+finally, when that day came, she was pretty excited. like, a lot. impatiently waiting for her turn. then it came. after a few shots, she proved good accuracy, though at the time, the conditions were in a way that didn't fully show her skills. it was only after the settings were being configured to see the cadets' full potential that she was quickly noticed by the higher ups.
+
+amazed by her skills, they recommended her to compete in a firearms contest. this part of the story you all know, she competed, outdid everyone and won. being deemed the best at the time. though this isn't where she got her title of the best sharpshooter. that came from a list of her achievements. most popular being: hitting a target from very far away with a sniper, hitting a target from far away with a rifle and hitting a target from a high distance with a pistol. all with insane accuracy.
+
+of course, such feats were never before seen, beating the previous records by quite the margin. these distances weren't easy to cover either, so it was a surprise. she quickly becaame the role model for a lot people, encouraging many to improve their aim. this strengthed the military of the city, so she had a pretty big impact on the city itself or just ordinary civilians that wished to know how to properly utilize a gun. congratulated by higher ups, of course.
+
+around three years after finishing her training, she decided that, despite all these beaten records, she was growing tired of this and wished to depart. now, many here say that it was actually because she was 'bored', which in hindsight, doesn't make sense. this is a common rumor that isn't true. however, it is true that she disliked her winning every competition but it didn't mean she wasn't having fun. and so, she made her exit.
+
+now living quietly in some suburbans in a yellow house, fitting her. for the more new citizens of the city, they confuse her with someone else, even though the name doe is rather rare. after her retirement, most information is unknown. saying most, because a lot of people know about her friendship with tony. but, let's be serious, who is tony?`,
+
+"Flower Woman": `Despite the spooky stories about the lone cottage itself, many people have tried to explore and scout the place, someday they'll see flashing lights from inside of the place.. and some have seen- this thing. Whatever it is, it looks like a flower with humanoid body wearing a pink hoodie. Maybe some of those stories about the witch has some merits to it after all.. because why does she own a walking flower?
+
+From the looks of it, it seems to be a servant or companion of the witch itself, we were able to see it water plants, pick up vegetables and plants from the surrounding area. When one of the people who saw it tried to walk toward the flower, it instantly went on to pick up a garden gnome from the side of the house and rushed at us. It did not go well as the guy would then get his head smacked, losing consciousness instantly from concussion. We ran away and got away successfully.. safe to say it isn't very good with people.
+
+I'd advise that you try and avoid it as much as possible, frankly just leave them alone at this point.. since most of the aggressiveness you see here are solely from people invading their house.
+
+A lot of people have theorized the similarities between the Plant man in apartment of the city and this mysterious flower woman.. perhaps they're related or perhaps the witch has created them by sheer dark magic? who knows..`,
+
+"Loner": `more than a decade ago, the previous family of the house nearby the lake had left Frieden, believing that this place wasn't fit for them. they moved to Tierra, finding its nature more beautiful than what was offered here. for a few years, the house was left untouched, as nobody was interested in it. it, unfortunately, started to fall apart due to neglect. its vibrant colors started to fade away and several gangsters had started putting graffiti on it, marking it as their territory. it was believed that this residence would never find a new owner.
+
+jonathan raven was the one who took initiative of the cheap deal this house had and bought it, despite its crumbling state, he found it his 'beloved', as he said, and would never let go of it afterwards. several outgoing civilians had tried to start conversations with him, but he was not very interested, instead brushing them off. therefore, people left him alone, as, clearly, he didn't wish to be bothered. over time, the house had started taking shape, being restored to its former glory. alas, a few aspects of the building were changed to fit his style, as the radiating colors turned into a tiring grey. i wouldn't assume it's any projection of his.
+
+however, despite having such a public problematic character, he is one of the electrical engineering managers at Alpha Electricity, carefully handling the power of a part of Frieden. as opposed to the others, he's much more brash on his decisions, being considered reckless at times, but, ultimately, his contributions are appreciated. he developed several sections of the fundamental wiring and knows the insides better than anyone. however, that does not mean he can act however he wishes, as the chief still scolds him for mistakes. in the end, this 'lone wolf' aspect earns him a good reputation.
+
+a reputation so good that, in fact, the director of Worst Company himself wanted to request mister raven's help. it is not known in what exactly he got himself into, whether he only helped for fixing few tiny flaws or constructing an entire system, but, many times, he had to tend to Worst Company. the most public information is the fact that he repaired the lights, as they had malfunctioned during an important rush hour and needed the issue immediately resolved. naturally, john was called instantly. it is unclear if raven has been paid a significant amount of TS for his work, or if he was rewarded in other ways, but he seems more joyous than normal. at times, he merely, and willingly, goes to the building just to discuss with the boss.
+
+even if his stoic attitude is comparable to many other civilians, it's righteous for him to behave like this, considering past events. although he is a high position in Alpha Electricity and has ties with Worst Company, he is still available to hire by the public. with everything i've said, it is appealing to do so.`,
+
+"Plant Man": `One of the biggest, most confusing 'people' of the century. This plant randomly appeared in the city one day, taking a spot in the Awesome Apartments. It is unsure if it pays rent, the land owner does not share any information about this publically. Originally, someone else had bought this apartment, before it was quickly taken by the plant. And I do mean taken, it made its home there and did not wish to leave at all costs.
+
+This phenomenon of a plant has yet to be explained or any method of its existence being discovered. It has gone through several experiments, all mostly taking place in its apartment. Several have confirmed that it is literally just a plant, no human with a potted plant on his head hiding. Some have tried making it listen to music or go under sunlight to see if it does the same actions as a normal plant. It does. So yet again, no conclusion has been found.
+
+Due to it being a plant, it doesn't actually have any rights. This is both a good thing and a bad thing. It can legally steal from other people, but it illegally lives here due to the apartment not being its property. Despite this, it is still here due to the interest of several others in it. It's basically a celebrity, except it doesn't speak proper sentences. Or exit its apartment. How is this plant treated better than I am??
+
+From the start it has been here until now, each time it has been visited, an extra potted plant appeared in its room. The plant never exits its apartment, so it couldn't have gotten them from the outside. Nobody has any idea how this is possible, especially how it is the same plant with the same size in the same pot, none of them withering due to missing vital conditions. These potted plants have been examined and are concluded to be normal plants. It is believed the plant somehow makes its potted plants meet the right conditions. Somehow.
+
+Because of how strange and absurd this plant is, a whole department dedicated to understanding it has been created. It is ridiculous the amount of effort put into this one plant. They say it's for discovering 'how to live without vital conditions' and how 'it could lead to crazy medication development'. I believe it's just those certain people making an excuse to be lazy. This is why we're never enhancing as a society.
+
+One day when entering the plant's room, there was a potted plant on the roof. After inspection, it was observed that the plant glued this pot to the roof. As an experiment, and due to another reason, it was decided to try and steal one of its potted plant to see how it would react. Needless to say, it was not a good idea. When the potted plant was taken far away from the plant, it started withering within a few days. As for the plant, it started acting aggressive to others. It grabbed a Garden Gnome that someone was holding next to it and used it as a weapon, scaring everyone out of its room. Since then, it has been monitored and no attempt to interact with it was made. They had gotten enough answers from it and thought they'd take care of it another day.
+
+That day never came.
+
+EDIT: The entirety of the apartments are afraid of it. One dared to fight it and they didn't last long. For anyone who reads this, do not attempt to brawl with it.`,
+
+"Ratman": `Ratman, the urban legend where its origin was lost to time. Perhaps it existed due to people's fears of the dark and claustrophobic sewer.. or maybe he was real after all.
+
+Nonetheless, some pictures have surfaced online. It's expectedly in the worst photo quality ever, so at this point.. do I even want to try and convince you this is an actual thing? This is quite literally just the equivalent of a boogeyman or UFO sightings, like come on!`,
+
+"Witch": `Nobody really knows her real name.. but she lives in the swamp alone. A lot of people died walking near the area, apparently she owns a sniper rifle that shoots poison darts.. so there's that. There's a lot of rumors going around about her being scary and psychotic killer, but maybe she really just wants some peace and quiet out in the wild.. which people refuses to respect that.
+
+There's also photos of a walking plant around her area aswell which people has connected to plant man existence. A lot of us would love to get clear answer from the witch herself.. too bad she doesn't like people very much`,
+
+"Wyrmling": `The Wyrmlings, a nickname agreed upon by many internet users surrounding the viral story "I Hear Something Outside My Tent" where the original poster, joshhiking04 documented his experience over his travels in Frieden into the wilderness just beyond swamp_fever. While the walk and climb above the mountains seems to have gone well for the early part of his time here, as the sun starts to dawn.. Josh has decided to set up a small tent somewhere in the forest. He also decided to set up a trail cam just by the tents, so that he'd know if there are any animals nearby.
+
+As the night went by, Josh was awoken up by strange sounds of an animal around his tent. The recorded video was sent as well by Josh himself; publishing onto his own page. The video itself captured a lot of really creepy noises outside his tent, completely alien to any known animals today. Most people theorized it was some kind of bird due to the chirping, but it sounded too big, too low pitch to be a bird. Not to mention, its large footsteps against the grass. Josh waited there in silence for a bit, and eventually.. the sound went away.
+
+The story would've ended there as another creepy hiking where some guy heard wild animals in the middle of nowhere.. however, something even more abnormal was revealed when Josh woke up in the morning and checked his trail camera.
+
+There was in fact something outside his tent, but it was not recognizable to be any animals ever documented. It had strange antlers coming out of what seems to be its back, alongside rocky oval head. The weirdest part about this thing however, are what seems to be its skeletal wings.. and its size which is about the size of an adult grizzly bear. It moves around on its hind legs and it seems to also have tusks around its head.
+
+The video would go viral from this footage, alongside Josh even managing to talk about his story on a TV Show. It was such a wild discovery that many other brave hikers have decided to set their foot onto the swamp_fever in hopes of finding this never-before-seen animal as well. It was nicknamed as "Wyrmlings" or simply referred to as "Dragons" by internet users around the globe.
+
+Despite many explorations taking place afterwards, no one was able to capture a footage that shows the Wyrmling in its full glory as Josh did, and while some people actually managed to record a footage of the noises in the surrounding area, those noises don't seem to match the one that could be heard in Josh's video, which makes a lot of people question afterwards.. was Josh's original video even real? or was it just a really fantastic work of 3D rendering?..`
+};
+
+const PDA_DOC_DESC = {
+"Watchtower": `As the name implies, it is a wooden watchtower constructed with the role of observing on other people from far away. Or alternative ideas, such as utilizing a snipe in a certain way. Beside that, this watchtower was originally in a much less favorable spot, due to the place where it is right now being taken by another building. After it was demolished, the watchtower was quickly moved here. Through a lot of trial and error. Of course now it’s actually being used instead of being talked about, regarding its spot. Inside, for the watcher, as I like to call the role, they have a sniper rifle most of the time. Given more than enough ammo too. In case you’re bored, you are given a radio to listen to. Of course it’s by E3K, so the selections are very little. It’s enough for someone to live in though, as long as they get nutrition. The high ground it offers is pretty nice. Albeit, with the current situation going on now, it’s not the best idea being more out in the open, visible to others.`,
+
+"Doe's House": `House owned by the famous sharpshooter Doe, bought after her retirement out of the military. Her story is well known, I don't need to detail it much. As for her house, she tidies up a lot, keeps it clear compared to some of the neighbors. People used to come to her house for interviews, she didn't like to do them but did it anyway for their enjoyment. As much as receiving vague answers can be enjoyed... I guess. She lives quietly, not wishing to make anything very big out of herself again. Though she cannot lie it was nice seeing the encouragement she somehow gave for others through idolization. It's really ironic how nothing is known about her previous to her popularity, presumably not sharing much about her, only for her to be a celebrity. That was all before the rebellion. Now, the place is still kept cleaned, nobody wishes to approach it though, thinking Doe would get rid of them instantly. Contrary to popular belief, this rumor is not true at all, as burglars are constantly stealing from her. Weirdly, she does not seem to want to fight back, even though she can and could shred them. It's honestly so strange, seeing how someone so powerful acts like this. At least I was able to talk with her a bit.`,
+
+"Metrostation": `One of the most important ways of travelling in this city, this station is connected to every region and is the biggest. Its transportation is divided into two parts, underground and surface, multiple trains for each, enough to transport over thousands each day. It houses many famous stores like some of the famous E3K brand's stores, Grim's Guns, etc. Full of advertising papers for many events, this place can also be somewhat informative at times... as informative as a 'toilet flood' can be. With multiple floors, staircases, elevators, it's easy to get lost in here. In the main entrance, there's a giant stone statue of Tofuu, with a fountain around it. What a narcissist. Before being finished, it was gonna be called the 'Sigma Metro Station', although, for unknown reasons, that idea was scrapped right before being finalized. How come all the quality went into the station and not the city itself?
+
+Though, now this place is deserted and used as a foundation for the government. Originally, Grim's Guns being more of a guns-for-all store, now is specially for them, containing guns inside glasses that, when broken, activate a loud alarm. You don't wanna tap the glass, trust me. Alongside that, there are also locked doors of the metrostation, which behind them, have some very cool and strong looking guns. I wish I could get inside and grab them for myself... how would I do that?`,
+
+"Swamp": `As the population of The City was growing, the more buildings were needed for the people. Although Tofuu could of possibly bought more unused land and build there, he was lazy and ordered to build on top of nature instead. Plus it was cheaper. Many beautiful spots were lost due to this, everything losing its colors. Many hated Tofuu for this, possibly a strong reason the rebellion happened in the first place. Despite this, on the opposite direction of this district, is the swamp. One of the last remaining places that weren't industrialized and turned into brainless factories of some sort. Well not completely. There are still a few buildings here, but it's not the same as every tree being chopped down and given three Worst Company buildings. It's very foggy here, so it's hard to tell where you're going sometimes. Although it's much more eco friendly. A waterfall is here, creating a river that divides the place. I don't think there are fish in it, unfortunately. On top of a hill is a wooden cottage, not many people know about it due to the fog hiding it. Someone lives up there. I'm not sure who. Beside that, something of importance here is the sewer system of this district. Although it's a place of nature, this was the only good place to build the sewers. Tofuu would of been berated if he didn't say that. Now that the rebellion took place, some smart scavengers came here and took their place here. Hard to spot them, so be careful when roaming this place. Since no one is here to take care of the buildings anymore, the nature has taken its place back. It is pretty nice though, much more calming than the bullet riddled city.`,
+
+"E3K Mall": `The E3K Mall is a well-recognized location amongst the public for its average furniture quality. Despite what the name advertises, the E3K Mall lacks any real traits of a real mall. It does not contain nor hold any stores or services for the public and the size of the structure is tiny in comparison.
+
+In 2004 prior to the creation of the E3K business, the young carpenter "Tay Everest" started their first business, opening a local store named "Everest Mall" in the Everett Urban District. It started off as a temporary business to rack money up for their family by selling old home appliances. The business was slow, gaining customers mainly from friends or relatives. However a popular firearm specialist influencer named "Davey Hawkins" bought off the store's entire furniture set for his viral video on AllVideos4U and even advertised Tay's Mall to his audience.
+
+The income the store gained from the popularity was more than enough to sustain Tay's family. Though despite that, Tay decided to quit their apprenticeship for carpentry diploma in 2005 to further pursue their career in gaining a bigger title in the furniture industry. By forming what's now known as the popular E3K company along side rebranding their local store as E3K Mall and making it their objective to make the store accessible across all districts. Later that year, Tay wrote a thank you letter to Davey Hawkins and was even briefly featured in one of Davey's videos.
+
+The E3K Mall became accessible across various districts for all consumers to use in 2013. It is unknown whether or not if Tay will consider making a proper mall or if they will ever change the name to properly advertise itself as a store. Considering the tedious legal process to change the store's name, it is highly unlikely.`,
+
+"Suburban?": `These could hardly be called Suburbans, with how little houses there are and their small relative size. However, no word can better describe it. There isn't a lot to note about this place, as it's just casual people living here, or LIVED, to be more correct. The only remaining one is Ms. Doe. Due how there aren't a lot of people here, this place is usually trashed. After the rebellion? Triple trashed, really. Unfortunately, this problem was never solved and only got worse. A bit sad really, looked like a nice place. Beside this, as any random location does, it has a few tales about it. Most notable being one of a suited man with a metal fork thing living here, before randomly disappearing and that in a house, someone once saw a weird yellow folder stabbed by a knife. In both of these, I have no clue what they're talking about.`,
+
+"Awesome Apartments": `The Awesome Apartments is a branch company made by the Awesome Agency as a way to expand their sources of income and create more living spaces for the citizens, due to the rapid increase of new civilians. I can't say it was fully done for just the good of the people, but there was some heart in it. These apartments are one of the smaller ones, their usual buildings have at least five floors. Surprising, right? However, the design is strange, as you can't access the power box of the building in any easy way. There could be a secret entrance somewhere but I haven't found it if that's the case. The most known person here is that one alive plant, I don't like it. Every apartment is relatively small, so it's weird that people would even think of living in them. More than two people wouldn't fit, not to mention two is already pushing it. But they are cheap, so it's fair. The door to the roof is locked, it's not due to any incident or anything, people really disliked this for no reason. To uphold their reputation, the agency locked the door, the person with the key is a mystery. It's not the worst place to live in, some of the colored houses seem really not worth it for their price.`,
+
+"The Lake": `Out of most locations before or even after the rebellion, The Lake is the only one that it downright creepy and has sent genuine shivers down my spine. Why? The environment surrounding it just seems so odd, so cold. There’s many tales about this Lake, I don’t trust any of them but even so, it’s still so strange. Some are about an idea that someone strong fell into it and never came out, their items being lost in it. Like... would you believe that? The one night I slept here, due to no other location being plausible to sleep at, I woke up to a strange noise in the middle of the night. A chef hat, almost like a butcher’s hat, to be more specific, peek out behind a hill. I checked and no one was there. I did not stay long there after that. Really I think I could be overreacting, but never wrong to be too safe.`,
+
+"The City": `One of the many regions the city has, this one is one of the more important bunch. bustling with life, it has everything you mostly need, your store for products, food, whatever else you may need, several different types of housing, normal homes and apartments, a large restaurant with the objective of feeding anyone who enters to the brim, a gas station, a mechanic shop and you get the point. all you need to live here happily. after tofuu's election, the city was in the best state its been for ages. until mister tofuu decided to implement some new laws to 'help' us, in his eyes, he thought he was doing well when it hurt most of us, and a lot. the first few, the community took it, thinking they were mistakes that were gonna be repaired soon. but when they started piling up, to the point where you could buy a gun for the sake of 'self-defense', no other reason, it started getting exaggeratingly dumb. however, people were afraid to speak up, because what if they lost tofuu, then they return to another president that worsens the city further?
+
+that's another story, the rebellion started and then after the events of it, the city was practically in shambles. civilians were scrambling to loot broken down houses, raid other people straight up or just kill whoever they disliked. it was chaos for the first few weeks. though, eventually, it started getting more calm. it's still terrible to live here, but compared to the start, there's more leniency. compared to other places that still had some functional stores, this city suffers due to poor resources, most of it all coming from worst company due to there being no other options. everybody hates it, but there's nothing else that can be done. surprisingly, electricity here still kind of works, so that's a plus. many have moved out due to all of this being said, deciding to go to other regions, try escaping the city or battle against factions. most did not make it in most of these options, everywhere is dangerous. this city is no different, and will never be no different.`,
+
+"Civilian Outpost #4": `One of the first outposts made by the Citizens, though still one of the most important. Its history is very short: built during the rebellion as a safehaven, until this 'safehaven' started turning aggressive and eventually turned into the Citizen faction. The houses are only used for storage and nothing else, and they're still disorganized, with barricades, barrels and other objects in the road blocking certain angles for them. You'd wonder how they managed to think of giving themselves a disadvantage in their own territory, but maybe I just don't understand. Giant fences all around, blocking a lot of possible entrances, though, over time from other intruders who tried, there's an entrance from the back, that has some sort of cover and an entrance from the side. Usually, these entrances are watched over with care, like they're hawks, but recently, they've been transporting received resources from other outposts as help, to improve their defenses. Of course, the rich get richer. Their watchtowers, with one sniper in each, are really annoying. They have a ton of people all around, so even if you think you're done with them, there might be more, so always be on your guard. Their ranks divide from people with melees to a literal rusher-breacher hybrid, whatever they are. My gut tells me that I shouldn't trust instantly walking into those houses, what if there's someone around the door, or worse?
+
+After all this being said, these dudes have some great loot that I'd LOVE to have, but I'm not risking it. I'm going as far as to not include a photo here because I don't wanna get shot while taking it. If I ever wanted to raid this place, I'd go in with a team and with a plan. Some wouldn't but I advise against it. I'd rather go stealthy and slowly, try not to use the LOUDEST guns maybe... rather than go blitz inside and maybe die within seconds... I'm talking to myself in these documents so much.`,
+
+"Mill": `A dilapidated, broken down mill. Unsure what purpose it was supposed to serve before the rebellion or after. Now it's ransacked by some rather rude people who shoot anyone on sight approaching their precious... mess of a house. It's surrounded by trees so I guess it's not too hard to sneak by, get close. I took a peek once and saw a Ruger there, pretty good gun they have... would be a shame if someone stole it. Not me though, I don't steal. Though the place feels sketchy, unsafe, if I WERE gonna steal, I would be careful with my step. People have all sorts of devices nowadays...`,
+
+"Sons Apartment": `At Sons Apartments, founded since the 1970s by Grandpa Uncle Son, the Son family somehow keeps things running. Grandpa Uncle Son, son of Greatuncle Fatherman Son, says Sons Apartments succeeds because every Son knows their role. Uncle Child Son, the son of Grandpa Uncle Son, manages the Sons Apartments, while Aunt Daughter Son, also the daughter of Grandpa Uncle Son, assists and supervises the apartment that Uncle Child Son manages. So when a Son calls for Son, another Son answers, and somehow the right Son shows up. Meanwhile, Kid Baby Son, the first son of Uncle Child Son and second grandchild of Grandpa Uncle Son, writes down bookings while Young Boy Son, the second son of Uncle Child Son and third grandchild of Grandpa Uncle Son, helps sweeps the Sons Apartments' stairs. Not to be outdone, Lady Aunt Daughter Son Jr., the daughter of Aunt Daughter Son and first grandchild of Grandpa Uncle Son, supervises the Sons who supervise Sons. So at Sons Apartments, every Son is someone's Son, every Son works for a Son, and every Son answers to a Son making Sons Apartments the only place where a Son saying "Son!" summons several Sons, and yet somehow, the right Son still solves the Son problem at Sons Apartments.`,
+
+"Library": `Despite the many pushes made for constructing more useful buildings, a library was made first. It’s not the biggest, so it’s strange to think any budget or effort was even put into it. Popularized by Nick The Dummy for its simplicity, the library was regularly used by many due to this. It’s said this happened due to Nick’s love for books, commonly seen in the movies he participated in, always reading. There used to be a lot of books here, stories, biographies, information, etcetera, but, keyword on "used", now they’re all ripped apart or stolen. The library does, however, look very cozy, I can’t lie. Many, including me, have observed the misspelling of library on the sign, saying librarby instead. Yet again, it makes no sense how they managed to mess it up and spell that instead or how they haven’t fixed it yet. I think it’s safe to assume that they don’t care about this building, even though it was prioritized over others.`,
+
+"FunkTown": `Small community of people lived here several years ago, but it all went down way before things hit the fan for the city itself. The town is quite famous for its medicine and innovations from Violette Paxton, being the one to directly fund the place. It houses a massive hospital with incredible doctors and cures for very dangerous diseases. They were so impressive that the government and president tofu would then take interest in the hospital itself, but for unpublished reason the hospital was forcibly closed alongside Violette Paxton going missing. Afterwards, the town would get its electricity cut off as nobody was paying for them anymore, not to mention the main building that funds the place's now defunct.. eventually the civilians of Funktown had to forcibly move out to the city.`,
+
+"Sewers": `As previously mentioned, despite the possibilities of constructing the sewers in a much more wasted place to fit the theme, it was chosen to be in the swamp. Interesting decision, I must say. The place was handled very well by the engineers, even though it was built in a mountain. It's confusing that they took this spot instead of out in the open but it is what it is. The inside doesn't look that bad for a disgusting place, somehow. I theorize the janitors worked overtime. Anyway, the place is pretty big, a lot of hallways, a lot of storage potential. Unfortunately, some scavengers had the smart idea of taking residence here. A lot of them. So it's hard to get in without causing a whole fight. I was able to get into this place before most of them migrated, so I saw some cool parts of it. The most notable was a room where I got talk with a kind old man. He was pretty cool. Typically, someone like me would immediately get asked where I'm coming from and held at gunpoint if I questioned anyone but he just had a nice conversation with me. For some reason, although this is the sewers, there are E3K vending machines. It could be for the workers but they can just bring their snacks from the outside, so... what's the purpose? I found a door that couldn't be opened and when I checked what's on the other side, it was a direct path to a huge drop into a pool of dirty water. It's not like you can get through said path because a wall blocks it off. But this makes me wonder... what were the architects thinking of when making the door? I keep hearing squeaking, like it's coming from mice or maybe rats. I'm not surprised, since it's a sewer system. But I think there were too many.`,
+
+"William's Warehouse": `William's Warehouse is a well known storage company in The City. Despite it being so known, it doesn't get enough customers for it to properly develop itself and turn into something much bigger. It's in a situation where it makes enough T$ to go on and continue storing items for others. Unfortunately, after the rebellion, the place was raided and nothing of its past remained. The power was cut deep, no sort of light source is in the building anymore. Even most of the furniture is gone, like it couldn't have been that bad. Beside this, it's not too interesting. If you want to be entertained, there's a story how one of them found a strange red and yellow key. They tried using it to unlock a lot of locked doors known, none of them being the proper fit. Personally, I don't think they even tried using it outside of the locked doors in the apartments.`,
+
+"John M4 House": `The reason for its name is only due to a joke made between how big a loner this dude is, and that he wields an M4. Not a lot of people know about him anyway, only people who have lived here for a long time have any information about him. Hard to document him when he's extremely mysterious. As of now, I have never seen him exit the house, his house has the curtains pulled so I can't see inside either. I don't wish to barge in through the front door, I don't know what awaits me on the other side.`,
+
+"Fiona's Diary": `My diary
+
+===========
+
+4/3/XXXX
+
+today i went scavenging
+i found a normal water bottle called still water and when i drank it it was rlly good. but today i was just walking around and accidentally knocked myself on the table. some of the water spilled onto the ground and i noticed. mushrooms. growing.. this could be rlly good fertilizer for my plants but i am not sure where can i get more
+
+===========
+
+6/3/XXXX
+
+today i shot a guy coming up to my doorstep and got some good gears. i think some of these can be used for ingredients.. apparently theres this weird red drink called mono cola too lol
+
+===========
+
+7/3/XXXX
+
+my flower withered after mixing the mono cola alongside still water. i hate these outsiders they only bring me CURSES AND MISFORTUNE UGHHHHH
+
+===========
+
+8/3/XXXX
+
+what WHAT IT BLOOMED AGAIN WHAT IS GOING ON IS THIS ACTUALLY THE METHOD. TODAY i checked that withered flower i was gonna throw out but NO its actually alive. what is going on.
+
+===========
+
+9/3/XXXX
+
+im writing this at 3 am right now but i dont know what is going on outside my house. maybe its some animals walking around so ill go check
+
+okay so i checked and theres no animals seen anywhere. im not sure where im hearing these or im going crazy cuz im NOT CRAZY! im GOOD im just shy and i like justifying shooting random people like deer
+
+===========
+
+10/3/XXXX
+
+my flower is BLOOMING BIGGER THAN EVER. she is SO GORGEOUS. the pink. its so.. beautiful. but Thats Not really what im looking for cuz im tryng to create life here like ive read Frankenstein book before
+
+===========
+
+12/3/XXXX
+
+im NOT SURE HOW TO FEEL IM VERY HAPPY BUT MY FLOWER GREW LEGS AND ITS ALL I EVER COULD HAVE WISHED FOR LIFE.I HAVE A WONDERFUL MINION THAT WILL DO MY BIDDINGS NOW HAHAHAHAHA!!. AND SHE IS FOLLOWING ME AROUND. oh my god i bet shes cold next time i shoot down some stupid loser im gonna give her some coat i am like a mother right now
+
+===========
+
+14/3/XXXX
+
+she is growing very fast. soon i will make an army of amazing plants and i will water them everyday with care and they will be very smart and intellectuals unlike those stupid bum in the city i will name her rosaire because i think i like it cuz shes all pink in her petals so
+
+===========
+
+18/3/XXXX
+
+because i spilled my still water last time i dont rlly got alot so i gotta use very little amount of these. and also My DEAR ROSAIRE IS SO AWESOME I Taught her how to shoot and hunt but well she seems to like running and she runs Very fast and when she catches up she starts bashing people head in with my garden gnome and that is really cool and good just like i taught her. she also sleeps with the garden gnome and i am very happy but i will make MORE SERVANTS AND MINIONS AND TAKE OVER THE CITY so they dont BULLY ME AND CALL ME CRAZY WITCH ANYMORE BECAUSEE I AM NOT A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH
+
+===========
+
+20/3/XXXX
+
+i tried the formula on a different plant today. it withered as usual but i believe it'll grow and bloom better than ever
+
+===========
+
+23/3/XXXX
+
+i dont see any flowers in the potted plant but ill have to wait and see i guess
+
+(The later pages were torn apart, there are leaves that are left over the pages.)
+
+===========
+
+2/4/XXXX
+
+im still so mad but whatever. i Know rosaire got me. and i got her. i will continue on with my world domination plan AHHAHAHAHA!!!!!!!!
+
+i dont have alot of these ingredients left anyways.. so i hope i can still make more plantlings.
+they are the best things ever i bet those high and mighty scientist living in big city dont know this either heh`
+};
+
+const PDA_TEXT_WIKI = {
+  bio: {"Citizen Rogue": "Citizen Rogue", "Citizen Scout": "Citizen Scout", "Doe": "Doe", "Flower Woman": "Flower Woman", "Loner": "Loner", "Plant Man": "Plant Man", "Ratman": "Ratman", "Witch": "Witch", "Wyrmling": "Wyrmling"},
+  docs: {"Watchtower": "Watchtower", "Doe's House": "Doe's House", "Metrostation": "Metrostation", "Swamp": "Swamp", "E3K Mall": "E3K Brand Store", "Suburban?": "Suburban?", "Awesome Apartments": "Awesome Apartments", "The Lake": "Lake", "The City": "Freiden", "Civilian Outpost #4": "Civilian Outpost", "Mill": "Mill", "Sons Apartment": "Son's Apartment", "Library": "Library", "FunkTown": "FunkTown", "Sewers": "Sewers", "William's Warehouse": "William's Warehouse", "John M4 House": "John M4 House", "Fiona's Diary": "Witch House"}
 };
