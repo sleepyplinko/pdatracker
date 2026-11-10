@@ -70,4 +70,4 @@ Read this first after any break or conversation summary. Update it whenever some
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 
 ## Open items
-- None right now. (Hover sounds are final; transfer links work on the live Worker; old webhook scrubbed from git history on 2026-11-09, owner told to replace it in Discord if still used.)
+- Owner wants the 11 people with no description filled from the OANC Wiki (needs a chat whose network allows once-a-normal-city-roblox.fandom.com): Citizen Rogue, Citizen Scout, Doe, Flower Woman, Hellbender, Loner, Plant Man, Ratman, Scavengers, Witch, Wyrmling. Copy the wiki's Description text exactly, paragraphs separated by blank lines, into `descriptions.js` (key = person name). Credit the wiki like the pictures. Skip any whose wiki page has no description and say so.
