@@ -2867,6 +2867,24 @@ const PDA_DATA = {
           "SPREAD DECREASE": "0.05/0.1s",
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
+        }, comment: "" }],
+        ["SCR 5.56 Raider", { stats: {
+          "CALIBER TYPE": "5.56x45mm NATO | .300 Blackout",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.1x",
+          "AIM TIME": "0.6",
+          "SWITCH TIME": "0.06s",
+          "RPM": "350",
+          "ALERT RADIUS": "500",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "25",
+          "MINIMUM SPREAD": "3",
+          "SPREAD INCREMENT": "0.05",
+          "SPREAD DECREASE": "0.1/0.2s",
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "0.5"
         }, comment: "" }]
         ],
         4: [
