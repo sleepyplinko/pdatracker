@@ -627,7 +627,24 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.75"
         }, comment: "Beloved submachine gun, it's has a really modular handguard except you can't really find the mods for it sadly, well maybe somewhere in the future." }],
-        "HK SMG-II Prototype"
+        ["HK SMG-II Prototype", { stats: {
+          "CALIBER TYPE": "9x19mm | 10x25mm",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.2x",
+          "AIM TIME": "0.75",
+          "SWITCH TIME": "0.08s",
+          "RPM": "800",
+          "ALERT RADIUS": "350",
+          "RELOAD MODIFIER": "0.75",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "6",
+          "MINIMUM SPREAD": "0",
+          "SPREAD INCREMENT": "0.6",
+          "SPREAD DECREASE": "0.2/0.1s",
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "1"
+        }, comment: "" }]
         ],
         3: [
         ["B&T MP9", { img: "images/tools/bandt-mp9.webp", picCredit: "wiki", stats: {
