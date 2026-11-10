@@ -1,4 +1,29 @@
 const PDA_DESC = {
+"Scavengers": `Life had drastically changed for each civilian once the rebellion had taken place. Several areas were destroyed beyond ruin, incapable of ever housing another person ever again. Their, once, beloved and appreciated state had been brought to something irreparable, and the people have to deal with it by themselves. Trust and love was abandoned, families torn apart and friendships fading away; it is truly a miserable side-effect of the rebellion and, perhaps, it wasn't necessary for this to happen. Despite so much positive belief, it mattered none, as, in the end, the less fortunate districts have gone under complete anarchy, such as Peric and next up, Frieden, which is inevitably approaching this fate as well.
+
+Tagging along companions is a concept barely kept done anymore, as many civilians opt to fight for themselves. However, that doesn't mean that they'll outright fire at all of their fellow citizens. Many have made pacts in the areas they live in, albeit not entirely for cooperation, merely acting as a truce. Despite this, this alliance may still lead to friendships being formed, so it's not a hopeless situation entirely. Because of this, newcomers aren't welcomed, as they are scared away and blasted by the ones who've taken residence there, ensuring their own safety through egotistical means. Safe cities are a rare sight, but the higher class districts are significantly more well controlled by the government than the poor areas. Relocation is no longer a reliable option for many, as some are, instead, out for blood, disrespecting any wishes of others and simply want to show Tofuu what his decisions have led to. In the end, it is a free for all.
+
+Any moral compass is gone by now, as several have resorted to, unrightfully, taking useful utilities or, maybe, even weaponry to themselves. They pick up anything they can get their hands on, but they keep their eyes out for the real deal: firearms. These range from weak handguns to automatic rifles, but, at times, they'll decide on brawling with objects such as a regular kitchen knife. Beside this fact, these scavengers don't have the right capabilities to properly utilize a gun, so most of them aren't intimidating. However, even so, they may still get lucky and take advantageous opportunities that let them dispose of a foe, so it's not as if they're no danger entirely. They tend to prefer close quarters combat, usually staying inside buildings and unwilling to go out, unless provoked.
+
+These scavengers have a wide range of variety and are mostly found within the substandard districts, in which the process of breaking any sort of lawful structure, that would be enforced by the local authorities, has already begun. Majority of these scavengers can be generalized into a simple category of civilians that have no ties to other factions formed after the rebellion. Opposed to Rogues, they've no assistance and must fend off for themselves, but, at the same time, it means that they've no obligations, so they may act however they wish. Sadly, many abandoned the idea of a peaceful life, so they've resorted to staying inside their residence, or other living quarters whose owners have left. In uncommon cases, they'll turn to joining an available nearby clan, usually being the Citizen faction or the Beige Box Clan.`,
+
+"Hellbender": `A NEW STAGE OF EVOLUTION HAS BEEN MADE
+
+A FAST, GRADUAL CHANGE OF THE WORLD.
+
+THIS CHANGE HAS NOT BEEN DOCUMENTED YET, THUS YOU MAY NOT FIND ANY WRITTEN TALES OF THIS CHILD.
+
+WHAT I WILL COMMENT HOWEVER, IS THE FACT THAT THIS CHILD WAS ONE OF THE FIRST TO ADAPT.
+
+BEFORE MEN, THERE WERE REPTILES.
+
+GIANT HULKING BEASTS THAT WALKED THE LANDS OF YOUR WORLD.
+
+YET IN PRESENT, THEY WERE NO LONGER SEEN WALKING.
+
+MANKIND ENDURED THE BLIGHT BEFORE THE FALLEN STAR RISENED IN THE FIRST PLACE.
+THE FALLEN STAR THAT WOULD SOON SHINE BRIGHTLY IN THE EXOSPHERE, COVERING THE SKY IN CRIMSON HUE.`,
+
 "Citizen Charger": `Due to how distant the Citizen Faction is split across regions, it's hard to maintain a resilient, trustworthy leader for each outpost. Without proper order, unruly scouts have, in the past, let their ego get to their head and attempted usurpations to gain control of negligent bases. It never went well. So, it was ultimately decided to simply create a side-grade to the Citizen Rusher that possessed managerial competence: Citizen Charger.
 
 Armed with superior equipment to flaunt their value and rank, they take care of the outpost with an iron fist. Very serious about their job, they make sure everything's efficient and clean, enforcing a no-nonsense way-of-life to avoid mistakes and damages. They handle most of the logistics relating to their assigned outpost: material transport, orders from higher-ups, communication with other outposts, etc.

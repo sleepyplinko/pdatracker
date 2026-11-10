@@ -71,4 +71,4 @@ Read this first after any break or conversation summary. Update it whenever some
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 
 ## Open items
-- None open. Still without text (wiki has none, 2026-11-10): people Hellbender (no wiki page), Scavengers (wiki description empty); documents Wooden Cottage, Creepy Glass, Maintenance Park, Robinson Residence, The Origins, Sewer maintenance, Mines Note #3, Paxton's letter, Mines Note #5, Green Tape (audio only), Resume #451. The wiki's Documents page only has screenshots of these.
+- None. (All people now have descriptions as of 2026-11-10.)
