@@ -5006,8 +5006,7 @@ const PDA_DATA = {
           "LOAD AMOUNT": "0 per insertion",
           "AMMO TYPE": ".50 BMG",
           "WEIGHT": "0.25"
-          }, comment: "" }],
-          "200rnd M134 Mag"
+          }, comment: "" }]
         ]
       }
     }
