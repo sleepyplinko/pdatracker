@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Pictures for 145 weapons (from the OANC Wiki)",
     "ADMIN: Discord preview tester",
     "Skorpion picture",
     "New Discord card for the site",

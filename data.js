@@ -16,7 +16,7 @@ const PDA_DATA = {
       name: "PISTOLS",
       tiers: {
         1: [
-        ["PB Silenced Makarov", { stats: {
+        ["PB Silenced Makarov", { img: "images/tools/pb-silenced-makarov.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -34,7 +34,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Glock 18", { stats: {
+        ["Glock 18", { img: "images/tools/glock-18.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -52,7 +52,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.25"
         }, comment: "The most popular handgun amongst the lowest ranking of civilians.. GLOCK 18! A tiny machine gun for handguns.. Uses 9mm and can be quite threatening, so it's no surprise it became a choice for the civilians." }],
-        ["ZVI Kevin M", { stats: {
+        ["ZVI Kevin M", { img: "images/tools/zvi-kevin-m.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "NO",
           "BURST": "NO",
@@ -70,7 +70,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "BERETTA GLOCK KEVIN???" }],
-        ["USFA Zip .22", { stats: {
+        ["USFA Zip .22", { img: "images/tools/usfa-zip-22.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".22lr",
           "AUTO": "YES",
           "BURST": "NO",
@@ -88,7 +88,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.25"
         }, comment: "So tactical in it's design and ergo, a pretty big handgun compared to others, 17-round magazine for your safety.. Accepts many bullet types so that's a neat trait about this pistol." }],
-        ["M45A1", { stats: {
+        ["M45A1", { img: "images/tools/m45a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -106,7 +106,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.25"
         }, comment: "Sweet .45 ACP! M1911s were outdated so M45A1s became more popular instead, a pretty odd choice since these weapons were honestly kind of forgotten even for their intended replacement. You'll find some of these amongst scavengers instead." }],
-        ["PM Makarov", { stats: {
+        ["PM Makarov", { img: "images/tools/pm-makarov.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -141,7 +141,7 @@ const PDA_DATA = {
           "SPREAD DECREASE": "1/0.1s",
           "EQUIP TIME": "0.25s"
         }, comment: "Incredibly light, like it literally takes up almost no space at all without magazine, don't know how the components got that light but don't expect the performance of the weapon to be anything good though." }],
-        ["SIG Sauer P250", { stats: {
+        ["SIG Sauer P250", { img: "images/tools/sig-sauer-p250.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP | .22lr | .357 SIG",
           "AUTO": "YES",
           "BURST": "NO",
@@ -161,7 +161,7 @@ const PDA_DATA = {
         }, comment: "This pistol is a menace. No seriously, it's really popular for whatever reason. Everyone loves these and nobody really knows why, is it because of it's incredible ergonomics? The fact that there's 5 different extended magazines available for it? Or that it accepts almost every single pistol bullet possible?\n\nMysteries that time will.. probably never tell." }]
         ],
         2: [
-        ["OTs-33 Pernach", { stats: {
+        ["OTs-33 Pernach", { img: "images/tools/ots-33-pernach.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -179,7 +179,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "The most popular handgun amongst the lowest ranking of civilians.. GLOCK 18! A tiny machine gun for handguns.. Uses 9mm and can be quite threatening, so it's no surprise it became a choice for the civilians." }],
-        ["OTs-02 Kiparis", { stats: {
+        ["OTs-02 Kiparis", { img: "images/tools/ots-02-kiparis.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -197,7 +197,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.1s",
           "WEIGHT": "0.5"
         }, comment: "The OTS-02 Kiparis, a SMG currently in service by internal security of foreign embassies and police overseas. Currently its unknown how this weapon managed to appear in the city but more sighting of such weapon have been seen with citizens, with majority citing its accuracy and light design combined with cheap ammunition and maintenance." }],
-        ["Beretta M9A3", { stats: {
+        ["Beretta M9A3", { img: "images/tools/beretta-m9a3.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP | .22lr",
           "AUTO": "YES",
           "BURST": "NO",
@@ -215,7 +215,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "So tactical in it's design and ergo, a pretty big handgun compared to others, 17-round magazine for your safety.. Accepts many bullet types so that's a neat trait about this pistol." }],
-        ["Ashot", { stats: {
+        ["Ashot", { img: "images/tools/ashot.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".410",
           "AUTO": "NO",
           "BURST": "NO",
@@ -233,7 +233,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Warne Eclipse II", { stats: {
+        ["Warne Eclipse II", { img: "images/tools/warne-eclipse-ii.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP | 10x25mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -253,7 +253,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         3: [
-        ["FN Five-Seven", { stats: {
+        ["FN Five-Seven", { img: "images/tools/fn-five-seven.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.7x28mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -271,7 +271,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "" }],
-        ["Warne Super Jägare", { stats: {
+        ["Warne Super Jägare", { img: "images/tools/warne-super-j-gare.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP | 10x25mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -289,7 +289,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Stechkin APB", { stats: {
+        ["Stechkin APB", { img: "images/tools/stechkin-apb.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -307,7 +307,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.4s",
           "WEIGHT": "0.5"
         }, comment: "A fully automatic 9x18mm handgun designed as a replacement to the inferior Makarov PM for usage by state special forces. While still relatively heavy and cumbersome, it's still lighter than its predecessor - the APS. This one comes attached with a foldable stock and a pistol suppressor. Quiet, somewhat accurate, yet still underwhelming due to the used caliber." }],
-        ["H&K VP70", { stats: {
+        ["H&K VP70", { img: "images/tools/handk-vp70.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "NO",
           "BURST": "YES",
@@ -328,7 +328,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "" }],
-        ["H&K USP Compact", { stats: {
+        ["H&K USP Compact", { img: "images/tools/handk-usp-compact.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP | .40 S&W | 9x19mm | .357 SIG",
           "AUTO": "YES",
           "BURST": "NO",
@@ -346,7 +346,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "The H&K USP Compact was formerly used by the 'Government' for it's high stopping power as well as the fact that they can utilize a variety of ammo types. Though it was eventually replaced by the H&K MP7 which had immense backlash due to the fact that President Tofuu thought it would be a good idea to replace a side arm with a submachine gun. A long debate was formed over this change where Tofuu tried to argue against the military on how the H&K MP7 classifies as a side-arm. He didn't win. Though instead of backing down, later that year he found the Beretta CX4 Storm and fell in love with it and thus chose that weapon instead for the military." }],
-        ["Glock 19", { stats: {
+        ["Glock 19", { img: "images/tools/glock-19.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -364,7 +364,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.5"
         }, comment: "The GLOCK 19 is a popular choice within the average district, decent ergonomics, average stopping power, variety of magazine supports ranging from 17 rounds to 80 rounds. Though you'll only ever see 17-20 rounds as the higher capacity is unnecessary and reasonably expensive. It's accessible ammo further makes it a popular pick within the district. Despite the fact that it only fires 9x19mm. It was also popularized by the Beige Boxes a faction known for their army of cardboard \"armoured\" men with GLOCK 19s. They're pretty weak especially on the durability side admittedly but there's so many of them that it's almost uncountable, I guess that makes up for their quality." }],
-        ["Ruger P345", { stats: {
+        ["Ruger P345", { img: "images/tools/ruger-p345.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -384,7 +384,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         4: [
-        ["Glock 19 Roland Special", { stats: {
+        ["Glock 19 Roland Special", { img: "images/tools/glock-19-roland-special.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -402,7 +402,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "" }],
-        ["AMT Hardballer", { stats: {
+        ["AMT Hardballer", { img: "images/tools/amt-hardballer.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -420,7 +420,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.25"
         }, comment: "The AMT Hardballer is a semi-automatic 1911-style pistol, famous for being the first pistol built entirely out of brushed stainless steel to prevent rust. It comes standard with competition-style modifications out of the factory, such as target sights, an extended slide release, and a wide target trigger. This variant is the most famous variant of the AMT Hardballer \"Long Slide\" variant, featuring a 7-inch barrel and slide. The Long Slide variant is a more sporty, target shooting focused variant to give target shooters a longer sight radius and enough muzzle weight to manage the strong recoil of .45 ACP. The name \"Hardballer\" derives it's name from it's intended use with standard 230-grain full metal jacket (FMJ) \"hardball\" military-grade ammunition." }],
-        ["Chrome M9", { stats: {
+        ["Chrome M9", { img: "images/tools/chrome-m9.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP | 10x25mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -440,7 +440,7 @@ const PDA_DATA = {
         }, comment: "Shine bright like a diamond" }]
         ],
         5: [
-        ["Glock 17+", { stats: {
+        ["Glock 17+", { img: "images/tools/glock-17-plus.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -483,7 +483,7 @@ const PDA_DATA = {
       name: "SUBMACHINE GUNS",
       tiers: {
         2: [
-        ["PPSh-41", { stats: {
+        ["PPSh-41", { img: "images/tools/ppsh-41.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x25mm Tokarev",
           "AUTO": "YES",
           "BURST": "NO",
@@ -519,7 +519,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.4s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["UZI", { stats: {
+        ["UZI", { img: "images/tools/uzi.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".22lr | .45ACP | 9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -537,7 +537,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["Daewoo K1", { stats: {
+        ["Daewoo K1", { img: "images/tools/daewoo-k1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -555,7 +555,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.85s",
           "WEIGHT": "1"
         }, comment: "The top tier choice for scavengers, and is even the main gun used by some rank of civilians. Whether they stole from each other is unknown, it's light and accurate but also pretty poor in damage compared to other weapons that uses 5.56." }],
-        ["H&K MP5K", { stats: {
+        ["H&K MP5K", { img: "images/tools/handk-mp5k.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -573,7 +573,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.5"
         }, comment: "The MP5K is a much more compact version of the MP5, as if the weapon wasn't light enough it's now even lighter!\nSadly it can't chamber 10x25mm. But hopefully the weight and ergonomics make up for it." }],
-        ["Micro Uzi", { stats: {
+        ["Micro Uzi", { img: "images/tools/micro-uzi.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -591,7 +591,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "It's fast and a beast, kind of like the Skorpion except it actually focuses a bit more on performance than being just light. It's performance and especially the spread isn't anything too surprising but it does have ridiculous firerate." }],
-        ["Gepard 9mm", { stats: {
+        ["Gepard 9mm", { img: "images/tools/gepard-9mm.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov | 9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -609,7 +609,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "0.75"
         }, comment: "A small and well-made SMG developed by and for foreign governments security forces. The way its configured allows it to easily hidden inside of a case or under a jacket while still providing comfortable and solid grip and ergonomics. Also has a small suppressor attached that helps mitigate your sound profile. All of which are also desired by hitmen or assassins.\n\nIts also built with the receiver of an AK. Because of that, it shares 50% of its parts with the AKS-74U" }],
-        ["Sten MK II", { stats: {
+        ["Sten MK II", { img: "images/tools/sten-mk-ii.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -630,7 +630,7 @@ const PDA_DATA = {
         "HK SMG-II Prototype"
         ],
         3: [
-        ["B&T MP9", { stats: {
+        ["B&T MP9", { img: "images/tools/bandt-mp9.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -648,7 +648,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "When Steyr sold the TMP in 2001, B&T said; \"I'd buy that!\", and bought they did. B&T bought the rights and designs to the Steyr TMP project for just.. 1 Australian shilling - essentially 1 dollar. No, i'm not kidding.\n\nBeing a development of the Steyr TMP, the MP9 is basically the Steyr TMP. Chambered in 9x19mm Parabellum, the MP9 is a polymer, corrosion-resistant machine pistol/PDW used by civillians and special forces for its simple design and ease of operability. Improvements on the TMP design includes a folding stock, integrated picatinny rail, and trigger safety." }],
-        [".22LR AMR-180", { stats: {
+        [".22LR AMR-180", { img: "images/tools/22lr-amr-180.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".22lr",
           "AUTO": "YES",
           "BURST": "NO",
@@ -666,7 +666,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "0.75"
         }, comment: "The .22lr AMR-180 is a fully automatic submachine gun with a distinct top-mounted flat pan drum magazine that enables it to hold 180 rounds of .22lr.\n\nThe AMR-180 was originally designed for military and law enforcement with the idea that repeated hits from .22lr would incapacitate targets without the danger of excessive over-penetration with larger calibres. Because it fires .22lr, the recoil is very stable and controllable even with it's high rpm, allowing the user to hit multiple accurate hits on targets." }],
-        ["H&K MP7A1", { stats: {
+        ["H&K MP7A1", { img: "images/tools/handk-mp7a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "4.6x30mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -702,7 +702,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Colt 9mm SMG", { stats: {
+        ["Colt 9mm SMG", { img: "images/tools/colt-9mm-smg.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm",
           "AUTO": "YES",
           "BURST": "YES",
@@ -723,7 +723,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.5"
         }, comment: "The first of the 9mm ARs\n\nThe COLT 9MM and its models are built on the Colt M16 rifle platform. Developed in the early 80's, the COLT 9MM SMG was built to offer the same handling and ergonomics the M16 rifle gives while also being lightweight, portable, and using the more readily available 9x19mm Parabellum pistol rounds to law enforcement and special units.\n\nUnlike the direct inpingment gas system of the M16 rifle, the COLT 9MM used a more simpler, closed-bolt blowback gas system due to its smaller low-pressure pistol calibre." }],
-        ["Aero Survival Rifle", { stats: {
+        ["Aero Survival Rifle", { img: "images/tools/aero-survival-rifle.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "10x25mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -741,7 +741,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["PP-19 Bizon", { stats: {
+        ["PP-19 Bizon", { img: "images/tools/pp-19-bizon.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x18mm Makarov",
           "AUTO": "YES",
           "BURST": "NO",
@@ -759,7 +759,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "0.75"
         }, comment: "The PP-19 Bizon is a 9x18mm Makarov submachine gun developed in 1993. Interestingly, the engineering team behind the Bizon was led by the sons of the creators of the AK-47 and SVD. It is heavily based on the AKS-74u rifle, sharing 60% of it's parts with the AKS-74u.\n\nThe Bizon was developed from the Ministry of Internal Affairs' demand for a submachine gun designed for law enforcement and counter-terrorist units that require precise, accurate fire at close range. It's\n\nIt's most notable design feature is the large magazine capacity from it's compact size, made possible by the magazine's helical design that allows it to store 64 rounds of 9x18mm Makarov." }],
-        ["SIG MPX", { stats: {
+        ["SIG MPX", { img: "images/tools/sig-mpx.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -777,7 +777,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["UMP-45", { stats: {
+        ["UMP-45", { img: "images/tools/ump-45.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45ACP | .40 S&W",
           "AUTO": "YES",
           "BURST": "NO",
@@ -795,7 +795,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["H&K MP5 RIS", { stats: {
+        ["H&K MP5 RIS", { img: "images/tools/handk-mp5-ris.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | 10x25mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -813,7 +813,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "Beloved submachine gun, it's has a really modular handguard except you can't really find the mods for it sadly, well maybe somewhere in the future." }],
-        ["DEVILSPAWN-BFC", { "special": true, stats: {
+        ["DEVILSPAWN-BFC", { img: "images/tools/devilspawn-bfc.webp", picCredit: "wiki", "special": true, stats: {
           "CALIBER TYPE": ".45ACP | .40 S&W | 10x25mm",
           "AUTO": "NO",
           "BURST": "YES",
@@ -836,7 +836,7 @@ const PDA_DATA = {
         }, comment: "Upgraded variant of the UZI. It is built and handcrafted with a rare exquisite iron. The gun could be seen around in black markets.. due to not being up to legal standards." }]
         ],
         4: [
-        ["Spectre M4", { stats: {
+        ["Spectre M4", { img: "images/tools/spectre-m4.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -854,7 +854,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Beretta CX4 Storm", { stats: {
+        ["Beretta CX4 Storm", { img: "images/tools/beretta-cx4-storm.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .40 S&W | .45ACP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -872,7 +872,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, comment: "A submachine gun wielded by the higher class of the Government. People often forget that 30 round magazines exist for this gun since it's so commonly seen with 50 rounds. Hell even 92 rounds are likely seen more with it.\n\nTruth be told, it was originally issued for civilian defense. When Tofuu saw this in the manufacture and found it's performance stunning and hence, placed all his funding into making it mutually exclusive with the Government. Not even the Military utilizes this.\n\nSo the 30 round magazines are unfortunately lost in time, but you may find early birds wielding these tools. Mostly journalists, as they have bought it off the original owners for a hefty price. Consider yourself lucky for getting your hands on these tools." }],
-        ["P90", { stats: {
+        ["P90", { img: "images/tools/p90.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.7x28mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -893,7 +893,7 @@ const PDA_DATA = {
         "H&K MP7A1+"
         ],
         5: [
-        ["CZ Skorpion EVO 3", { stats: {
+        ["CZ Skorpion EVO 3", { img: "images/tools/cz-skorpion-evo-3.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .22lr",
           "AUTO": "YES",
           "BURST": "NO",
@@ -911,7 +911,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.5"
         }, comment: "--" }],
-        ["Military Kriss Vector", { stats: {
+        ["Military Kriss Vector", { img: "images/tools/military-kriss-vector.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
           "AUTO": "YES",
           "BURST": "NO",
@@ -937,7 +937,7 @@ const PDA_DATA = {
       name: "RIFLES",
       tiers: {
         1: [
-        ["AKS-74U", { stats: {
+        ["AKS-74U", { img: "images/tools/aks-74u.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -957,7 +957,7 @@ const PDA_DATA = {
         }, comment: "Popular weapon amongst the scavengers, light-weight rifle that uses 5.45. Pretty cheap weapon that gets the job done." }]
         ],
         2: [
-        ["Savage Arms Axis II", { stats: {
+        ["Savage Arms Axis II", { img: "images/tools/savage-arms-axis-ii.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".308 | 7.62x51mm NATO",
           "AUTO": "NO",
           "BURST": "NO",
@@ -975,7 +975,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.75s",
           "WEIGHT": "1.25"
         }, comment: "One of the easiest sniper rifles to get your hands on, you can often find these at Watchtowers." }],
-        ["Z-M LR-300", { stats: {
+        ["Z-M LR-300", { img: "images/tools/z-m-lr-300.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -993,7 +993,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["SKS", { stats: {
+        ["SKS", { img: "images/tools/sks.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1011,7 +1011,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["9A-91", { stats: {
+        ["9A-91", { img: "images/tools/9a-91.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1031,7 +1031,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         3: [
-        ["Colt M4A1", { stats: {
+        ["Colt M4A1", { img: "images/tools/colt-m4a1.webp", picCredit: "wiki", stats: {
           "MODE": "Underslung",
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
@@ -1050,7 +1050,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "Adopted by over 60 countries worldwide, and has been described as \"one of the defining firearms of the 21st century\". Hearing the word \"assault rifle\", a lot of people think of the M4A1 Carbine.\n\nThe M4A1 is a gas operated, select-fire carbine that is chambered to fire the 5.56x45 mm NATO cartridge. Also sometimes mistaken for an AR-15, in which its definitely is also mistaken for Assault Rifle, it's actually ArmyLife\n\nBeing a shortened, carbine version of the M16 platform, the M4A1 has been used for close quarters operations where the M16 would be too long and bulky to use effectively. It has been a compact, light, customizable, and accurate weapon. Like other firearms, failure to properly maintain the M4 can result in malfunctions. Funnily enough, 94% of military members found the M4 more efficient." }],
-        ["Gaultier WA2000", { stats: {
+        ["Gaultier WA2000", { img: "images/tools/gaultier-wa2000.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1068,7 +1068,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Galil ARM", { stats: {
+        ["Galil ARM", { img: "images/tools/galil-arm.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1086,7 +1086,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["L85A1 SA80", { stats: {
+        ["L85A1 SA80", { img: "images/tools/l85a1-sa80.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1104,7 +1104,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.75s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["SVT-40", { stats: {
+        ["SVT-40", { img: "images/tools/svt-40.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1122,7 +1122,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Mosin-Nagant", { stats: {
+        ["Mosin-Nagant", { img: "images/tools/mosin-nagant.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1140,7 +1140,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "The Mosin Nagant is a legendary, 5-shot bolt-action military rifle chambered in 7.62x54mmR. It is the longest running production military rifle, being developed in 1891 and still being produced after moving production to Peric and it's surrounding areas.\n\nIt's design is a simple bolt-action that uses a internal magazine that requires manual loading by hand or with the use of stripper clips.\n\nIn the decades following The Great Dummy War, millions of Mosin Nagant rifles were released as military surplus, making them an affordable and common leading to widespread use even to today in modern conflicts." }],
-        ["AN-94", { stats: {
+        ["AN-94", { img: "images/tools/an-94.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "YES",
           "BURST": "YES",
@@ -1161,7 +1161,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "The AN-94 is a burst-fire, 5.45x39mm assault rifle designed as a replacement to the AK-74. But due to the complexity of it's design and it's high production cost, the AN-94 failed to replace the AK-74 and was used only in limited numbers as a special purpose weapon.\n\nThe AN-94 is known for it's unique \"hyperburst\" feature that allows it to shoot a 2-round burst so fast in quick succession at 1,800 RPM that they feel like a single shot to the shooter. A pulley system inside the AN-94 is used for the hyperburst feature. As a round is fired, the bolt carrier group moves back due the blowback system and pulls the pulley cable. The pulley then advances a new cartridge into the feeding mechanism while the bolt carrier group is still travelling back from the first shot, allowing for both rounds to impact almost instantenously. Because of the complex pulley and cable mechanism occupying the left side of the gun, the magazine is canted at an angle to the right.\n\nLegend says a stranded man in the south-west desert was saved by the AN-94 when he disassembled the gun, using the pulley system and bucket to draw water from the water well." }],
-        ["VSK-94", { stats: {
+        ["VSK-94", { img: "images/tools/vsk-94.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1179,7 +1179,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["AKM", { stats: {
+        ["AKM", { img: "images/tools/akm.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1197,7 +1197,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "The AKM is a select-fire, 7.62x39mm assault rifle. It is a more lighter, cost-effective, and refined successor to the AK-47. A majority of the firearm remains the same as the AK-74 with the exception of a few key changes.\n\nLighter stamp metal sheets that made the receiver lighter, cheaper, and fast to produce, an angled cut on the muzzle brake to counteract the tendency for the AKM to climb during automatic fire, and a rate reducer to slow the cyclic rate for improving accuracy during sustained bursts.\n\nWhile the AKM was eventually superseded by the AK-74, millions of AKMs were still produced and exported. It remains in heavy use by military, police forces, criminals, and everyone alike around the world." }],
-        ["L85A3 SA80", { stats: {
+        ["L85A3 SA80", { img: "images/tools/l85a3-sa80.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1215,7 +1215,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.75s",
           "WEIGHT": "1.5"
         }, comment: "The SA80 L85A3 is the most recent, upgraded iteration of the SA80 L85 rifle family. The upgrades focused on weight reduction, modularity improvement, and enhancing reliability.\n\nThe upgrades to the A3 from the A2 model include full-length picatinny rail,refinements in the upper receiver for better reliability, and finished with a durable FDE Cerakote finish, which is more resistant to wear than the A2's coating.\n\nDespite the upgrade to the weapons reliability, there is still the slim chance the weapon can jam due to the local manufacturer cutting costs during production." }],
-        ["AS-VAL", { stats: {
+        ["AS-VAL", { img: "images/tools/as-val.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1233,7 +1233,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "Along with it's sister weapon, the VSS Vintorez - the AS-VAL is a special purpose intergrally-suppressed semi-auto rifle chambered for the heavy, 250 grain subsonic 9x39mm SP-6.\n\nLike most descendants of the AK, it borrows a modified version of the Kalashnikov action - a gas-operated, rotating bolt mechanism. What differentiates it from most is its specially designed dual-chamber integrated suppressor. The resulting sound is significantly quieter than unsuppressed rifle even at a short distance that it sounds like an airsoft gun." }],
-        ["Kuvalda OP-SKS", { stats: {
+        ["Kuvalda OP-SKS", { img: "images/tools/kuvalda-op-sks.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1251,7 +1251,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["M16A1", { stats: {
+        ["M16A1", { img: "images/tools/m16a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "NO",
           "BURST": "YES",
@@ -1272,7 +1272,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["H&K PSG-1", { stats: {
+        ["H&K PSG-1", { img: "images/tools/handk-psg-1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1290,7 +1290,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["FAMAS G2", { stats: {
+        ["FAMAS G2", { img: "images/tools/famas-g2.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "YES",
@@ -1311,7 +1311,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["FN FAL", { stats: {
+        ["FN FAL", { img: "images/tools/fn-fal.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1329,7 +1329,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["SV-98", { stats: {
+        ["SV-98", { img: "images/tools/sv-98.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1347,7 +1347,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["H&K G36C", { stats: {
+        ["H&K G36C", { img: "images/tools/handk-g36c.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1365,7 +1365,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.5"
         }, comment: "The H&K G36C is a variant of the G36 5.56x45mm assault rifle. The C meaning \"compact\" as this variant is designed for special forces, police units, and vehicle crews who require the stopping power of a rifle in a concealable, submachine gun sized package.\n\nUnlike the full length G36, the G36C has a shorter ~50cm length with the stock folded and lighter weight. The \"C\" also replaces the iconic built-in optical scope with a Picatinny rail system for mounting various scopes and optics." }],
-        ["AUG A1", { stats: {
+        ["AUG A1", { img: "images/tools/aug-a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1383,7 +1383,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "The AUG A1 is a 5.56x45mm, bullpup rifle. It features an integrated 1.5x optical scope with a signature \"donut\" reticle and a folding forward grip. The AUG A1 was a trendsetter for bullpup guns, largely popularizing the design.\n\nThe main advantage of this bullpup design is it's weight distribution. The design places the rifle's main components towards the rear of the gun around the \"stock\" area, providing excellent balance and allowing for a full-length barrel inside a manueverable and compact frame.\n\nIt's highly modular with 6 main interchangable groups being; the barrel, receiver + optic, bolt carrier group, trigger mechanism, stock, and magazine. The rifle can be quickly field-stripped allowing it to adapt into a variety of configurations depending on the situation it's needed for." }],
-        ["AK74", { stats: {
+        ["AK74", { img: "images/tools/ak74.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1421,7 +1421,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         4: [
-        ["AK12", { stats: {
+        ["AK12", { img: "images/tools/ak12.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1439,7 +1439,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["OTs-14 Groza", { stats: {
+        ["OTs-14 Groza", { img: "images/tools/ots-14-groza.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1457,7 +1457,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "0.75"
         }, comment: "None" }],
-        ["Remington 700", { stats: {
+        ["Remington 700", { img: "images/tools/remington-700.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".308 | 7.62x51mm NATO",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1476,7 +1476,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["KAC SR-25", { stats: {
+        ["KAC SR-25", { img: "images/tools/kac-sr-25.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1495,7 +1495,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["L96A1", { stats: {
+        ["L96A1", { img: "images/tools/l96a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1514,7 +1514,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["Magpul Masada", { stats: {
+        ["Magpul Masada", { img: "images/tools/magpul-masada.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1532,7 +1532,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["H&K G11", { stats: {
+        ["H&K G11", { img: "images/tools/handk-g11.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "4.73x33mm",
           "AUTO": "YES",
           "BURST": "YES",
@@ -1553,7 +1553,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["R11 RSASS", { stats: {
+        ["R11 RSASS", { img: "images/tools/r11-rsass.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1572,7 +1572,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["AAC Honey Badger", { stats: {
+        ["AAC Honey Badger", { img: "images/tools/aac-honey-badger.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".300 Blackout",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1590,7 +1590,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Konstantinov", { stats: {
+        ["Konstantinov", { img: "images/tools/konstantinov.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm | 5.45x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1608,7 +1608,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.25"
         }, comment: "The prime example of good idea, ugly in practice. Alexander Konstantinov aimed to create a rifle that was highly controllable during off-hand automatic fire. For this, he introduced the unique and unconventional design known as the \"inverted bullpup\", the pistol grip being above the receiver was made to achieve this. The Konstantinov SA-01 has a gas-operated, rotating bolt mechanism similar to the AK.\n\nUndergoing testing, the Konstantinov SA-01's results indicated that the rifle sustained \"sufficient operability\" and that the principles of its design were effective. However, the inverted bullpup design was deemed to radical and unwieldly, which led to its discontinuation for more conventional designs.\n\nStill, a hand-few of rare prototypes that remained from its testing phase ended up in the hands of a lucky few, including one in the normal city." }],
-        ["Henry 45-70", { stats: {
+        ["Henry 45-70", { img: "images/tools/henry-45-70.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".45-70 | .410",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1626,7 +1626,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["M14 EBR", { stats: {
+        ["M14 EBR", { img: "images/tools/m14-ebr.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1644,7 +1644,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["SCAR-L", { stats: {
+        ["SCAR-L", { img: "images/tools/scar-l.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "YES",
@@ -1665,7 +1665,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["AEK-971", { stats: {
+        ["AEK-971", { img: "images/tools/aek-971.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "NO",
           "BURST": "YES",
@@ -1686,7 +1686,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["SR-3M Vikhr", { stats: {
+        ["SR-3M Vikhr", { img: "images/tools/sr-3m-vikhr.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1704,7 +1704,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.85s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["SIG Sauer MCX Virtus", { stats: {
+        ["SIG Sauer MCX Virtus", { img: "images/tools/sig-sauer-mcx-virtus.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO | 7.62x39mm | .300 Blackout",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1722,7 +1722,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["DP-28 Degtyaryov", { stats: {
+        ["DP-28 Degtyaryov", { img: "images/tools/dp-28-degtyaryov.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1741,7 +1741,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Dragunov SVD", { stats: {
+        ["Dragunov SVD", { img: "images/tools/dragunov-svd.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1759,7 +1759,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "The SVD Dragunov is a semi-auto, designated marksman rifle (DMR) chambered in 7.62x54mmR (rimfire). It comes with the standard 10rnd magazine. Although 20rnd magazines exist, they're either aftermarkets or from specialized variants. It's standard scope is the PSO-1 optical sight which mounts to the dovetail rail on the side of the SVD. The PSO-1 features a stadiametric rangefinder for hitting targets >100m.\n\nDespite its visual similarity to the AK platform, the SVD has a different internal design. It's internals are better suited to handle the 7.62x54mmR's increased power as the visual similiarities are only for standardizing manual of arms.\n\nA few of the modifications to be made for the SVD includes shorter short-stroke gas piston system instad of the AK's fixed piston, three locking lugs on the bolt from the AK's two, and a significantly longer receiver to accomodate the 7.62x54mmR cartridge. These all work to reduce recoil and give the SVD better handling." }],
-        ["FN SCAR-H", { stats: {
+        ["FN SCAR-H", { img: "images/tools/fn-scar-h.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "YES",
@@ -1780,7 +1780,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["AK103", { stats: {
+        ["AK103", { img: "images/tools/ak103.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1798,7 +1798,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["VSS Vintorez", { stats: {
+        ["VSS Vintorez", { img: "images/tools/vss-vintorez.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1816,7 +1816,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "A favorite amongst scarfaced mercenaries operating in the East.\n\nUnlike it's sister weapon, the AS-VAL, the VSS Vintorez is a designated marksman or sniper rifle with a fixed wooden stock optimized for stealth and accuracy for special force units.\n\nThe VSS Vintorez shares alot of the same parts as the AS-VAL with approximately 70% of their components being interchangeable, including its specially designed dual-chamber integrated suppressor. The main difference in the two being the VSS typically features a side rail dovetail mount specifically designed for Eastern optics like the PSO-1." }],
-        ["SIG MCX", { stats: {
+        ["SIG MCX", { img: "images/tools/sig-mcx.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO | 7.62x39mm | .300 Blackout",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1834,7 +1834,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.75s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["H&K G36E", { stats: {
+        ["H&K G36E", { img: "images/tools/handk-g36e.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO | .22lr",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1852,7 +1852,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "The H&K G36E is a variant of the G36 5.56x45mm assault rifle. The E meaning \"export\" as \"E\" variant is an export version of the G36 rifle.\n\nA key difference between the G36E and G36 is the G36E's intergrated single-optic while the G36 has a integrated dual-optic." }],
-        ["RPK", { stats: {
+        ["RPK", { img: "images/tools/rpk.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1892,7 +1892,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "7"
         }, comment: "" }],
-        ["OTs-03 SVU", { stats: {
+        ["OTs-03 SVU", { img: "images/tools/ots-03-svu.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1910,7 +1910,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, comment: "The OTs-03 SVU is a semi-auto, bullpup configuration of the SVD Dragunov rifle. It's standard magazine Capacity is 20 rounds, though it can use the SVD's 10 round magazine and vice versa. The SVU was initially developed to modernize the aging SVD, but designers realized the configuration of the SVD would have had to be completely changed, leading to the development of the SVU. It is mostly seen used amongst security and special force units.\n\nThe bullpup configuration involved moving forward the trigger group so that it's in front of the magazine well of the SVU, making it greatly shorter than the SVD. This layout improves ergonomics and gives better handling for close encounters. It's built in suppressor and special muzzle break reduces the sound of the gun fire greatly and reduces ~40% of the incoming recoil. It always comes standard with the PSO-1 scope." }],
-        ["Deserttech MDR 7.62", { stats: {
+        ["Deserttech MDR 7.62", { img: "images/tools/deserttech-mdr-7-62.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1928,7 +1928,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "Yup" }],
-        ["BCM Jack Carbine", { stats: {
+        ["BCM Jack Carbine", { img: "images/tools/bcm-jack-carbine.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO | 9x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -1946,7 +1946,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.4s",
           "WEIGHT": "1"
         }, comment: "This isn't any JACK CARBINE, It's special from other rifles for it's capability of firing incendiary rounds!" }],
-        ["Barrett M82A1", { stats: {
+        ["Barrett M82A1", { img: "images/tools/barrett-m82a1.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".50 BMG",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1965,7 +1965,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["AK50", { stats: {
+        ["AK50", { img: "images/tools/ak50.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".50 BMG",
           "AUTO": "NO",
           "BURST": "NO",
@@ -1984,7 +1984,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["Colt M4A1+", { stats: {
+        ["Colt M4A1+", { img: "images/tools/colt-m4a1-plus.webp", picCredit: "wiki", stats: {
           "MODE": "Base",
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
@@ -2006,7 +2006,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, modes: [{"MODE": "Underslung", "CALIBER TYPE": "12/70", "AUTO": "YES", "BURST": "NO", "STRENGTH": "1x", "AIM TIME": "0.4", "SWITCH TIME": "0.04s", "RPM": "200", "ALERT RADIUS": "400", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Manually-loaded", "MAX SPREAD": "7.25", "MINIMUM SPREAD": "0", "SPREAD INCREMENT": "0", "SPREAD DECREASE": "0.15/0.1s", "EQUIP TIME": "1s"}], comment: "" }],
-        ["Colt M4A1 RIS M203", { stats: {
+        ["Colt M4A1 RIS M203", { img: "images/tools/colt-m4a1-ris-m203.webp", picCredit: "wiki", stats: {
           "MODE": "Base",
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
@@ -2025,7 +2025,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1"
         }, modes: [{"MODE": "Underslung", "CALIBER TYPE": "40x46mm", "AUTO": "NO", "BURST": "NO", "STRENGTH": "0.8x", "AIM TIME": "1", "SWITCH TIME": "1.2s", "RPM": "50", "ALERT RADIUS": "100", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Manually-loaded", "MAX SPREAD": "3", "MINIMUM SPREAD": "0", "SPREAD INCREMENT": "0", "SPREAD DECREASE": "0.15/0.1s", "EQUIP TIME": "1.5s"}], comment: "Adopted by over 60 countries worldwide, and has been described as \"one of the defining firearms of the 21st century\". Hearing the word \"assault rifle\", a lot of people think of the M4A1 Carbine.\n\nThe M4A1 is a gas operated, select-fire carbine that is chambered to fire the 5.56x45 mm NATO cartridge. Also sometimes mistaken for an AR-15, in which its definitely is also mistaken for Assault Rifle, it's actually ArmyLife\n\nBeing a shortened, carbine version of the M16 platform, the M4A1 has been used for close quarters operations where the M16 would be too long and bulky to use effectively. It has been a compact, light, customizable, and accurate weapon. Like other firearms, failure to properly maintain the M4 can result in malfunctions. Funnily enough, 94% of military members found the M4 more efficient." }],
-        ["DVL-10", { stats: {
+        ["DVL-10", { img: "images/tools/dvl-10.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x51mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2043,7 +2043,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["ASh-12.7", { stats: {
+        ["ASh-12.7", { img: "images/tools/ash-12-7.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12.7x55mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2064,7 +2064,7 @@ const PDA_DATA = {
         "Dragunov SVD-M",
         "AK74M",
         "SIG MCX-SPEAR",
-        ["H&K HK416A5", { stats: {
+        ["H&K HK416A5", { img: "images/tools/handk-hk416a5.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm | 5.56x45mm NATO | .300 Blackout",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2082,7 +2082,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "1.25"
         }, comment: "--" }],
-        ["RPK-74M", { stats: {
+        ["RPK-74M", { img: "images/tools/rpk-74m.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.45x39mm",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2107,7 +2107,7 @@ const PDA_DATA = {
       name: "MACHINE GUNS",
       tiers: {
         4: [
-        ["H&K MG4", { stats: {
+        ["H&K MG4", { img: "images/tools/handk-mg4.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2126,7 +2126,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["IWI Negev", { stats: {
+        ["IWI Negev", { img: "images/tools/iwi-negev.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2147,7 +2147,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         5: [
-        ["Military M249 SAW", { stats: {
+        ["Military M249 SAW", { img: "images/tools/military-m249-saw.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2166,7 +2166,7 @@ const PDA_DATA = {
           "EQUIP TIME": "2.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["PKM", { stats: {
+        ["PKM", { img: "images/tools/pkm.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "7.62x54mmR",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2192,7 +2192,7 @@ const PDA_DATA = {
       name: "SHOTGUNS",
       tiers: {
         1: [
-        ["Duplet", { stats: {
+        ["Duplet", { img: "images/tools/duplet.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "YES",
@@ -2213,7 +2213,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Colt 1883 Sawn Off", { stats: {
+        ["Colt 1883 Sawn Off", { img: "images/tools/colt-1883-sawn-off.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2249,7 +2249,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Remington 870, Sawed Off", { stats: {
+        ["Remington 870, Sawed Off", { img: "images/tools/remington-870-sawed-off.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2269,7 +2269,7 @@ const PDA_DATA = {
         }, comment: "A hefty light-weight shotgun that also isn't as light as a sawn off but it's still lighter compared to most shotguns just with a bigger magazine tube for your disposal." }]
         ],
         2: [
-        ["Double Barrel Shotgun", { stats: {
+        ["Double Barrel Shotgun", { img: "images/tools/double-barrel-shotgun.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2287,7 +2287,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "Terrifying, be thankful it isn't possible to fire both barrels at the same time, as if the sawn off version of this weapon wasn't terrifying enough, you can get the full length double barrel that does nearly twice the damage." }],
-        ["Benelli Nova", { stats: {
+        ["Benelli Nova", { img: "images/tools/benelli-nova.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2305,7 +2305,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Serbu Super Shorty", { stats: {
+        ["Serbu Super Shorty", { img: "images/tools/serbu-super-shorty.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2323,7 +2323,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.75"
         }, comment: "Kind of like the sawn off except you have an extra round, and is also slightly heavier. Incase two rounds wasn't enough, still works relatively well as a panic weapon." }],
-        ["Mossberg 590 Shockwave", { stats: {
+        ["Mossberg 590 Shockwave", { img: "images/tools/mossberg-590-shockwave.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".410",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2359,7 +2359,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "1"
         }, comment: "An armcannon noticeably worn by large brutes that wander the Maw, the gun itself is quite cool in its appearance.. but not very practical, as searing heat can be felt from prolonged use of the gun. It is unknown as to what kind of material were used to craft this weapon, however it seems to actually be softer and more flexible than it looks..as if it was made out of flesh..?" }],
-        ["Citori 725", { stats: {
+        ["Citori 725", { img: "images/tools/citori-725.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2377,7 +2377,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.5"
         }, comment: "Shotgun that is often competed with the Double Barrel Shotgun. Numerous of heavy debates regarding on which weapon is objectively better. However, it is true that the CITORI .725 performance wise is much better than the double barrel. But in terms of weight, Double Barrel wins.\n\nAlso a weapon often used by the \"Marigolds\", one of the largest organization of \"independent\" scavengers, they hunt with 12 gauge 5.25mm, while reserving the more special rounds for larger foes.\n\nUnlike the rich folks with more expensive shotguns, they have a scarce amount of slugs thus armour is their largest weakness." }],
-        ["Henry .410 Axe", { stats: {
+        ["Henry .410 Axe", { img: "images/tools/henry-410-axe.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".410",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2397,7 +2397,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         3: [
-        ["Baikal MP-133", { stats: {
+        ["Baikal MP-133", { img: "images/tools/baikal-mp-133.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2415,7 +2415,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.35s",
           "WEIGHT": "0.5"
         }, comment: "This shotgun is special, because of how light it is compared to other shotguns despite having around the same length as them, it's actually about as light as a SUPER SERBU SHOTTY. I guess that flashlight is what makes it pretty light huh?" }],
-        ["Remington 11-87", { stats: {
+        ["Remington 11-87", { img: "images/tools/remington-11-87.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2433,7 +2433,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["MAG-7", { stats: {
+        ["MAG-7", { img: "images/tools/mag-7.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2451,7 +2451,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["Remington 870", { stats: {
+        ["Remington 870", { img: "images/tools/remington-870.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2469,7 +2469,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["MTs-255", { stats: {
+        ["MTs-255", { img: "images/tools/mts-255.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".410",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2487,7 +2487,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.15s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Saiga-12", { stats: {
+        ["Saiga-12", { img: "images/tools/saiga-12.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2507,7 +2507,7 @@ const PDA_DATA = {
         }, comment: "Kind of like a shotgun, except it has a magazine instead of a magazine tube. The spread is one to be questioned but, having multiple magazines does marginally help you in tougher situations.\n\nWhen T$ still mattered in value, these things weren't favourited at all as their performance did not make up for it's magazine support. Especially considering it costed more to supply it than the performance it gave.\n\nOvertime the weapon began to see the broad daylight. Glad to see it on board! Not available in most regions though." }]
         ],
         4: [
-        ["Franchi SPAS-12", { stats: {
+        ["Franchi SPAS-12", { img: "images/tools/franchi-spas-12.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2525,7 +2525,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.5"
         }, comment: "" }],
-        ["Benelli M4", { stats: {
+        ["Benelli M4", { img: "images/tools/benelli-m4.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2562,7 +2562,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Keltec KSG-12", { stats: {
+        ["Keltec KSG-12", { img: "images/tools/keltec-ksg-12.webp", picCredit: "wiki", stats: {
           "MODE": "Base",
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
@@ -2583,7 +2583,7 @@ const PDA_DATA = {
         }, modes: [{"MODE": "Base", "CALIBER TYPE": "12/70", "AUTO": "YES", "BURST": "NO", "STRENGTH": "1.15x", "AIM TIME": "0.85", "SWITCH TIME": "0.6s", "RPM": "100", "ALERT RADIUS": "600", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Manually-loaded", "MAX SPREAD": "7", "MINIMUM SPREAD": "0", "SPREAD INCREMENT": "0.1", "SPREAD DECREASE": "0.15/0.05s", "EQUIP TIME": "1s"}], comment: "" }]
         ],
         5: [
-        ["Military AA12", { stats: {
+        ["Military AA12", { img: "images/tools/military-aa12.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2601,7 +2601,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.75s",
           "WEIGHT": "2"
         }, comment: "" }],
-        ["SRM-1216", { stats: {
+        ["SRM-1216", { img: "images/tools/srm-1216.webp", picCredit: "wiki", stats: {
           "MODE": "Base",
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
@@ -2620,7 +2620,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, modes: [{"MODE": "Base", "CALIBER TYPE": "12/70", "AUTO": "YES", "BURST": "NO", "STRENGTH": "1.2x", "AIM TIME": "0.75", "SWITCH TIME": "0.08s", "RPM": "200", "ALERT RADIUS": "500", "RELOAD MODIFIER": "1", "WEAPON TYPE": "Magazine-fed", "MAX SPREAD": "7", "MINIMUM SPREAD": "7", "SPREAD INCREMENT": "0", "SPREAD DECREASE": "0/0s", "EQUIP TIME": "1s"}], comment: "" }],
-        ["Military Striker-12", { stats: {
+        ["Military Striker-12", { img: "images/tools/military-striker-12.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "YES",
@@ -2648,7 +2648,7 @@ const PDA_DATA = {
       name: "HEAVY PISTOL",
       tiers: {
         1: [
-        ["Taurus 605", { stats: {
+        ["Taurus 605", { img: "images/tools/taurus-605.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".357",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2668,7 +2668,7 @@ const PDA_DATA = {
         }, comment: "The Taurus 605 is a compact, 5 shot double-action/single-action \"snubnosed\" revolver chambered for both .357 Magnum and .40 S&W. It's a popular entry-level, being common amongst beginners and budget shooters due to its affordability and simple operation. It's double-action is on the heavier side, often exceeding 5kg of force. While this makes it safer by preventing accidental discharge, it requires significant hand strength. And because it's a small, lightweight concealed-carry firing full-size revolver sounds, it can sometimes have snappy recoil, leading to longer follow-through shots." }]
         ],
         2: [
-        ["MP-412 Rex", { stats: {
+        ["MP-412 Rex", { img: "images/tools/mp-412-rex.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".357",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2686,7 +2686,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, comment: "One of the few revolver models that exists in this district, it's not a popular weapon choice but it does get the job done as a heavy pistol. So there's that." }],
-        ["M&P R8", { stats: {
+        ["M&P R8", { img: "images/tools/mandp-r8.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".357",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2722,7 +2722,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.5"
         }, comment: "The Obrez is a sawed-off, makeshift handgun made from a full-sized Mosin Nagant rifle. The Mosin's barrel and wooden stock were hacked off, leaving only a snubby barrel and crude pistol grip.\n\nIt's design was improvised by soldiers, criminals, and anyone alike. Back then when handguns were scarce and reserved for military officers, soldiers and criminals would often saw off surplus Mosin Nagants for a concealable, close quarter weapon.\n\nA major drawback from this modification was the weapon's horrible ballistics. The Obrez's 7.62x54mmR round loses a significant amount of bullet velocity upon exiting the barrel, suffering from poor accuracy, unmanageable recoil, and a massive fireball from the residue gunpowder prematurely igniting in the barrel." }],
-        ["Chiappa Rhino 50DS", { stats: {
+        ["Chiappa Rhino 50DS", { img: "images/tools/chiappa-rhino-50ds.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".40 S&W | .357 | 9x19mm",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2742,7 +2742,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         3: [
-        [".44 Magnum", { stats: {
+        [".44 Magnum", { img: "images/tools/44-magnum.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".44",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2760,7 +2760,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1"
         }, comment: "One of the few revolver models that exists in this district, it's not a popular weapon choice but it does get the job done as a heavy pistol. So there's that." }],
-        [".44 Auto Mag Pistol", { stats: {
+        [".44 Auto Mag Pistol", { img: "images/tools/44-auto-mag-pistol.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".44 AMP",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2778,7 +2778,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.5"
         }, comment: "\"This is the .44 magnum \"Auto Mag\", and it holds a 300 grain cartridge and if properly used it can remove the fingerprints, assuming it doesn't jam.\"\n\nThe Auto Mag Pistol (AMP) started out as a rough, unreliable, experimental prototype and was improved to be more reliable and profitable. Though, even with a correct finished design, the questionable reliability, expensive manufacturing processes and materials all made the cost of producing each pistol expensive, resulting in the bankruptcy of the original Auto Mag Corporation.\n\nNow, it's sought after more of a collector's item by collectors and firearm enthusiasts than actually being used, except for by a famous, dirty police inspector." }],
-        ["HPD 2016 Special", { stats: {
+        ["HPD 2016 Special", { img: "images/tools/hpd-2016-special.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "5.56x45mm NATO",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2796,7 +2796,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["Mare's Leg", { stats: {
+        ["Mare's Leg", { img: "images/tools/mare-s-leg.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".44 | .357",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2814,7 +2814,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Deagle Mark XIX .357", { stats: {
+        ["Deagle Mark XIX .357", { img: "images/tools/deagle-mark-xix-357.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".357",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2832,7 +2832,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.5"
         }, comment: "" }],
-        ["Deagle .50 AE", { stats: {
+        ["Deagle .50 AE", { img: "images/tools/deagle-50-ae.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".50AE",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2850,7 +2850,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.75"
         }, comment: "Having more screentime in action films and videogames than actual combat usage, this handgun is more \"hollywood star\" than gun.\n\nThe Desert Eagle/\"Deagle\" is a gas-operated, single action, semi-auto fire handgun chambered in the massive .50 Action Express - one of the most powerful pistol cartridges.\n\nInterestingly, the Deagle uses a gas-operated ejection, rotating bolt system usually found in rifles, as opposed to the short-recoil or blowback designs found in most handguns. The advantage of this design is that it allows the use of larger, more powerful cartridges, allowing the Deagle to compete in a field previously dominated by large-calibre revolvers.\n\nDownsides to this gas-operated mechanism is the large size of the Deagle. It's heavy and has an excessive amount of recoil, too impractical for actual combat usage." }],
-        ["Deagle .44", { stats: {
+        ["Deagle .44", { img: "images/tools/deagle-44.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".44",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2888,7 +2888,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["AMT Automag V", { stats: {
+        ["AMT Automag V", { img: "images/tools/amt-automag-v.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".50AE",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2906,7 +2906,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "0.5"
         }, comment: "The AMT AUTOMAG V is a large, high calibre semi-automatic pistol made by the same creator as the .44 Auto Mag Pistol. It is chambered in .50 Action Express and features a 6.5 inch barrel and only a 5-round mag capacity\n\nThe AUTOMAG V was meant to compete with hand cannons like the Desert Eagle, being significantly lighter than the Desert Eagle. The AUTOMAG V has a smaller grip making it easier to handle but often has snappier, more violent recoil making sight recovery harder." }],
-        ["Taurus Judge", { stats: {
+        ["Taurus Judge", { img: "images/tools/taurus-judge.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".410",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2924,7 +2924,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.5"
         }, comment: "The JUDGE.\n\nThe TAURUS JUDGE is a close-range, high-spread high-ordanance weapon, similar in role to a shotgun but it fits in one hand. Despite the TAURUS JUDGE being designed to fire .410 shotshells, its rifled barrels qualify it as a regular, high calibre handgun under federal laws in Frieden and its surrounding areas.\n\nSurprisingly, the TAURUS JUDGE is popular amongst civillians for its versatility, close-range self defense, and home protection for its stopping power. It's effectiveness dwindles at longer ranges, being most effective at closer range." }],
-        [".50 AE Home Defense Companion", { stats: {
+        [".50 AE Home Defense Companion", { img: "images/tools/50-ae-home-defense-companion.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": ".50AE",
           "AUTO": "NO",
           "BURST": "NO",
@@ -2952,7 +2952,7 @@ const PDA_DATA = {
       name: "HEAVY RIFLES",
       tiers: {
         5: [
-        ["M320 GL", { stats: {
+        ["M320 GL", { img: "images/tools/m320-gl.webp", picCredit: "wiki", stats: {
           "CALIBER TYPE": "40x46mm",
           "AUTO": "YES",
           "BURST": "NO",

@@ -268,6 +268,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .dbox { background: rgba(20,20,20,.85); border: 1px solid #6a6a6a; display: flex; flex-direction: column; min-height: 0; }
 .preview { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; background: linear-gradient(#4a4a4a, #1c1c1c); overflow: hidden; }
 .preview img { width: 100%; height: 100%; object-fit: cover; }
+.preview.gunprev img { object-fit: contain; }
 .preview .ph { width: 60%; max-width: 130px; color: #6a6a6a; }
 .star { position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; padding: 0; border: 0; background: none; color: #e6c400; }
 .star svg { width: 100%; height: 100%; }
@@ -517,6 +518,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .preview img[data-tip] { cursor: help; }
 .stat[data-tip]:hover i { text-decoration: underline dotted; text-underline-offset: 3px; }
 
+.imgcredit { position: absolute; right: 6px; top: 6px; padding: 0 5px; border-radius: 3px; background: rgba(0,0,0,.7); color: #bbb; font-size: 11px; text-decoration: none; }
+.imgcredit:hover { color: #fff; text-decoration: underline; }
 .imgcount { position: absolute; left: 6px; bottom: 6px; padding: 0 5px; border-radius: 3px; background: rgba(0,0,0,.7); color: #eee; font-size: 12px; font-weight: 700; }
 .arrow:disabled { opacity: .3; cursor: default; }
 .arrow:disabled:hover { color: #111; }
@@ -1133,3 +1136,4 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .dcdesc { font-size: 14px; line-height: 1.35; white-space: pre-line; margin-bottom: 10px; }
 .dcimg { display: block; width: 100%; border-radius: 4px; }
 .dcimg.small { width: 80px; }
+.lightbox figcaption a { color: #fff; }

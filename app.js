@@ -358,10 +358,12 @@
     for (const o of objs) {
       if (!o) continue;
       const list = o.imgs || (o.img ? [o.img] : null);
-      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" });
+      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "" }));
     }
     return [];
   }
+  const PIC_CREDITS = { wiki: { name: "Once A Normal City Wiki", short: "OANC WIKI", url: "https://once-a-normal-city-roblox.fandom.com/wiki/Guns" } };
+  const creditHTML = im => { const c = PIC_CREDITS[im.credit]; return c ? `<a class="imgcredit" href="${esc(c.url)}" target="_blank" rel="noopener" title="Picture from the ${esc(c.name)} (Fandom)">PIC: ${esc(c.short)}</a>` : ""; };
   let imgIndex = 0;
   let curImgs = [];
   function previewHTML(imgs, fallback) {
@@ -370,7 +372,7 @@
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
     return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" title="Click to enlarge" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
-           (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "");
+           (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "") + creditHTML(im);
   }
   function arrowsHTML(imgs) {
     if (imgs.length < 2) return `<span class="arrows"><button class="arrow" disabled>&#9664;</button><button class="arrow" disabled>&#9654;</button></span>`;
@@ -954,7 +956,7 @@
     screen.innerHTML = `
       <div class="detail">
         <div class="dbox"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
-          <div class="preview">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
+          <div class="preview gunprev">${previewHTML(imgs, `<span class="ph">${I.gun}</span>`)}
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${moreMenu((fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE CALC</button>` : "") + `<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>` + linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
@@ -2332,7 +2334,7 @@
       <h4 class="admh4">DISCORD PREVIEW</h4>
       ${pickerHTML("admprev", { placeholder: adm.prev && adm.prev.label ? `${adm.prev.label}  (type to change)` : "Type an entry, or pick Main site…", onPick: v => loadPreview(v),
         items: [{ v: "", label: "Main site", group: "" }, ...entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }))] })}
-      ${adm.prev ? previewHTML(adm.prev) : `<p class="dim">Shows what Discord will show, from the live preview files. New cards appear after the daily update.</p>`}</details>`;
+      ${adm.prev ? discordPreviewHTML(adm.prev) : `<p class="dim">Shows what Discord will show, from the live preview files. New cards appear after the daily update.</p>`}</details>`;
   }
   document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches("[data-admtest]")) adm.testOpen = e.target.open; }, true);
   async function loadPreview(id) {
@@ -2350,7 +2352,7 @@
     } catch (err) { adm.prev = { label: adm.prev.label, url, err: err.message || "Couldn't load it." }; }
     if (ui.tab === "admin") keepScroll(render);
   }
-  function previewHTML(p) {
+  function discordPreviewHTML(p) {
     if (p.loading) return '<p class="dim">Loading…</p>';
     if (p.err) return `<p class="dim">${esc(p.err)}</p>`;
     const img = p.img ? p.img + (p.img.includes("?") ? "&" : "?") + "t=" + Date.now() : "";
@@ -3467,7 +3469,7 @@
   function drawLightbox() {
     const n = curImgs.length; if (!n) return closeLightbox();
     const i = ((imgIndex % n) + n) % n, im = curImgs[i];
-    lb.innerHTML = `<figure><img src="${esc(im.src)}" alt="">${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ""}</figure>
+    lb.innerHTML = `<figure><img src="${esc(im.src)}" alt="">${im.caption || PIC_CREDITS[im.credit] ? `<figcaption>${im.caption ? esc(im.caption) : ""}${PIC_CREDITS[im.credit] ? `${im.caption ? " · " : ""}Picture: <a href="${esc(PIC_CREDITS[im.credit].url)}" target="_blank" rel="noopener">${esc(PIC_CREDITS[im.credit].name)}</a>` : ""}</figcaption>` : ""}</figure>
       ${n > 1 ? `<button class="lbnav prev" data-lb="-1">&#9664;</button><button class="lbnav next" data-lb="1">&#9654;</button><span class="lbcount">${i + 1} / ${n}</span>` : ""}
       <button class="lbclose" data-lb="x">×</button>`;
   }
