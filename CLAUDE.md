@@ -16,6 +16,8 @@ Read this first after any break or conversation summary. Update it whenever some
 - Previews regenerate on GitHub (daily + on data pushes); locally run `node tools/previews.js` if needed. Owner wants the site to look good when posted on Discord.
 - Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
+- README is a short description + credits only, not a guide.
+- MANUAL → ABOUT says "Built with AI (Claude)." (owner's choice of spot).
 - Site text (manual, changelog, help notes): incredibly short and simple. Changelog items are a few words each.
 - Replies short and plain. When suggesting ideas, give a few good ones; if the owner passes, don't push them.
 - From time to time, re-read this file and the code to stay current on what the owner wants.

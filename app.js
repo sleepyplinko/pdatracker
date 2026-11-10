@@ -3040,6 +3040,7 @@
         <div class="k">ESC - BACK</div>
         <h3>-=-=- ABOUT -=-=-</h3>
         <p>Fan-made. Not affiliated with the game. ??? means the name isn't known yet.</p>
+        <p>Built with AI (Claude).</p>
       </div>`;
   }
 
