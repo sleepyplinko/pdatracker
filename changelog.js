@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-10", items: [
+    "AK74M and Dragunov SVD-M stats",
+  ]},
   { date: "2026-11-09", items: [
     "MANUAL: AI note",
     "Search matches words in any order",
