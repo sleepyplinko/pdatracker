@@ -3129,7 +3129,24 @@ const PDA_DATA = {
         }, comment: "Menace.. I wouldn't want to be on the other side of that grenade launcher." }]
         ],
         6: [
-        "WC Rocket Launcher"
+        ["WC Rocket Launcher", { stats: {
+          "CALIBER TYPE": "Rocket",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "12.5x",
+          "AIM TIME": "3.5",
+          "SWITCH TIME": "2s",
+          "RPM": "300",
+          "ALERT RADIUS": "300",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Manually-loaded",
+          "MAX SPREAD": "15",
+          "MINIMUM SPREAD": "0",
+          "SPREAD INCREMENT": "0.1",
+          "SPREAD DECREASE": "0.15/0.05s",
+          "EQUIP TIME": "3s",
+          "WEIGHT": "4"
+        }, comment: "" }]
         ]
       }
     },

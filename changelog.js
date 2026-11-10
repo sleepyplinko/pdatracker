@@ -1,6 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-10", items: [
-    "Stats for 8 more weapons",
+    "Every weapon now has stats",
   ]},
   { date: "2026-11-09", items: [
     "MANUAL: AI note",
@@ -20,7 +20,7 @@ const PDA_CHANGELOG = [
     "DAMAGE: best ammo for your target",
     "DAMAGE: share link",
     "New sounds from the game",
-    "Stats for 8 more weapons",
+    "Every weapon now has stats",
     "Pages slide like the game",
     "CLOUD: move your PDA to another device",
     "No more accounts",
