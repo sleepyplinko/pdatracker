@@ -22,8 +22,8 @@ jobs:
       - run: npm i --no-save --no-package-lock playwright@1.48.2 && npx playwright install --with-deps chromium
       - run: node tools/previews.js
       - run: |
-          git add -A e
+          git add -A e images/og.jpg
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Update Discord previews"
-          git pull --rebase origin main
+          git pull --rebase --autostash origin main
           git push
