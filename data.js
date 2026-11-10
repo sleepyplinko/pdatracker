@@ -4214,56 +4214,337 @@ const PDA_DATA = {
           }, comment: "" }]
         ],
         2: [
-          "30rnd TEC-9 Mag",
-          "10rnd TEC-9 Mag",
-          "30rnd AR10 GEN M3 Mag",
-          "20rnd AR10 GEN M3 Mag",
-          "6rnd Speed Loader",
-          "30rnd MP5 Mag",
-          "40rnd APS Mag",
-          "20rnd APS Mag",
-          "7rnd Deagle Mag",
-          "30rnd Kiparis Mag",
-          "20rnd SVT-40 Mag",
-          "10rnd SVT-40 Mag",
+          ["30rnd TEC-9 Mag", { img: "images/ammo/30rnd-tec-9-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x19mm | 9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd TEC-9 Mag", { img: "images/ammo/10rnd-tec-9-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x19mm | 9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AR10 GEN M3 Mag", { img: "images/ammo/30rnd-ar10-gen-m3-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO | 6.8x51mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd AR10 GEN M3 Mag", { img: "images/ammo/20rnd-ar10-gen-m3-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO | 6.8x51mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["6rnd Speed Loader", { img: "images/ammo/6rnd-speed-loader.webp", stats: {
+          "CAPACITY": "6 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".357",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd MP5 Mag", { img: "images/ammo/30rnd-mp5-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | 10x25mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd APS Mag", { img: "images/ammo/40rnd-aps-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd APS Mag", { img: "images/ammo/20rnd-aps-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["7rnd Deagle Mag", { img: "images/ammo/7rnd-deagle-mag.webp", stats: {
+          "CAPACITY": "7 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".50AE | .357 | .44",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd Kiparis Mag", { img: "images/ammo/30rnd-kiparis-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd SVT-40 Mag", { img: "images/ammo/20rnd-svt-40-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd SVT-40 Mag", { img: "images/ammo/10rnd-svt-40-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "10rnd ASh-12.7 Mag",
-          "10rnd SV98 Mag",
-          "35rnd G36E Mag",
-          "30rnd AK74U Mag",
+          ["10rnd SV98 Mag", { img: "images/ammo/10rnd-sv98-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["35rnd G36E Mag", { img: "images/ammo/35rnd-g36e-mag.webp", stats: {
+          "CAPACITY": "35 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | .22lr",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AK74U Mag", { img: "images/ammo/30rnd-ak74u-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.45x39mm | 7.62x39mm | 5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "20rnd 9A-91 Mag",
-          "30rnd AK Mag",
-          "30rnd FAMAS G2 Mag",
-          "35rnd MPX Mag",
-          "20rnd SKORPION Mag",
-          "30rnd G11 Mag",
-          "11rnd R700 Mag",
-          "20rnd FIVE-SEVEN Mag",
-          "10rnd Saiga-12 Mag",
-          "30rnd AK74 Mag",
-          "12rnd Saiga-12 Mag",
-          "25rnd MICRO UZI Mag",
-          "10rnd Vepr-410 Mag",
-          "7rnd Automag",
-          "20rnd Vepr-410 Mag",
-          "180rnd AMR-180 Mag",
-          "22rnd ZiP Mag",
-          "30rnd MPX Mag",
-          "27rnd PERNACH Mag",
-          "30rnd AR15 Mag",
-          "20rnd AR10 LANCER Mag",
-          "20rnd AS-VAL Mag",
+          ["30rnd AK Mag", { img: "images/ammo/30rnd-ak-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.45x39mm | 7.62x39mm | 5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd FAMAS G2 Mag", { img: "images/ammo/30rnd-famas-g2-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["35rnd MPX Mag", { img: "images/ammo/35rnd-mpx-mag.webp", stats: {
+          "CAPACITY": "35 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd SKORPION Mag", { img: "images/ammo/20rnd-skorpion-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".32 ACP | 9x19mm | 9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd G11 Mag", { img: "images/ammo/30rnd-g11-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "4.73x33mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["11rnd R700 Mag", { img: "images/ammo/11rnd-r700-mag.webp", stats: {
+          "CAPACITY": "11 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".308 | 7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd FIVE-SEVEN Mag", { img: "images/ammo/20rnd-five-seven-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "5.7x28mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd Saiga-12 Mag", { img: "images/ammo/10rnd-saiga-12-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AK74 Mag", { img: "images/ammo/30rnd-ak74-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.45x39mm | 7.62x39mm | 5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["12rnd Saiga-12 Mag", { img: "images/ammo/12rnd-saiga-12-mag.webp", stats: {
+          "CAPACITY": "12 rounds",
+          "RELOAD TIME": "1.2s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["25rnd MICRO UZI Mag", { img: "images/ammo/25rnd-micro-uzi-mag.webp", stats: {
+          "CAPACITY": "25 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd Vepr-410 Mag", { img: "images/ammo/10rnd-vepr-410-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".410",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["7rnd Automag", { img: "images/ammo/7rnd-automag.webp", stats: {
+          "CAPACITY": "7 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": ".44 AMP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd Vepr-410 Mag", { img: "images/ammo/20rnd-vepr-410-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".410",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["180rnd AMR-180 Mag", { img: "images/ammo/180rnd-amr-180-mag.webp", stats: {
+          "CAPACITY": "180 rounds",
+          "RELOAD TIME": "0.9s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": ".22lr",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["22rnd ZiP Mag", { img: "images/ammo/22rnd-zip-mag.webp", stats: {
+          "CAPACITY": "22 rounds",
+          "RELOAD TIME": "0.6s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".22lr"
+          }, comment: "" }],
+          ["30rnd MPX Mag", { img: "images/ammo/30rnd-mpx-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["27rnd PERNACH Mag", { img: "images/ammo/27rnd-pernach-mag.webp", stats: {
+          "CAPACITY": "27 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AR15 Mag", { img: "images/ammo/30rnd-ar15-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd AR10 LANCER Mag", { img: "images/ammo/20rnd-ar10-lancer-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO | 6.8x51mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd AS-VAL Mag", { img: "images/ammo/20rnd-as-val-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "20rnd ProMag OP-SKS Mag",
-          "30rnd MP9 Mag",
-          "32rnd STEN Mag",
-          "20rnd M14 EBR Mag",
-          "33rnd Beretta Mag",
-          "11rnd Deagle Mag",
-          "10rnd SVD Mag",
-          "5rnd MAG-7 Mag",
-          ["15rnd ADV Mag", {"gold": true}],
-          "30rnd G36C Mag",
-          "30rnd MP7A1 Mag",
-          "30rnd AUG Mag",
+          ["30rnd MP9 Mag", { img: "images/ammo/30rnd-mp9-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["32rnd STEN Mag", { img: "images/ammo/32rnd-sten-mag.webp", stats: {
+          "CAPACITY": "32 rounds",
+          "RELOAD TIME": "1.3s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd M14 EBR Mag", { img: "images/ammo/20rnd-m14-ebr-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["33rnd Beretta Mag", { img: "images/ammo/33rnd-beretta-mag.webp", stats: {
+          "CAPACITY": "33 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | .22lr | 10x25mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["11rnd Deagle Mag", { img: "images/ammo/11rnd-deagle-mag.webp", stats: {
+          "CAPACITY": "11 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".50AE | .357 | .44",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd SVD Mag", { img: "images/ammo/10rnd-svd-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "1.3s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["5rnd MAG-7 Mag", { img: "images/ammo/5rnd-mag-7-mag.webp", stats: {
+          "CAPACITY": "5 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["15rnd ADV Mag", { "gold": true, img: "images/ammo/15rnd-adv-mag.webp", stats: {
+          "CAPACITY": "15 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "8x25mm | .50 BC",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd G36C Mag", { img: "images/ammo/30rnd-g36c-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | .22lr",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd MP7A1 Mag", { img: "images/ammo/30rnd-mp7a1-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "4.6x30mm | 9x19mm | .45ACP | .40 S&W",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AUG Mag", { img: "images/ammo/30rnd-aug-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "100rnd KEVIN Mag",
           "20rnd SVD Mag",
           "72rnd TEC-9 Drum Mag"
