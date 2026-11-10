@@ -966,7 +966,24 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "1"
         }, comment: "" }],
-        "PP-19-01 Vityaz"
+        ["PP-19-01 Vityaz", { stats: {
+          "CALIBER TYPE": "9x19mm | 7.62x25mm Tokarev",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.7x",
+          "AIM TIME": "0.25",
+          "SWITCH TIME": "0.03s",
+          "RPM": "1000",
+          "ALERT RADIUS": "300",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "20",
+          "MINIMUM SPREAD": "1.5",
+          "SPREAD INCREMENT": "0.05",
+          "SPREAD DECREASE": "0.05/0.1s",
+          "EQUIP TIME": "0.25s",
+          "WEIGHT": "0.5"
+        }, comment: "" }]
         ]
       }
     },
