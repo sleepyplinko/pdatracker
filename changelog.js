@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-10", items: [
+    "DAMAGE: burst delay in time to kill",
     "Citizen Charger description",
     "Every weapon now has stats",
   ]},

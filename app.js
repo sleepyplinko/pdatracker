@@ -1425,7 +1425,7 @@
     return { effSA, afterSA, effDef, final: afterSA * (1 - effDef / 100) };
   }
 
-  const ATK_DEF = { gun: "", mode: 0, ammo: "", str: true, hits: "", direct: true, custom: "" };
+  const ATK_DEF = { gun: "", mode: 0, ammo: "", str: true, hits: "", direct: true, custom: "", fire: "" };
   function dmgState() {
     const d = ui.dmg || (ui.dmg = {});
     const out = Object.assign({ ...ATK_DEF, target: "", hp: "100", def: "0", sa: "0", ss: "0", sh: "0", vs: false }, d);
@@ -1437,8 +1437,8 @@
     const d = ui.dmg = dmgState();
     const s = k.startsWith("b.") ? d.b : d, key = k.replace(/^b\./, "");
     s[key] = v;
-    if (key === "gun") { s.mode = 0; s.ammo = ""; s.hits = ""; }
-    if (key === "mode") { s.mode = +v; s.ammo = ""; s.hits = ""; }
+    if (key === "gun") { s.mode = 0; s.ammo = ""; s.hits = ""; s.fire = ""; }
+    if (key === "mode") { s.mode = +v; s.ammo = ""; s.hits = ""; s.fire = ""; }
     if (key === "ammo") s.hits = "";
     return d;
   }
@@ -1448,7 +1448,7 @@
   const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, "+").replace(/_/g, "/"))));
   function dmgLink() {
     const d = dmgState();
-    const atk = s => { const o = {}; if (s.gun) o.g = s.gun; if (+s.mode) o.m = +s.mode; if (s.ammo) o.a = s.ammo; if (!s.str) o.s = 0; if (s.hits !== "") o.h = s.hits; if (!s.direct) o.d = 0; if (s.custom !== "") o.c = s.custom; return o; };
+    const atk = s => { const o = {}; if (s.gun) o.g = s.gun; if (+s.mode) o.m = +s.mode; if (s.ammo) o.a = s.ammo; if (!s.str) o.s = 0; if (s.hits !== "") o.h = s.hits; if (!s.direct) o.d = 0; if (s.custom !== "") o.c = s.custom; if (s.fire) o.f = s.fire; return o; };
     const o = { A: atk(d) };
     if (d.target) o.t = d.target; else o.n = [d.hp, d.def, d.sa, d.ss, d.sh];
     if (d.vs) o.B = atk(d.b);
@@ -1459,7 +1459,7 @@
     let o; try { o = JSON.parse(unb64u(m[1])); } catch { return false; }
     if (!o || typeof o !== "object") return false;
     const atk = a => { a = a && typeof a === "object" ? a : {}; const g = typeof a.g === "string" && byId.has(a.g) ? a.g : "";
-      return { gun: g, mode: g ? Math.max(0, parseInt(a.m) || 0) : 0, ammo: typeof a.a === "string" ? a.a : "", str: a.s !== 0, hits: a.h != null ? String(a.h) : "", direct: a.d !== 0, custom: a.c != null ? String(a.c) : "" }; };
+      return { gun: g, mode: g ? Math.max(0, parseInt(a.m) || 0) : 0, ammo: typeof a.a === "string" ? a.a : "", str: a.s !== 0, hits: a.h != null ? String(a.h) : "", direct: a.d !== 0, custom: a.c != null ? String(a.c) : "", fire: a.f === "burst" || a.f === "auto" ? a.f : "" }; };
     const d = Object.assign({}, atk(o.A));
     d.target = typeof o.t === "string" && people.some(p => p.id === o.t) ? o.t : "";
     const n = Array.isArray(o.n) ? o.n : [];
@@ -1524,14 +1524,22 @@
       const rpm = mode && mode.rpm;
       const swing = melee ? xnum(mode.s["SWING TIME"]) : null;
       const burstN = melee && mode.s.BURST === "YES" ? Math.max(1, xnum(mode.s["BURST AMOUNT"]) || 1) : 1;
-      const ttkOf = n => n && rpm ? (n - 1) * 60 / rpm : n && swing ? (n - 1) * swing : null;
+      const sm = mode ? mode.s : {};
+      const hasBurst = !melee && sm.BURST === "YES", hasAuto = sm.AUTO === "YES";
+      const useBurst = hasBurst && (!hasAuto || s.fire === "burst");
+      const bAmt = Math.max(1, Math.round(xnum(sm["BURST AMOUNT"]) || 1)), bDelay = Math.max(0, xnum(sm["BURST DELAY"]) || 0);
+      const ttkOf = n => {
+        if (!n) return null;
+        if (rpm) { const b = useBurst ? Math.floor((n - 1) / bAmt) : 0; return (n - 1 - b) * 60 / rpm + b * bDelay; }
+        return swing ? (n - 1) * swing : null;
+      };
       const r = (mode || !gun) ? shot(ammo) : null;
       const htk = r ? toKill(r.final, ammo) : null;
 
       const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), k = toKill(sh.final, a); return { a, s: sh, k, kb: k && ss ? blocked(ssByp(a)) : 0 }; })
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
-      return { s, gun, modes, mode, melee, pool, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
+      return { s, gun, modes, mode, melee, pool, hasBurst, hasAuto, useBurst, bAmt, bDelay, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
         r, htk, ttk: ttkOf(htk), nBlocked: blocked(ssByp(ammo)), shInfo: r ? healthHits(r.final, ammo) : null, ranked, bestK };
     }
     const A = attack(d), B = vs ? attack(d.b) : null;
@@ -1547,6 +1555,7 @@
             items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier })))] })}
           ${X.gun ? `<button class="mini-btn" data-open-tool="${esc(X.gun.id)}">OPEN ${esc(X.gun.name.toUpperCase())}</button>` : ""}
           ${X.modes.length > 1 ? `<label>MODE <select data-dmg="${pfx}mode">${X.modes.map(m => opt(m.i, X.mode.i, m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))).join("")}</select></label>` : ""}
+          ${X.hasBurst && X.hasAuto ? `<label>FIRE <select data-dmg="${pfx}fire">${opt("auto", X.useBurst ? "burst" : "auto", "AUTO")}${opt("burst", X.useBurst ? "burst" : "auto", `BURST (${X.bAmt} shots, ${fmt2(X.bDelay)}s between)`)}</select></label>` : ""}
           ${X.melee ? `<p class="cat-note">Melee: uses the weapon's DAMAGE, with its DEFENSE BYPASS as defense penetration.</p>`
             : X.pool.length ? `<label>AMMO</label>${pickerHTML("dmgammo" + kB, { label: "Ammo", placeholder: X.ammo ? `${X.ammo.name}  (type to change)` : "Type an ammo name…", onPick: v => setDmg(pfx + "ammo", v), chips: true,
                 items: X.pool.map(a => ({ v: a.key, label: a.name, group: a.caliber, star: !!(X.ammo && a.key === X.ammo.key), sub: `${fmt2(a.base * (a.mult == null ? 1 : a.mult))} dmg${a.proj > 1 ? " ×" + a.proj : ""}${a.pen ? " · " + fmt2(a.pen * 100) + "% pen" : ""}` })) })}`
@@ -1584,9 +1593,9 @@
       return `<div class="dbox dres${win ? " dwin" : ""}"><div class="dhead">${title}${win ? '<span class="hright"><span class="chip status-found">BETTER</span></span>' : ""}</div><div class="stats">
           ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${tip}
-            ${ttk != null ? `<p class="cat-note">Time to kill assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : " and no reloading or burst delay"}.</p>` : ""}`
+            ${ttk != null ? `<p class="cat-note">Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>`;
     }
