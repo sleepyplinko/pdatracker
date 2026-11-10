@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-09", items: [
+    "Search matches words in any order",
     "Added SCR 5.56 Raider",
     "Pictures for 145 weapons (from the OANC Wiki)",
     "ADMIN: Discord preview tester",
