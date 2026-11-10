@@ -1,4 +1,12 @@
 const PDA_DESC = {
+"Citizen Charger": `Due to how distant the Citizen Faction is split across regions, it's hard to maintain a resilient, trustworthy leader for each outpost. Without proper order, unruly scouts have, in the past, let their ego get to their head and attempted usurpations to gain control of negligent bases. It never went well. So, it was ultimately decided to simply create a side-grade to the Citizen Rusher that possessed managerial competence: Citizen Charger.
+
+Armed with superior equipment to flaunt their value and rank, they take care of the outpost with an iron fist. Very serious about their job, they make sure everything's efficient and clean, enforcing a no-nonsense way-of-life to avoid mistakes and damages. They handle most of the logistics relating to their assigned outpost: material transport, orders from higher-ups, communication with other outposts, etc.
+
+For intruders, they have been trained to avoid action unless necessary, but when they do, it is quick and ruthless. Similar to Citizen Rushers, they rush at you, sprinting at full speed to catch you. Once they catch sight of you, even if you go behind cover, they will fire relentlessly until they are out of ammo or until you're dead. Even if you shoot back, their armor is nothing to scoff at. Donning a bulky vest and heavy-duty helmet, the Charger is certainly no squishy, low-class Civilian; prioritize taking out those puny meat-shields before facing this rigged-out chief, if you truly want to stand a chance.
+
+Due to their suppressive strategy, Chargers chew through shotgun munitions, which why you rarely see other Civilians equipped with shotguns. Many scouts complain about this, but they're not powerful enough to actually do anything about it.`,
+
 "Miners": `[ One search result found ]
 
 ayyy sum girl named dorothea just left all these stuff for us to use. pretty helpful considering i was planning on starting a gang. got all my buddies and gals here, we're thinking we could take down tofuu yeah. haven't thought of a name yet tho
