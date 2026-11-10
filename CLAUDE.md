@@ -70,5 +70,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - Settings include sound/hover sound/volume, page slide, CRT, light theme, text size.
 - Sounds (final, owner confirmed): hover tool (`tool-hover.mp3`, recorded in-game), leave/unmark (`bio-close.mp3`, recorded in-game; old person-close removed), open/mark (`person-open`), tabs, warnings, misc.
 
+- Ammo (2026-11-10): stats (CAPACITY, RELOAD TIME, LOAD AMOUNT, AMMO TYPE, WEIGHT) + pictures `images/ammo/<slug>.webp` for every mag the owner has found, from his tier videos. Pictures are the game's preview box with the star painted out. Some in-game AMMO TYPE lines are cut off at the panel edge (MP7A1 mags, AK/AK74/AK74U, RPK, 15rnd H&K USP); copied as far as visible. Game quirk kept: 16rnd SRM Mag says CAPACITY 4 rounds. Ammo stat colours sampled from the game (TOOL_STAT_COLORS).
+
 ## Open items
 - None. (All people now have descriptions as of 2026-11-10.)
