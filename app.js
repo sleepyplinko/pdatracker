@@ -346,6 +346,9 @@
   };
   const TIPS = (typeof PDA_TIPS === "object" && PDA_TIPS) || { person: {}, weapon: {} };
   const DESC = (typeof PDA_DESC === "object" && PDA_DESC) || {};
+  const DOC_DESC = (typeof PDA_DOC_DESC === "object" && PDA_DOC_DESC) || {};
+  const TEXT_WIKI = (typeof PDA_TEXT_WIKI === "object" && PDA_TEXT_WIKI) || { bio: {}, docs: {} };
+  const wikiCredit = (sec, name) => { const pg = (TEXT_WIKI[sec] || {})[name]; return pg ? `<p class="desccredit">TEXT: <a href="https://once-a-normal-city-roblox.fandom.com/wiki/${encodeURIComponent(pg.replace(/ /g, "_"))}" target="_blank" rel="noopener" title="Text from the Once A Normal City Wiki (Fandom)">OANC WIKI</a></p>` : ""; };
   Object.keys(STAT).forEach(k => { if (k in (TIPS.person || {})) STAT[k].tip = TIPS.person[k]; });
   const BASE_ORDER  = ["Health", "Speed", "Defense", "Shield", "Supershield", "Super Armour", "Burn Resistance", "Bleed Resistance", "Explosive Resistance", "Stun Resistance", "Fracture Immunity"];
   const SKILL_ORDER = ["Suppressor", "Pre-Aim", "Strength", "Aim Time Multiplier", "Reload Speed Multiplier", "Aim Slowdown", "Attack Slowdown"];
@@ -1132,7 +1135,7 @@
           </div>
           ${mtabs}
         </div>
-        <div class="dbox pdesc">${bottomBox("Description", desc ? paras(desc) : '<p class="none">No description on file.</p>', e.id)}</div>
+        <div class="dbox pdesc">${bottomBox("Description", desc ? paras(desc) + (e.desc || card.desc ? "" : wikiCredit("bio", DESC[e.name] ? e.name : card.name)) : '<p class="none">No description on file.</p>', e.id)}</div>
       </div>`;
   }
 
@@ -1160,7 +1163,7 @@
             <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
           </div>
         </div>
-        <div class="dbox pdesc">${bottomBox("Description", e.desc ? paras(e.desc) : '<p class="none">No description on file.</p>', e.id)}</div>
+        <div class="dbox pdesc">${bottomBox("Description", e.desc ? paras(e.desc) : DOC_DESC[e.name] ? paras(DOC_DESC[e.name]) + wikiCredit("docs", e.name) : '<p class="none">No description on file.</p>', e.id)}</div>
       </div>`;
   }
 
@@ -2407,7 +2410,7 @@
       ${e ? `${isTool ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x · lines you leave out keep their old value</small><textarea id="admStats" rows="10">${esc(statsToText(e.stats))}</textarea>
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
-        : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || DESC[e.name] || "")}</textarea>
+        : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || (e.section === "docs" ? DOC_DESC : DESC)[e.name] || "")}</textarea>
           <label>PICTURES <small>the first one shows on the tile; paste https:// image links (Imgur and similar; Discord links can expire)</small></label>
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); return (l.length ? l : [""]).map(u => imgRowHTML(u)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
@@ -2957,7 +2960,7 @@
     const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
     const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);
-    const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !imagesOf(e).length);
+    const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !DOC_DESC[e.name] && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
     return [["UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
             ["WEAPONS MISSING THEIR WEIGHT", noWeight, "weight", "Stats"], ["PEOPLE WITH NO DESCRIPTION", noDesc, "description", "Description"],

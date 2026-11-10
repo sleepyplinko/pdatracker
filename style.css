@@ -405,6 +405,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .desc { flex: 1; overflow-y: auto; padding: 8px 14px; font-size: 14px; line-height: 1.35; scrollbar-width: thin; scrollbar-color: #888 transparent; }
 .desc p { margin: 0 0 10px; text-indent: 3em; text-align: justify; }
 .desc p.none { text-indent: 0; color: #777; font-style: italic; }
+.desc p.desccredit { text-indent: 0; text-align: right; margin: 4px 0 0; font-size: 11px; color: #888; }
+.desc p.desccredit a { color: #aaa; }
+.desc p.desccredit a:hover { color: #fff; }
 
 .results { height: 100%; overflow-y: auto; padding: 8px 10px; background: rgba(40,40,40,.75); border: 1px solid #5a5a5a; border-radius: 6px; scrollbar-width: thin; scrollbar-color: #888 transparent; }
 .sgroup { margin-bottom: 8px; }

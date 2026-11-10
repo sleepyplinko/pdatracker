@@ -17,7 +17,7 @@ const srv = http.createServer((q, r) => {
   const p = path.join(ROOT, decodeURIComponent(q.url.split("?")[0]).replace(/\/$/, "/index.html"));
   fs.readFile(p, (e, d) => {
     if (e) { r.writeHead(404); return r.end(); }
-    if (p.endsWith("app.js")) d = Buffer.from(String(d).replace("  const byId = new Map();", "  const byId = new Map(); window.__pda = () => ({ entries, h5, imagesOf, DESC, STAT, TOOL_STAT_COLORS });"));
+    if (p.endsWith("app.js")) d = Buffer.from(String(d).replace("  const byId = new Map();", "  const byId = new Map(); window.__pda = () => ({ entries, h5, imagesOf, DESC, DOC_DESC, STAT, TOOL_STAT_COLORS });"));
     r.writeHead(200, { "Content-Type": TYPES[path.extname(p)] || "application/octet-stream" }); r.end(d);
   });
 }).listen(0, async () => {
@@ -32,7 +32,7 @@ const srv = http.createServer((q, r) => {
   await pg.waitForFunction(() => window.__pda && document.fonts.status === "loaded");
 
   const list = await pg.evaluate(() => {
-    const { entries, h5, imagesOf, DESC, STAT, TOOL_STAT_COLORS } = window.__pda();
+    const { entries, h5, imagesOf, DESC, DOC_DESC, STAT, TOOL_STAT_COLORS } = window.__pda();
     const W_KEYS = ["CALIBER TYPE", "DAMAGE", "STRENGTH", "RPM", "SWING TIME", "DEFENSE BYPASS", "RANGE", "GEAR TYPE", "DEFENSE INCREASE", "SHIELD DURABILITY", "SUPER SHIELD INCREASE", "CARRY WEIGHT INCREASE", "QUICK SLOT INCREASE", "WEAPON TYPE", "EQUIP TIME", "WEIGHT"];
     const P_KEYS = ["Health", "Defense", "Shield", "Supershield", "Super Armour", "Speed"];
     return entries.filter(e => !e.unknown).map(e => {
@@ -55,7 +55,7 @@ const srv = http.createServer((q, r) => {
         meta = stats.slice(0, 2).map(([k, v]) => `${k[0] + k.slice(1).toLowerCase()} ${v}`);
       } else {
         sub = `${e.group}`;
-        text = e.desc || "";
+        text = e.desc || DOC_DESC[e.name] || "";
       }
       return { id: e.id, h: h5(e.id), name: e.name, sec, sub, img, stats, text, meta };
     });
