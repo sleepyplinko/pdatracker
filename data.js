@@ -1924,7 +1924,24 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "Salient Arms GRY"
+        ["Salient Arms GRY", { stats: {
+          "CALIBER TYPE": "5.56x45mm NATO | .300 Blackout",
+          "AUTO": "YES",
+          "BURST": "NO",
+          "STRENGTH": "1.2x",
+          "AIM TIME": "0.65",
+          "SWITCH TIME": "0.07s",
+          "RPM": "800",
+          "ALERT RADIUS": "600",
+          "RELOAD MODIFIER": "0.8",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "30",
+          "MINIMUM SPREAD": "2",
+          "SPREAD INCREMENT": "0.05",
+          "SPREAD DECREASE": "0.1/0.07s",
+          "EQUIP TIME": "1.5s",
+          "WEIGHT": "1"
+        }, comment: "" }]
         ],
         5: [
         ["PLATINUM-C.S.I.R.O DEVICE", { special: true, stats: {
