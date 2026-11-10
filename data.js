@@ -4795,22 +4795,118 @@ const PDA_DATA = {
           "20rnd Deagle Mag"
         ],
         4: [
-          "100rnd PKM Mag",
-          "5rnd M82A1 .50 BMG Mag",
-          "50rnd ProMag P250 Mag",
-          "50rnd ProMag FIVE-SEVEN Mag",
-          "80rnd Glock Mag",
-          "50rnd CX4 Storm Mag",
-          "80rnd AUG Mag",
-          "50rnd MPX Mag",
-          "150rnd M249 Mag",
-          "50rnd P90 Mag",
-          "40rnd M14 EBR Mag",
-          "72rnd Uzi Mag",
-          "150rnd NEGEV Mag",
-          "20rnd AA12 Mag",
-          "20rnd Saiga-12 ProMag",
-          "100rnd Beta C-Mag",
+          ["100rnd PKM Mag", { img: "images/ammo/100rnd-pkm-mag.webp", stats: {
+          "CAPACITY": "100 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.5"
+          }, comment: "" }],
+          ["5rnd M82A1 .50 BMG Mag", { img: "images/ammo/5rnd-m82a1-50-bmg-mag.webp", stats: {
+          "CAPACITY": "5 rounds",
+          "RELOAD TIME": "2s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".50 BMG",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["50rnd ProMag P250 Mag", { img: "images/ammo/50rnd-promag-p250-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | .22lr | .357 SIG",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["50rnd ProMag FIVE-SEVEN Mag", { img: "images/ammo/50rnd-promag-five-seven-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "5.7x28mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["80rnd Glock Mag", { img: "images/ammo/80rnd-glock-mag.webp", stats: {
+          "CAPACITY": "80 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
+          "WEIGHT": "0.75"
+          }, comment: "" }],
+          ["50rnd CX4 Storm Mag", { img: "images/ammo/50rnd-cx4-storm-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .40 S&W | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["80rnd AUG Mag", { img: "images/ammo/80rnd-aug-mag.webp", stats: {
+          "CAPACITY": "80 rounds",
+          "RELOAD TIME": "2.2s",
+          "LOAD AMOUNT": "4 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "0.5"
+          }, comment: "" }],
+          ["50rnd MPX Mag", { img: "images/ammo/50rnd-mpx-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["150rnd M249 Mag", { img: "images/ammo/150rnd-m249-mag.webp", stats: {
+          "CAPACITY": "150 rounds",
+          "RELOAD TIME": "2.5s",
+          "LOAD AMOUNT": "9 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "1"
+          }, comment: "" }],
+          ["50rnd P90 Mag", { img: "images/ammo/50rnd-p90-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "5.7x28mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd M14 EBR Mag", { img: "images/ammo/40rnd-m14-ebr-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1.2s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["72rnd Uzi Mag", { img: "images/ammo/72rnd-uzi-mag.webp", stats: {
+          "CAPACITY": "72 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".22lr | .45ACP | 9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["150rnd NEGEV Mag", { img: "images/ammo/150rnd-negev-mag.webp", stats: {
+          "CAPACITY": "150 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "1.25"
+          }, comment: "" }],
+          ["20rnd AA12 Mag", { img: "images/ammo/20rnd-aa12-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd Saiga-12 ProMag", { img: "images/ammo/20rnd-saiga-12-promag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "2.3s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.5"
+          }, comment: "" }],
+          ["100rnd Beta C-Mag", { img: "images/ammo/100rnd-beta-c-mag.webp", stats: {
+          "CAPACITY": "100 rounds",
+          "RELOAD TIME": "2s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "50rnd MP5 Mag",
           "100rnd PKP Mag",
           "82rnd ZiP Mag",
@@ -4820,19 +4916,97 @@ const PDA_DATA = {
           "73rnd ProMag Drum"
         ],
         5: [
-          "12rnd AW Mag",
-          "5rnd DVL-10 Mag",
-          "55rnd PP-19-01 Vityaz Mag",
-          "20rnd FN FAL Mag",
-          ["30rnd Augmented Uzi Mag", {"special": true}],
-          "10rnd AW Mag",
-          "20rnd SCAR-H Mag",
-          "10rnd DVL-10 Mag",
-          "45rnd CZ SKORPION Mag",
-          "80rnd CZ SKORPION Mag",
-          "30rnd FN FAL Mag",
-          "20rnd PSG-1 Mag",
-          "10rnd M82A1 .50 BMG Mag",
+          ["12rnd AW Mag", { img: "images/ammo/12rnd-aw-mag.webp", stats: {
+          "CAPACITY": "12 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["5rnd DVL-10 Mag", { img: "images/ammo/5rnd-dvl-10-mag.webp", stats: {
+          "CAPACITY": "5 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["55rnd PP-19-01 Vityaz Mag", { img: "images/ammo/55rnd-pp-19-01-vityaz-mag.webp", stats: {
+          "CAPACITY": "55 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "4 per insertion",
+          "AMMO TYPE": "9x19mm | 7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd FN FAL Mag", { img: "images/ammo/20rnd-fn-fal-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd Augmented Uzi Mag", { "special": true, img: "images/ammo/30rnd-augmented-uzi-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".45ACP | .40 S&W | 10x25mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd AW Mag", { img: "images/ammo/10rnd-aw-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd SCAR-H Mag", { img: "images/ammo/20rnd-scar-h-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd DVL-10 Mag", { img: "images/ammo/10rnd-dvl-10-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["45rnd CZ SKORPION Mag", { img: "images/ammo/45rnd-cz-skorpion-mag.webp", stats: {
+          "CAPACITY": "45 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x19mm | .22lr",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["80rnd CZ SKORPION Mag", { img: "images/ammo/80rnd-cz-skorpion-mag.webp", stats: {
+          "CAPACITY": "80 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .22lr",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd FN FAL Mag", { img: "images/ammo/30rnd-fn-fal-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["20rnd PSG-1 Mag", { img: "images/ammo/20rnd-psg-1-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["10rnd M82A1 .50 BMG Mag", { img: "images/ammo/10rnd-m82a1-50-bmg-mag.webp", stats: {
+          "CAPACITY": "10 rounds",
+          "RELOAD TIME": "2s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".50 BMG",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "200rnd M134 Mag"
         ]
       }
