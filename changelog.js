@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-10", items: [
+    "Tier 1 ammo: stats and pictures",
     "Scavengers and Hellbender descriptions",
     "18 document texts (from the OANC Wiki)",
     "9 more people descriptions (from the OANC Wiki)",

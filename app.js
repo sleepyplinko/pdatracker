@@ -868,10 +868,12 @@
     "MODE": "#8de08d", "DAMAGE": "#ff2a2a", "DEFENSE BYPASS": "#ff7a3a", "SWING TIME": "#ffa82a",
     "RANGE": "#a070ff", "AIM SLOWDOWN": "#d09a6a", "ATTACK SLOWDOWN": "#9a8a7a",
     "GEAR TYPE": "#8a8aff", "DEFENSE INCREASE": "#ff9a40", "SHIELD DURABILITY": "#35d6ff",
-    "CARRY WEIGHT INCREASE": "#7ae07a", "QUICK SLOT INCREASE": "#ff4a5a", "SUPER SHIELD INCREASE": "#ff3a3a"
+    "CARRY WEIGHT INCREASE": "#7ae07a", "QUICK SLOT INCREASE": "#ff4a5a", "SUPER SHIELD INCREASE": "#ff3a3a",
+    "CAPACITY": "#e0e664", "RELOAD TIME": "#b168e2", "LOAD AMOUNT": "#de805b", "AMMO TYPE": "#66e565"
   };
 
-  const gapsFor = s => s["GEAR TYPE"] ? new Set(["TIER"])
+  const gapsFor = s => s["CAPACITY"] ? new Set([s.WEIGHT != null ? "WEIGHT" : "TIER"])
+    : s["GEAR TYPE"] ? new Set(["TIER"])
     : s["DAMAGE"] ? new Set(["WEIGHT"])
     : s["CALIBER TYPE"] ? new Set(["MAX SPREAD", "AIM SLOWDOWN", "ATTACK SLOWDOWN", "EQUIP TIME", "WEIGHT"])
     : new Set();
