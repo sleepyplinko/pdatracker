@@ -890,7 +890,27 @@ const PDA_DATA = {
           "EQUIP TIME": "1.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        "H&K MP7A1+"
+        ["H&K MP7A1+", { stats: {
+          "CALIBER TYPE": "9x19mm | .45ACP | .40 S&W",
+          "AUTO": "YES",
+          "BURST": "YES",
+          "BURST DELAY": "0.15s",
+          "BURST AMOUNT": "4",
+          "BURST VOLLEY": "2",
+          "STRENGTH": "1.5x",
+          "AIM TIME": "0.5",
+          "SWITCH TIME": "0.05s",
+          "RPM": "1000",
+          "ALERT RADIUS": "100",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Magazine-fed",
+          "MAX SPREAD": "20",
+          "MINIMUM SPREAD": "0.5",
+          "SPREAD INCREMENT": "0.05",
+          "SPREAD DECREASE": "0.1/0.1s",
+          "EQUIP TIME": "1s",
+          "WEIGHT": "1"
+        }, comment: "" }]
         ],
         5: [
         ["CZ Skorpion EVO 3", { img: "images/tools/cz-skorpion-evo-3.webp", picCredit: "wiki", stats: {
