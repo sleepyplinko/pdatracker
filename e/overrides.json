@@ -1,0 +1,41 @@
+{
+ "t|pistols|skorpion": {
+  "comment": "Incredibly light, like it literally takes up almost no space at all without magazine, don't know how the components got that light but don't expect the performance of the weapon to be anything good though.",
+  "stats": {
+   "CALIBER TYPE": ".32 ACP | 9x19mm | 9x18mm Makarov",
+   "AUTO": "YES",
+   "BURST": "NO",
+   "STRENGTH": "0.8x",
+   "AIM TIME": "0.25",
+   "SWITCH TIME": "0.03s",
+   "RPM": "700",
+   "ALERT RADIUS": "200",
+   "RELOAD MODIFIER": "0.8",
+   "WEAPON TYPE": "Magazine-fed",
+   "MAX SPREAD": "20",
+   "MINIMUM SPREAD": "2",
+   "SPREAD INCREMENT": "0.2",
+   "SPREAD DECREASE": "1/0.1s",
+   "EQUIP TIME": "0.25s",
+   "WEIGHT": "0"
+  },
+  "updated": 1794315944
+ },
+ "t|sharp|balisong": {
+  "comment": "The Balisong is a well known self defense weapon, its lightness fitting into anyone's pockets whilst still delivering blows that could scare off attackers. However, as more and more people got their hands on dangerous firearms and improved tools in terms of close quarter combat, this tiny knife became out of date quick. Due to this, it can be a rare sight to see, so maybe take it for yourself if you ever spot it, because it's really cool flipping it around in your hands!",
+  "stats": {
+   "DAMAGE": "35",
+   "DEFENSE BYPASS": "0",
+   "AUTO": "YES",
+   "BURST": "NO",
+   "AIM TIME": "0.25",
+   "SWITCH TIME": "0.025s",
+   "SWING TIME": "0.275s",
+   "ALERT RADIUS": "25",
+   "RANGE": "3",
+   "EQUIP TIME": "0.1s",
+   "WEIGHT": "0"
+  },
+  "updated": 1794261169
+ }
+}
