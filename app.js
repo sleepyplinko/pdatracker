@@ -1208,6 +1208,15 @@
     const compact = n.replace(/[^a-z0-9]/g, ""), cq = q.replace(/[^a-z0-9]/g, "");
     if (cq && compact.includes(cq)) return 4;
 
+    const split = s => s.split(/[\s\-.'&"/|()]+/).map(w => w.replace(/[^a-z0-9²]/g, "")).filter(Boolean);
+    const qw = split(q);
+    if (qw.length > 1) {
+      const nw = split(n);
+      let typo = false;
+      const ok = qw.every(w => nw.some(x => x.startsWith(w)) || (w.length >= 4 && nw.some(x => typoDist(w, x.slice(0, w.length)) <= 1) && (typo = true)));
+      if (ok) return typo ? 4.8 : 4.5;
+    }
+
     if ((cq.match(/[a-z]/g) || []).length >= 3) {
       const allow = cq.length >= 7 ? 2 : 1;
       const words = n.split(/[\s\-.'&]+/).map(w => w.replace(/[^a-z0-9]/g, "")).filter(Boolean);
