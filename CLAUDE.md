@@ -32,7 +32,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - Keep share links (entry links: the address bar shows `…/pdatracker/e/<hash>/` while a page is open (`syncURL()` via replaceState; `<base>` tag in index.html keeps relative files working) and LINK copies the same; `#e=` still works; profile share `#v=`, damage calc `#dmg=`).
 - Credit **gluehesthar** (@iaminyourwallsiaminyourwalls on Discord) for the OANC Ammo Chart wherever ammo data shows.
 - **Rejected / not wanted:** completion rewards, "dropped by" or route features, damage over distance/headshots (game has neither), weapon records page, NPC compare, recently viewed, document reading mode, public change history.
-- Gear has no WEIGHT in the game, so never flag it as missing weight.
+- Gear has no WEIGHT in the game, so never flag it as missing weight. Same for any item (ammo included) whose PDA page shows no WEIGHT line: it weighs nothing (owner). Leave WEIGHT out, don't add 0.
 - Supershield math: blocked hits = `ss > B ? ceil((ss - B) / max(1, B)) : 0`; shown inline as "N supershield + M health = X hits to kill". (Owner had me undo a different change here once; don't touch without being asked.)
 
 ## Files
