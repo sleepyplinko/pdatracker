@@ -3050,7 +3050,24 @@ const PDA_DATA = {
         }, comment: "The .50 AE Home Defense Companion is an absurd, questionable variant of the STRIKER-12 that was rechambered to fire .50 AE. It was built on the STRIKER-12's frame, reusing almost of its parts with the exception of having rifled barrel and lacking a foregrip. The lack of a foregrip was done in order for the firearm to be legally classified as a \"pistol\", though at the cost of ergonomics and handling.\n\n..With a name like \"Home Defense Companion\", its rather misleading." }]
         ],
         5: [
-        "RSh-12"
+        ["RSh-12", { stats: {
+          "CALIBER TYPE": "12.7x55mm",
+          "AUTO": "NO",
+          "BURST": "NO",
+          "STRENGTH": "1x",
+          "AIM TIME": "0.7",
+          "SWITCH TIME": "0.4s",
+          "RPM": "300",
+          "ALERT RADIUS": "650",
+          "RELOAD MODIFIER": "1",
+          "WEAPON TYPE": "Manually-loaded",
+          "MAX SPREAD": "2",
+          "MINIMUM SPREAD": "0",
+          "SPREAD INCREMENT": "0.25",
+          "SPREAD DECREASE": "0.2/0.15s",
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "1"
+        }, comment: "" }]
         ]
       }
     },
