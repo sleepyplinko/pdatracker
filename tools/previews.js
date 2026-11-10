@@ -135,6 +135,7 @@ const srv = http.createServer((q, r) => {
 `);
   }
   fs.writeFileSync(MAN, JSON.stringify(man));
+  if (Object.keys(ov).length) fs.writeFileSync(path.join(OUT, "overrides.json"), JSON.stringify(ov, Object.keys(ov).sort(), 1).length ? JSON.stringify(Object.fromEntries(Object.keys(ov).sort().map(k => [k, ov[k]])), null, 1) + "\n" : "{}");
   const totals = await pg.evaluate(() => { const { entries } = window.__pda(); const n = sec => entries.filter(e => e.section === sec).length; return { tools: n("tools"), bio: n("bio"), docs: n("docs"), all: entries.length }; });
   const pics = list.filter(x => x.sec === "BIOGRAPHY" && x.img && !/^https?:/.test(x.img)).map(x => x.img);
   const pick = ["security-bot-c", "tony", "robinson", "bonecrab", "factory-king", "goat"].map(k => pics.find(p => p.includes(k))).filter(Boolean);

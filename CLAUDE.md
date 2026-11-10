@@ -13,7 +13,8 @@ Read this first after any break or conversation summary. Update it whenever some
 - When given a video, pull the data out frame by frame (crop the stats/comment panels at full resolution) instead of guessing.
 - Actually implement and push changes; don't just describe them or hand over files. Test in a browser (Playwright) before saying something works. I can't reach the live site from the sandbox, so say so instead of claiming it's live-verified.
 - Every push: bump `pda-tracker-vN` in `sw.js`, and add a changelog line at the top of the newest date block in `changelog.js`.
-- Previews regenerate on GitHub (daily + on data pushes); locally run `node tools/previews.js` if needed. Owner wants the site to look good when posted on Discord.
+- Previews regenerate on GitHub (daily + on data pushes); locally run `node tools/previews.js` if needed.
+- Admin edits live on the Worker, not in data.js. `e/overrides.json` is a copy the preview job saves (daily / on data pushes): **read it before reporting gaps or checking data**, or test with it loaded (`localStorage pda-overrides-v1`). Owner edits through ADMIN only and never wants to touch GitHub. Owner wants the site to look good when posted on Discord.
 - Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
 - README is a short description + credits only, not a guide.
