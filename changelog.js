@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-10", items: [
+    "Removed 200rnd M134 Mag (not in the game)",
     "All found ammo: stats and pictures",
     "Scavengers and Hellbender descriptions",
     "18 document texts (from the OANC Wiki)",
