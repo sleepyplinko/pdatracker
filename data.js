@@ -4550,44 +4550,248 @@ const PDA_DATA = {
           "72rnd TEC-9 Drum Mag"
         ],
         3: [
-          "14rnd AMT Mag",
-          "42rnd AUG Mag",
-          "30rnd AS-VAL Mag",
-          "30rnd Uzi Mag",
-          "30rnd AR15-FastMag",
-          "8rnd P345 Mag",
-          "45rnd RPK Mag",
-          "60rnd Stanag Drum Mag",
-          "32rnd SKORPION Mag",
-          "32rnd ProMag P250 Mag",
-          "35rnd PP-19-01 Vityaz Mag",
+          ["14rnd AMT Mag", { img: "images/ammo/14rnd-amt-mag.webp", stats: {
+          "CAPACITY": "14 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["42rnd AUG Mag", { img: "images/ammo/42rnd-aug-mag.webp", stats: {
+          "CAPACITY": "42 rounds",
+          "RELOAD TIME": "1.4s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AS-VAL Mag", { img: "images/ammo/30rnd-as-val-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd Uzi Mag", { img: "images/ammo/30rnd-uzi-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".22lr | .45ACP | 9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd AR15-FastMag", { img: "images/ammo/30rnd-ar15-fastmag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["8rnd P345 Mag", { img: "images/ammo/8rnd-p345-mag.webp", stats: {
+          "CAPACITY": "8 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["45rnd RPK Mag", { img: "images/ammo/45rnd-rpk-mag.webp", stats: {
+          "CAPACITY": "45 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.45x39mm | 7.62x39mm | 9x39mm | 5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["60rnd Stanag Drum Mag", { img: "images/ammo/60rnd-stanag-drum-mag.webp", stats: {
+          "CAPACITY": "60 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["32rnd SKORPION Mag", { img: "images/ammo/32rnd-skorpion-mag.webp", stats: {
+          "CAPACITY": "32 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": ".32 ACP | 9x19mm | 9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["32rnd ProMag P250 Mag", { img: "images/ammo/32rnd-promag-p250-mag.webp", stats: {
+          "CAPACITY": "32 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | .22lr | .357 SIG",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["35rnd PP-19-01 Vityaz Mag", { img: "images/ammo/35rnd-pp-19-01-vityaz-mag.webp", stats: {
+          "CAPACITY": "35 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "4 per insertion",
+          "AMMO TYPE": "9x19mm | 7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "20rnd ASh-12.7 Mag",
-          "47rnd DP-28 Mag",
-          "40rnd FAST-Glock Mag",
-          "40rnd AK Mag",
-          "30rnd GEN M3 STANAG",
-          "5rnd Automag V",
-          "16rnd SRM Mag",
-          "14rnd Automag",
-          "33rnd Glock Mag",
-          "40rnd UMP45 Mag",
-          "64rnd Bizon Mag",
-          "8rnd AA12 Mag",
-          "50rnd Spectre M4 Mag",
-          "25rnd Galil ARM Mag",
-          "71rnd PPsh Mag",
-          "40rnd Vepr-410 Drum Mag",
-          "100rnd MG4 Mag",
-          "20rnd R700 Mag",
-          "33rnd H&K USP Mag",
-          "30rnd CX4 Storm Mag",
-          ["15rnd ADV Fast-Mag", {"gold": true}],
-          "40rnd MP7A1 Mag",
-          "45rnd MP9 Mag",
+          ["47rnd DP-28 Mag", { img: "images/ammo/47rnd-dp-28-mag.webp", stats: {
+          "CAPACITY": "47 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "7.62x54mmR",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd FAST-Glock Mag", { img: "images/ammo/40rnd-fast-glock-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd AK Mag", { img: "images/ammo/40rnd-ak-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1.2s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "5.45x39mm | 7.62x39mm | 5.56x45mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd GEN M3 STANAG", { img: "images/ammo/30rnd-gen-m3-stanag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO | 7.62x39mm | 5.56x45mm NATO (Special) | .300 Blackout | 5.45x39mm | 7.62x51mm NATO | 9x39mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["5rnd Automag V", { img: "images/ammo/5rnd-automag-v.webp", stats: {
+          "CAPACITY": "5 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".50AE",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["16rnd SRM Mag", { img: "images/ammo/16rnd-srm-mag.webp", stats: {
+          "CAPACITY": "4 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["14rnd Automag", { img: "images/ammo/14rnd-automag.webp", stats: {
+          "CAPACITY": "14 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": ".44 AMP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["33rnd Glock Mag", { img: "images/ammo/33rnd-glock-mag.webp", stats: {
+          "CAPACITY": "33 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd UMP45 Mag", { img: "images/ammo/40rnd-ump45-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1.2s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".45ACP | .40 S&W",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["64rnd Bizon Mag", { img: "images/ammo/64rnd-bizon-mag.webp", stats: {
+          "CAPACITY": "64 rounds",
+          "RELOAD TIME": "1.75s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "9x18mm Makarov",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["8rnd AA12 Mag", { img: "images/ammo/8rnd-aa12-mag.webp", stats: {
+          "CAPACITY": "8 rounds",
+          "RELOAD TIME": "0.75s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "12/70",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["50rnd Spectre M4 Mag", { img: "images/ammo/50rnd-spectre-m4-mag.webp", stats: {
+          "CAPACITY": "50 rounds",
+          "RELOAD TIME": "1.3s",
+          "LOAD AMOUNT": "2 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["25rnd Galil ARM Mag", { img: "images/ammo/25rnd-galil-arm-mag.webp", stats: {
+          "CAPACITY": "25 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["71rnd PPsh Mag", { img: "images/ammo/71rnd-ppsh-mag.webp", stats: {
+          "CAPACITY": "71 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd Vepr-410 Drum Mag", { img: "images/ammo/40rnd-vepr-410-drum-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".410",
+          "WEIGHT": "0.5"
+          }, comment: "" }],
+          ["100rnd MG4 Mag", { img: "images/ammo/100rnd-mg4-mag.webp", stats: {
+          "CAPACITY": "100 rounds",
+          "RELOAD TIME": "1.5s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": "5.56x45mm NATO",
+          "WEIGHT": "1"
+          }, comment: "" }],
+          ["20rnd R700 Mag", { img: "images/ammo/20rnd-r700-mag.webp", stats: {
+          "CAPACITY": "20 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": ".308 | 7.62x51mm NATO",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["33rnd H&K USP Mag", { img: "images/ammo/33rnd-handk-usp-mag.webp", stats: {
+          "CAPACITY": "33 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "0 per insertion",
+          "AMMO TYPE": ".45ACP | .40 S&W | .357 SIG | 9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["30rnd CX4 Storm Mag", { img: "images/ammo/30rnd-cx4-storm-mag.webp", stats: {
+          "CAPACITY": "30 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm | .40 S&W | .45ACP",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["15rnd ADV Fast-Mag", { "gold": true, img: "images/ammo/15rnd-adv-fast-mag.webp", stats: {
+          "CAPACITY": "15 rounds",
+          "RELOAD TIME": "0.5s",
+          "LOAD AMOUNT": "3 per insertion",
+          "AMMO TYPE": "8x25mm | .50 BC",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["40rnd MP7A1 Mag", { img: "images/ammo/40rnd-mp7a1-mag.webp", stats: {
+          "CAPACITY": "40 rounds",
+          "RELOAD TIME": "1.2s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "4.6x30mm | 9x19mm | .45ACP | .40 S&W",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
+          ["45rnd MP9 Mag", { img: "images/ammo/45rnd-mp9-mag.webp", stats: {
+          "CAPACITY": "45 rounds",
+          "RELOAD TIME": "1.25s",
+          "LOAD AMOUNT": "1 per insertion",
+          "AMMO TYPE": "9x19mm",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "40rnd AR10 GEN M3 Mag",
           "40rnd MICRO UZI Mag",
           "65rnd P90 Mag",
-          "25rnd Kriss Mag",
+          ["25rnd Kriss Mag", { img: "images/ammo/25rnd-kriss-mag.webp", stats: {
+          "CAPACITY": "25 rounds",
+          "RELOAD TIME": "1s",
+          "LOAD AMOUNT": "4 per insertion",
+          "AMMO TYPE": "9x19mm | .45ACP | 10x25mm | .40 S&W | .357 SIG | .22lr | 7.62x25mm Tokarev",
+          "WEIGHT": "0.25"
+          }, comment: "" }],
           "20rnd Deagle Mag"
         ],
         4: [
