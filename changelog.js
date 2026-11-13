@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-13", items: [
+    "Added Garden Gnome (BLUDGEON tier 7)",
     "Documents look like the game",
     "Fiona's Diary copied from the game",
     "Every location now has its text",

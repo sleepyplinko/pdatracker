@@ -242,8 +242,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .tile:active { transform: scale(.97); }
 .tile.special { background: linear-gradient(#4a0606, #2a0303); border-color: #c01a1a; box-shadow: inset 0 0 8px rgba(255,0,0,.25); }
 .tile.special .tname { color: #ff3a3a; text-shadow: 0 0 6px rgba(255,0,0,.45); }
-.tile.gold { background: linear-gradient(#f2dcae, #d9b77a); border-color: #b8914a; }
-.tile.gold .tname { color: #e0942a; text-shadow: 0 0 2px #fff3, 0 1px 0 #7a4a10; }
+.tile.gold { background: linear-gradient(#c9bd9e, #a8997a); border-color: #d8ccae; }
+.tile.gold .tname { color: #f6b98a; background: linear-gradient(90deg, #f4a283, #fbf38f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 0.6px #3a2a10) drop-shadow(0 0 0.6px #3a2a10); text-shadow: none; }
 .tile.locked {
   background: radial-gradient(ellipse at 50% 45%, #2a2a1c 0%, #0a0a08 75%);
   border-color: #1c1c1c; box-shadow: none;
