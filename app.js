@@ -1185,41 +1185,42 @@
       </div>`;
   }
 
+  const DOC_LOOK = {
+    "Creepy Glass": { t: "Illusions: Creepy Glass" }, "Metrostation": { t: "Epsilon Metro Station" }, "Swamp": { t: "The Swamp" },
+    "Sons Apartment": { t: "Sons Apartments", bar: "rgba(255,190,0,.24)", tc: "#f5ebab" }, "The Lake": { t: "The Devious Lake", tc: "#f2f5c0", bc: "#c7b7a2" },
+    "The City": { tc: "#eba882" }, "Civilian Outpost #4": { tc: "#e2676d" }, "Wooden Cottage": { t: "Cottage" }, "Awesome Apartments": { t: "Apartments" },
+    "Restaurant": { t: "Unnamed Restaurant" }, "John M4 House": { t: "John M4's House" }, "Library": { t: "The Library" }, "Suburban?": { t: "Suburbans" },
+    "Sewers": { t: "The Sewers" }, "Fiona's Diary": { t: "My diary" }, "Resume #451": { form: true }
+  };
+  const EXIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="#ff2d2d" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M20 12H9"/><path d="M13 8l-4 4 4 4"/></svg>';
+  function gameDocText(e, look) {
+    let t = e.desc != null ? e.desc : DOC_DESC[e.name] || "";
+    const title = look.t || e.name;
+    if (t.startsWith(title + "\n")) t = t.slice(title.length + 1).replace(/^\n+/, "");
+    if (look.form) {
+      const parts = t.split(/\n\s*\n/);
+      return `<div class="gform">${parts.map(p => /^STATUS:/.test(p) ? `<div class="gstatus">${esc(p)}</div>` : /\?$/.test(p.trim()) && p.length < 80 ? `<div class="gq">${esc(p)}</div>` : `<div class="ga">${esc(p).replace(/\n/g, "<br>")}</div>`).join("")}</div>`;
+    }
+    return t ? `<div class="gtext"${look.bc ? ` style="color:${look.bc}"` : ""}>${esc(t)}</div>` : '<div class="gtext none">No text on file.</div>';
+  }
   function renderDocDetail(e) {
-    const g = PDA_DATA.documents[e.groupIndex];
     const got = isFound(e.id);
     const l = label(e);
-    const icon = { location: I.wifi, note: I.note, misc: I.docTile }[e.kind];
     const imgs = imagesOf(e);
-    const type = { location: "Location", note: "Note", misc: "Miscellaneous" }[e.kind];
-    if ((e.tape || (e.kind === "note" && imgs.length)) && got) {
-      const head = `<div class="readbar"><span class="rname"${e.ecolor ? ` style="color:${e.ecolor}"` : ""}>${esc(l)}</span>
-            <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<button class="estar mini${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="Found: click to unmark">${I.star(got)}</button><button class="return" id="ret">RETURN</button></span></div>`;
-      const body = e.tape
-        ? `<div class="tape"><img src="${esc(imgs[0].src)}" alt="${esc(e.tape.title)}"><button class="tapeplay" data-tape="${esc(e.tape.src)}">${tapeAudio && !tapeAudio.paused && tapeAudio.dataset.src === e.tape.src ? "Stop" : "Play"}</button></div>`
-        : `<div class="notepaper${imgs.length > 1 ? " many" : ""}">${imgs.map(x => `<img src="${esc(x.src)}" alt="${esc(l)}">`).join("")}</div>`;
-      screen.innerHTML = `<div class="reader">${head}<div class="reader-body">${body}</div>${e.desc ? `<div class="dbox pdesc">${bottomBox("Description", paras(e.desc), e.id)}</div>` : ""}</div>`;
-      return;
-    }
-    screen.innerHTML = `
-      <div class="pdetail doc-detail ${e.kind}">
-        <div class="dbox pprev"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
-          <div class="preview docprev">${previewHTML(imgs, `<span class="ph big">${got ? icon : I.lock}</span>`)}</div>
-        </div>
-        <div class="dbox edata"><div class="dhead">Document Data
-            <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
-          <div class="ename"${e.ecolor ? ` style="color:${e.ecolor}"` : ""}>${esc(l)}</div>
-          <div class="ebody">
-            <div class="erows">
-              ${statRow("Type", type)}
-              ${statRow("Category", g.name)}
-            </div>
-            <div class="erarity">${communityHTML(e)}</div>
-            <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
-          </div>
-        </div>
-        <div class="dbox pdesc">${bottomBox("Description", e.desc ? paras(e.desc) : DOC_DESC[e.name] ? paras(DOC_DESC[e.name]) + wikiCredit("docs", e.name) : '<p class="none">No description on file.</p>', e.id)}</div>
-      </div>`;
+    const look = DOC_LOOK[e.name] || {};
+    const nt = ui.btab === "notes";
+    let body;
+    if (e.tape) body = `<div class="reader-body"><div class="tape"><img src="${esc(imgs[0].src)}" alt="${esc(e.tape.title)}"><button class="tapeplay" data-tape="${esc(e.tape.src)}">${tapeAudio && !tapeAudio.paused && tapeAudio.dataset.src === e.tape.src ? "Stop" : "Play"}</button></div></div>`;
+    else if (e.kind === "note" && imgs.length) body = `<div class="reader-body"><div class="notepaper${imgs.length > 1 ? " many" : ""}">${imgs.map(x => `<img src="${esc(x.src)}" alt="${esc(l)}">`).join("")}</div></div>`;
+    else body = `<div class="gscroll"><div class="gtitle"${look.bar ? ` style="background:${look.bar}"` : ""}><span${look.tc || e.ecolor ? ` style="color:${look.tc || e.ecolor}"` : ""}>${esc(look.t || l)}</span></div>${gameDocText(e, look)}
+        ${imgs.length ? `<div class="gpics">${imgs.map(x => `<img src="${esc(x.src)}" alt="" loading="lazy">`).join("")}</div>` : ""}
+        ${e.desc ? "" : wikiCredit("docs", e.name)}${communityHTML(e)}</div>`;
+    if (nt) body = `<div class="gscroll"><div class="gtitle"><span>MY NOTES: ${esc(l)}</span></div><textarea class="notes gnotes" data-note="${esc(e.id)}" placeholder="Your own notes, saved in this browser (where you found it, what it needs...)">${esc(notes[e.id] || "")}</textarea></div>`;
+    const has = !!(notes[e.id] || "").trim();
+    screen.innerHTML = `<div class="gdoc">${body}
+      <div class="gfoot"><button class="gexit" id="ret" title="Return">${EXIT_ICON}</button>
+        <span class="gmid">${flowBtns(e)}<button class="hbtn${nt ? " on" : ""}" data-btab="${nt ? "desc" : "notes"}">${nt ? "BACK TO PAGE" : "MY NOTES" + (has ? " •" : "")}</button>${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}</span>
+        <button class="gstar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button></div></div>`;
   }
 
   let tapeAudio = null;
