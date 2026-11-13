@@ -21,6 +21,53 @@
   },
   "updated": 1794315944
  },
+ "t|rifles|platinum-c.s.i.r.o device": {
+  "comment": "",
+  "stats": {
+   "CALIBER TYPE": "5 KG BIO-SLUG",
+   "AUTO": "YES",
+   "BURST": "NO",
+   "STRENGTH": "1x",
+   "AIM TIME": "2.8",
+   "SWITCH TIME": "0.28s",
+   "RPM": "200",
+   "ALERT RADIUS": "700",
+   "RELOAD MODIFIER": "1",
+   "WEAPON TYPE": "Magazine-fed",
+   "MAX SPREAD": "1",
+   "MINIMUM SPREAD": "0",
+   "SPREAD INCREMENT": "0.5",
+   "SPREAD DECREASE": "0.5/0.3s",
+   "AIM SLOWDOWN": "-30.000000000000004%",
+   "EQUIP TIME": "1.25s",
+   "WEIGHT": "7",
+   "HIDDEN": "YES"
+  },
+  "updated": 1794572600
+ },
+ "t|rifles|sig mcx-spear": {
+  "comment": "",
+  "stats": {
+   "CALIBER TYPE": "6.8x51mm",
+   "AUTO": "YES",
+   "BURST": "NO",
+   "STRENGTH": "1x",
+   "AIM TIME": "1.5",
+   "SWITCH TIME": "0.15s",
+   "RPM": "125",
+   "ALERT RADIUS": "750",
+   "RELOAD MODIFIER": "1",
+   "WEAPON TYPE": "Magazine-fed",
+   "MAX SPREAD": "3",
+   "MINIMUM SPREAD": "0.25",
+   "SPREAD INCREMENT": "0.5",
+   "SPREAD DECREASE": "0.25/0.15s",
+   "EQUIP TIME": "1.5s",
+   "WEIGHT": "1.25",
+   "HIDDEN": "YES"
+  },
+  "updated": 1794572615
+ },
  "t|sharp|balisong": {
   "comment": "The Balisong is a well known self defense weapon, its lightness fitting into anyone's pockets whilst still delivering blows that could scare off attackers. However, as more and more people got their hands on dangerous firearms and improved tools in terms of close quarter combat, this tiny knife became out of date quick. Due to this, it can be a rare sight to see, so maybe take it for yourself if you ever spot it, because it's really cool flipping it around in your hands!",
   "stats": {
