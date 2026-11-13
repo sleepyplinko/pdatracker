@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-13", items: [
+    "Every location now has its text",
     "Resume #451 and Restaurant texts",
     "Hover sound works right away",
     "Notes open as the real note",
