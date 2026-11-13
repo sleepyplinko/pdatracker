@@ -1,5 +1,7 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-13", items: [
+    "DAMAGE: regen and Maria notes",
+    "DAMAGE: its own page for search",
     "Easier to find on Google",
     "Added Garden Gnome (BLUDGEON tier 7)",
     "Documents look like the game",

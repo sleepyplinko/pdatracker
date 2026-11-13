@@ -1191,3 +1191,5 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .gmid { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
 .gmid .hbtn.on { background: #fff; color: #000; }
 @media (max-width: 600px) { .gtitle { font-size: 18px; } .gtext { font-size: 13px; } .gform .ga { font-size: 9px; } }
+
+.cat-note.dwarn { color: #ffcf4a; }

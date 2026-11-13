@@ -137,6 +137,23 @@ const srv = http.createServer((q, r) => {
     fs.writeFileSync(path.join(dir, "index.html"), SHELL.replace("<!--HEAD-->", () => head));
     urls.push(url);
   }
+  fs.mkdirSync(path.join(ROOT, "damage"), { recursive: true });
+  fs.writeFileSync(path.join(ROOT, "damage", "index.html"), SHELL.replace("<!--HEAD-->", () => `<title>OANC Damage Calculator · Once A Normal City hits &amp; time to kill · PDA.exe</title>
+  <meta name="description" content="Free Once A Normal City (OANC) damage calculator. Pick any weapon, ammo and enemy to see damage per hit, hits to kill and time to kill, with defense, armor pen, super armour, shield and supershield. Compare two loadouts and find the best ammo.">
+  <link rel="canonical" href="${SITE}damage/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
+  <meta property="og:title" content="OANC Damage Calculator">
+  <meta property="og:description" content="Hits and time to kill for any Once A Normal City weapon, ammo and enemy.">
+  <meta property="og:url" content="${SITE}damage/">
+  <meta property="og:image" content="${SITE}images/og.jpg?v=2">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0a">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"OANC Damage Calculator","alternateName":"Once A Normal City Damage Calculator","url":"${SITE}damage/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"}}</script>
+  <script>if (!location.hash) history.replaceState(null, "", location.pathname + location.search + "#damage")</script>`));
+  urls.unshift(SITE + "damage/");
   fs.writeFileSync(MAN, JSON.stringify(man));
   fs.writeFileSync(path.join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, ...urls].map(u => `  <url><loc>${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   if (Object.keys(ov).length) fs.writeFileSync(path.join(OUT, "overrides.json"), JSON.stringify(ov, Object.keys(ov).sort(), 1).length ? JSON.stringify(Object.fromEntries(Object.keys(ov).sort().map(k => [k, ov[k]])), null, 1) + "\n" : "{}");
