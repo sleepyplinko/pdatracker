@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-13", items: [
+    "Icon says OANC",
     "DAMAGE: regen and Maria notes",
     "DAMAGE: its own page for search",
     "Easier to find on Google",
