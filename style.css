@@ -578,6 +578,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .bnew { background: #ff2a8a; color: #fff; }
 .bfr { background: #2a6aff; color: #fff; }
 .bfav { background: #000; color: #ff5a7a; }
+.bhid { background: #555; color: #fff; }
 .card .badges { bottom: 46px; }
 .doc .badges { bottom: 46px; }
 
