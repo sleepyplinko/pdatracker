@@ -36,7 +36,7 @@
   let favs     = load(KEY_FAV, {});
   let notes    = load(KEY_NOTES, {});
 
-  const MOVED = { "b|miscellaneous|wc emissary": "b|wc|wc emissary", "b|miscellaneous|wc speedster": "b|wc|wc speedster" };
+  const MOVED = { "d|notes|???4": "d|notes|evacuation day", "d|locations|???22": "d|locations|restaurant", "b|miscellaneous|wc emissary": "b|wc|wc emissary", "b|miscellaneous|wc speedster": "b|wc|wc speedster" };
   const migrateIds = (obj, key) => {
     let ch = false;
     Object.entries(MOVED).forEach(([o, n]) => { if (obj && o in obj) { if (!(n in obj)) obj[n] = obj[o]; delete obj[o]; ch = true; } });
@@ -126,7 +126,25 @@
                     : typeof raw === "string" ? { name: raw } : { ...raw };
 
   const OV_CACHE = (typeof PDA_CLOUD === "object" && PDA_CLOUD && PDA_CLOUD.api) ? load("pda-overrides-v1", {}) : {};
-  const addedSig = ov => JSON.stringify(Object.entries(ov || {}).filter(([, o]) => o && o.add).map(([id, o]) => [id, o.add]).sort());
+  const isStructId = id => /^[tbd]\|@(cat|tab)\|/.test(id);
+  const addedSig = ov => JSON.stringify(Object.entries(ov || {}).filter(([id, o]) => o && (o.add || isStructId(id))).map(([id, o]) => [id, o.add || o.stats]).sort());
+  const okColor = c => /^#[0-9a-f]{6}$/i.test(c || "") ? c.toLowerCase() : "";
+  const mixHex = (c, k) => "#" + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * k).toString(16).padStart(2, "0")).join("");
+  const DOC_KINDS = ["location", "note", "misc"];
+  const CUSTOM_TABS = [];
+  Object.entries(OV_CACHE).forEach(([id, o]) => {
+    const m = id.match(/^d\|@tab\|(.+)$/), st = (o && o.stats) || {}; if (!m || !st._NAME) return;
+    CUSTOM_TABS.push({ key: m[1], id, name: st._NAME, color: okColor(st._COLOR) || "#d0d0d0" });
+  });
+  Object.entries(OV_CACHE).forEach(([id, o]) => {
+    const m = id.match(/^([tbd])\|@cat\|(.+)$/), st = (o && o.stats) || {}; if (!m || !st._NAME) return;
+    const name = st._NAME, col = okColor(st._COLOR);
+    const list = { t: PDA_DATA.tools, b: PDA_DATA.biography, d: PDA_DATA.documents }[m[1]];
+    if (list.some(g => slug(g.name) === slug(name))) return;
+    if (m[1] === "t") list.push({ name, tiers: {}, custom: id });
+    else if (m[1] === "b") list.push({ name, color: col || "#dddddd", bg: mixHex(col || "#dddddd", 0.12), entries: [], custom: id });
+    else list.push({ name, kind: DOC_KINDS.includes(st._KIND) ? st._KIND : "misc", color: col, tab: CUSTOM_TABS.some(t => t.key === st._TAB) ? st._TAB : "", entries: [], custom: id });
+  });
   const ADDED_SIG = addedSig(OV_CACHE);
   const SEC_DATA = { tools: () => PDA_DATA.tools, bio: () => PDA_DATA.biography, docs: () => PDA_DATA.documents };
   const SEC_LETTER = { tools: "t", bio: "b", docs: "d" };
@@ -427,9 +445,14 @@
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
   const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
 
-  const TOP_TABS = ["tools", "biography", "documents", "missing", "loadout", "damage"];
+  const TOP_TABS = ["tools", "biography", "documents", ...CUSTOM_TABS.map(t => "x:" + t.key), "missing", "loadout", "damage"];
+  const tabOf = key => CUSTOM_TABS.find(t => t.key === key);
+  CUSTOM_TABS.forEach(t => { TAB_LABEL["x:" + t.key] = t.name.toUpperCase(); });
+  if (/^x:/.test(ui.tab) && !tabOf(ui.tab.slice(2))) ui.tab = "documents";
+  const docTab = () => ui.tab === "documents" ? "" : /^x:/.test(ui.tab) ? ui.tab.slice(2) : null;
+  const docGroups = tab => PDA_DATA.documents.map((g, i) => [g, i]).filter(([g]) => (g.tab || "") === tab);
   let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
-  const tabBtn = t => `<button class="tab" role="tab" data-tab="${t}" aria-selected="${!query && ui.tab === t}">${I[t]}<span>${TAB_LABEL[t] || t.toUpperCase()}</span></button>`;
+  const tabBtn = t => `<button class="tab" role="tab" data-tab="${esc(t)}" aria-selected="${!query && ui.tab === t}"${/^x:/.test(t) ? ` style="--tabc:${tabOf(t.slice(2)).color}"` : ""}>${I[t] || I.documents}<span>${esc(TAB_LABEL[t] || t.toUpperCase())}</span></button>`;
   function renderTabs() {
     [["#tabs", TOP_TABS], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
       const el = $(sel), x = el.scrollLeft;
@@ -512,7 +535,7 @@
     }
   });
 
-  const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : ui.tab === "documents" ? ui.docs : ""}`;
+  const viewKey = () => detail ? `d:${detail.type}:${detail.id}` : query ? "" : `${ui.tab}:${ui.tab === "tools" ? ui.cat : ui.tab === "biography" ? ui.bio : docTab() !== null ? ui.docs : ""}`;
   let keeping = false;
   let lastVk = null;
 
@@ -592,7 +615,7 @@
     const move = (cur, min, max) => Math.max(min, Math.min(max, cur + step));
     if (ui.tab === "tools") { const n = move(Math.max(0, ui.cat), 0, PDA_DATA.tools.length - 1); if (n === ui.cat) return; ui.cat = n; ui.cal = ""; }
     else if (ui.tab === "biography") { const n = move(ui.bio, -1, PDA_DATA.biography.length - 1); if (n === ui.bio) return; ui.bio = n; }
-    else if (ui.tab === "documents") { const n = move(ui.docs, 0, PDA_DATA.documents.length - 1); if (n === ui.docs) return; ui.docs = n; }
+    else if (docTab() !== null) { const l = docGroups(docTab()).map(x => x[1]), at = l.indexOf(ui.docs), n = l[Math.max(0, Math.min(l.length - 1, at + step))]; if (n == null || n === ui.docs) return; ui.docs = n; }
     else return;
     play("switch"); persistUI(); render();
     screen.classList.remove("slide-l", "slide-r"); void screen.offsetWidth; screen.classList.add(step > 0 ? "slide-l" : "slide-r");
@@ -661,11 +684,11 @@
       if (e.isCard) e = e.card.members[0];
       return detail.type === "tool" ? renderToolDetail(e) : detail.type === "doc" ? renderDocDetail(e) : renderPersonDetail(e);
     }
-    detail = null;
+    detail = null; stopTape();
     if (query) return renderSearch();
     if (sinceView) return renderSince();
-    ({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: renderDocs, missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, admin: renderAdmin })[ui.tab]();
+    (({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
+       tools: renderTools, biography: renderBio, documents: () => renderDocs(""), missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, admin: renderAdmin })[ui.tab] || (() => renderDocs(ui.tab.slice(2))))();
   }
 
   function badges(e) {
@@ -698,6 +721,9 @@
     const lines = tileLines(name), n = Math.max(...lines.map(l => l.length), 3);
     return `--tn:${n};--tl:${lines.length}`;
   }
+  const ecls = e => (e.ecolor ? " ecol" : "") + (e.eglow ? " eglow" : "");
+  const eSty = (e, v = "--ec") => e.ecolor ? ` style="${v}:${e.ecolor}"` : "";
+  const titleCol = (e, def) => e.special ? "var(--red)" : e.gold ? "#f0c060" : e.ecolor || def;
   const tileText = name => tileLines(name).map(esc).join("<br>");
   function tileHTML(e) {
     const got = isFound(e.id);
@@ -706,7 +732,7 @@
       return `<button class="tile locked" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}: not found">
         <span class="lock">${I.lock}</span><span class="lname">${esc(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
     }
-    return `<button class="tile${e.special ? " special" : ""}${e.gold ? " gold" : ""}" data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
+    return `<button class="tile${e.special ? " special" : ""}${e.gold ? " gold" : ""}${ecls(e)}"${eSty(e)} data-open-tool="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
       <span class="tname" style="${tileFont(l)}">${tileText(l)}</span>${hstar(e.id, l)}${badges(e)}</button>`;
   }
 
@@ -966,7 +992,7 @@
             <button class="star" id="star" data-star="${esc(e.id)}" aria-pressed="${got}" title="${got ? "Found: click to unmark" : "Not found: click to mark"}">${I.star(got)}</button>
           </div></div>
         <div class="dbox"><div class="dhead">Statistics<span class="hright">${flowBtns(e)}${moreMenu((fireModes(e).some(m => m.melee || m.cals.length) ? `<button class="hbtn" data-dmgcalc="${esc(e.id)}" title="Work out its damage against anyone">DAMAGE CALC</button>` : "") + `<button class="hbtn${ui.cmp.includes(e.id) ? " on" : ""}" data-cmp="${esc(e.id)}" title="Add to the weapon comparison">${ui.cmp.includes(e.id) ? "COMPARING ✓" : "COMPARE +"}</button>` + linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
-          <div class="stats"><h2 style="color:${e.special ? "var(--red)" : e.gold ? "#f0c060" : "#fff"}">// ${esc(l.toUpperCase())}</h2>
+          <div class="stats"><h2 style="color:${titleCol(e, "#fff")}">// ${esc(l.toUpperCase())}</h2>
             ${statHTML}
             ${countHTML(e)}
             ${rarityHTML(e)}
@@ -1060,7 +1086,7 @@
     const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${got ? "" : ' class="dimpic"'}>` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
-    return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${g.color}" title="${esc(tip)}">
+    return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}${got ? ecls(c.entry) : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${(got && c.entry.ecolor) || g.color}" title="${esc(tip)}">
       <span class="pic">${pic}</span>
       ${isGroup ? `<span class="count" title="${t} variants">×${t}</span>` : ""}${hstar(c.entry.id, l)}${badges(c.entry)}
       <span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
@@ -1131,7 +1157,7 @@
         </div>
         <div class="dbox edata"><div class="dhead">Enemy Data
             <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(card.entry.id) + suggestBtn(card.entry.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
-          <div class="ename">${esc(l)}</div>
+          <div class="ename"${e.ecolor ? ` style="color:${e.ecolor}"` : ""}>${esc(l)}</div>
           <div class="ebody">
             <div class="erows">${empty ? '<div class="esec" style="color:#888">NO DATA ON FILE</div>' : rows}</div>
             <button class="estar${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="${members.length ? `${got ? "Found" : "Not found"}: this star covers all ${members.length} ${esc(card.name)} variants` : got ? "Found: click to unmark" : "Click to mark as found"}">${I.star(got)}</button>
@@ -1149,6 +1175,15 @@
     const icon = { location: I.wifi, note: I.note, misc: I.docTile }[e.kind];
     const imgs = imagesOf(e);
     const type = { location: "Location", note: "Note", misc: "Miscellaneous" }[e.kind];
+    if ((e.tape || (e.kind === "note" && imgs.length)) && got) {
+      const head = `<div class="readbar"><span class="rname"${e.ecolor ? ` style="color:${e.ecolor}"` : ""}>${esc(l)}</span>
+            <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<button class="estar mini${got ? " on" : ""}" data-star="${esc(e.id)}" aria-pressed="${got}" title="Found: click to unmark">${I.star(got)}</button><button class="return" id="ret">RETURN</button></span></div>`;
+      const body = e.tape
+        ? `<div class="tape"><img src="${esc(imgs[0].src)}" alt="${esc(e.tape.title)}"><button class="tapeplay" data-tape="${esc(e.tape.src)}">${tapeAudio && !tapeAudio.paused && tapeAudio.dataset.src === e.tape.src ? "Stop" : "Play"}</button></div>`
+        : `<div class="notepaper${imgs.length > 1 ? " many" : ""}">${imgs.map(x => `<img src="${esc(x.src)}" alt="${esc(l)}">`).join("")}</div>`;
+      screen.innerHTML = `<div class="reader">${head}<div class="reader-body">${body}</div>${e.desc ? `<div class="dbox pdesc">${bottomBox("Description", paras(e.desc), e.id)}</div>` : ""}</div>`;
+      return;
+    }
     screen.innerHTML = `
       <div class="pdetail doc-detail ${e.kind}">
         <div class="dbox pprev"><div class="dhead">Preview${arrowsHTML(imgs)}</div>
@@ -1156,7 +1191,7 @@
         </div>
         <div class="dbox edata"><div class="dhead">Document Data
             <span class="hright">${flowBtns(e)}${moreMenu(linkBtn(e.id) + suggestBtn(e.id))}${favBtn(e.id)}<span class="chip ${got ? "status-found" : "status-missing"}">${got ? "FOUND" : "MISSING"}</span><button class="return" id="ret">RETURN</button></span></div>
-          <div class="ename">${esc(l)}</div>
+          <div class="ename"${e.ecolor ? ` style="color:${e.ecolor}"` : ""}>${esc(l)}</div>
           <div class="ebody">
             <div class="erows">
               ${statRow("Type", type)}
@@ -1170,6 +1205,18 @@
       </div>`;
   }
 
+  let tapeAudio = null;
+  function stopTape() { if (tapeAudio) { tapeAudio.pause(); tapeAudio = null; } }
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-tape]"); if (!b) return;
+    if (tapeAudio && !tapeAudio.paused && tapeAudio.dataset.src === b.dataset.tape) { stopTape(); b.textContent = "Play"; play("click"); return; }
+    stopTape(); play("click");
+    tapeAudio = new Audio(b.dataset.tape); tapeAudio.dataset.src = b.dataset.tape;
+    tapeAudio.volume = Math.max(0, Math.min(1, (settings.volume ?? 70) / 100));
+    tapeAudio.addEventListener("ended", () => { const x = screen.querySelector("[data-tape]"); if (x) x.textContent = "Play"; tapeAudio = null; });
+    tapeAudio.play().catch(() => { toast("Couldn't play the tape."); tapeAudio = null; b.textContent = "Play"; });
+    b.textContent = "Stop";
+  });
   const DOC_TAB = { location: ["var(--cyan)", "#0a2a2e"], note: ["var(--doc-yellow)", "#24230a"], misc: ["#fff", "#1c1c1c"] };
   function docHTML(e) {
     const got = isFound(e.id);
@@ -1180,17 +1227,21 @@
         <span class="pic">${I.lock}</span>${hstar(e.id, l)}${badges(e)}
         <span class="nm"><span class="tag">- MISSING -</span>${settings.lockedNames && !e.unknown ? `<span class="sub">${esc(l)}</span>` : ""}</span></button>`;
     }
-    return `<button class="doc ${e.kind}" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}" title="${esc(l)}">
+    const gc = PDA_DATA.documents[e.groupIndex].color, dc = e.ecolor || gc;
+    return `<button class="doc ${e.kind}${ecls(e)}" data-open-doc="${esc(e.id)}" data-entry="${esc(e.id)}"${dc ? ` style="--dc:${dc};--dbg:${mixHex(dc, 0.06)}"` : ""} title="${esc(l)}">
       <span class="pic">${icon}</span>${hstar(e.id, l)}${badges(e)}<span class="nm" style="${fit(l, 26)}">${esc(l)}</span></button>`;
   }
-  function renderDocs() {
-    const groups = PDA_DATA.documents;
-    if (ui.docs >= groups.length) ui.docs = 0;
-    const g = groups[ui.docs];
-    const tabs = groups.map((x, i) => {
+  function renderDocs(tab) {
+    const list = docGroups(tab);
+    if (!list.length) { screen.innerHTML = `<div class="empty-cat"><b>EMPTY</b>No categories here yet.${amAdmin() ? " Add one in ADMIN → CATEGORIES." : ""}</div>`; return; }
+    ui.docsBy = ui.docsBy || {};
+    if (!list.some(([, i]) => i === ui.docs)) ui.docs = list.some(([, i]) => i === ui.docsBy[tab]) ? ui.docsBy[tab] : list[0][1];
+    ui.docsBy[tab] = ui.docs;
+    const g = PDA_DATA.documents[ui.docs];
+    const tabs = list.map(([x, i]) => {
       const [f, t] = countOf(x.items);
       if (ui.hideDone && f === t && i !== ui.docs) return "";
-      const [c, bg] = DOC_TAB[x.kind];
+      const [c, bg] = x.color ? [x.color, mixHex(x.color, 0.12)] : DOC_TAB[x.kind];
       return `<button class="subtab striped${f === t ? " complete" : ""}" data-docs="${i}" aria-selected="${i === ui.docs}" style="--sc:${c};--sbg:${bg}" title="${i === ui.docs ? "Click again to unlock the whole tab" : ""}">${esc(x.name)}<span class="n">${f}/${t}</span>${pbar(f, t)}</button>`;
     }).join("");
     const items = sortEntries(g.items).filter(e => passFilter(isFound(e.id)));
@@ -1202,7 +1253,8 @@
   function contextOf(e) {
     if (e.section === "tools") return `TOOLS › ${e.group} › TIER ${e.tier}`;
     if (e.section === "bio") return `BIOGRAPHY › ${e.group}${e.card && e.card.kind === "group" ? " › " + e.card.name : ""}`;
-    return `DOCUMENTS › ${e.group}`;
+    const dg = PDA_DATA.documents[e.groupIndex], tb = dg && dg.tab && tabOf(dg.tab);
+    return `${tb ? tb.name.toUpperCase() : "DOCUMENTS"} › ${e.group}`;
   }
   function score(name, q) {
     const n = slug(name);
@@ -1298,7 +1350,7 @@
   function resultHTML(e, ctx) {
     const got = isFound(e.id);
     const open = { tools: "data-open-tool", bio: "data-open", docs: "data-open-doc" }[e.section];
-    return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}${e.gold ? " gold" : ""}">
+    return `<div class="sres${got ? " got" : ""}${e.special ? " special" : ""}${e.gold ? " gold" : ""}${got ? ecls(e) : ""}"${eSty(e)}>
       <button class="sres-main" ${open}="${esc(e.id)}" data-entry="${esc(e.id)}" title="Open ${esc(label(e))}">
         <span class="sres-ic" data-star="${esc(e.id)}" role="checkbox" aria-checked="${got}" title="${got ? "Found: click to unmark" : "Click to mark as found"}">${got ? I.check : '<span class="box"></span>'}</span>
         <span class="sres-name">${esc(label(e))}${badges(e)}</span>
@@ -1785,7 +1837,7 @@
   }
   function openEntry(x) {
     const e = byId.get(x.id) || byId.get(trackOf(x.id)); if (!e) return;
-    ui.tab = { tools: "tools", bio: "biography", docs: "documents" }[e.section] || ui.tab;
+    ui.tab = e.section === "docs" && PDA_DATA.documents[e.groupIndex].tab ? "x:" + PDA_DATA.documents[e.groupIndex].tab : { tools: "tools", bio: "biography", docs: "documents" }[e.section] || ui.tab;
     if (e.section === "tools") ui.cat = e.catIndex; else if (e.section === "bio") ui.bio = e.groupIndex; else if (e.section === "docs") ui.docs = e.groupIndex;
     renderTabs(); openDetail(typeOf(e), e.id);
   }
@@ -2156,13 +2208,21 @@
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
       if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { hidden: e.hidden, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
+      origInfo.set(e, { hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = true; delete os.HIDDEN; }
+      const sty = os._STYLE, glow = os._GLOW === "YES"; Object.keys(os).forEach(k => { if (k[0] === "_") delete os[k]; });
+      if (sty) {
+        delete e.special; delete e.gold; delete e.ecolor; delete e.eglow;
+        const tool = e.section === "tools";
+        if (sty === "red") { if (tool) e.special = true; else { e.ecolor = "#ff3a3a"; e.eglow = true; } }
+        else if (sty === "gold") { if (tool) e.gold = true; else e.ecolor = "#f0c060"; }
+        else if (okColor(sty)) { e.ecolor = okColor(sty); if (glow) e.eglow = true; }
+      }
       if (Object.keys(os).length) {
         const st = { ...(e.stats || {}), ...os };
         if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }
@@ -2265,7 +2325,7 @@
     const slots = (g.items || []).filter(e => e.unknown);
     return `<div class="dbox admedit"><div class="dhead">Add a new entry${adm.edit.sub ? ` (from submission #${adm.edit.sub})` : ""}</div><div class="dform addform">
       <div class="frow"><label>SECTION <select data-admadd="section">${[["tools", "TOOLS"], ["bio", "BIOGRAPHY"], ["docs", "DOCUMENTS"]].map(([v, n]) => `<option value="${v}"${v === sec ? " selected" : ""}>${n}</option>`).join("")}</select></label>
-        <label>${sec === "tools" ? "CATEGORY" : "GROUP"} <select data-admadd="group">${groups.map(n => `<option${n === a.group ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+        <label>${sec === "tools" ? "CATEGORY" : "GROUP"} <select data-admadd="group">${SEC_DATA[sec]().map(x => `<option value="${esc(x.name)}"${x.name === a.group ? " selected" : ""}>${x.tab && tabOf(x.tab) ? esc(tabOf(x.tab).name.toUpperCase()) + " › " : ""}${esc(x.name)}</option>`).join("")}</select></label>
         ${sec === "tools" ? `<label>TIER <input type="number" min="1" max="9" data-admadd="tier" value="${esc(a.tier || "")}"></label>` : ""}</div>
       <label>NAME <small>exactly as the PDA shows it</small><input data-admadd="name" maxlength="80" value="${esc(a.name || "")}"></label>
       ${slots.length ? `<label>FILLS A ??? SLOT? <small>pick one if this is one of the unknown entries, so the total stays right</small><select data-admadd="replace"><option value="">No, it's an extra entry</option>${slots.map(e => `<option value="${esc(e.id)}"${e.id === a.replace ? " selected" : ""}>??? in ${esc(e.group)}${e.tier ? " tier " + e.tier : ""}</option>`).join("")}</select></label>` : ""}
@@ -2398,14 +2458,46 @@
       ${rare ? `<div><b>Rarest:</b> ${rare}</div><div><b>Most found:</b> ${common}</div>` : ""}
       <div class="btnrow"><button class="mini-btn" data-admbackup>DOWNLOAD BACKUP OF PUBLISHED INFO</button></div></details>`;
   }
+  function catsEditorHTML() {
+    const c = adm.edit.cats, where = c.where || "t";
+    const isDoc = where === "d" || where.startsWith("x:");
+    const sec = { t: "TOOLS", b: "BIOGRAPHY", d: "DOCUMENTS" };
+    const mine = Object.entries(overrides).filter(([id]) => isStructId(id)).map(([id, o]) => {
+      const st = o.stats || {}, tab = id.startsWith("d|@tab|");
+      const g = !tab && SEC_DATA[{ t: "tools", b: "bio", d: "docs" }[id[0]]]().find(x => x.custom === id);
+      const n = tab ? PDA_DATA.documents.filter(x => x.tab === id.slice(7)).length : g ? (g.items || []).filter(e => !e.unknown).length : 0;
+      const place = tab ? "TAB" : `${st._TAB && tabOf(st._TAB) ? tabOf(st._TAB).name.toUpperCase() : sec[id[0]]}${st._KIND ? " · " + st._KIND : ""}`;
+      return `<div class="frrow"><b>${esc(st._NAME || id)}</b><span class="dim">${esc(place)} · ${n} ${tab ? "categor" + (n === 1 ? "y" : "ies") : n === 1 ? "entry" : "entries"}</span><span></span><span class="frbtns"><button class="mini-btn danger" data-admcatdel="${esc(id)}" data-admcatn="${n}">DELETE</button></span></div>`;
+    }).join("");
+    return `<div class="dbox admedit"><div class="dhead">Categories and tabs</div><div class="dform">
+      ${mine ? `<div class="frlist">${mine}</div>` : '<p class="dim">No custom categories or tabs yet.</p>'}
+      <h3 class="ph3">NEW CATEGORY //</h3>
+      <div class="frow"><label>IN <select id="catWhere">${[["t", "TOOLS"], ["b", "BIOGRAPHY"], ["d", "DOCUMENTS"], ...CUSTOM_TABS.map(t => ["x:" + t.key, t.name.toUpperCase()])].map(([v, n]) => `<option value="${esc(v)}"${v === where ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+        <label>NAME <input id="catName" maxlength="40"></label>
+        ${isDoc ? `<label>TYPE <select id="catKind"><option value="note">Notes</option><option value="location">Locations</option><option value="misc">Misc</option></select></label>` : ""}
+        ${where !== "t" ? `<label>COLOUR <input type="color" id="catColor" value="${isDoc ? "#f2e86b" : "#9ad0ff"}"></label>` : ""}</div>
+      <div class="btnrow"><button class="pbtn" id="catGo">ADD CATEGORY</button></div>
+      <h3 class="ph3">NEW TAB //</h3>
+      <div class="frow"><label>NAME <input id="tabName" maxlength="20"></label><label>COLOUR <input type="color" id="tabColor" value="#f2e86b"></label></div>
+      <div class="btnrow"><button class="pbtn" id="tabGo">ADD TAB</button><button class="pbtn" id="admCancel">CLOSE</button></div>
+      <p class="dim">A new tab sits next to DOCUMENTS. Add categories to it above, then entries with ADD NEW ENTRY (section DOCUMENTS). The page reloads after each change.</p>
+    </div></div>`;
+  }
+  async function catDelete(id, n) {
+    if (n) { toast(id.startsWith("d|@tab|") ? "Delete the categories in this tab first." : `Remove its ${n} ${n === 1 ? "entry" : "entries"} first (EDIT → REMOVE PUBLISHED INFO).`, { ms: 7000 }); play("warn"); return; }
+    const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(id)).catch(() => [0]);
+    if (st !== 200) { toast("Couldn't delete it."); play("warn"); return; }
+    delete overrides[id]; save("pda-overrides-v1", overrides); play("deselect"); toast("Deleted. Reloading…"); setTimeout(() => location.reload(), 600);
+  }
   function readAddForm() { if (!adm.edit || !adm.edit.add) return; screen.querySelectorAll("[data-admadd]").forEach(el => { adm.edit.add[el.dataset.admadd] = el.value; }); }
   function adminEditorHTML() {
     const ed = adm.edit; if (!ed) return "";
     if (ed.add) return addEditorHTML();
     if (ed.ammo !== undefined) return ammoEditorHTML();
     if (ed.notice) return noticeEditorHTML();
+    if (ed.cats) return catsEditorHTML();
     const e = ed.entry && findEntry(ed.entry);
-    const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }));
+    const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: x.section === "docs" ? contextOf(x).split(" › ")[0] : { tools: x.group, bio: "BIOGRAPHY" }[x.section] }));
     const isTool = e && e.section === "tools", isPerson = e && e.section === "bio";
     const target = isPerson && e.isCard ? e.card.members[0] : e;
     const pub = e && overrides[e.id];
@@ -2420,6 +2512,9 @@
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
         <label class="chk"><input type="checkbox" id="admHidden"${e.hidden ? " checked" : ""}> HIDDEN <small>still shows, but doesn't count toward anyone's PDA</small></label>
+        ${(() => { const cur = e.special ? "red" : e.gold ? "gold" : e.ecolor === "#ff3a3a" && e.eglow ? "red" : e.ecolor === "#f0c060" && !e.eglow ? "gold" : e.ecolor ? "custom" : "";
+          return `<label>COLOUR <small>how the tile looks once found</small></label><div class="colrow"><select id="admStyle">${[["", "Normal"], ["red", "Red, glowing"], ["gold", "Gold"], ["custom", "Custom"]].map(([v, n]) => `<option value="${v}"${v === cur ? " selected" : ""}>${n}</option>`).join("")}</select>
+          <span id="admCustom"${cur === "custom" ? "" : " hidden"}><input type="color" id="admColor" value="${esc(e.ecolor || "#7ad7ff")}"> <label class="chk"><input type="checkbox" id="admGlow"${e.eglow ? " checked" : ""}> GLOW</label></span></div>`; })()}
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
@@ -2435,13 +2530,13 @@
         <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="Note the sender sees on their SUBMIT tab (optional, e.g. why it wasn't added)">
         <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
-    const pubs = Object.entries(overrides).map(([id, o]) => {
+    const pubs = Object.entries(overrides).filter(([id]) => !isStructId(id)).map(([id, o]) => {
       if (id === "site|notice") return { id, name: "SITE NOTICE", group: (o.notice && o.notice.text || "").slice(0, 60), ok: true, special: "notice" };
       if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
       const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: (e ? e.group : (o.add ? o.add.group : "")) + (o.stats && o.stats.HIDDEN ? " · HIDDEN" : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admcats>CATEGORIES…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
       ${setupHTML()}
       ${statsHTML()}
@@ -2473,6 +2568,9 @@
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
       if ($("#admHidden").checked) data.stats = { ...(data.stats || {}), HIDDEN: "YES" };
+      { const o0 = origInfo.has(e) ? origInfo.get(e) : e, base = o0.special ? "red" : o0.gold ? "gold" : "", v = $("#admStyle").value;
+        if (v === "custom") data.stats = { ...(data.stats || {}), _STYLE: $("#admColor").value, ...($("#admGlow").checked ? { _GLOW: "YES" } : {}) };
+        else if (v !== base) data.stats = { ...(data.stats || {}), _STYLE: v || "normal" }; }
       if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return; }
@@ -2521,6 +2619,29 @@
       const [st, r] = await api("POST", "/api/admin/announce", { update: upd, names, message: msg }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't post it."); play("warn"); return; }
       adm.ann = null; play("confirm"); toast("Posted to Discord."); keepScroll(render);
+    });
+    const putStruct = async (id, stats, msg) => {
+      const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data: { stats }, what: "category" }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't save."); play("warn"); return; }
+      overrides[id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides);
+      play("confirm"); toast(msg + " Reloading…"); setTimeout(() => location.reload(), 600);
+    };
+    const sSel = $("#admStyle"); if (sSel) sSel.onchange = () => { $("#admCustom").hidden = sSel.value !== "custom"; };
+    const wSel = $("#catWhere"); if (wSel) wSel.onchange = () => { adm.edit.cats.where = wSel.value; play("click"); keepScroll(render); };
+    on("catGo", async () => {
+      const where = $("#catWhere").value, name = $("#catName").value.trim(); if (!name) { toast("Type a name."); play("warn"); return; }
+      const L = where.startsWith("x:") ? "d" : where, list = { t: PDA_DATA.tools, b: PDA_DATA.biography, d: PDA_DATA.documents }[L];
+      if (list.some(g => slug(g.name) === slug(name))) { toast("There's already a category with that name."); play("warn"); return; }
+      const stats = { _NAME: name };
+      if ($("#catColor")) stats._COLOR = $("#catColor").value;
+      if (L === "d") stats._KIND = $("#catKind").value;
+      if (where.startsWith("x:")) stats._TAB = where.slice(2);
+      await putStruct(`${L}|@cat|${slug(name)}`, stats, `Added ${name}.`);
+    });
+    on("tabGo", async () => {
+      const name = $("#tabName").value.trim(); if (!name) { toast("Type a name."); play("warn"); return; }
+      if (CUSTOM_TABS.some(t => slug(t.name) === slug(name)) || TABS.includes(slug(name))) { toast("There's already a tab with that name."); play("warn"); return; }
+      await putStruct(`d|@tab|${slug(name)}`, { _NAME: name, _COLOR: $("#tabColor").value }, `Added the ${name.toUpperCase()} tab.`);
     });
     on("admAddGo", async () => {
       readAddForm(); const a = adm.edit.add, sec = a.section || "tools";
@@ -3252,6 +3373,8 @@
     { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admammo]"); if (b) { adm.edit = { ammo: b.dataset.admammo || null }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
     if (t.closest("[data-admammoadd]")) { adm.edit = { ammo: "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    if (t.closest("[data-admcats]")) { adm.edit = { cats: {} }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    { const b = t.closest("[data-admcatdel]"); if (b) { if (!+b.dataset.admcatn && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "SURE?"; play("warn"); return; } catDelete(b.dataset.admcatdel, +b.dataset.admcatn); return; } }
     if (t.closest("[data-admnotice]")) { adm.edit = { notice: true }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
     if (t.closest("[data-admbackup]")) { play("click"); const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", kind: "published-info", at: new Date().toISOString(), overrides }, null, 1)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pda-published-info-${today()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
     if (t.closest("[data-admann]")) { adm.ann = { update: "", msg: "" }; play("click"); keepScroll(render); return; }
@@ -3419,7 +3542,7 @@
       e.preventDefault(); const d = e.key === "]" ? 1 : -1;
       if (ui.tab === "tools") { const n = PDA_DATA.tools.length; ui.cat = ((ui.cat < 0 ? 0 : ui.cat) + d + n) % n; }
       else if (ui.tab === "biography") { const n = PDA_DATA.biography.length; ui.bio = ((ui.bio < 0 ? 0 : ui.bio) + d + n) % n; }
-      else if (ui.tab === "documents") { const n = PDA_DATA.documents.length; ui.docs = (ui.docs + d + n) % n; }
+      else if (docTab() !== null) { const l = docGroups(docTab()).map(x => x[1]); if (!l.length) return; const n = l.length; ui.docs = l[(Math.max(0, l.indexOf(ui.docs)) + d + n) % n]; }
       else return;
       kbFocus = null; play("click"); persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return;
     }

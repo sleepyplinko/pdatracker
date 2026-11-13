@@ -1,4 +1,11 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-13", items: [
+    "Notes open as the real note",
+    "Green Tape plays its song",
+    "Added Evacuation Day and Restaurant",
+    "ADMIN: entry colours",
+    "ADMIN: new categories and tabs",
+  ]},
   { date: "2026-11-12", items: [
     "ADMIN: hide entries from the count",
   ]},

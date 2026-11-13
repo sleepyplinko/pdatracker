@@ -5254,13 +5254,14 @@ const PDA_DATA = {
       "Swamp", "Maintenance Park", "E3K Mall", "Suburban?", "Awesome Apartments",
       "The Lake", "The City", "Civilian Outpost #4", "Robinson Residence",
       "The Origins", "Mill", "Sons Apartment", "Library", "FunkTown", "Sewers",
-      "John M4 House", "William's Warehouse", "???"
+      "John M4 House", "William's Warehouse", "Restaurant"
     ]},
     { name: "Notes", kind: "note", entries: [
-      "Sewer maintenance", "Mines Note #3", "Paxton's letter", "Mines Note #5", "???"
+      ["Sewer maintenance", { img: "images/docs/sewer-maintenance.webp" }], ["Mines Note #3", { img: "images/docs/mines-note-3.webp" }], ["Paxton's letter", { img: "images/docs/paxtons-letter.webp" }],
+      ["Mines Note #5", { img: "images/docs/mines-note-5.webp" }], ["Evacuation Day", { img: "images/docs/evacuation-day.webp" }]
     ]},
     { name: "Misc", kind: "misc", entries: [
-      "Green Tape", "Fiona's Diary", "Resume #451"
+      ["Green Tape", { img: "images/docs/green-tape.webp", tape: { title: "Paradise Falls", src: "sounds/docs/paradise-falls.mp3" } }], "Fiona's Diary", "Resume #451"
     ]}
   ]
 };
