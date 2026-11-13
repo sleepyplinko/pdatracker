@@ -1,18 +1,103 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8">
-<title>Wooden Cottage · PDA.exe</title>
-<meta name="description" content="Locations
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>document.write('<base href="' + location.pathname.replace(/e\/[0-9a-z]{5}\/?$/, "").replace(/[^/]*$/, "") + '">')</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wooden Cottage (OANC document) · PDA.exe Once A Normal City tracker</title>
+  <meta name="description" content="Wooden Cottage (Locations) in Once A Normal City (OANC). [INFORMATION MISSING]">
+  <link rel="canonical" href="https://sleepyplinko.github.io/pdatracker/e/sj932/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
+  <meta property="og:title" content="Wooden Cottage">
+  <meta property="og:description" content="Locations
 [INFORMATION MISSING]">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
-<meta property="og:title" content="Wooden Cottage">
-<meta property="og:description" content="Locations
-[INFORMATION MISSING]">
-<meta property="og:url" content="https://sleepyplinko.github.io/pdatracker/e/sj932/">
-<meta property="og:image" content="https://sleepyplinko.github.io/pdatracker/e/sj932/card.jpg?v=53c69873">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Wooden Cottage in PDA.exe">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f3ee30">
-<script>location.replace("../../#e=sj932")</script>
-</head><body style="background:#0a0a0a;color:#ddd;font-family:monospace"><a href="../../#e=sj932" style="color:#ddd">Open Wooden Cottage on PDA.exe</a></body></html>
+  <meta property="og:url" content="https://sleepyplinko.github.io/pdatracker/e/sj932/">
+  <meta property="og:image" content="https://sleepyplinko.github.io/pdatracker/e/sj932/card.jpg?v=53c69873">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Wooden Cottage in PDA.exe">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0a">
+  <script>if (!/^#e=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search + "#e=sj932")</script>
+  <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"><div class="bgimg"></div></div>
+
+  <main class="pda" id="pda">
+    <header class="titlebar">
+      <span class="title">PDA.exe</span>
+      <span class="hint">&lt; SCROLL TABS FOR MORE OPTIONS &gt;</span>
+      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install PDA.exe as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
+    </header>
+
+    <div class="banner" id="banner" hidden></div>
+    <div class="backupbar" id="backupbar" hidden></div>
+    <div class="noticebar" id="noticebar" hidden></div>
+    <div class="sincebar" id="sincebar" hidden></div>
+    <div class="updbar" id="updbar" hidden>PDA.exe was updated. <button onclick="location.reload()">RELOAD</button></div>
+    <div class="window">
+    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">PDA<span>.exe</span></div><div class="bt-sub">ONCE A NORMAL CITY // TRACKER</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
+    <nav class="tabs" id="tabs" aria-label="Checklist sections"></nav>
+
+    <div class="searchbar">
+      <span class="sicon" id="searchIcon" aria-hidden="true"></span>
+      <input id="search" type="search" placeholder="SEARCH · ENTER = MARK FOUND" title="Type to search. ENTER marks the top match as found, SHIFT+ENTER opens it. Press / to jump here." autocomplete="off" spellcheck="false" aria-label="Search the PDA">
+      <button class="clear-search" id="clearSearch" hidden aria-label="Clear search">CLEAR</button>
+      <div class="viewtools" role="toolbar" aria-label="View options">
+        <button data-view="grid" title="Grid view (like the game)">&#9638;</button>
+        <button data-view="list" title="Checklist view">&#9776;</button>
+        <button data-compact title="Compact grid (fit more on screen)">&#9641;</button>
+        <button data-hidedone title="Hide finished tiers, tabs and categories">HIDE DONE</button>
+        <select id="sortSel" title="Sort order" aria-label="Sort order">
+          <option value="found">FOUND FIRST</option>
+          <option value="az">A&ndash;Z</option>
+          <option value="recent">RECENTLY FOUND</option>
+        </select>
+        <span class="vsep"></span>
+        <button data-filter="all" title="Show everything">ALL</button>
+        <button data-filter="missing" title="Show only what you haven't found">MISSING</button>
+        <button data-filter="found" title="Show only what you've found">FOUND</button>
+      </div>
+    </div>
+
+    <section class="screen" id="screen" aria-live="polite"></section>
+    <nav class="tabs bottom" id="tabs2" aria-label="Profile and options"></nav>
+    </div>
+  </main>
+
+  <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
+
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script src="sounds.js"></script>
+  <script src="data.js"></script>
+  <script src="descriptions.js"></script>
+  <script src="tooltips.js"></script>
+  <script src="ammo-links.js"></script>
+  <script src="ammo.js"></script>
+  <script src="changelog.js"></script>
+  <script src="contribute.js"></script>
+  <script src="cloud-config.js"></script>
+  <script src="screenshot-import.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol === "https:") {
+      const had = !!navigator.serviceWorker.controller, t0 = Date.now();
+      let touched = false;
+      ["pointerdown", "keydown"].forEach(t => addEventListener(t, () => { touched = true; }, { once: true, capture: true }));
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!had) return;
+        if (!touched && Date.now() - t0 < 15000) { location.reload(); return; }
+        const b = document.getElementById("updbar"); if (b) b.hidden = false;
+      });
+      navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {});
+    }
+  </script>
+</body>
+</html>

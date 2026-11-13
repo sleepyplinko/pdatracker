@@ -63,7 +63,8 @@ const srv = http.createServer((q, r) => {
 
   const seen = new Set(); list.forEach(x => { if (seen.has(x.h)) throw new Error("hash collision " + x.h); seen.add(x.h); });
   const old = fs.existsSync(MAN) ? JSON.parse(fs.readFileSync(MAN, "utf8")) : {};
-  const man = {};
+  const man = {}, urls = [];
+  const SHELL = fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace(/  <!--SEO-->[\s\S]*?<!--\/SEO-->/, "<!--HEAD-->").replace(/\n  <meta name="theme-color"[^>]*>/, "");
   const imgHash = src => { try { return /^https?:/.test(src) ? src : crypto.createHash("sha1").update(fs.readFileSync(path.join(ROOT, src.split("?")[0]))).digest("hex"); } catch { return src; } };
   fs.mkdirSync(OUT, { recursive: true });
   for (const d of fs.readdirSync(OUT)) if (d !== "manifest.json" && !seen.has(d)) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
@@ -114,34 +115,38 @@ const srv = http.createServer((q, r) => {
       await pg.screenshot({ path: jpg, type: "jpeg", quality: 74, clip: { x: 0, y: 0, width: 1200, height: 630 } });
       drawn++;
     }
-    const title = `${x.name} · PDA.exe`;
-    const desc = clip([x.sub, x.meta.join(" · "), x.text].filter(Boolean).join("\n"), 280);
-    fs.writeFileSync(path.join(dir, "index.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<title>${esc(title)}</title>
-<meta name="description" content="${esc(desc)}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
-<meta property="og:title" content="${esc(x.name)}">
-<meta property="og:description" content="${esc(desc)}">
-<meta property="og:url" content="${SITE}e/${x.h}/">
-<meta property="og:image" content="${SITE}e/${x.h}/card.jpg?v=${sig.slice(0, 8)}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="${esc(x.name)} in PDA.exe">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f3ee30">
-<script>location.replace("../../#e=${x.h}")</script>
-</head><body style="background:#0a0a0a;color:#ddd;font-family:monospace"><a href="../../#e=${x.h}" style="color:#ddd">Open ${esc(x.name)} on PDA.exe</a></body></html>
-`);
+    const kind = { TOOLS: "weapon", BIOGRAPHY: "person", DOCUMENTS: "document" }[x.sec];
+    const title = `${x.name} (OANC ${kind}) · PDA.exe Once A Normal City tracker`;
+    const desc = clip([`${x.name} (${x.sub}) in Once A Normal City (OANC).`, x.stats.map(([k, v]) => `${k}: ${v}`).join(", "), x.text].filter(Boolean).join(" "), 300);
+    const url = `${SITE}e/${x.h}/`;
+    const head = `<title>${esc(title)}</title>
+  <meta name="description" content="${esc(desc)}">
+  <link rel="canonical" href="${url}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
+  <meta property="og:title" content="${esc(x.name)}">
+  <meta property="og:description" content="${esc(clip([x.sub, x.meta.join(" · "), x.text].filter(Boolean).join("\n"), 280))}">
+  <meta property="og:url" content="${url}">
+  <meta property="og:image" content="${url}card.jpg?v=${sig.slice(0, 8)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${esc(x.name)} in PDA.exe">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0a">
+  <script>if (!/^#e=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search + "#e=${x.h}")</script>`;
+    fs.writeFileSync(path.join(dir, "index.html"), SHELL.replace("<!--HEAD-->", () => head));
+    urls.push(url);
   }
   fs.writeFileSync(MAN, JSON.stringify(man));
+  fs.writeFileSync(path.join(ROOT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[SITE, ...urls].map(u => `  <url><loc>${u}</loc></url>`).join("\n")}\n</urlset>\n`);
   if (Object.keys(ov).length) fs.writeFileSync(path.join(OUT, "overrides.json"), JSON.stringify(ov, Object.keys(ov).sort(), 1).length ? JSON.stringify(Object.fromEntries(Object.keys(ov).sort().map(k => [k, ov[k]])), null, 1) + "\n" : "{}");
   const totals = await pg.evaluate(() => { const { entries } = window.__pda(); const n = sec => entries.filter(e => e.section === sec).length; return { tools: n("tools"), bio: n("bio"), docs: n("docs"), all: entries.length }; });
   const pics = list.filter(x => x.sec === "BIOGRAPHY" && x.img && !/^https?:/.test(x.img)).map(x => x.img);
   const pick = ["security-bot-c", "tony", "robinson", "bonecrab", "factory-king", "goat"].map(k => pics.find(p => p.includes(k))).filter(Boolean);
   for (const p of pics) if (pick.length < 6 && !pick.includes(p)) pick.push(p);
   await pg.evaluate(({ t, pick }) => {
-    const c = document.getElementById("ogcard");
+    let c = document.getElementById("ogcard");
+    if (!c) { c = document.createElement("div"); c.id = "ogcard"; document.body.appendChild(c); }
     c.innerHTML = `<div class="ogc-top"><b>PDA.exe</b><span>ONCE A NORMAL CITY</span></div>
       <div class="ogs-body">
         <div class="ogs-left">
@@ -155,6 +160,10 @@ const srv = http.createServer((q, r) => {
       <div class="ogc-foot">SLEEPYPLINKO.GITHUB.IO/PDATRACKER</div>`;
     let st = document.getElementById("ogsite");
     if (!st) { st = document.createElement("style"); st.id = "ogsite"; document.head.appendChild(st); st.textContent = `
+      #ogcard { position: fixed; inset: 0; width: 1200px; height: 630px; z-index: 99999; background: #0b0b0b; color: #e8e8e8; font-family: Inconsolata, monospace; display: flex; flex-direction: column; border: 3px solid #d8d8d8; box-sizing: border-box; }
+      .ogc-top { height: 54px; background: linear-gradient(#f4f4f4, #cfcfcf); color: #111; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 30px; }
+      .ogc-top b { font-weight: 800; } .ogc-top span { font-size: 24px; font-weight: 700; letter-spacing: 2px; color: #333; }
+      .ogc-foot { height: 40px; display: flex; align-items: center; padding: 0 26px; font-size: 18px; letter-spacing: 3px; color: #777; border-top: 1px solid #333; }
       .ogs-body { flex: 1; display: flex; gap: 28px; padding: 26px 28px 18px; min-height: 0; }
       .ogs-left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
       .ogs-logo { font-size: 112px; font-weight: 900; line-height: .95; color: #fff; letter-spacing: 2px; text-shadow: 0 0 22px rgba(255,255,255,.18); }
