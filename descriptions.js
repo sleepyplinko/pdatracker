@@ -491,89 +491,65 @@ After all this being said, these dudes have some great loot that I'd LOVE to hav
 "John M4 House": `The reason for its name is only due to a joke made between how big a loner this dude is, and that he wields an M4. Not a lot of people know about him anyway, only people who have lived here for a long time have any information about him. Hard to document him when he's extremely mysterious. As of now, I have never seen him exit the house, his house has the curtains pulled so I can't see inside either. I don't wish to barge in through the front door, I don't know what awaits me on the other side.`,
 
 "Fiona's Diary": `My diary
-
-===========
-
+============
 4/3/XXXX
-
 today i went scavenging
 i found a normal water bottle called still water and when i drank it it was rlly good. but today i was just walking around and accidentally knocked myself on the table. some of the water spilled onto the ground and i noticed. mushrooms. growing.. this could be rlly good fertilizer for my plants but i am not sure where can i get more
 
-===========
-
+=============
 6/3/XXXX
-
 today i shot a guy coming up to my doorstep and got some good gears. i think some of these can be used for ingredients.. apparently theres this weird red drink called mono cola too lol
 
-===========
-
+=============
 7/3/XXXX
-
 my flower withered after mixing the mono cola alongside still water. i hate these outsiders they only bring me CURSES AND MISFORTUNE UGHHHHH
 
-===========
-
+=============
 8/3/XXXX
-
 what WHAT IT BLOOMED AGAIN WHAT IS GOING ON IS THIS ACTUALLY THE METHOD. TODAY i checked that withered flower i was gonna throw out but NO its actually alive. what is going on.
 
-===========
-
+=============
 9/3/XXXX
-
 im writing this at 3 am right now but i dont know what is going on outside my house. maybe its some animals walking around so ill go check
 
 okay so i checked and theres no animals seen anywhere. im not sure where im hearing these or im going crazy cuz im NOT CRAZY! im GOOD im just shy and i like justifying shooting random people like deer
-
-===========
-
+=============
 10/3/XXXX
-
 my flower is BLOOMING BIGGER THAN EVER. she is SO GORGEOUS. the pink. its so.. beautiful. but Thats Not really what im looking for cuz im tryng to create life here like ive read Frankenstein book before
 
-===========
-
+=============
 12/3/XXXX
+im NOT SURE HOW TO FEEL IM VERY HAPPY BUT MY FLOWER GREW LEGS AND ITS ALL I EVER COULD HAVE WISHED FOR LIFE.I HAVE A WONDERFUL MINION THAT WILL DO  MY BIDDINGS NOW HAHAHAHAHA!!. AND SHE IS FOLLOWING ME AROUND. oh my god i bet shes cold next time i shoot down some stupid loser im gonna give her some coat i am like a mother right now
 
-im NOT SURE HOW TO FEEL IM VERY HAPPY BUT MY FLOWER GREW LEGS AND ITS ALL I EVER COULD HAVE WISHED FOR LIFE.I HAVE A WONDERFUL MINION THAT WILL DO MY BIDDINGS NOW HAHAHAHAHA!!. AND SHE IS FOLLOWING ME AROUND. oh my god i bet shes cold next time i shoot down some stupid loser im gonna give her some coat i am like a mother right now
-
-===========
-
+=============
 14/3/XXXX
-
 she is growing very fast. soon i will make an army of amazing plants and i will water them everyday with care and they will be very smart and intellectuals unlike those stupid bum in the city i will name her rosaire because i think i like it cuz shes all pink in her petals so
 
-===========
-
+=============
 18/3/XXXX
+because i spilled my still water last time i dont rlly got alot so i gotta use very little amount of these. and also My DEAR ROSAIRE IS so AWESOME I Taught her how to shoot and hunt but well she seems to like running and she runs Very fast and when she catches up she starts bashing people head in with my garden gnome and that is really cool and good just like i taught her. she also sleeps with the garden gnome and i am very happy but i will make MORE SERVANTS AND MINIONS and TAKE OVER  THE CITY so they dont BULLY ME and CALL ME CRAZY WITCH ANYMORE BECAUSEE I AM NOT A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH I AM NOT A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH
 
-because i spilled my still water last time i dont rlly got alot so i gotta use very little amount of these. and also My DEAR ROSAIRE IS SO AWESOME I Taught her how to shoot and hunt but well she seems to like running and she runs Very fast and when she catches up she starts bashing people head in with my garden gnome and that is really cool and good just like i taught her. she also sleeps with the garden gnome and i am very happy but i will make MORE SERVANTS AND MINIONS AND TAKE OVER THE CITY so they dont BULLY ME AND CALL ME CRAZY WITCH ANYMORE BECAUSEE I AM NOT A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH STOP CALLING ME A WITCH
-
-===========
-
+=============
 20/3/XXXX
-
 i tried the formula on a different plant today. it withered as usual but i believe it'll grow and bloom better than ever
 
-===========
-
+=============
 23/3/XXXX
-
 i dont see any flowers in the potted plant but ill have to wait and see i guess
+
+
 
 (The later pages were torn apart, there are leaves that are left over the pages.)
 
-===========
-
+=============
 2/4/XXXX
-
-im still so mad but whatever. i Know rosaire got me. and i got her. i will continue on with my world domination plan AHHAHAHAHA!!!!!!!!
+im still so mad but whatever. i Know rosaire got me. and i got her. i will continue on with my world domination plan AHHAHAHAHA!!!!!!!!!
 
 i dont have alot of these ingredients left anyways.. so i hope i can still make more plantlings.
-they are the best things ever i bet those high and mighty scientist living in big city dont know this either heh`
+they are the best things ever i bet those high and mighty scientist living in big city dont know this either  heh`
 };
 
 const PDA_TEXT_WIKI = {
   bio: {"Citizen Rogue": "Citizen Rogue", "Citizen Scout": "Citizen Scout", "Doe": "Doe", "Flower Woman": "Flower Woman", "Loner": "Loner", "Plant Man": "Plant Man", "Ratman": "Ratman", "Witch": "Witch", "Wyrmling": "Wyrmling"},
-  docs: {"Watchtower": "Watchtower", "Doe's House": "Doe's House", "Metrostation": "Metrostation", "Swamp": "Swamp", "E3K Mall": "E3K Brand Store", "Suburban?": "Suburban?", "Awesome Apartments": "Awesome Apartments", "The Lake": "Lake", "The City": "Freiden", "Civilian Outpost #4": "Civilian Outpost", "Mill": "Mill", "Sons Apartment": "Son's Apartment", "Library": "Library", "FunkTown": "FunkTown", "Sewers": "Sewers", "William's Warehouse": "William's Warehouse", "John M4 House": "John M4 House", "Fiona's Diary": "Witch House"}
+  docs: {"Watchtower": "Watchtower", "Doe's House": "Doe's House", "Metrostation": "Metrostation", "Swamp": "Swamp", "E3K Mall": "E3K Brand Store", "Suburban?": "Suburban?", "Awesome Apartments": "Awesome Apartments", "The Lake": "Lake", "The City": "Freiden", "Civilian Outpost #4": "Civilian Outpost", "Mill": "Mill", "Sons Apartment": "Son's Apartment", "Library": "Library", "FunkTown": "FunkTown", "Sewers": "Sewers", "William's Warehouse": "William's Warehouse", "John M4 House": "John M4 House"}
 };
