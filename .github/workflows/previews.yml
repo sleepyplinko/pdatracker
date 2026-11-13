@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["data.js", "descriptions.js", "images/**", "tools/previews.js"]
+    paths: ["data.js", "descriptions.js", "images/**", "tools/previews.js", "index.html"]
 permissions:
   contents: write
 concurrency:
@@ -22,7 +22,7 @@ jobs:
       - run: npm i --no-save --no-package-lock playwright@1.48.2 && npx playwright install --with-deps chromium
       - run: node tools/previews.js
       - run: |
-          git add -A e images/og.jpg
+          git add -A e images/og.jpg sitemap.xml
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Update Discord previews"
           git pull --rebase --autostash origin main
