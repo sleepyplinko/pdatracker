@@ -410,6 +410,30 @@ Despite many explorations taking place afterwards, no one was able to capture a 
 };
 
 const PDA_DOC_DESC = {
+"Restaurant": `Every district needs its restaurant. So came along the unnamed large restaurant, serving anyone's needs. It took some time for it to be constructed, the parking lot taking a majority of that duration. For some reason, while building the parking lot, the restaurant was closed until it was finished. Big financial mistake. However, when you're the only restaurant, there are no competitors so it doesn't really matter. It's really interesting seeing how this place, barely looking like it has any effort put into it, be so liked by the citizens. There were actually a few interesting meals on the list, two meats and some flakes. Unsure what ever happened to them, supposedly, they kinda just disappeared one day. Not to mention the very peculiar toilet design. Glass doors? I don't get it. In the present, the place got ransacked and doesn't have much. I tried checking the toilets to see what's going on and I was met with three very rude people. I luckily escaped but, as a warning for others, be careful.`,
+
+"Resume #451": `Tell me about yourself?
+
+i'm cools and goods with weaponry like never before seen, i knows  all nubs and beats them all! my name miguel birch and i really awesome. birch is great woods type , you knews that? yes me know well and i proud of family, happyness. i h ave enemy matthews he steals my friends  in high schools. hes loser i winners.
+
+What are your weaknesses?
+
+me hate onions a lot.  they make miguel cry and i cry bad bad make tummy ache nooo , but it ok because i really strong in real world and i craft strong guns and mine op ores, like my favorite gamed minecraft. i weak to 1.8 pvp tho becuz i noob at it only play new minecraft
+
+What are your strengths?
+
+i really good at minecraft andd uhh favorite game at arcade with blocks that fall yes that mine favorite wowiee! me be pro at both but i struggle with crafitng bow from minecraft i forgot recipe :( but me saves thats by good at eye my eye have good dps (video game term plz tell if u know it)
+
+Do you have any prior experience with guns?
+
+when miguel young and coo l i play al ot of call of duty it fun i crouch fast no worry nade throw go boom boom gun pew pew woooo yes i good! trust me 100 % no problemo (as family say: miguel play this game don't help you in life!)
+
+How do you handle stress?
+
+me really good at minecraft by speedrun or hit 360s no scope headshots on call of duty (very real trust me) and my friend record me i can send proof if u want so i perform bester under pressurizingations. than k you for asking this qu estion because it make me think of childhood and my childhood good except when mom told me that minecraft no help in life
+
+STATUS: APPROVED`,
+
 "Watchtower": `As the name implies, it is a wooden watchtower constructed with the role of observing on other people from far away. Or alternative ideas, such as utilizing a snipe in a certain way. Beside that, this watchtower was originally in a much less favorable spot, due to the place where it is right now being taken by another building. After it was demolished, the watchtower was quickly moved here. Through a lot of trial and error. Of course now it’s actually being used instead of being talked about, regarding its spot. Inside, for the watcher, as I like to call the role, they have a sniper rifle most of the time. Given more than enough ammo too. In case you’re bored, you are given a radio to listen to. Of course it’s by E3K, so the selections are very little. It’s enough for someone to live in though, as long as they get nutrition. The high ground it offers is pretty nice. Albeit, with the current situation going on now, it’s not the best idea being more out in the open, visible to others.`,
 
 "Doe's House": `House owned by the famous sharpshooter Doe, bought after her retirement out of the military. Her story is well known, I don't need to detail it much. As for her house, she tidies up a lot, keeps it clear compared to some of the neighbors. People used to come to her house for interviews, she didn't like to do them but did it anyway for their enjoyment. As much as receiving vague answers can be enjoyed... I guess. She lives quietly, not wishing to make anything very big out of herself again. Though she cannot lie it was nice seeing the encouragement she somehow gave for others through idolization. It's really ironic how nothing is known about her previous to her popularity, presumably not sharing much about her, only for her to be a celebrity. That was all before the rebellion. Now, the place is still kept cleaned, nobody wishes to approach it though, thinking Doe would get rid of them instantly. Contrary to popular belief, this rumor is not true at all, as burglars are constantly stealing from her. Weirdly, she does not seem to want to fight back, even though she can and could shred them. It's honestly so strange, seeing how someone so powerful acts like this. At least I was able to talk with her a bit.`,
