@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-12", items: [
+    "ADMIN: hide entries from the count",
+  ]},
   { date: "2026-11-10", items: [
     "Removed 200rnd M134 Mag (not in the game)",
     "All found ammo: stats and pictures",

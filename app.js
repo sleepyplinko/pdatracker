@@ -199,7 +199,7 @@
   const cardFound = c => isFound(c.entry.id);
 
   people.forEach(v => { if (v.trackId) { const old = `${v.trackId.replace(/\|[^|]*$/, "")}|${slug(v.card.name)}|${slug(v.name)}`; if (found[old]) { found[v.trackId] = 1; delete found[old]; } } });
-  const countOf   = list => [list.filter(e => isFound(e.id)).length, list.length];
+  const countOf   = list => { list = list.filter(e => !e.hidden); return [list.filter(e => isFound(e.id)).length, list.length]; };
   const label     = e => e.unknown ? "???" : e.name;
 
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
@@ -673,6 +673,7 @@
     const out = [];
     if (friend && !viewOnly && friend.set[t] && !found[t]) out.push(`<b class="bfr" title="${esc(friend.name || "Your friend")} has this and you don't">${esc((friend.name || "F").charAt(0).toUpperCase())}✓</b>`);
     if (favs[e.id] || favs[t]) out.push('<b class="bfav" title="Favourite">♥︎</b>');
+    if (e.hidden) out.push('<b class="bhid" title="Doesn\'t count toward your PDA">HIDDEN</b>');
     if (e.update && e.update === latestUpdate) out.push(`<b class="bnew" title="New in ${esc(e.update)}">NEW</b>`);
     return out.length ? `<span class="badges">${out.join("")}</span>` : "";
   }
@@ -888,7 +889,7 @@
     const list = siblingsOf(base), i = list.indexOf(base);
     for (let k = 1; k <= list.length; k++) {
       const x = list[(i + k) % list.length];
-      if (x !== base && !x.unknown && !isFound(x.id)) return x;
+      if (x !== base && !x.unknown && !x.hidden && !isFound(x.id)) return x;
     }
     return null;
   }
@@ -1739,7 +1740,7 @@
     PDA_DATA.tools.forEach(c => Object.keys(c.tiers).forEach(t => groups.push([`${c.name} · TIER ${t}`, c.items.filter(e => e.tier === +t)])));
     PDA_DATA.biography.forEach(g => groups.push([`BIOGRAPHY · ${g.name}`, g.items]));
     PDA_DATA.documents.forEach(g => groups.push([`DOCUMENTS · ${g.name}`, g.items]));
-    const close = groups.map(([n, items]) => { const real = items.filter(e => !e.unknown); const left = sortEntries(real.filter(e => !isFound(e.id))); return [n, left, real.length]; })
+    const close = groups.map(([n, items]) => { const real = items.filter(e => !e.unknown && !e.hidden); const left = sortEntries(real.filter(e => !isFound(e.id))); return [n, left, real.length]; })
       .filter(([, left, tot]) => left.length && left.length <= 3 && tot > left.length)
       .sort((a, b) => a[1].length - b[1].length || b[2] - a[2]).slice(0, 10);
     if (!close.length) return "";
@@ -1758,6 +1759,7 @@
     PDA_DATA.documents.forEach(g => groups.push(["DOCUMENTS › " + g.name, inUpd(g.items)]));
     const updSel = tags.length ? `<label class="leftupd">SHOW <select data-leftupd><option value="">EVERYTHING</option>${tags.map(x => `<option value="${esc(x)}"${x === ui.leftUpd ? " selected" : ""}>NEW IN ${esc(x.toUpperCase())}</option>`).join("")}</select></label>` : "";
     const body = groups.map(([name, items]) => {
+      items = items.filter(e => !e.hidden);
       const left = sortEntries(items.filter(e => !isFound(e.id)));
       if (!left.length) return "";
       return `<div class="sgroup"><div class="tier-head">${esc(name)}<small>${left.length} left</small>${pbar(items.length - left.length, items.length)}</div>${left.map(e => resultHTML(e)).join("")}</div>`;
@@ -1774,7 +1776,7 @@
     PDA_DATA.tools.forEach(c => out.push(["TOOLS › " + c.name, c.items]));
     PDA_DATA.biography.forEach(g => out.push(["BIOGRAPHY › " + g.name, g.items]));
     PDA_DATA.documents.forEach(g => out.push(["DOCUMENTS › " + g.name, g.items]));
-    return out.map(([n, items]) => [n, sortEntries(items.filter(e => !isFound(e.id) && !e.unknown))]).filter(([, l]) => l.length);
+    return out.map(([n, items]) => [n, sortEntries(items.filter(e => !isFound(e.id) && !e.unknown && !e.hidden))]).filter(([, l]) => l.length);
   }
   function missingText() {
     const [f, t] = countOf(entries);
@@ -1799,7 +1801,7 @@
     if (nx) goNext(nx); else { toast("That was the last one missing here!"); render(); }
   }
   function randomMissing() {
-    const pool = entries.filter(e => !isFound(e.id) && !e.unknown);
+    const pool = entries.filter(e => !isFound(e.id) && !e.unknown && !e.hidden);
     if (!pool.length) { toast("You've found everything!"); return; }
     const e = pool[Math.floor(Math.random() * pool.length)];
     if (query) clearSearch(false);
@@ -2154,14 +2156,15 @@
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
       if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
-      if (o.stats && Object.keys(o.stats).length) {
-        const st = { ...(e.stats || {}), ...o.stats };
+      origInfo.set(e, { hidden: e.hidden, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
+      const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = true; delete os.HIDDEN; }
+      if (Object.keys(os).length) {
+        const st = { ...(e.stats || {}), ...os };
         if (st.WEIGHT != null) { const w = st.WEIGHT; delete st.WEIGHT; st.WEIGHT = w; }
         e.stats = st;
       }
@@ -2171,10 +2174,10 @@
       if (o.update) e.update = o.update;
       const oi = Array.isArray(o.imgs) ? o.imgs : o.img ? [o.img] : null;
       if (oi && oi.length && e.section !== "tools") { delete e.img; e.imgs = oi.slice(); if (e.isCard && e.card) e.card.img = oi[0]; }
-      if (Object.keys(o).some(k => !["update", "updated", "add"].includes(k))) e.community = o.updated || 1;
+      if (Object.keys(o).some(k => !["update", "updated", "add", "stats"].includes(k)) || Object.keys(os).length) e.community = o.updated || 1;
     });
     latestUpdate = updateTags()[0] || "";
-    applyAmmoOv(ov); noticeBar();
+    applyAmmoOv(ov); noticeBar(); updateCount();
   }
   async function loadOverrides() {
     if (!API) return;
@@ -2416,6 +2419,7 @@
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); return (l.length ? l : [""]).map(u => imgRowHTML(u)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
+        <label class="chk"><input type="checkbox" id="admHidden"${e.hidden ? " checked" : ""}> HIDDEN <small>still shows, but doesn't count toward anyone's PDA</small></label>
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
@@ -2434,7 +2438,7 @@
     const pubs = Object.entries(overrides).map(([id, o]) => {
       if (id === "site|notice") return { id, name: "SITE NOTICE", group: (o.notice && o.notice.text || "").slice(0, 60), ok: true, special: "notice" };
       if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
-      const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: e ? e.group : (o.add ? o.add.group : ""), added: !!o.add, update: o.update, ok: !!e }; })
+      const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: (e ? e.group : (o.add ? o.add.group : "")) + (o.stats && o.stats.HIDDEN ? " · HIDDEN" : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
       <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
@@ -2468,6 +2472,7 @@
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
+      if ($("#admHidden").checked) data.stats = { ...(data.stats || {}), HIDDEN: "YES" };
       if (overrides[e.id] && overrides[e.id].add) data.add = overrides[e.id].add;
       const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(e.id), { data }).catch(() => [0, {}]);
       if (st !== 200) { toast(r.error || "Couldn't publish."); play("warn"); return; }
@@ -2850,7 +2855,7 @@
     const youHave = sortEntries(entries.filter(e => found[e.id] && !friend.set[e.id]));
     const both = entries.filter(e => found[e.id] && friend.set[e.id]).length;
     return `<div class="compare">
-      <div class="leftsum">Comparing with <b>${esc(nm)}</b>: you both have ${both} · ${esc(nm)} has ${Object.keys(friend.set).length} / ${entries.length}</div>
+      <div class="leftsum">Comparing with <b>${esc(nm)}</b>: you both have ${both} · ${esc(nm)} has ${countOf(entries.filter(e => friend.set[e.id]))[0]} / ${countOf(entries)[1]}</div>
       <div class="sgroup"><div class="tier-head">${esc(nm.toUpperCase())} HAS, YOU DON'T<small>${theyHave.length}</small></div>${theyHave.map(e => resultHTML(e)).join("") || '<p class="cat-note">Nothing. You have everything they do.</p>'}</div>
       <div class="sgroup"><div class="tier-head">YOU HAVE, ${esc(nm.toUpperCase())} DOESN'T<small>${youHave.length}</small></div>${youHave.map(e => resultHTML(e)).join("") || '<p class="cat-note">Nothing.</p>'}</div>
     </div>`;
@@ -3530,7 +3535,7 @@
   function renderBanner() {
     if (viewOnly) {
       bannerEl.hidden = false;
-      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${entries.length} FOUND</span>
+      bannerEl.innerHTML = `<span>VIEWING <b>${esc(viewOnly.name || "SOMEONE")}</b>'S PDA${viewOnly.live ? " (LIVE)" : ""} · READ-ONLY · ${countOf(entries)[0]} / ${countOf(entries)[1]} FOUND</span>
         <span><button data-b="compare">COMPARE WITH MINE</button><button data-b="exit">EXIT</button></span>`;
     } else if (friend) {
       const n = entries.filter(e => friend.set[e.id] && !found[e.id]).length;
@@ -3622,6 +3627,7 @@
     if (readDmgLink(location.hash)) { persistUI(); renderTabs(); render(); } else toast("That damage calculator link is broken or out of date.");
     try { history.replaceState(null, "", ROOT_PATH + location.search); } catch {}
   });
+  if (API) applyOverrides(overrides);
   renderTabs();
   updateCount();
   render();
@@ -3629,7 +3635,6 @@
   backupNag();
   if (!API) checkSince();
   if (API) {
-    applyOverrides(overrides);
     setAdmin(!!adminSess && ui.tab === "admin");
     loadRarity(); loadOverrides().then(reloading => { if (!reloading) checkSince(); }); loadServerInfo();
     if (adminSess) checkAdmin();
