@@ -3359,6 +3359,21 @@ const PDA_DATA = {
           "EQUIP TIME": "0s",
           "WEIGHT": "0.25"
         }, comment: "A variation of brass knuckles with sawblade tips, designed to boost damage and pierce into people's skins. They're great for hand to hand combats and they ABSOLUTELY hurt. Not many of these exists in the city, however it seems that the Carter Family somehow still have possession of these things" }]
+        ],
+        7: [
+        ["Garden Gnome", { gold: true, img: "images/tools/garden-gnome.webp", stats: {
+          "DAMAGE": "70",
+          "DEFENSE BYPASS": "100",
+          "AUTO": "NO",
+          "BURST": "NO",
+          "AIM TIME": "0.75",
+          "SWITCH TIME": "0.8s",
+          "SWING TIME": "0.8s",
+          "ALERT RADIUS": "25",
+          "RANGE": "6",
+          "EQUIP TIME": "0.5s",
+          "WEIGHT": "8.5"
+        }, comment: "I have no idea how this is utilized as anything, it's merely a decoration. Though, it's worth noting that some people really love this thing. So much so it got banned once, only for it to come back away. Some yellow dude and a dude who was popular for 'tutorials' were apart of that group. Examining it a little closer you can see specks of space dust." }]
         ]
       }
     },
