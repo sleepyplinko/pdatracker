@@ -67,11 +67,28 @@
 
   const SFX = (typeof PDA_SOUNDS === "object" && PDA_SOUNDS) || {};
   const pools = {};
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const actx = AC ? (() => { try { return new AC(); } catch { return null; } })() : null;
+  const bufs = {};
+  if (actx) {
+    const files = [...new Set(Object.values(SFX).map(d => d && d.file).filter(Boolean))];
+    files.forEach(f => fetch(f).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, no) => actx.decodeAudioData(b, ok, no))).then(buf => { bufs[f] = buf; }).catch(() => {}));
+    const wake = () => { if (actx.state !== "running") actx.resume().catch(() => {}); };
+    ["pointerdown", "keydown", "touchstart", "touchend", "click"].forEach(t => addEventListener(t, wake, { capture: true, passive: true }));
+  }
   function play(name) {
     if (!settings.sound) return;
     if (name.startsWith("hover") && !settings.hoverSound) return;
     const def = SFX[name];
     if (!def || !def.file) return;
+    if (actx && actx.state === "running" && bufs[def.file]) {
+      try {
+        const src = actx.createBufferSource(), g = actx.createGain();
+        src.buffer = bufs[def.file]; g.gain.value = Math.max(0, Math.min(1, (def.volume ?? 1) * settings.volume / 100));
+        src.connect(g).connect(actx.destination); src.start();
+        return;
+      } catch {}
+    }
     let pool = pools[name];
     if (!pool) {
       pool = pools[name] = { i: 0, list: [] };
