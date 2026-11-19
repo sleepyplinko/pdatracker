@@ -593,7 +593,9 @@
     const vkBefore = lastVk, wy = window.scrollY;
     const same = vkBefore !== null && vkBefore === viewKey();
     const before = same ? [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop) : null;
+    const navEl = screen.querySelector(".cats, .subtabs"), navKey = navEl && navEl.className, navPos = navEl && [navEl.scrollTop, navEl.scrollLeft];
     renderInner();
+    { const n = screen.querySelector(".cats, .subtabs"); if (n && navPos && n.className === navKey) { n.scrollTop = navPos[0]; n.scrollLeft = navPos[1]; } }
     ui.detail = detail && !viewOnly ? detail : null; persistUI();
     renderCmpBar();
     lastVk = viewKey();
