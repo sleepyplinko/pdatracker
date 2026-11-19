@@ -18,6 +18,7 @@ Read this first after any break or conversation summary. Update it whenever some
 - Code has no explanatory comments (owner's call): write code for myself, keep notes here instead.
 - Commit messages end with the Co-Authored-By / Claude-Session lines from the session's attribution reminder.
 - README is a short description + credits only, not a guide.
+- MANUAL text: `MANUAL_DEFAULT` in app.js; admins can replace it (ADMIN → MANUAL… or EDIT MANUAL on the MANUAL tab), stored as override `d|@manual|text` `desc`. Format: `== TITLE ==` section, `# Heading`, `- KEY - THING` key line, other lines paragraphs.
 - MANUAL → ABOUT says "Built with AI (Claude)." (owner's choice of spot).
 - Site text (manual, changelog, help notes): incredibly short and simple. Changelog items are a few words each.
 - Replies short and plain. When suggesting ideas, give a few good ones; if the owner passes, don't push them.
