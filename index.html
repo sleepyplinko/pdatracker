@@ -5,18 +5,18 @@
   <script>document.write('<base href="' + location.pathname.replace(/(e\/[0-9a-z]{5}|damage)\/?$/, "").replace(/[^/]*$/, "") + '">')</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!--SEO-->
-  <title>OANC PDA Tracker &amp; Damage Calculator · Once A Normal City weapons, stats &amp; checklist · PDA.exe</title>
+  <title>Once A Normal Tracker · OANC PDA tracker &amp; damage calculator for Once A Normal City</title>
   <meta name="description" content="Fan-made Once A Normal City (OANC) PDA tracker and damage calculator. Check off every weapon, person and document, see full weapon, ammo and NPC stats, and work out hits and time to kill against any enemy.">
   <link rel="canonical" href="https://sleepyplinko.github.io/pdatracker/">
-  <meta property="og:site_name" content="PDA.exe">
-  <meta property="og:title" content="PDA.exe · Once A Normal City tracker">
+  <meta property="og:site_name" content="Once A Normal Tracker">
+  <meta property="og:title" content="Once A Normal Tracker">
   <meta property="og:description" content="Check off every weapon, person and document in your PDA. Stats, pictures, a damage calculator and more, styled like the in-game PDA.">
   <meta property="og:url" content="https://sleepyplinko.github.io/pdatracker/">
   <meta property="og:image" content="https://sleepyplinko.github.io/pdatracker/images/og.jpg?v=2">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"PDA.exe","alternateName":["OANC PDA Tracker","Once A Normal City PDA Tracker","OANC Damage Calculator","Once A Normal City Damage Calculator"],"url":"https://sleepyplinko.github.io/pdatracker/","description":"Fan-made PDA tracker for the Roblox game Once A Normal City (OANC): weapons, people, documents, stats and a damage calculator."}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Once A Normal Tracker","alternateName":["Once A Normal Calculator","PDA.exe","OANC PDA Tracker","Once A Normal City PDA Tracker","OANC Damage Calculator","Once A Normal City Damage Calculator"],"url":"https://sleepyplinko.github.io/pdatracker/","description":"Fan-made PDA tracker for the Roblox game Once A Normal City (OANC): weapons, people, documents, stats and a damage calculator."}</script>
   <!--/SEO-->
   <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
@@ -31,18 +31,18 @@
 
   <main class="pda" id="pda">
     <header class="titlebar">
-      <span class="title">PDA.exe</span>
+      <span class="title" id="siteTitle">Once A Normal Tracker</span>
       <span class="hint">&lt; SCROLL TABS FOR MORE OPTIONS &gt;</span>
-      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install PDA.exe as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
+      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install Once A Normal Tracker as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
     </header>
 
     <div class="banner" id="banner" hidden></div>
     <div class="backupbar" id="backupbar" hidden></div>
     <div class="noticebar" id="noticebar" hidden></div>
     <div class="sincebar" id="sincebar" hidden></div>
-    <div class="updbar" id="updbar" hidden>PDA.exe was updated. <button onclick="location.reload()">RELOAD</button></div>
+    <div class="updbar" id="updbar" hidden>Once A Normal Tracker was updated. <button onclick="location.reload()">RELOAD</button></div>
     <div class="window">
-    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">PDA<span>.exe</span></div><div class="bt-sub">ONCE A NORMAL CITY // TRACKER</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
+    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">ONCE A NORMAL<span> TRACKER</span></div><div class="bt-sub">ONCE A NORMAL CITY // PDA</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
     <nav class="tabs" id="tabs" aria-label="Checklist sections"></nav>
 
     <div class="searchbar">

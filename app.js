@@ -448,7 +448,7 @@
   const isStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; installBtn(); if (ui.tab === "settings") keepScroll(render); });
-  window.addEventListener("appinstalled", () => { installEvt = null; installBtn(); toast("Installed. Open PDA.exe from your home screen or apps."); });
+  window.addEventListener("appinstalled", () => { installEvt = null; installBtn(); toast("Installed. Open Once A Normal Tracker from your home screen or apps."); });
   function installBtn() {
     const b = $("#installBtn"); if (!b) return;
     b.hidden = !installEvt || isStandalone() || settings.hideInstall;
@@ -576,6 +576,7 @@
     ghost.classList.add("pg-out");
     setTimeout(() => { ghost.remove(); screen.classList.remove("pg-in"); }, 340);
   }
+  const BASE_TITLE = document.title;
   function render() {
     const nav = navSig(), ghost = lastNav !== null && nav !== lastNav && !keeping ? startTransition() : null;
     lastNav = nav;
@@ -595,6 +596,7 @@
     const before = same ? [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop) : null;
     const navEl = screen.querySelector(".cats, .subtabs"), navKey = navEl && navEl.className, navPos = navEl && [navEl.scrollTop, navEl.scrollLeft];
     renderInner();
+    { const calc = ui.tab === "damage" && !detail && !query, t = $("#siteTitle"); if (t) t.textContent = calc ? "Once A Normal Calculator" : "Once A Normal Tracker"; document.title = calc ? "Once A Normal Calculator · OANC damage calculator" : BASE_TITLE; }
     { const n = screen.querySelector(".cats, .subtabs"); if (n && navPos && n.className === navKey) { n.scrollTop = navPos[0]; n.scrollLeft = navPos[1]; } }
     ui.detail = detail && !viewOnly ? detail : null; persistUI();
     renderCmpBar();
@@ -2734,7 +2736,7 @@
   };
   const near = (sel, up) => () => { const el = screen.querySelector(sel) || document.querySelector(sel); return el && up ? el.closest(up) : el; };
   const TOUR = [
-    { h: "Welcome to PDA.exe", p: "A checklist for the Once A Normal City PDA. Quick tour: <b>NEXT</b> to continue, <b>Esc</b> to leave." },
+    { h: "Welcome to Once A Normal Tracker", p: "A checklist for the Once A Normal City PDA. Quick tour: <b>NEXT</b> to continue, <b>Esc</b> to leave." },
     { h: "Sections", tab: "tools", el: () => $("#tabs"), p: "Weapons in <b>TOOLS</b>, people in <b>BIOGRAPHY</b>, locations and notes in <b>DOCUMENTS</b>." },
     { h: "Mark it found", tab: "tools", el: near(".tile"), force: true, p: "Press the <b>&#9733;&#xFE0E;</b> on a tile. On a phone you can also swipe right across it. Click the tile to see its stats." },
     { h: "Whole tier", tab: "tools", el: near(".tier-head.clickable"), p: "Click a <b>TIER</b> bar to mark everything in it." },

@@ -258,7 +258,7 @@ async function route(req, env, ctx) {
       const msg = clip(b.message, 1500).trim();
       const res = await fetch(env.ANNOUNCE_WEBHOOK, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         allowed_mentions: { parse: [] },
-        embeds: [{ title: `New on PDA.exe: ${upd}`, url: site, description: ((msg ? msg + "\n\n" : "") + (names.length ? names.map(n => "• " + n).join("\n") : "")).slice(0, 3900) || "New entries were added.", footer: { text: "PDA.exe tracker" } }] }) }).catch(() => null);
+        embeds: [{ title: `New on Once A Normal Tracker: ${upd}`, url: site, description: ((msg ? msg + "\n\n" : "") + (names.length ? names.map(n => "• " + n).join("\n") : "")).slice(0, 3900) || "New entries were added.", footer: { text: "PDA.exe tracker" } }] }) }).catch(() => null);
       if (!res || !res.ok) return err(502, "Discord didn't accept the message. Check the webhook.");
       return json({ ok: true });
     }
