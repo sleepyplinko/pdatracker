@@ -1,4 +1,26 @@
 {
+ "d|@manual|text": {
+  "desc": "== ABOUT ==\nFan-made. Not affiliated with the game. ??? means the name isn't known yet.\n# Is the site VibeCoded? (Coded with AI)\nYes. Sorry if there's any issues with the site due to that.\n# Will this site get updated?\nProbably, I made it as there's no other tools to do this currently, as long as that remains true, I will continue to push updates to it.\n== GUIDE ==\n# Mark something found\nPress the star on it. Shift + star marks a range.\n# Mark a lot at once\nClick a TIER bar, or the tab you're on.\n# Undo\nCtrl+Z, or UNDO on the message at the bottom.\n# See what's missing\nMISSING next to search, or the WHAT'S LEFT tab.\n# Stats\nClick an entry. Cards with variants count as one find.\n# Search\nNames or stats, like \"9x19mm\" or \"tier 5\". ENTER marks the top result.\n# Keep going\nFOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.\n# Compare weapons\nCOMPARE + on up to 3 weapons, then VIEW.\n# Share\nLINK copies a link to a page. CLOUD has a link to your whole PDA.\n# Don't lose progress\nIt's saved in this browser only. Back it up in CLOUD.\n# Send info\nSUBMIT, or FIX? on any page. No account needed.\n== KEYS ==\n- ARROWS - MOVE\n- SPACE - MARK\n- ENTER - OPEN\n- CTRL + Z - UNDO\n- / - SEARCH\n- ESC - BACK",
+  "updated": 1795090447
+ },
+ "t|bludgeon|garden gnome": {
+  "comment": "I have no idea how this is utilized as anything, it's merely a decoration. Though, it's worth noting that some people really love this thing. So much so it got banned once, only for it to come back away. Some yellow dude and a dude who was popular for 'tutorials' were apart of that group. Examining it a little closer you can see specks of space dust.",
+  "stats": {
+   "DAMAGE": "70",
+   "DEFENSE BYPASS": "100",
+   "AUTO": "NO",
+   "BURST": "NO",
+   "AIM TIME": "0.75",
+   "SWITCH TIME": "0.8s",
+   "SWING TIME": "0.8s",
+   "ALERT RADIUS": "25",
+   "RANGE": "6",
+   "EQUIP TIME": "0.5s",
+   "WEIGHT": "8.5",
+   "HIDDEN": "YES"
+  },
+  "updated": 1795083283
+ },
  "t|pistols|skorpion": {
   "comment": "Incredibly light, like it literally takes up almost no space at all without magazine, don't know how the components got that light but don't expect the performance of the weapon to be anything good though.",
   "stats": {

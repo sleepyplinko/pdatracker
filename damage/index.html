@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <script>document.write('<base href="' + location.pathname.replace(/(e\/[0-9a-z]{5}|damage)\/?$/, "").replace(/[^/]*$/, "") + '">')</script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OANC Damage Calculator · Once A Normal City hits &amp; time to kill · PDA.exe</title>
+<title>Once A Normal Calculator · OANC damage calculator for Once A Normal City</title>
   <meta name="description" content="Free Once A Normal City (OANC) damage calculator. Pick any weapon, ammo and enemy to see damage per hit, hits to kill and time to kill, with defense, armor pen, super armour, shield and supershield. Compare two loadouts and find the best ammo.">
   <link rel="canonical" href="https://sleepyplinko.github.io/pdatracker/damage/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
-  <meta property="og:title" content="OANC Damage Calculator">
+  <meta property="og:site_name" content="Once A Normal Tracker">
+  <meta property="og:title" content="Once A Normal Calculator">
   <meta property="og:description" content="Hits and time to kill for any Once A Normal City weapon, ammo and enemy.">
   <meta property="og:url" content="https://sleepyplinko.github.io/pdatracker/damage/">
   <meta property="og:image" content="https://sleepyplinko.github.io/pdatracker/images/og.jpg?v=2">
@@ -17,7 +17,7 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0a0a0a">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"OANC Damage Calculator","alternateName":"Once A Normal City Damage Calculator","url":"https://sleepyplinko.github.io/pdatracker/damage/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Once A Normal Calculator","alternateName":["OANC Damage Calculator","Once A Normal City Damage Calculator"],"url":"https://sleepyplinko.github.io/pdatracker/damage/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"}}</script>
   <script>if (!location.hash) history.replaceState(null, "", location.pathname + location.search + "#damage")</script>
   <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
@@ -31,18 +31,18 @@
 
   <main class="pda" id="pda">
     <header class="titlebar">
-      <span class="title">PDA.exe</span>
+      <span class="title" id="siteTitle">Once A Normal Tracker</span>
       <span class="hint">&lt; SCROLL TABS FOR MORE OPTIONS &gt;</span>
-      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install PDA.exe as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
+      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install Once A Normal Tracker as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
     </header>
 
     <div class="banner" id="banner" hidden></div>
     <div class="backupbar" id="backupbar" hidden></div>
     <div class="noticebar" id="noticebar" hidden></div>
     <div class="sincebar" id="sincebar" hidden></div>
-    <div class="updbar" id="updbar" hidden>PDA.exe was updated. <button onclick="location.reload()">RELOAD</button></div>
+    <div class="updbar" id="updbar" hidden>Once A Normal Tracker was updated. <button onclick="location.reload()">RELOAD</button></div>
     <div class="window">
-    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">PDA<span>.exe</span></div><div class="bt-sub">ONCE A NORMAL CITY // TRACKER</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
+    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">ONCE A NORMAL<span> TRACKER</span></div><div class="bt-sub">ONCE A NORMAL CITY // PDA</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
     <nav class="tabs" id="tabs" aria-label="Checklist sections"></nav>
 
     <div class="searchbar">
