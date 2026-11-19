@@ -833,7 +833,7 @@
       } else list = sortEntries(list);
       body = statBarHTML(cat) + `<div class="list">${list.map(e => resultHTML(e, ui.tsort ? `${ui.tsort}: ${(e.stats && e.stats[ui.tsort]) || "—"}` : `TIER ${e.tier} · ${typesOf(e).join(" | ")}`)).join("") || '<p class="cat-note">Nothing matches.</p>'}</div>`;
     } else if (!tiers.length) {
-      body = `<div class="empty-cat"><b>NO ENTRIES ON FILE</b>Add this category's weapons to data.js to track them.</div>`;
+      body = `<div class="empty-cat"><b>NO ENTRIES ON FILE</b>Nothing has been logged in this category yet.</div>`;
     } else {
       body += statBarHTML(cat);
       if (cat.note) body += `<p class="cat-note">${esc(cat.note)}</p>`;
