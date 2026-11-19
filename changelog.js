@@ -1,5 +1,7 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-19", items: [
+    "WHAT'S LEFT is now CHECKLIST",
+    "Title shows the tab you're on",
     "New name: Once A Normal Tracker",
     "DAMAGE: supershield vs shotguns fixed",
     "DAMAGE: hit first with another weapon",

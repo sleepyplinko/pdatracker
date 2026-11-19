@@ -461,7 +461,7 @@
   document.addEventListener("click", e => { if (e.target.closest("#installBtn, [data-install]")) doInstall(); });
 
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
-  const TAB_LABEL = { missing: "WHAT'S LEFT", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
+  const TAB_LABEL = { missing: "CHECKLIST", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
 
   const TOP_TABS = ["tools", "biography", "documents", ...CUSTOM_TABS.map(t => "x:" + t.key), "missing", "loadout", "damage"];
   const tabOf = key => CUSTOM_TABS.find(t => t.key === key);
@@ -596,7 +596,7 @@
     const before = same ? [...screen.querySelectorAll(SCROLLERS)].map(el => el.scrollTop) : null;
     const navEl = screen.querySelector(".cats, .subtabs"), navKey = navEl && navEl.className, navPos = navEl && [navEl.scrollTop, navEl.scrollLeft];
     renderInner();
-    { const calc = ui.tab === "damage" && !detail && !query, t = $("#siteTitle"); if (t) t.textContent = calc ? "Once A Normal Calculator" : "Once A Normal Tracker"; document.title = calc ? "Once A Normal Calculator · OANC damage calculator" : BASE_TITLE; }
+    { const calc = ui.tab === "damage" && !detail && !query, t = $("#siteTitle"); if (t) { const w = query ? "Tracker" : calc ? "Calculator" : String(TAB_LABEL[ui.tab] || ui.tab).toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()); t.textContent = "Once A Normal " + w; } document.title = calc ? "Once A Normal Calculator · OANC damage calculator" : BASE_TITLE; }
     { const n = screen.querySelector(".cats, .subtabs"); if (n && navPos && n.className === navKey) { n.scrollTop = navPos[0]; n.scrollLeft = navPos[1]; } }
     ui.detail = detail && !viewOnly ? detail : null; persistUI();
     renderCmpBar();
@@ -2365,7 +2365,7 @@
     return true;
   }
   const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "") || /^https?:\/\/(media\d*\.giphy\.com|media\.tenor\.com|c\.tenor\.com)\//i.test(u || "");
-  const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on WHAT'S LEFT</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
+  const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on CHECKLIST</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
     const a = adm.edit.add, sec = a.section || "tools";
     const groups = SEC_DATA[sec]().map(g => g.name);
@@ -2742,7 +2742,7 @@
     { h: "Whole tier", tab: "tools", el: near(".tier-head.clickable"), p: "Click a <b>TIER</b> bar to mark everything in it." },
     { h: "Search", tab: "tools", el: () => $("#search"), p: "Type a name and press <b>ENTER</b> to mark it found." },
     { h: "On a page", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>FOUND + NEXT</b> marks this and opens the next one you're missing." },
-    { h: "What's left", tab: "missing", el: near("[data-random]", "div"), p: "Everything you still need, in one list." },
+    { h: "Checklist", tab: "missing", el: near("[data-random]", "div"), p: "Everything you still need, in one list." },
     { h: "Damage", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, ammo and target to see hits to kill." },
     { h: "Save your progress", tab: "cloud", el: near("#exp", "div"), p: "Progress is stored in this browser only. Download a backup, or use a transfer link to move it to another device." },
     { h: "Done", p: "<b>Ctrl+Z</b> undoes a mistake. Replay this tour in <b>SETTINGS</b>." }
@@ -3216,7 +3216,7 @@ Click a TIER bar, or the tab you're on.
 # Undo
 Ctrl+Z, or UNDO on the message at the bottom.
 # See what's missing
-MISSING next to search, or the WHAT'S LEFT tab.
+MISSING next to search, or the CHECKLIST tab.
 # Stats
 Click an entry. Cards with variants count as one find.
 # Search
