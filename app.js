@@ -1567,14 +1567,18 @@
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
     let st0 = { h: hp, sh: shield, ss };
-    function runHits(st, f, b, ig, max) {
+    function runHits(st, sht, b, ig, max) {
+      const p = Math.max(1, Math.round(sht.proj || 1)), f = sht.final, fk = k => k >= p ? f : sht.fk ? sht.fk(k) : f * k / p;
       let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0;
       while (h > 1e-9 && n < max) {
         if (s2 <= b && (ig || sh <= 1e-9)) { const k = Math.min(max - n, Math.ceil(h / f - 1e-9)); n += k; h -= k * f; break; }
         n++;
-        if (s2 > b) { s2 -= Math.max(1, b); nb++; continue; }
-        if (!ig && sh > 1e-9) { const took = Math.min(sh, f / 2); sh -= took; h -= f - took; nsh++; }
-        else h -= f;
+        let k = p;
+        while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
+        if (!k) { nb++; continue; }
+        const g = fk(k);
+        if (!ig && sh > 1e-9) { const took = Math.min(sh, g / 2); sh -= took; h -= g - took; nsh++; }
+        else h -= g;
       }
       return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2 } };
     }
@@ -1594,8 +1598,8 @@
         if (!a) { const dmg = xnum(s.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
         const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
         const proj = xnum(s.hits) != null && a.proj > 1 ? Math.max(0, Math.min(a.proj, xnum(s.hits))) : a.proj;
-        const dmg = per * proj;
-        return { per, proj, dmg, ...calcHit({ dmg, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct }) };
+        const dmg = per * proj, hit = d => calcHit({ dmg: d, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct });
+        return { per, proj, dmg, fk: k => hit(per * k).final, ...hit(dmg) };
       };
 
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
@@ -1603,15 +1607,15 @@
       const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
       const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket/i.test(a.caliber) || /rocket/i.test(a.name));
       const ignoresShield = a => isBludgeon || isExplosive(a);
-      function run(f, a) {
+      function run(sht, a) {
         if (!(hp > 0)) return null;
         if (st0.h <= 1e-9) return { n: 0, nb: 0, nsh: 0 };
-        if (!(f > 0)) return null;
-        const r = runHits(st0, f, ssByp(a), ignoresShield(a), 1e7);
+        if (!sht || !(sht.final > 0)) return null;
+        const r = runHits(st0, sht, ssByp(a), ignoresShield(a), 1e7);
         return r.dead ? r : null;
       }
-      const healthHits = (f, a) => { const k = run(f, a); return k ? { n: k.n - k.nb, sh: k.nsh } : null; };
-      const toKill = (f, a) => { const k = run(f, a); return k ? k.n : null; };
+      const healthHits = (sht, a) => { const k = run(sht, a); return k ? { n: k.n - k.nb, sh: k.nsh } : null; };
+      const toKill = (sht, a) => { const k = run(sht, a); return k ? k.n : null; };
 
       const rpm = mode && mode.rpm;
       const swing = melee ? xnum(mode.s["SWING TIME"]) : null;
@@ -1626,18 +1630,18 @@
         return swing ? (n - 1) * swing : null;
       };
       const r = (mode || !gun) ? shot(ammo) : null;
-      const htk = r ? toKill(r.final, ammo) : null;
+      const htk = r ? toKill(r, ammo) : null;
 
-      const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), k = toKill(sh.final, a); return { a, s: sh, k, kb: k && ss ? blocked(ssByp(a)) : 0 }; })
+      const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), rr = run(sh, a), k = rr ? rr.n : null; return { a, s: sh, k, kb: rr ? rr.nb : 0 }; })
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
       return { s, gun, modes, mode, melee, pool, hasBurst, hasAuto, useBurst, bAmt, bDelay, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
-        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r.final, ammo) ? run(r.final, ammo).nb : 0, shInfo: r ? healthHits(r.final, ammo) : null, ranked, bestK };
+        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r, ammo) ? run(r, ammo).nb : 0, shInfo: r ? healthHits(r, ammo) : null, ranked, bestK };
     }
     const P = d.pre ? attack(d.p) : null, pn = Math.max(0, Math.min(999, Math.floor(xnum(d.pn) || 0)));
     let preRes = null;
     if (P && P.r && pn && hp > 0) {
-      preRes = runHits(st0, Math.max(0, P.r.final), P.ssByp(P.ammo), P.ignoresShield(P.ammo), pn);
+      preRes = runHits(st0, P.r, P.ssByp(P.ammo), P.ignoresShield(P.ammo), pn);
       if (P.r.final > 0) st0 = preRes.st;
     }
     const A = attack(d), B = vs ? attack(d.b) : null;
@@ -1750,7 +1754,7 @@
       : `<div class="dgrid">${attackerBox(A, "", P ? "Then finish with" : "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
-      <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
+      <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits; against shotguns it blocks single pellets and the rest of the blast still hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a> by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord).</p>
     </div>`;
   }
