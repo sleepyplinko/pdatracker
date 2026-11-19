@@ -3698,7 +3698,7 @@ const PDA_DATA = {
           "WEIGHT": "0.25"
         }, comment: "Before the rebellion happened, and eventually settled down, a common medical item sold in clinics was the Aspectic Bandage. Back then, the presence of medical First Aid Kits made this item unnecessary to have, as the kit would already contain three bandages ready to be utilized at any moment. However, in the present, these light bandages can be used quickly to seal a bleeding wound without having to carry an entire kit and take extra time taking the needed item out of it." }],
         ["Skateboard", { comment: "Useful tool for transportation, insanely popular in more urban districts and can be found nearly everywhere! Sadly skateboarding isn't a common practice in lesser urban places. Though, at least for the more fortunate people they get to have tons of skateboards." }],
-        ["Medical Pouch (MP)", { hidden: true, special: true, stats: {
+        ["Medical Pouch (MP)", { special: true, stats: {
           "WEIGHT": "0.5"
         }, comment: "A medical First Aid Kit, usually used for emergenices, now used for wound obtainable and everyone wants one. This kit only comes with bandages to help with bleeding. It's a bit of surprise it doesn't have other tools, especially when it's so necessary in the middle of a whole warzone." }],
         ["Flare Gun", { stats: {
@@ -3798,7 +3798,7 @@ const PDA_DATA = {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "10%"
         }, comment: "A slim vest, nearly comparable to a jacket. It's not much but it'll probably help. Yeah, sorry, it doesn't have pockets." }],
-        ["Skull", { hidden: true, special: true, stats: {
+        ["Skull", { special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "6%"
         }, comment: "A human skull. Not very strong.. but quite durable as a basic armor for what it is. our anatomy are truly fascinating, huh?" }],
@@ -3861,11 +3861,11 @@ const PDA_DATA = {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "Wearing this makes you look like you're apart of some sort of gang. Especially if you have a sharp weapon. It's not something very protective, but any extra layer helps to even slightly weaken the impact of damage." }],
-        ["Comedy Mask", { hidden: true, special: true, stats: {
+        ["Comedy Mask", { special: true, stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "A comedy mask, usually worn in theatre plays to represent joy and humor. It was often seen used in traditions of the Helens in the middle ages, where the townspeople will have a masquerade parties in many special occasions, ranging from festivals, birthday, coronation and funeral." }],
-        ["Horned Skull", { hidden: true, special: true, stats: {
+        ["Horned Skull", { special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "Pristine and durable skull with horns. It's noticeably human in appearance, but we obviously do not have these.." }]
