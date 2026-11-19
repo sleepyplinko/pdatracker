@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-19", items: [
+    "ADMIN: edit the manual",
     "Most red items hidden from the count",
     "Category list keeps its place",
     "Tidier empty category message",

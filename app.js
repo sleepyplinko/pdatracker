@@ -2518,6 +2518,7 @@
     if (ed.ammo !== undefined) return ammoEditorHTML();
     if (ed.notice) return noticeEditorHTML();
     if (ed.cats) return catsEditorHTML();
+    if (ed.manual) return manualEditorHTML();
     const e = ed.entry && findEntry(ed.entry);
     const items = entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: x.section === "docs" ? contextOf(x).split(" › ")[0] : { tools: x.group, bio: "BIOGRAPHY" }[x.section] }));
     const isTool = e && e.section === "tools", isPerson = e && e.section === "bio";
@@ -2552,13 +2553,13 @@
         <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="Note the sender sees on their SUBMIT tab (optional, e.g. why it wasn't added)">
         <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
-    const pubs = Object.entries(overrides).filter(([id]) => !isStructId(id)).map(([id, o]) => {
+    const pubs = Object.entries(overrides).filter(([id]) => !isStructId(id) && id !== MANUAL_ID).map(([id, o]) => {
       if (id === "site|notice") return { id, name: "SITE NOTICE", group: (o.notice && o.notice.text || "").slice(0, 60), ok: true, special: "notice" };
       if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
       const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: (e ? e.group : (o.add ? o.add.group : "")) + (o.stats && o.stats.HIDDEN ? " · HIDDEN" : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admcats>CATEGORIES…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admcats>CATEGORIES…</button><button class="mini-btn" data-admmanual>MANUAL…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
       ${adminEditorHTML()}
       ${setupHTML()}
       ${statsHTML()}
@@ -2625,6 +2626,19 @@
     on("ammoUndo", async () => {
       const id = adm.edit.ammo; const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(id)).catch(() => [0]);
       if (st === 200) { delete overrides[id]; save("pda-overrides-v1", overrides); applyOverrides(overrides); play("deselect"); toast("Back to the chart's numbers."); adm.edit = null; keepScroll(render); } else toast("Couldn't remove it.");
+    });
+    { const mt = $("#manText"); if (mt) mt.oninput = () => { adm.edit.text = mt.value; const pv = screen.querySelector(".manprev"); if (pv) pv.innerHTML = manualHTML(mt.value); }; }
+    on("manGo", async () => {
+      const text = $("#manText").value.trim(); if (!text) { toast("Write something first."); play("warn"); return; }
+      const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(MANUAL_ID), { data: { desc: text }, what: "manual" }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't save."); play("warn"); return; }
+      overrides[MANUAL_ID] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides);
+      adm.edit = null; play("confirm"); toast("Manual updated."); keepScroll(render);
+    });
+    on("manReset", async () => {
+      const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(MANUAL_ID)).catch(() => [0]);
+      if (st !== 200) { toast("Couldn't reset it."); play("warn"); return; }
+      delete overrides[MANUAL_ID]; save("pda-overrides-v1", overrides); adm.edit = null; play("deselect"); toast("Manual is back to the default."); keepScroll(render);
     });
     on("noticeGo", async () => {
       const text = $("#noticeText").value.trim(); if (!text) { toast("Write the notice first."); play("warn"); return; }
@@ -3166,43 +3180,59 @@
     sending = false; keepScroll(render);
   }
 
+  const MANUAL_ID = "d|@manual|text";
+  const MANUAL_DEFAULT = `== GUIDE ==
+# Mark something found
+Press the star on it. Shift + star marks a range.
+# Mark a lot at once
+Click a TIER bar, or the tab you're on.
+# Undo
+Ctrl+Z, or UNDO on the message at the bottom.
+# See what's missing
+MISSING next to search, or the WHAT'S LEFT tab.
+# Stats
+Click an entry. Cards with variants count as one find.
+# Search
+Names or stats, like "9x19mm" or "tier 5". ENTER marks the top result.
+# Keep going
+FOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.
+# Compare weapons
+COMPARE + on up to 3 weapons, then VIEW.
+# Share
+LINK copies a link to a page. CLOUD has a link to your whole PDA.
+# Don't lose progress
+It's saved in this browser only. Back it up in CLOUD.
+# Send info
+SUBMIT, or FIX? on any page. No account needed.
+== KEYS ==
+- ARROWS - MOVE
+- SPACE - MARK
+- ENTER - OPEN
+- CTRL + Z - UNDO
+- / - SEARCH
+- ESC - BACK
+== ABOUT ==
+Fan-made. Not affiliated with the game. ??? means the name isn't known yet.
+Built with AI (Claude).`;
+  const manualText = () => { const o = overrides[MANUAL_ID]; return o && typeof o.desc === "string" && o.desc.trim() ? o.desc : MANUAL_DEFAULT; };
+  const manualHTML = t => t.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    let m;
+    if ((m = l.match(/^==\s*(.+?)\s*==$/))) return `<h3>-=-=- ${esc(m[1])} -=-=-</h3>`;
+    if ((m = l.match(/^#\s*(.+)$/))) return `<h4>${esc(m[1])}</h4>`;
+    if ((m = l.match(/^-\s+(.+)$/))) return `<div class="k">${esc(m[1])}</div>`;
+    return `<p>${esc(l)}</p>`;
+  }).join("");
   function renderManual() {
-    screen.innerHTML = `
-      <div class="manual">
-        <h3>-=-=- GUIDE -=-=-</h3>
-        <h4>Mark something found</h4>
-        <p>Press the star on it. Shift + star marks a range.</p>
-        <h4>Mark a lot at once</h4>
-        <p>Click a TIER bar, or the tab you're on.</p>
-        <h4>Undo</h4>
-        <p>Ctrl+Z, or UNDO on the message at the bottom.</p>
-        <h4>See what's missing</h4>
-        <p>MISSING next to search, or the WHAT'S LEFT tab.</p>
-        <h4>Stats</h4>
-        <p>Click an entry. Cards with variants count as one find.</p>
-        <h4>Search</h4>
-        <p>Names or stats, like "9x19mm" or "tier 5". ENTER marks the top result.</p>
-        <h4>Keep going</h4>
-        <p>FOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.</p>
-        <h4>Compare weapons</h4>
-        <p>COMPARE + on up to 3 weapons, then VIEW.</p>
-        <h4>Share</h4>
-        <p>LINK copies a link to a page. CLOUD has a link to your whole PDA.</p>
-        <h4>Don't lose progress</h4>
-        <p>It's saved in this browser only. Back it up in CLOUD.</p>
-        <h4>Send info</h4>
-        <p>SUBMIT, or FIX? on any page. No account needed.</p>
-        <h3>-=-=- KEYS -=-=-</h3>
-        <div class="k">ARROWS - MOVE</div>
-        <div class="k">SPACE - MARK</div>
-        <div class="k">ENTER - OPEN</div>
-        <div class="k">CTRL + Z - UNDO</div>
-        <div class="k">/ - SEARCH</div>
-        <div class="k">ESC - BACK</div>
-        <h3>-=-=- ABOUT -=-=-</h3>
-        <p>Fan-made. Not affiliated with the game. ??? means the name isn't known yet.</p>
-        <p>Built with AI (Claude).</p>
-      </div>`;
+    screen.innerHTML = `<div class="manual">${manualHTML(manualText())}${amAdmin() ? '<div class="btnrow"><button class="mini-btn" data-admmanual>EDIT MANUAL</button></div>' : ""}</div>`;
+  }
+  function manualEditorHTML() {
+    const t = adm.edit.text != null ? adm.edit.text : manualText();
+    return `<div class="dbox admedit"><div class="dhead">Manual</div><div class="dform">
+      <p class="dim">== TITLE == makes a section. # Heading makes a heading. - TEXT makes a key line. Anything else is a paragraph.</p>
+      <label>TEXT<textarea id="manText" rows="18" maxlength="8000">${esc(t)}</textarea></label>
+      <div class="btnrow"><button class="pbtn" id="manGo">PUBLISH</button>${overrides[MANUAL_ID] ? '<button class="pbtn danger" id="manReset">BACK TO DEFAULT</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
+      <h4 class="admh4">PREVIEW</h4><div class="manual manprev">${manualHTML(t)}</div>
+    </div></div>`;
   }
 
 
@@ -3395,6 +3425,7 @@
     { const b = t.closest("[data-admst]"); if (b) { const n = screen.querySelector(`[data-admnoteid="${b.dataset.admid}"]`); api("PUT", "/api/admin/submissions/" + b.dataset.admid, { status: b.dataset.admst, note: n ? n.value.trim() : "" }).then(() => { play("click"); loadAdmin(); }); return; } }
     { const b = t.closest("[data-admammo]"); if (b) { adm.edit = { ammo: b.dataset.admammo || null }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
     if (t.closest("[data-admammoadd]")) { adm.edit = { ammo: "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    if (t.closest("[data-admmanual]") && amAdmin()) { adm.edit = { manual: true }; ui.tab = "admin"; detail = null; persistUI(); play("click"); renderTabs(); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
     if (t.closest("[data-admcats]")) { adm.edit = { cats: {} }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
     { const b = t.closest("[data-admcatdel]"); if (b) { if (!+b.dataset.admcatn && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "SURE?"; play("warn"); return; } catDelete(b.dataset.admcatdel, +b.dataset.admcatn); return; } }
     if (t.closest("[data-admnotice]")) { adm.edit = { notice: true }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
