@@ -217,6 +217,7 @@
       people.push(card.entry);
       return card;
     });
+    if (g.hidden) g.cards.forEach(c => { c.entry.hidden = true; c.members.forEach(m => { m.hidden = true; }); });
     g.items = g.cards.map(c => c.entry);
   });
 
@@ -2233,7 +2234,7 @@
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
       origInfo.set(e, { hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
-      const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = true; delete os.HIDDEN; }
+      const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = os.HIDDEN !== "NO"; delete os.HIDDEN; }
       const sty = os._STYLE, glow = os._GLOW === "YES"; Object.keys(os).forEach(k => { if (k[0] === "_") delete os[k]; });
       if (sty) {
         delete e.special; delete e.gold; delete e.ecolor; delete e.eglow;
@@ -2586,7 +2587,7 @@
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
-      if ($("#admHidden").checked) data.stats = { ...(data.stats || {}), HIDDEN: "YES" };
+      { const h0 = (origInfo.has(e) ? origInfo.get(e) : e).hidden, h = $("#admHidden").checked; if (h !== !!h0) data.stats = { ...(data.stats || {}), HIDDEN: h ? "YES" : "NO" }; }
       { const o0 = origInfo.has(e) ? origInfo.get(e) : e, base = o0.special ? "red" : o0.gold ? "gold" : "", v = $("#admStyle").value;
         if (v === "custom") data.stats = { ...(data.stats || {}), _STYLE: $("#admColor").value, ...($("#admGlow").checked ? { _GLOW: "YES" } : {}) };
         else if (v !== base) data.stats = { ...(data.stats || {}), _STYLE: v || "normal" }; }
