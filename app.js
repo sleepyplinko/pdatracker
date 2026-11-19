@@ -1509,12 +1509,14 @@
     const d = ui.dmg || (ui.dmg = {});
     const out = Object.assign({ ...ATK_DEF, target: "", hp: "100", def: "0", sa: "0", ss: "0", sh: "0", vs: false }, d);
     out.b = Object.assign({ ...ATK_DEF }, d.b || {});
+    out.p = Object.assign({ ...ATK_DEF }, d.p || {});
+    out.pre = !!d.pre; out.pn = d.pn != null ? String(d.pn) : "1";
     return out;
   }
 
   function dmgSet(k, v) {
     const d = ui.dmg = dmgState();
-    const s = k.startsWith("b.") ? d.b : d, key = k.replace(/^b\./, "");
+    const s = k.startsWith("b.") ? d.b : k.startsWith("p.") ? d.p : d, key = k.replace(/^[bp]\./, "");
     s[key] = v;
     if (key === "gun") { s.mode = 0; s.ammo = ""; s.hits = ""; s.fire = ""; }
     if (key === "mode") { s.mode = +v; s.ammo = ""; s.hits = ""; s.fire = ""; }
@@ -1531,6 +1533,7 @@
     const o = { A: atk(d) };
     if (d.target) o.t = d.target; else o.n = [d.hp, d.def, d.sa, d.ss, d.sh];
     if (d.vs) o.B = atk(d.b);
+    if (d.pre) { o.P = atk(d.p); o.pn = d.pn; }
     return `${ROOT}#dmg=${b64u(JSON.stringify(o))}`;
   }
   function readDmgLink(hash) {
@@ -1544,6 +1547,7 @@
     const n = Array.isArray(o.n) ? o.n : [];
     ["hp", "def", "sa", "ss", "sh"].forEach((k, i) => { d[k] = n[i] != null && isFinite(+n[i]) ? String(n[i]) : { hp: "100" }[k] || "0"; });
     d.vs = !!o.B; d.b = atk(o.B);
+    d.pre = !!o.P; d.p = atk(o.P); d.pn = o.pn != null && isFinite(+o.pn) ? String(Math.max(0, Math.floor(+o.pn))) : "1";
     ui.dmg = d; ui.tab = "damage"; detail = null;
     return true;
   }
@@ -1562,6 +1566,18 @@
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
+    let st0 = { h: hp, sh: shield, ss };
+    function runHits(st, f, b, ig, max) {
+      let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0;
+      while (h > 1e-9 && n < max) {
+        if (s2 <= b && (ig || sh <= 1e-9)) { const k = Math.min(max - n, Math.ceil(h / f - 1e-9)); n += k; h -= k * f; break; }
+        n++;
+        if (s2 > b) { s2 -= Math.max(1, b); nb++; continue; }
+        if (!ig && sh > 1e-9) { const took = Math.min(sh, f / 2); sh -= took; h -= f - took; nsh++; }
+        else h -= f;
+      }
+      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2 } };
+    }
 
     function attack(s) {
       const gun = s.gun && byId.get(s.gun);
@@ -1587,18 +1603,15 @@
       const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
       const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket/i.test(a.caliber) || /rocket/i.test(a.name));
       const ignoresShield = a => isBludgeon || isExplosive(a);
-      function healthHits(f, a) {
-        if (!(f > 0) || !(hp > 0)) return null;
-        if (!shield || ignoresShield(a)) return { n: Math.ceil(hp / f - 1e-9), sh: 0 };
-        let h = hp, sh = shield, n = 0, shHits = 0;
-        while (h > 1e-9 && n < 100000) {
-          n++;
-          if (sh > 1e-9) { const half = f / 2, took = Math.min(sh, half); sh -= took; h -= f - took; shHits++; }
-          else h -= f;
-        }
-        return { n, sh: shHits };
+      function run(f, a) {
+        if (!(hp > 0)) return null;
+        if (st0.h <= 1e-9) return { n: 0, nb: 0, nsh: 0 };
+        if (!(f > 0)) return null;
+        const r = runHits(st0, f, ssByp(a), ignoresShield(a), 1e7);
+        return r.dead ? r : null;
       }
-      const toKill = (f, a) => { const k = healthHits(f, a); return k ? blocked(ssByp(a)) + k.n : null; };
+      const healthHits = (f, a) => { const k = run(f, a); return k ? { n: k.n - k.nb, sh: k.nsh } : null; };
+      const toKill = (f, a) => { const k = run(f, a); return k ? k.n : null; };
 
       const rpm = mode && mode.rpm;
       const swing = melee ? xnum(mode.s["SWING TIME"]) : null;
@@ -1619,7 +1632,13 @@
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
       return { s, gun, modes, mode, melee, pool, hasBurst, hasAuto, useBurst, bAmt, bDelay, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
-        r, htk, ttk: ttkOf(htk), nBlocked: blocked(ssByp(ammo)), shInfo: r ? healthHits(r.final, ammo) : null, ranked, bestK };
+        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r.final, ammo) ? run(r.final, ammo).nb : 0, shInfo: r ? healthHits(r.final, ammo) : null, ranked, bestK };
+    }
+    const P = d.pre ? attack(d.p) : null, pn = Math.max(0, Math.min(999, Math.floor(xnum(d.pn) || 0)));
+    let preRes = null;
+    if (P && P.r && pn && hp > 0) {
+      preRes = runHits(st0, Math.max(0, P.r.final), P.ssByp(P.ammo), P.ignoresShield(P.ammo), pn);
+      if (P.r.final > 0) st0 = preRes.st;
     }
     const A = attack(d), B = vs ? attack(d.b) : null;
 
@@ -1628,8 +1647,8 @@
     const aName = X => X.gun ? X.gun.name + (X.modes.length > 1 && X.mode ? ` (${X.mode.label})` : "") : X.ammo ? X.ammo.name : "Custom damage";
 
     function attackerBox(X, pfx, title) {
-      const s = X.s, kB = pfx ? "B" : "";
-      return `<div class="dbox"><div class="dhead">${title}${pfx ? `<span class="hright"><button class="hbtn" data-dmgswap title="Swap loadout A and B">SWAP A ⇄ B</button></span>` : ""}</div><div class="dform">
+      const s = X.s, kB = pfx === "b." ? "B" : pfx === "p." ? "P" : "";
+      return `<div class="dbox"><div class="dhead">${title}${pfx === "b." ? `<span class="hright"><button class="hbtn" data-dmgswap title="Swap loadout A and B">SWAP A ⇄ B</button></span>` : ""}</div><div class="dform">
           <label>WEAPON</label>${pickerHTML("dmggun" + kB, { label: "Weapon", placeholder: X.gun ? `${X.gun.name}  (type to change)` : "Type a weapon name…", onPick: v => setDmg(pfx + "gun", v),
             items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier })))] })}
           ${X.gun ? `<button class="mini-btn" data-open-tool="${esc(X.gun.id)}">OPEN ${esc(X.gun.name.toUpperCase())}</button>` : ""}
@@ -1641,7 +1660,7 @@
           ${!X.melee && X.mode && X.mode.strength !== 1 ? `<label class="chk"><input type="checkbox" data-dmg="${pfx}str"${s.str ? " checked" : ""}> multiply by the weapon's STRENGTH (${X.mode.strength}x)</label>` : ""}
           ${X.ammo && X.ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${X.ammo.proj}" step="1" data-dmg="${pfx}hits" value="${esc(s.hits)}" placeholder="all ${X.ammo.proj}"></label>` : ""}
           ${X.ammo && X.ammo.trueOnDirect ? `<label class="chk"><input type="checkbox" data-dmg="${pfx}direct"${s.direct ? " checked" : ""}> direct hit (true damage)</label>` : ""}
-          ${!vs ? ammoCard(X.ammo) : ""}
+          ${pfx === "p." ? `<label>HOW MANY HITS FIRST <input type="number" min="0" max="999" step="1" data-dmg="pn" value="${esc(d.pn)}"></label>` : !vs ? ammoCard(X.ammo) : ""}
         </div></div>`;
     }
     function ammoCard(ammo) {
@@ -1666,12 +1685,13 @@
         steps += step("DEFENSE", `${fmt2(r.effDef)}%`, ammo && ammo.trueOnDirect && X.s.direct ? "ignored on a direct hit" : `${fmt2(def)}%${penP ? ` × (1 − ${fmt2(penP)}% ${melee ? "defense bypass" : "armor pen"})` : ""}`);
       }
 
+      const preLine = preRes ? `<div class="dpre">${preRes.dead ? `<b>Already dead</b> after ${preRes.n} hit${preRes.n === 1 ? "" : "s"} of ${esc(aName(P))}.` : `After ${pn} hit${pn === 1 ? "" : "s"} of ${esc(aName(P))} (${fmt2(P.r.final)} each): <b>${fmt2(st0.h)}</b> health left${shield ? `, shield ${fmt2(st0.sh)}` : ""}${ss ? `, supershield ${fmt2(st0.ss)}` : ""}. Then:`}</div>` : "";
       const best = X.ranked.length && X.bestK != null && htk != null && X.bestK < htk ? X.ranked[0] : null;
       const tip = best ? `<div class="dbest">Best ammo here: <b>${esc(best.a.name)}</b>, ${best.k} hit${best.k === 1 ? "" : "s"} to kill <button class="mini-btn" data-dmgammo="${pfx}${esc(best.a.key)}">USE IT</button></div>` : "";
       return `<div class="dbox dres${win ? " dwin" : ""}"><div class="dhead">${title}${win ? '<span class="hright"><span class="chip status-found">BETTER</span></span>' : ""}</div><div class="stats">
-          ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}
+          ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}${preLine}
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${tip}
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
             ${htk && tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Maria's second phase.</p>` : ""}`
@@ -1717,16 +1737,17 @@
              <label>SHIELD <input type="number" step="any" min="0" data-dmg="sh" value="${esc(d.sh)}"></label>`}
         </div></div>`;
 
-    const tools = `<div class="dtools"><button class="mini-btn${vs ? " on" : ""}" data-dmgvs title="Put a second weapon and ammo next to this one, against the same target">${vs ? "✕ STOP COMPARING" : "COMPARE TWO LOADOUTS"}</button><button class="mini-btn" data-dmgshare title="Copy a link that opens the calculator set up exactly like this">COPY LINK TO THIS</button></div>`;
+    const tools = `<div class="dtools"><button class="mini-btn${d.pre ? " on" : ""}" data-dmgpre title="Hit the target with another weapon first, then finish with yours">${d.pre ? "✕ NO HITS FIRST" : "HIT FIRST WITH ANOTHER WEAPON"}</button><button class="mini-btn${vs ? " on" : ""}" data-dmgvs title="Put a second weapon and ammo next to this one, against the same target">${vs ? "✕ STOP COMPARING" : "COMPARE TWO LOADOUTS"}</button><button class="mini-btn" data-dmgshare title="Copy a link that opens the calculator set up exactly like this">COPY LINK TO THIS</button></div>`;
 
     screen.innerHTML = `<div class="results dmgcalc">
       <div class="leftsum"><b>DAMAGE CALCULATOR</b> · ammo stats from the <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">OANC Ammo Chart</a>, made by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord)
         <div class="dim dnote">&#9888;&#xFE0E; Community chart: some ammo may be out of date. Hits to kill is an estimate.${ammoAll.some(a => a.edited) ? " Ammo marked ✎ was corrected by the site's admins." : ""}</div>${tools}</div>
+      ${P ? `<div class="dgrid dpregrid">${attackerBox(P, "p.", "Hit first with")}</div>` : ""}
       ${vs ? `<div class="dgrid">${attackerBox(A, "", "Loadout A")}${attackerBox(B, "b.", "Loadout B")}${targetBox}</div>
         ${verdict ? `<div class="dverdict">${esc(verdict)}</div>` : ""}
         <div class="dgrid dgrid2">${resultHTML(A, "", "Result A", winA)}${resultHTML(B, "b.", "Result B", winB)}</div>
         ${bestTable(A, "", `Loadout A: best ammo against ${esc(tgtLabel)}`)}${bestTable(B, "b.", `Loadout B: best ammo against ${esc(tgtLabel)}`)}`
-      : `<div class="dgrid">${attackerBox(A, "", "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
+      : `<div class="dgrid">${attackerBox(A, "", P ? "Then finish with" : "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
       <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
@@ -3410,6 +3431,7 @@ Built with AI (Claude).`;
         keepScroll(render); return; } }
     { const bb = t.closest("[data-admboot]"); if (bb && amAdmin()) { runBoot({ force: true, hold: +bb.dataset.admboot }); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const v = row.dataset.dmgammo, isB = v.startsWith("b."); dmgSet(isB ? "b.ammo" : "ammo", isB ? v.slice(2) : v); persistUI(); play("click"); keepScroll(render); return; } }
+    if (t.closest("[data-dmgpre]")) { const d = ui.dmg = dmgState(); d.pre = !d.pre; persistUI(); play(d.pre ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgvs]")) { const d = ui.dmg = dmgState(); d.vs = !d.vs; if (d.vs && !d.b.gun && !d.b.ammo) d.b = { ...d.b, gun: d.gun, mode: d.mode, str: d.str }; persistUI(); play(d.vs ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgswap]")) { const d = ui.dmg = dmgState(); const keys = Object.keys(ATK_DEF), a = {}; keys.forEach(k => { a[k] = d[k]; d[k] = d.b[k]; }); d.b = a; persistUI(); play("switch"); keepScroll(render); return; }
     if (t.closest("[data-dmgshare]")) { const url = dmgLink(); play("click"); (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this calculation copied.")).catch(() => toast(url, { ms: 12000 })); return; }
