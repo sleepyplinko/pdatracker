@@ -5221,7 +5221,7 @@ const PDA_DATA = {
           [W("Dagger")])
       ]), { img: "images/people/velris-family.webp" })
     ]},
-    { name: "WC", color: "#9ad7ff", bg: "#0e1820", entries: [
+    { name: "WC", color: "#9ad7ff", bg: "#0e1820", hidden: true, entries: [
       P("WC Emissary", { Health: 325, Speed: 1.6, Defense: 70, Shield: 400, Supershield: 2, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 25, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
         [W("GLOCK 17+"), A("9x19mm FXX2"), M("19rnd Glock Mag")]),
