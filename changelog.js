@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-19", items: [
+    "DAMAGE: supershield vs shotguns fixed",
     "DAMAGE: hit first with another weapon",
     "ADMIN: edit the manual",
     "Most red items hidden from the count",
