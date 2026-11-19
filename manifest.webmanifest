@@ -1,6 +1,6 @@
 {
-  "name": "PDA.exe — Once A Normal City Tracker",
-  "short_name": "PDA Tracker",
+  "name": "Once A Normal Tracker",
+  "short_name": "OAN Tracker",
   "description": "Fan-made checklist for the PDA in Once A Normal City.",
   "start_url": "./",
   "scope": "./",

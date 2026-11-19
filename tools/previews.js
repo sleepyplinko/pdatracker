@@ -6,7 +6,7 @@ const TYPES = { ".js": "application/javascript", ".css": "text/css", ".html": "t
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clip = (s, n) => { s = String(s).split("\n").map(l => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n"); return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s; };
 const OUT = path.join(ROOT, "e"), MAN = path.join(OUT, "manifest.json");
-const VERSION = 4;
+const VERSION = 5;
 
 async function overrides() {
   if (!API || process.env.NO_OVERRIDES) return {};
@@ -82,7 +82,7 @@ const srv = http.createServer((q, r) => {
         const lift = c => { const m = /^#([0-9a-f]{6})$/i.exec(c); if (!m) return c; const n = parseInt(m[1], 16), r = n >> 16, g = n >> 8 & 255, b = n & 255; return (r * .3 + g * .59 + b * .11) < 110 ? "#a8a8a8" : c; };
         const e = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
         const txt = x.text.replace(/\s+/g, " ").trim();
-        c.innerHTML = `<div class="ogc-top"><b>PDA.exe</b><span>${e(x.sec)}</span></div>
+        c.innerHTML = `<div class="ogc-top"><b>ONCE A NORMAL TRACKER</b><span>${e(x.sec)}</span></div>
           <div class="ogc-body">
             ${x.img ? `<div class="ogc-pic${x.sec === "TOOLS" ? " gun" : ""}"><img src="${e(x.img)}"></div>` : `<div class="ogc-pic ogc-ico"><img src="images/icons/${x.sec === "TOOLS" ? "tools" : x.sec === "BIOGRAPHY" ? "biography" : "manual"}.png"></div>`}
             <div class="ogc-info"><div class="ogc-name">// ${e(x.name.toUpperCase())}</div><div class="ogc-sub">${e(x.sub)}</div>
@@ -116,21 +116,21 @@ const srv = http.createServer((q, r) => {
       drawn++;
     }
     const kind = { TOOLS: "weapon", BIOGRAPHY: "person", DOCUMENTS: "document" }[x.sec];
-    const title = `${x.name} (OANC ${kind}) · PDA.exe Once A Normal City tracker`;
+    const title = `${x.name} (OANC ${kind}) · Once A Normal Tracker`;
     const desc = clip([`${x.name} (${x.sub}) in Once A Normal City (OANC).`, x.stats.map(([k, v]) => `${k}: ${v}`).join(", "), x.text].filter(Boolean).join(" "), 300);
     const url = `${SITE}e/${x.h}/`;
     const head = `<title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <link rel="canonical" href="${url}">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
+  <meta property="og:site_name" content="Once A Normal Tracker">
   <meta property="og:title" content="${esc(x.name)}">
   <meta property="og:description" content="${esc(clip([x.sub, x.meta.join(" · "), x.text].filter(Boolean).join("\n"), 280))}">
   <meta property="og:url" content="${url}">
   <meta property="og:image" content="${url}card.jpg?v=${sig.slice(0, 8)}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${esc(x.name)} in PDA.exe">
+  <meta property="og:image:alt" content="${esc(x.name)} in Once A Normal Tracker">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0a0a0a">
   <script>if (!/^#e=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search + "#e=${x.h}")</script>`;
@@ -138,12 +138,12 @@ const srv = http.createServer((q, r) => {
     urls.push(url);
   }
   fs.mkdirSync(path.join(ROOT, "damage"), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, "damage", "index.html"), SHELL.replace("<!--HEAD-->", () => `<title>OANC Damage Calculator · Once A Normal City hits &amp; time to kill · PDA.exe</title>
+  fs.writeFileSync(path.join(ROOT, "damage", "index.html"), SHELL.replace("<!--HEAD-->", () => `<title>Once A Normal Calculator · OANC damage calculator for Once A Normal City</title>
   <meta name="description" content="Free Once A Normal City (OANC) damage calculator. Pick any weapon, ammo and enemy to see damage per hit, hits to kill and time to kill, with defense, armor pen, super armour, shield and supershield. Compare two loadouts and find the best ammo.">
   <link rel="canonical" href="${SITE}damage/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PDA.exe · Once A Normal City tracker">
-  <meta property="og:title" content="OANC Damage Calculator">
+  <meta property="og:site_name" content="Once A Normal Tracker">
+  <meta property="og:title" content="Once A Normal Calculator">
   <meta property="og:description" content="Hits and time to kill for any Once A Normal City weapon, ammo and enemy.">
   <meta property="og:url" content="${SITE}damage/">
   <meta property="og:image" content="${SITE}images/og.jpg?v=2">
@@ -151,7 +151,7 @@ const srv = http.createServer((q, r) => {
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#0a0a0a">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"OANC Damage Calculator","alternateName":"Once A Normal City Damage Calculator","url":"${SITE}damage/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Once A Normal Calculator","alternateName":["OANC Damage Calculator","Once A Normal City Damage Calculator"],"url":"${SITE}damage/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0"}}</script>
   <script>if (!location.hash) history.replaceState(null, "", location.pathname + location.search + "#damage")</script>`));
   urls.unshift(SITE + "damage/");
   fs.writeFileSync(MAN, JSON.stringify(man));
@@ -164,7 +164,7 @@ const srv = http.createServer((q, r) => {
   await pg.evaluate(({ t, pick }) => {
     let c = document.getElementById("ogcard");
     if (!c) { c = document.createElement("div"); c.id = "ogcard"; document.body.appendChild(c); }
-    c.innerHTML = `<div class="ogc-top"><b>PDA.exe</b><span>ONCE A NORMAL CITY</span></div>
+    c.innerHTML = `<div class="ogc-top"><b>ONCE A NORMAL TRACKER</b><span>ONCE A NORMAL CITY</span></div>
       <div class="ogs-body">
         <div class="ogs-left">
           <div class="ogs-logo">PDA<span>.exe</span></div>
