@@ -308,6 +308,7 @@
     manual:  '<img class="tabimg" src="images/icons/manual.png" alt="" draggable="false">',
     settings:'<img class="tabimg" src="images/icons/settings.png" alt="" draggable="false">',
     community: '<svg viewBox="0 0 24 24" fill="#111"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2M6 9h12v2H6m8 3H6v-2h8m4-4H6V6h12"/></svg>',
+    map: '<svg viewBox="0 0 24 24" fill="#111"><path d="M15 5.1 9 3 3 5v16l6-2.1 6 2.1 6-2V3l-6 2.1zM10 5.5l4 1.4v11.6l-4-1.4V5.5zM5 6.4l3-1v11.7l-3 1V6.4zm14 11.2-3 1V6.9l3-1v11.7z"/></svg>',
     damage: '<svg viewBox="0 0 24 24" fill="#111"><path d="M12 8a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m-8.95 5H1v-2h2.05C3.5 6.83 6.83 3.5 11 3.05V1h2v2.05c4.17.45 7.5 3.78 7.95 7.95H23v2h-2.05c-.45 4.17-3.78 7.5-7.95 7.95V23h-2v-2.05C6.83 20.5 3.5 17.17 3.05 13M12 5a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7"/></svg>',
     players: '<svg viewBox="0 0 24 24" fill="#111"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg>',
     admin: '<svg viewBox="0 0 24 24" fill="#111"><path d="m12 1 9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5zm4 13H8v1.5c0 .27.19.46.47.5h6.96c.31 0 .52-.16.57-.41V14m1-6-2.67 2.67L12 8.34l-2.33 2.33L7 8l1 5h8z"/></svg>',
@@ -461,7 +462,7 @@
   document.addEventListener("click", e => { if (e.target.closest("#installBtn, [data-install]")) doInstall(); });
 
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
-  const TAB_LABEL = { missing: "CHECKLIST", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
+  const TAB_LABEL = { map: "MAP", missing: "CHECKLIST", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
 
   const TOP_TABS = ["tools", "biography", "documents", ...CUSTOM_TABS.map(t => "x:" + t.key), "missing", "loadout", "damage"];
   const tabOf = key => CUSTOM_TABS.find(t => t.key === key);
@@ -472,7 +473,7 @@
   let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
   const tabBtn = t => `<button class="tab" role="tab" data-tab="${esc(t)}" aria-selected="${!query && ui.tab === t}"${/^x:/.test(t) ? ` style="--tabc:${tabOf(t.slice(2)).color}"` : ""}>${I[t] || I.documents}<span>${esc(TAB_LABEL[t] || t.toUpperCase())}</span></button>`;
   function renderTabs() {
-    [["#tabs", TOP_TABS], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
+    [["#tabs", [...TOP_TABS, ...(mapVisible() ? ["map"] : [])]], ["#tabs2", BOTTOM_TABS]].forEach(([sel, list]) => {
       const el = $(sel), x = el.scrollLeft;
       el.innerHTML = list.map(tabBtn).join("");
       el.scrollLeft = x;
@@ -710,7 +711,7 @@
     if (query) return renderSearch();
     if (sinceView) return renderSince();
     (({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: () => renderDocs(""), missing: renderMissing, loadout: renderLoadout, damage: renderDamage, community: renderCommunity, admin: renderAdmin })[ui.tab] || (() => renderDocs(ui.tab.slice(2))))();
+       tools: renderTools, biography: renderBio, documents: () => renderDocs(""), missing: renderMissing, loadout: renderLoadout, damage: renderDamage, map: renderMap, community: renderCommunity, admin: renderAdmin })[ui.tab] || (() => renderDocs(ui.tab.slice(2))))();
   }
 
   function badges(e) {
@@ -2335,7 +2336,9 @@
   }
   function setAdmin(on) {
     const want = ["profile", "cloud", "manual", "settings", "community", ...(on ? ["admin"] : [])];
+    const was = mapVisible();
     if (want.join() !== BOTTOM_TABS.join()) { BOTTOM_TABS = want; if (!on && ui.tab === "admin") ui.tab = "community"; renderTabs(); }
+    if (was !== mapVisible()) { if (!mapVisible() && ui.tab === "map") { ui.tab = "tools"; render(); } renderTabs(); }
   }
   async function loadAdmin() {
     if (adm.status === "history") { try { const [st, r] = await api("GET", "/api/admin/changes"); adm.changes = st === 200 ? r : []; adm.msg = st === 200 ? "" : r.error || "Couldn't load."; } catch { adm.msg = "Couldn't reach the server."; } if (ui.tab === "admin") keepScroll(render); return; }
@@ -2580,7 +2583,7 @@
         <input class="admnote" data-admnoteid="${r.id}" maxlength="300" value="${esc(r.note || "")}" placeholder="Note the sender sees on their SUBMIT tab (optional, e.g. why it wasn't added)">
         <div class="btnrow"><button class="mini-btn go" data-admedit="${r.id}" data-admentry="${esc(e ? e.id : "")}" data-admimg="${isImgLink(r.link) ? esc(r.link) : ""}">PUBLISH INFO…</button><button class="mini-btn go" data-admaddnew="${r.id}" data-admname="${esc(e ? "" : r.entry || "")}">ADD AS NEW ENTRY…</button>${r.status !== "done" ? `<button class="mini-btn" data-admst="done" data-admid="${r.id}">DONE</button>` : ""}${r.status !== "rejected" ? `<button class="mini-btn" data-admst="rejected" data-admid="${r.id}">REJECT</button>` : ""}${r.status !== "new" ? `<button class="mini-btn" data-admst="new" data-admid="${r.id}">BACK TO NEW</button>` : ""}<button class="mini-btn danger" data-admdel="${r.id}">DELETE</button><button class="mini-btn danger" data-admblock="${r.id}" title="Stop this person sending anything else, and reject the rest of what they sent">BLOCK SENDER</button></div></div>`;
     }).join("");
-    const pubs = Object.entries(overrides).filter(([id]) => !isStructId(id) && id !== MANUAL_ID).map(([id, o]) => {
+    const pubs = Object.entries(overrides).filter(([id]) => !isStructId(id) && !id.startsWith("d|@")).map(([id, o]) => {
       if (id === "site|notice") return { id, name: "SITE NOTICE", group: (o.notice && o.notice.text || "").slice(0, 60), ok: true, special: "notice" };
       if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
       const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: (e ? e.group : (o.add ? o.add.group : "")) + (o.stats && o.stats.HIDDEN ? " · HIDDEN" : ""), added: !!o.add, update: o.update, ok: !!e }; })
@@ -3206,6 +3209,96 @@
     }
     sending = false; keepScroll(render);
   }
+
+  const MAP_ID = "d|@map|main";
+  const mapCfg = () => { const o = overrides[MAP_ID] || {}; return { img: typeof o.desc === "string" ? o.desc.trim() : "", pub: !!(o.stats && o.stats._PUBLIC === "YES") }; };
+  function mapVisible() { try { return amAdmin() || (mapCfg().pub && !!mapCfg().img); } catch { return false; } }
+  const mapPins = () => Object.entries(overrides).filter(([id]) => id.startsWith("d|@pin|")).map(([id, o]) => { const st = o.stats || {}; return { id, x: +st._X || 0, y: +st._Y || 0, label: st._LABEL || "", entry: st._ENTRY || "", color: okColor(st._COLOR) || "#ffd23f", note: o.desc || "" }; });
+  const mapView = { z: 1, x: 0, y: 0, sel: "", edit: null, placing: false, q: "" };
+  function renderMap() {
+    if (!mapVisible()) { ui.tab = "tools"; renderTabs(); render(); return; }
+    const cfg = mapCfg(), admin = amAdmin(), pins = mapPins(), sel = pins.find(p => p.id === mapView.sel);
+    const ed = mapView.edit;
+    const setup = admin ? `<div class="dbox"><div class="dhead">Map settings<span class="hright dim">admins only</span></div><div class="dform">
+        <label>MAP PICTURE LINK <input id="mapImg" value="${esc(cfg.img)}" placeholder="https://… .png / .jpg / .webp"></label>
+        <label class="chk"><input type="checkbox" id="mapPub"${cfg.pub ? " checked" : ""}> SHOW THE MAP TAB TO EVERYONE</label>
+        <div class="btnrow"><button class="pbtn" id="mapSave">SAVE</button></div>
+        <p class="dim">Only admins can see the MAP tab until you tick the box. Pins: press ADD PIN, then click the map.</p></div></div>` : "";
+    if (!cfg.img) { screen.innerHTML = `<div class="results mappage">${setup}<div class="empty-cat"><b>NO MAP YET</b>${admin ? "Paste a picture link above." : ""}</div></div>`; bindMap(); return; }
+    const list = pins.filter(p => !mapView.q || (p.label + " " + p.note).toLowerCase().includes(mapView.q.toLowerCase())).sort((a, b) => collator.compare(a.label, b.label));
+    const ent = sel && sel.entry ? byId.get(sel.entry) : null;
+    const pop = sel && !ed ? `<div class="mappop"><b style="color:${sel.color}">${esc(sel.label || "Pin")}</b>${sel.note ? `<p>${esc(sel.note).replace(/\n/g, "<br>")}</p>` : ""}
+        <div class="btnrow">${ent ? `<button class="mini-btn" data-mapopen="${esc(ent.id)}">OPEN ${esc(ent.name.toUpperCase())}</button>` : ""}${admin ? `<button class="mini-btn" data-mapedit="${esc(sel.id)}">EDIT</button>` : ""}<button class="mini-btn" data-mapclose>CLOSE</button></div></div>` : "";
+    const form = ed ? `<div class="mappop mapform"><b>${ed.id ? "EDIT PIN" : "NEW PIN"}</b>
+        <label>NAME <input id="pinLabel" maxlength="100" value="${esc(ed.label || "")}"></label>
+        <label>LINKS TO ENTRY</label>${pickerHTML("mappin", { label: "Entry", placeholder: ed.entry && byId.get(ed.entry) ? `${byId.get(ed.entry).name}  (type to change)` : "Optional: type an entry name…", onPick: v => { mapView.edit.entry = v; mapView.edit.label = (document.getElementById("pinLabel") || {}).value || mapView.edit.label; mapView.edit.note = (document.getElementById("pinNote") || {}).value ?? mapView.edit.note; if (!mapView.edit.label && byId.get(v)) mapView.edit.label = byId.get(v).name; keepScroll(render); },
+          items: [{ v: "", label: "None", group: "" }, ...entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: x.section === "docs" ? "DOCUMENTS" : x.section === "bio" ? "BIOGRAPHY" : x.group }))] })}
+        <label>COLOUR <input type="color" id="pinColor" value="${esc(ed.color || "#ffd23f")}"></label>
+        <label>NOTE <textarea id="pinNote" rows="3" maxlength="2000">${esc(ed.note || "")}</textarea></label>
+        <div class="btnrow"><button class="pbtn" id="pinSave">SAVE PIN</button>${ed.id ? '<button class="pbtn danger" id="pinDel">DELETE</button>' : ""}<button class="pbtn" data-mapclose>CANCEL</button></div></div>` : "";
+    screen.innerHTML = `<div class="results mappage">
+      <div class="maptools"><button class="mini-btn" data-mapzoom="1.4" title="Zoom in">+</button><button class="mini-btn" data-mapzoom="0.7" title="Zoom out">−</button><button class="mini-btn" data-mapzoom="0" title="Reset">RESET</button>${admin ? `<button class="mini-btn${mapView.placing ? " on" : ""}" data-mapplace>${mapView.placing ? "CLICK THE MAP…" : "ADD PIN"}</button>` : ""}<span class="dim">Drag to move · scroll to zoom</span></div>
+      <div class="mapwrap"><div class="mapview${mapView.placing ? " placing" : ""}" id="mapView"><div class="mapinner" id="mapInner" style="transform:translate(${mapView.x}px,${mapView.y}px) scale(${mapView.z})"><img src="${esc(cfg.img)}" alt="Map" draggable="false">
+        ${pins.map(p => `<button class="mappin${p.id === mapView.sel ? " on" : ""}" data-pin="${esc(p.id)}" style="left:${p.x}%;top:${p.y}%;--pc:${p.color}" title="${esc(p.label)}"><i></i><span>${esc(p.label)}</span></button>`).join("")}
+        ${ed && !ed.id ? `<span class="mappin ghost" style="left:${ed.x}%;top:${ed.y}%;--pc:${esc(ed.color || "#ffd23f")}"><i></i></span>` : ""}</div></div>${pop}${form}</div>
+      ${pins.length ? `<div class="dbox"><div class="dhead">Pins <span class="hright"><input class="mapq" id="mapQ" placeholder="Find a pin…" value="${esc(mapView.q)}"></span></div><div class="maplist">${list.map(p => `<button class="mini-btn" data-pin="${esc(p.id)}"><i style="background:${p.color}"></i>${esc(p.label || "Pin")}</button>`).join("") || '<span class="dim">No pins match.</span>'}</div></div>` : ""}
+      ${setup}</div>`;
+    bindMap();
+  }
+  function bindMap() {
+    bindMapForms();
+    const v = $("#mapView"), inner = $("#mapInner"); if (!v || !inner) return;
+    const apply = () => { inner.style.transform = `translate(${mapView.x}px,${mapView.y}px) scale(${mapView.z})`; inner.style.setProperty("--iz", 1 / mapView.z); };
+    apply();
+    const img = inner.querySelector("img");
+    const fit = () => { if (!img.naturalWidth) return; const k = Math.min(v.clientWidth / img.naturalWidth, v.clientHeight / img.naturalHeight); mapView.z = k; mapView.x = (v.clientWidth - img.naturalWidth * k) / 2; mapView.y = (v.clientHeight - img.naturalHeight * k) / 2; apply(); mapView.fitted = true; };
+    mapView.fitFn = fit;
+    if (!mapView.fitted) { if (img.complete && img.naturalWidth) fit(); else img.addEventListener("load", fit, { once: true }); }
+    const zoomAt = (f, cx, cy) => { const z = Math.max(0.05, Math.min(12, mapView.z * f)); const k = z / mapView.z; mapView.x = cx - (cx - mapView.x) * k; mapView.y = cy - (cy - mapView.y) * k; mapView.z = z; apply(); };
+    v.addEventListener("wheel", ev => { ev.preventDefault(); const r = v.getBoundingClientRect(); zoomAt(ev.deltaY < 0 ? 1.15 : 1 / 1.15, ev.clientX - r.left, ev.clientY - r.top); }, { passive: false });
+    const pts = new Map(); let moved = false, start = null, pinch = null;
+    v.addEventListener("pointerdown", ev => { if (ev.target.closest(".mappin")) return; v.setPointerCapture(ev.pointerId); pts.set(ev.pointerId, [ev.clientX, ev.clientY]); moved = false; start = [ev.clientX, ev.clientY, mapView.x, mapView.y];
+      if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: mapView.z }; } });
+    v.addEventListener("pointermove", ev => { if (!pts.has(ev.pointerId)) return; pts.set(ev.pointerId, [ev.clientX, ev.clientY]);
+      if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()], r = v.getBoundingClientRect(), d = Math.hypot(a[0] - b[0], a[1] - b[1]); zoomAt(pinch.z * d / pinch.d / mapView.z, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top); moved = true; return; }
+      if (start && Math.hypot(ev.clientX - start[0], ev.clientY - start[1]) > 4) moved = true;
+      if (moved && start && pts.size === 1) { mapView.x = start[2] + ev.clientX - start[0]; mapView.y = start[3] + ev.clientY - start[1]; apply(); } });
+    const up = ev => { if (!pts.has(ev.pointerId)) return; pts.delete(ev.pointerId); if (pts.size < 2) pinch = null;
+      if (!moved && pts.size === 0 && mapView.placing) { const r = inner.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width * 100, y = (ev.clientY - r.top) / r.height * 100;
+        if (x >= 0 && x <= 100 && y >= 0 && y <= 100) { mapView.placing = false; mapView.sel = ""; mapView.edit = { x: +x.toFixed(2), y: +y.toFixed(2), label: "", entry: "", color: "#ffd23f", note: "" }; play("click"); render(); } }
+      if (pts.size === 0) start = null; };
+    v.addEventListener("pointerup", up); v.addEventListener("pointercancel", up);
+    const q = $("#mapQ"); if (q) q.oninput = () => { mapView.q = q.value; const l = screen.querySelector(".maplist"); if (!l) return; const pins = mapPins().filter(p => !mapView.q || (p.label + " " + p.note).toLowerCase().includes(mapView.q.toLowerCase())).sort((a, b) => collator.compare(a.label, b.label)); l.innerHTML = pins.map(p => `<button class="mini-btn" data-pin="${esc(p.id)}"><i style="background:${p.color}"></i>${esc(p.label || "Pin")}</button>`).join("") || '<span class="dim">No pins match.</span>'; };
+  }
+  function bindMapForms() {
+    const put = async (id, data, msg) => { const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(id), { data, what: "map" }).catch(() => [0, {}]);
+      if (st !== 200) { toast(r.error || "Couldn't save."); play("warn"); return false; }
+      overrides[id] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); play("confirm"); toast(msg); return true; };
+    const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+    on("mapSave", async () => { const img = $("#mapImg").value.trim(); if (img && !/^https:\/\/\S+$/i.test(img)) { toast("Use an https:// picture link."); play("warn"); return; }
+      if (await put(MAP_ID, { desc: img, stats: { _PUBLIC: $("#mapPub").checked ? "YES" : "NO" } }, "Map saved.")) { mapView.fitted = false; renderTabs(); keepScroll(render); } });
+    on("pinSave", async () => { const ed = mapView.edit; if (!ed) return;
+      const label = $("#pinLabel").value.trim(), note = $("#pinNote").value.trim(), color = $("#pinColor").value;
+      if (!label && !ed.entry) { toast("Give the pin a name."); play("warn"); return; }
+      const id = ed.id || "d|@pin|" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const p0 = ed.id ? mapPins().find(p => p.id === ed.id) : null;
+      if (await put(id, { desc: note, stats: { _X: String(p0 ? p0.x : ed.x), _Y: String(p0 ? p0.y : ed.y), _LABEL: label || (byId.get(ed.entry) || {}).name || "Pin", _ENTRY: ed.entry || "", _COLOR: color } }, "Pin saved.")) { mapView.edit = null; mapView.sel = id; keepScroll(render); } });
+    on("pinDel", async () => { const ed = mapView.edit; if (!ed || !ed.id) return; const b = $("#pinDel"); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "SURE?"; play("warn"); return; }
+      const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(ed.id)).catch(() => [0]); if (st !== 200) { toast("Couldn't delete it."); play("warn"); return; }
+      delete overrides[ed.id]; save("pda-overrides-v1", overrides); mapView.edit = null; mapView.sel = ""; play("deselect"); toast("Pin deleted."); keepScroll(render); });
+  }
+  document.addEventListener("click", ev => {
+    if (ui.tab !== "map") return;
+    const t = ev.target;
+    const z = t.closest("[data-mapzoom]"); if (z) { const v = $("#mapView"), f = +z.dataset.mapzoom; if (!f) { if (mapView.fitFn) { mapView.fitFn(); play("click"); return; } mapView.z = 1; mapView.x = mapView.y = 0; } else { const k = Math.max(0.05, Math.min(12, mapView.z * f)) / mapView.z, cx = v.clientWidth / 2, cy = v.clientHeight / 2; mapView.x = cx - (cx - mapView.x) * k; mapView.y = cy - (cy - mapView.y) * k; mapView.z *= k; } const i = $("#mapInner"); if (i) { i.style.transform = `translate(${mapView.x}px,${mapView.y}px) scale(${mapView.z})`; i.style.setProperty("--iz", 1 / mapView.z); } play("click"); return; }
+    if (t.closest("[data-mapplace]")) { mapView.placing = !mapView.placing; mapView.edit = null; play("click"); keepScroll(render); return; }
+    const pin = t.closest("[data-pin]"); if (pin) { mapView.sel = mapView.sel === pin.dataset.pin && pin.closest(".mapview") ? "" : pin.dataset.pin; mapView.edit = null; play("click");
+      if (!pin.closest(".mapview")) { const p = mapPins().find(x => x.id === mapView.sel), v = $("#mapView"), i = $("#mapInner"); if (p && v && i) { const w = i.offsetWidth, h = i.offsetHeight; mapView.x = v.clientWidth / 2 - p.x / 100 * w * mapView.z; mapView.y = v.clientHeight / 2 - p.y / 100 * h * mapView.z; } }
+      keepScroll(render); return; }
+    const ed = t.closest("[data-mapedit]"); if (ed) { const p = mapPins().find(x => x.id === ed.dataset.mapedit); if (p) mapView.edit = { ...p }; play("click"); keepScroll(render); return; }
+    if (t.closest("[data-mapclose]")) { mapView.sel = ""; mapView.edit = null; mapView.placing = false; play("back"); keepScroll(render); return; }
+    const op = t.closest("[data-mapopen]"); if (op) { openEntry({ id: op.dataset.mapopen }); return; }
+  });
 
   const MANUAL_ID = "d|@manual|text";
   const MANUAL_DEFAULT = `== GUIDE ==
