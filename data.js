@@ -1944,7 +1944,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         5: [
-        ["PLATINUM-C.S.I.R.O DEVICE", { special: true, stats: {
+        ["PLATINUM-C.S.I.R.O DEVICE", { hidden: true, special: true, stats: {
           "CALIBER TYPE": "5 KG BIO-SLUG",
           "AUTO": "YES",
           "BURST": "NO",
@@ -2463,7 +2463,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "0.75"
         }, comment: "" }],
-        ["SCATTERFIRE-CANNON", { special: true, stats: {
+        ["SCATTERFIRE-CANNON", { hidden: true, special: true, stats: {
           "CALIBER TYPE": "12/70",
           "AUTO": "YES",
           "BURST": "NO",
@@ -3182,7 +3182,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "Due to the raid hosted by many scavengers and rogues, the sewers have been taken over and used as base for them. How selfish. Many pipes were destroyed in the process, pieces of them scattering everywhere, as some decided to take them home. The metal composition it has gives it a strong and tough shell, which can be dangerous for the body, permitting it to possibly fracture a bone or two under the right conditions." }],
-        ["Chaos hammer", { special: true, stats: {
+        ["Chaos hammer", { hidden: true, special: true, stats: {
           "DAMAGE": "60",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3278,7 +3278,7 @@ const PDA_DATA = {
         }, comment: "The customary weapon used against riots by the authorities to stop them in their tracks or to prevent the masses from overwhelming them. Their ability to be agile and deliver hard hitting swings quickly served of great use to them. It worked for the time being, putting injust and loud civilians in their place. However, eventually, the people became stronger, leading to this tool quickly being abandoned since it wasn't keeping up. The Harnicia Police Department and some forces of the government still use it, but their users are designed with the weapon in mind, instead of it being a secondary option." }]
         ],
         3: [
-        ["S-Ampule's Injector", { special: true, stats: {
+        ["S-Ampule's Injector", { hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3406,7 +3406,7 @@ const PDA_DATA = {
           "RANGE": "3",
           "EQUIP TIME": "0.1s"
         }, comment: "The Balisong is a well known self defense weapon, its lightness fitting into anyone's pockets whilst still delivering blows that could scare off attackers. However, as more and more people got their hands on dangerous firearms and improved tools in terms of close quarter combat, this tiny knife became out of date quick. Due to this, it can be a rare sight to see, so maybe take it for yourself if you ever spot it, because it's really cool flipping it around in your hands!" }],
-        ["Dagger", { special: true, stats: {
+        ["Dagger", { hidden: true, special: true, stats: {
           "DAMAGE": "65",
           "DEFENSE BYPASS": "30",
           "AUTO": "YES",
@@ -3474,7 +3474,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "1"
         }, comment: "This axe was used across Europe in Medieval times, both as a tool and weapon. The lower portion of the axe bit is sharp and provides a wide cutting surface for the weapon while keeping its mass relatively low. Due to its mass, some people have used this axe as a dual-wielding weapon too or as a throwable axe, Either way.. people will use whatever technique they can think of if it means you get the successful kill." }],
-        ["Atuned Skewer", { special: true, stats: {
+        ["Atuned Skewer", { hidden: true, special: true, stats: {
           "DAMAGE": "90",
           "DEFENSE BYPASS": "80",
           "AUTO": "NO",
@@ -3502,7 +3502,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "1"
         }, comment: "A pickaxe, these are rare nowadays. Many of them were bought out days prior to the rebellion for the mines in order to start work on a project. This project was never exactly revealed to the public, so it was left as a mystery. Tons were disappointed when finding that they were unable to purchase a utility that is recognized due to D.H because of his background. It is very strong as a weapon though, its sharp edge is more than enough to tear through a limb, which makes up for its heaviness." }],
-        ["Claymore", { special: true, stats: {
+        ["Claymore", { hidden: true, special: true, stats: {
           "DAMAGE": "180",
           "DEFENSE BYPASS": "50",
           "AUTO": "NO",
@@ -3544,7 +3544,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "One of the most important tools in construction work, creating space by boring holes in which can be put bolts that help keep things in place or bring stability to structures. Many scavengers are in search of one, as its special ability of just being able to hold the trigger as the drill spins deeper into the target has a simplicity that many desire. However, it can also penetrate armor, as it slowly creates a hole through it and reaching the vulnerable skin." }],
-        ["P-Ampule's Injector", { special: true, stats: {
+        ["P-Ampule's Injector", { hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3571,7 +3571,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.9s",
           "WEIGHT": "1.25"
         }, comment: "Fire axes have been kept around, despite their original purpose of chopping down trees being entirely scrapped, being another strong, yet rare, weapon. Many scavengers wish to find one, as they believe their power is very, very appealing. Its sharp edge make its swings deadly, as it can easily pierce through flesh, making you bleed heavily in the case that you survived. Due to this, any facility that held them were instructed to make sure these don't get out. However, their count has significantly decreased as many were mysteriously taken, alongside sledgehammers, during the period of a few days." }],
-        ["Spinal-lance", { special: true, stats: {
+        ["Spinal-lance", { hidden: true, special: true, stats: {
           "DAMAGE": "150",
           "DEFENSE BYPASS": "60",
           "AUTO": "NO",
@@ -3584,7 +3584,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "1"
         }, comment: "Sharp and strong lance made from the mudskipper's remains. Commonly used in the maw by survivors around the tunnels of this place. Sometimes, people even elicit a hunt for these creatures in order to sustain themselves. Their strange exposed branches are also used for culinary dishes. When put into boiling water, they will eventually soften down and create delicious strands of meat.. people have described the taste to be similarly to chickens.\n\nWhile their meats are mostly used for day-to-day meals, its tongue seems to have some unique properties.. like being able to penetrate humans with powerful force or to dig deep burrows in the underground. It's quite good as a really durable weapon." }],
-        ["W-Ampule's Injector", { special: true, stats: {
+        ["W-Ampule's Injector", { hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3600,7 +3600,7 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         4: [
-        ["Runes Saber", { special: true, stats: {
+        ["Runes Saber", { hidden: true, special: true, stats: {
           "DAMAGE": "300",
           "DEFENSE BYPASS": "75",
           "AUTO": "NO",
@@ -3641,7 +3641,7 @@ const PDA_DATA = {
         }, comment: "Typically used for medieval times, this weapon still serves large use today (of course, if you find one). The combined power of a spike and an axe can do wonders, run creative with your attacks." }]
         ],
         8: [
-        ["Excalibur?", { special: true, stats: {
+        ["Excalibur?", { hidden: true, special: true, stats: {
           "DAMAGE": "600",
           "DEFENSE BYPASS": "100",
           "AUTO": "NO",
@@ -3698,7 +3698,7 @@ const PDA_DATA = {
           "WEIGHT": "0.25"
         }, comment: "Before the rebellion happened, and eventually settled down, a common medical item sold in clinics was the Aspectic Bandage. Back then, the presence of medical First Aid Kits made this item unnecessary to have, as the kit would already contain three bandages ready to be utilized at any moment. However, in the present, these light bandages can be used quickly to seal a bleeding wound without having to carry an entire kit and take extra time taking the needed item out of it." }],
         ["Skateboard", { comment: "Useful tool for transportation, insanely popular in more urban districts and can be found nearly everywhere! Sadly skateboarding isn't a common practice in lesser urban places. Though, at least for the more fortunate people they get to have tons of skateboards." }],
-        ["Medical Pouch (MP)", { special: true, stats: {
+        ["Medical Pouch (MP)", { hidden: true, special: true, stats: {
           "WEIGHT": "0.5"
         }, comment: "A medical First Aid Kit, usually used for emergenices, now used for wound obtainable and everyone wants one. This kit only comes with bandages to help with bleeding. It's a bit of surprise it doesn't have other tools, especially when it's so necessary in the middle of a whole warzone." }],
         ["Flare Gun", { stats: {
@@ -3798,11 +3798,11 @@ const PDA_DATA = {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "10%"
         }, comment: "A slim vest, nearly comparable to a jacket. It's not much but it'll probably help. Yeah, sorry, it doesn't have pockets." }],
-        ["Skull", { special: true, stats: {
+        ["Skull", { hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "6%"
         }, comment: "A human skull. Not very strong.. but quite durable as a basic armor for what it is. our anatomy are truly fascinating, huh?" }],
-        ["Leather Boots", { special: true, stats: {
+        ["Leather Boots", { hidden: true, special: true, stats: {
           "GEAR TYPE": "LEG WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "Old and worn down leather boots, It is somewhat comfy to wear.." }],
@@ -3814,7 +3814,7 @@ const PDA_DATA = {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "1%"
         }, comment: "Glasses of Sun" }],
-        ["Wicked Skull", { special: true, stats: {
+        ["Wicked Skull", { hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET"
         }, comment: "Fleshy skull. Just looking at it makes me feel uneasy." }],
         ["Skull Balaclava", { stats: {
@@ -3861,11 +3861,11 @@ const PDA_DATA = {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "Wearing this makes you look like you're apart of some sort of gang. Especially if you have a sharp weapon. It's not something very protective, but any extra layer helps to even slightly weaken the impact of damage." }],
-        ["Comedy Mask", { special: true, stats: {
+        ["Comedy Mask", { hidden: true, special: true, stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "A comedy mask, usually worn in theatre plays to represent joy and humor. It was often seen used in traditions of the Helens in the middle ages, where the townspeople will have a masquerade parties in many special occasions, ranging from festivals, birthday, coronation and funeral." }],
-        ["Horned Skull", { special: true, stats: {
+        ["Horned Skull", { hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "Pristine and durable skull with horns. It's noticeably human in appearance, but we obviously do not have these.." }]
@@ -3885,7 +3885,7 @@ const PDA_DATA = {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "Mining Helmet, this is a Mining Helmet. yeah this is a Mining Helmet" }],
-        ["Knight Armour", { special: true, stats: {
+        ["Knight Armour", { hidden: true, special: true, stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "30%",
           "DEFENSE INCREASE": "20%"
@@ -3914,7 +3914,7 @@ const PDA_DATA = {
           "GEAR TYPE": "LEG WEAR",
           "CARRY WEIGHT INCREASE": "0.5"
         }, comment: "A convenient garb equipped with a small bag on your leg. Alot of people uses it to carry their coins and small trinkets in Medieval times, however it was later developed into a gun holster in the Wild west." }],
-        ["Knight Helmet", { special: true, stats: {
+        ["Knight Helmet", { hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "10%",
           "DEFENSE INCREASE": "15%"
