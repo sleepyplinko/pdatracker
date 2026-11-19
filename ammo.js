@@ -621,6 +621,29 @@ const PDA_AMMO = {
      "pen": 0.0,
      "saBypass": 0,
      "trueOnDirect": false
+    },
+    {
+     "name": ".22LR Supermatch",
+     "raw": {
+      "base": "25",
+      "mult": "1x",
+      "spread": "0.6x",
+      "proj": "1",
+      "pen": "0",
+      "fracture": "N0",
+      "bleed": "",
+      "saBypass": "",
+      "ssBypass": "",
+      "weakness": "",
+      "alert": "-0.3"
+     },
+     "base": 25.0,
+     "mult": 1.0,
+     "spreadMult": 0.6,
+     "proj": 1.0,
+     "pen": 0.0,
+     "saBypass": 0.0,
+     "trueOnDirect": false
     }
    ],
    "notes": []
@@ -639,7 +662,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.3",
       "fracture": "NO",
-      "bleed": "",
+      "bleed": "LVL 1",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -662,7 +685,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.7",
       "fracture": "NO",
-      "bleed": "",
+      "bleed": "LVL 1",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -685,7 +708,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.3",
       "fracture": "NO",
-      "bleed": "",
+      "bleed": "LVL 1",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -708,7 +731,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.3",
       "fracture": "NO",
-      "bleed": "",
+      "bleed": "LVL 1",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -731,7 +754,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.3",
       "fracture": "NO",
-      "bleed": "LVL 5",
+      "bleed": "LVL 3",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -762,7 +785,7 @@ const PDA_AMMO = {
       "proj": "1",
       "pen": "0.3",
       "fracture": "NO",
-      "bleed": "",
+      "bleed": "LVL 1",
       "saBypass": "",
       "ssBypass": "",
       "weakness": "",
@@ -1939,10 +1962,10 @@ const PDA_AMMO = {
     {
      "name": ".410 Birdshot",
      "raw": {
-      "base": "16.5",
+      "base": "17",
       "mult": "1x",
       "spread": "1x",
-      "proj": "14",
+      "proj": "15",
       "pen": "0",
       "fracture": "",
       "bleed": "",
@@ -1951,10 +1974,10 @@ const PDA_AMMO = {
       "weakness": "",
       "alert": "0"
      },
-     "base": 16.5,
+     "base": 17.0,
      "mult": 1.0,
      "spreadMult": 1.0,
-     "proj": 14.0,
+     "proj": 15.0,
      "pen": 0.0,
      "saBypass": 0,
      "trueOnDirect": false
@@ -2393,31 +2416,8 @@ const PDA_AMMO = {
      "name": "5.45x39mm 7N22",
      "raw": {
       "base": "52",
-      "mult": "1.2x",
-      "spread": "0.65x",
-      "proj": "1",
-      "pen": "0.8",
-      "fracture": "",
-      "bleed": "",
-      "saBypass": "",
-      "ssBypass": "",
-      "weakness": "",
-      "alert": "0"
-     },
-     "base": 52.0,
-     "mult": 1.2,
-     "spreadMult": 0.65,
-     "proj": 1.0,
-     "pen": 0.8,
-     "saBypass": 0,
-     "trueOnDirect": false
-    },
-    {
-     "name": "5.45x39mm 7N40",
-     "raw": {
-      "base": "52",
       "mult": "1x",
-      "spread": "0.9x",
+      "spread": ".9x",
       "proj": "1",
       "pen": "0.6",
       "fracture": "",
@@ -2432,6 +2432,29 @@ const PDA_AMMO = {
      "spreadMult": 0.9,
      "proj": 1.0,
      "pen": 0.6,
+     "saBypass": 0,
+     "trueOnDirect": false
+    },
+    {
+     "name": "5.45x39mm 7N40",
+     "raw": {
+      "base": "52",
+      "mult": "1.2x",
+      "spread": ".65x",
+      "proj": "1",
+      "pen": "0.8",
+      "fracture": "",
+      "bleed": "",
+      "saBypass": "",
+      "ssBypass": "",
+      "weakness": "",
+      "alert": "0"
+     },
+     "base": 52.0,
+     "mult": 1.2,
+     "spreadMult": 0.65,
+     "proj": 1.0,
+     "pen": 0.8,
      "saBypass": 0,
      "trueOnDirect": false
     },
@@ -2502,6 +2525,29 @@ const PDA_AMMO = {
      "proj": 1.0,
      "pen": 1.0,
      "saBypass": 0,
+     "trueOnDirect": false
+    },
+    {
+     "name": "5.45x39mm BP GS",
+     "raw": {
+      "base": "54",
+      "mult": "1x",
+      "spread": "1x",
+      "proj": "1",
+      "pen": "0.4",
+      "fracture": "",
+      "bleed": "",
+      "saBypass": "",
+      "ssBypass": "",
+      "weakness": "",
+      "alert": "0"
+     },
+     "base": 54.0,
+     "mult": 1.0,
+     "spreadMult": 1.0,
+     "proj": 1.0,
+     "pen": 0.4,
+     "saBypass": 0.0,
      "trueOnDirect": false
     }
    ],
@@ -3382,7 +3428,7 @@ const PDA_AMMO = {
       "fracture": "True",
       "bleed": "LVL 1",
       "saBypass": "0.04",
-      "ssBypass": "",
+      "ssBypass": "1",
       "weakness": "",
       "alert": "0"
      },
@@ -3710,7 +3756,7 @@ const PDA_AMMO = {
       "fracture": "True",
       "bleed": "",
       "saBypass": "0.05",
-      "ssBypass": "1",
+      "ssBypass": "0",
       "weakness": "",
       "alert": ""
      },
@@ -3823,7 +3869,7 @@ const PDA_AMMO = {
       "bleed": "NO",
       "saBypass": "0.15",
       "ssBypass": "4",
-      "weakness": "True",
+      "statuses": "Weakness (10s)",
       "alert": "-0.5"
      },
      "base": 200.0,
@@ -3847,7 +3893,7 @@ const PDA_AMMO = {
       "bleed": "LVL2",
       "saBypass": "0.2",
       "ssBypass": "3",
-      "weakness": "True",
+      "statuses": "Weakness (10s)",
       "alert": "0"
      },
      "base": 200.0,
@@ -3871,7 +3917,7 @@ const PDA_AMMO = {
       "bleed": "LVL2",
       "saBypass": "0.15",
       "ssBypass": "3",
-      "weakness": "True",
+      "statuses": "Weakness (10s)",
       "alert": "0"
      },
      "base": 200.0,
@@ -3895,7 +3941,7 @@ const PDA_AMMO = {
       "bleed": "NO",
       "saBypass": "0.25",
       "ssBypass": "6",
-      "weakness": "True",
+      "statuses": "Weakness (10s)",
       "alert": "0"
      },
      "base": 200.0,
@@ -4428,7 +4474,7 @@ const PDA_AMMO = {
       "pen": "0.7",
       "shieldPierce": "",
       "fracture": "True",
-      "bleed": "",
+      "bleed": "1",
       "saBypass": "",
       "ssBypass": "",
       "statuses": "",
@@ -4558,7 +4604,7 @@ const PDA_AMMO = {
       "bleed": "LVL 5",
       "saBypass": "0.5",
       "ssBypass": "5",
-      "statuses": "True",
+      "statuses": "Enervated (10s), Weakness (30s), Stun (10s)",
       "alert": "0"
      },
      "base": 350.0,
@@ -4581,7 +4627,7 @@ const PDA_AMMO = {
       "bleed": "LVL 5",
       "saBypass": "0.5",
       "ssBypass": "5",
-      "statuses": "True",
+      "statuses": "Enervated (10s), Weakness (30s), Stun (10s)",
       "alert": "0"
      },
      "base": 350.0,
@@ -4604,7 +4650,7 @@ const PDA_AMMO = {
       "bleed": "LVL 5",
       "saBypass": "0.5",
       "ssBypass": "5",
-      "statuses": "True",
+      "statuses": "Enervated (10s), Weakness (30s), Stun (10s)",
       "alert": "0"
      },
      "base": 350.0,
@@ -4627,7 +4673,7 @@ const PDA_AMMO = {
       "bleed": "LVL 5",
       "saBypass": "1",
       "ssBypass": "10",
-      "statuses": "True",
+      "statuses": "Enervated (10s), Weakness (30s), Stun (10s)",
       "alert": "0"
      },
      "base": 350.0,
@@ -4636,6 +4682,29 @@ const PDA_AMMO = {
      "proj": 1.0,
      "pen": 1.0,
      "saBypass": 1.0,
+     "trueOnDirect": false
+    },
+    {
+     "name": ".50 BMG BALL M2",
+     "raw": {
+      "base": "350",
+      "mult": "1.3x",
+      "spread": "1.3x",
+      "proj": "1",
+      "pen": "0.5",
+      "fracture": "True",
+      "bleed": "LVL 5",
+      "saBypass": "0.5",
+      "ssBypass": "5",
+      "statuses": "Enervated (10s), Weakness (30s), Stun (10s)",
+      "alert": "0"
+     },
+     "base": 350.0,
+     "mult": 1.3,
+     "spreadMult": 1.3,
+     "proj": 1.0,
+     "pen": 0.5,
+     "saBypass": 0.5,
      "trueOnDirect": false
     }
    ],
