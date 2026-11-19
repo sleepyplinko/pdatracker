@@ -1196,3 +1196,24 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 
 .dpre { margin: 2px 0 8px; padding: 6px 8px; border-left: 3px solid #c8a0ff; background: #c8a0ff14; }
 .dpregrid { grid-template-columns: minmax(0, 1fr); }
+.mappage { display: flex; flex-direction: column; gap: 8px; }
+.maptools { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.maptools .mini-btn.on { background: #ffd23f; color: #000; }
+.mapwrap { position: relative; }
+.mapview { position: relative; height: min(68vh, 640px); overflow: hidden; background: #050505; border: 1px solid #3a3a3a; cursor: grab; touch-action: none; user-select: none; }
+.mapview:active { cursor: grabbing; }
+.mapview.placing { cursor: crosshair; }
+.mapinner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.mapinner img { display: block; max-width: none; width: auto; height: auto; pointer-events: none; }
+.mappin { position: absolute; transform: translate(-50%, -100%) scale(var(--iz, 1)); transform-origin: 50% 100%; background: none; border: 0; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+.mappin i { width: 16px; height: 16px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--pc); border: 2px solid #000; box-shadow: 0 1px 4px #000a; }
+.mappin span { margin-top: 2px; font-size: 12px; font-weight: 700; color: #fff; background: #000c; padding: 0 4px; white-space: nowrap; display: none; }
+.mappin:hover span, .mappin.on span { display: block; }
+.mappin.on i { outline: 2px solid #fff; }
+.mappin.ghost { pointer-events: none; opacity: .8; }
+.mappop { position: absolute; right: 10px; top: 10px; width: min(320px, calc(100% - 20px)); max-height: calc(100% - 20px); overflow: auto; background: #111e; border: 1px solid #555; padding: 10px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.mappop p { margin: 0; }
+.mapform textarea, .mapform input:not([type=color]) { width: 100%; }
+.maplist { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+.maplist .mini-btn i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.mapq { width: 180px; }
