@@ -1458,7 +1458,7 @@
   });
 
   const AMMO = (typeof PDA_AMMO === "object" && PDA_AMMO) || { groups: [] };
-  const CAL_ALIAS = { "5 KG BIO-SLUG": ["8x25mm / .50 BC / Bio-slug", "5 KG-Somafluid Slug"] };
+  const CAL_ALIAS = { "5 KG BIO-SLUG": ["8x25mm / .50 BC / Bio-slug", "5 KG-Somafluid Slug"], "Rocket": ["Anti-personnel rocket"], "6.8x51mm": ["6.8x51mm SIG"] };
 
   const AMMO_ORIG = JSON.parse(JSON.stringify(AMMO.groups));
   const AMMO_KEYS = [["base", "BASE DAMAGE"], ["mult", "DAMAGE MULT"], ["spread", "SPREAD MULT"], ["proj", "# OF PROJECTILES"], ["pen", "ARMOR PEN"], ["shieldPierce", "SHIELD PIERCING"], ["fracture", "FRACTURE"], ["bleed", "CAUSES BLEED"], ["saBypass", "SUPER ARMOR BYPASS"], ["ssBypass", "SUPERSHIELD BYPASS"], ["weakness", "CAUSES WEAKNESS"], ["statuses", "STATUSES"], ["alert", "ALERT RADIUS MULT"]];
