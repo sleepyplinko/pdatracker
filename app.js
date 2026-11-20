@@ -395,10 +395,11 @@
   });
 
   function imagesOf(...objs) {
+    const own = objs.find(o => o && (o.picCred || o.picTip)) || {};
     for (const o of objs) {
       if (!o) continue;
       const list = o.imgs || (o.img ? [o.img] : null);
-      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "", cred: o.picCred || null, tip: o.picTip || "" }));
+      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "", cred: own.picCred || null, tip: own.picTip || "" }));
     }
     return [];
   }
@@ -412,7 +413,7 @@
     if (!imgs.length) return fallback;
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
-    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" title="${esc(im.tip || "Click to enlarge")}" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
+    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" ${im.tip || im.caption ? `data-tip="${esc(im.tip || im.caption)}"` : `title="Click to enlarge"`}>` +
            (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "") + creditHTML(im);
   }
   function arrowsHTML(imgs) {
