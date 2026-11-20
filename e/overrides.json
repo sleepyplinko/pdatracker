@@ -1,7 +1,32 @@
 {
+ "b|scavengers|tony": {
+  "desc": "tony himself is not very recognized by anyone, having completed no major achievement for such possibilities. he is more overshadowed by his older brother, who plays in a rather popular rock band. unfortunate for him... i wouldn't blame you if you didn't know him either.\n\nhowever, tony doesn't let that be an issue. he has a lot of connections, despite his arrogant attitude. most notably is his friendship with ms. doe, a well known great sharpshooter. i think everyone knows her, no need to detail anything. though seemingly, they have been interacting less as of recently.\n\nhe goes around districts, competing in golfing contests. though only at the middle point of his career, he's been starting to gather up significant wins, unlike before. he was a bit laughed at when he started, losing a lot, but i think that's how it is when you're new to something.\n\nhe is trying to make a name for himself in the golfing industry, using his trusty golf club given to him by his father. not bad at all i'd say, jealous of him even.",
+  "stats": {
+   "_PICTIP": "LOL"
+  },
+  "updated": 1795200676
+ },
  "d|@manual|text": {
-  "desc": "== ABOUT ==\nFan-made. Not affiliated with the game. ??? means the name isn't known yet.\n# Is the site VibeCoded? (Coded with AI)\nYes. Sorry if there's any issues with the site due to that.\n# Will this site get updated?\nProbably, I made it as there's no other tools to do this currently, as long as that remains true, I will continue to push updates to it.\n== GUIDE ==\n# Mark something found\nPress the star on it. Shift + star marks a range.\n# Mark a lot at once\nClick a TIER bar, or the tab you're on.\n# Undo\nCtrl+Z, or UNDO on the message at the bottom.\n# See what's missing\nMISSING next to search, or the WHAT'S LEFT tab.\n# Stats\nClick an entry. Cards with variants count as one find.\n# Search\nNames or stats, like \"9x19mm\" or \"tier 5\". ENTER marks the top result.\n# Keep going\nFOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.\n# Compare weapons\nCOMPARE + on up to 3 weapons, then VIEW.\n# Share\nLINK copies a link to a page. CLOUD has a link to your whole PDA.\n# Don't lose progress\nIt's saved in this browser only. Back it up in CLOUD.\n# Send info\nSUBMIT, or FIX? on any page. No account needed.\n== KEYS ==\n- ARROWS - MOVE\n- SPACE - MARK\n- ENTER - OPEN\n- CTRL + Z - UNDO\n- / - SEARCH\n- ESC - BACK",
-  "updated": 1795090447
+  "desc": "== ABOUT ==\nFan-made. Not affiliated with the game.\n# Is the site VibeCoded? (Coded with AI)\nYes. Sorry if there's any issues with the site due to that, I didn't expect people to even find this site to be honest.\n# Will this site get updated?\nI will continue to try to push updates to it unless there's other tools like this. I \"made\" this simply as there was no other tools, and it bothered me.\n# Where can I send criticism?\nIn the submit section, just make it apparent in your note its not about a specific submission please.\n== GUIDE ==\n# Mark something found\nPress the star on it. Shift + star marks a range.\n# Mark a lot at once\nClick a TIER bar, or the tab you're on.\n# Undo\nCtrl+Z, or UNDO on the message at the bottom.\n# See what's missing\nMISSING next to search, or the WHAT'S LEFT tab.\n# Stats\nClick an entry. Cards with variants count as one find.\n# Search\nNames or stats, like \"9x19mm\" or \"tier 5\". ENTER marks the top result.\n# Keep going\nFOUND + NEXT (N) marks and opens the next missing one. NEXT MISSING (M) skips.\n# Compare weapons\nCOMPARE + on up to 3 weapons, then VIEW.\n# Share\nLINK copies a link to a page. CLOUD has a link to your whole PDA.\n# Don't lose progress\nIt's saved in this browser only. Back it up in CLOUD.\n# Send info\nSUBMIT, or FIX? on any page. No account needed.\n== KEYS ==\n- ARROWS - MOVE\n- SPACE - MARK\n- ENTER - OPEN\n- CTRL + Z - UNDO\n- / - SEARCH\n- ESC - BACK",
+  "updated": 1795201963
+ },
+ "d|@map|main": {
+  "desc": "https://cdn.discordapp.com/attachments/1511775912427913466/1527610585716359219/OANC_MAP_u2v3_2.png?ex=6b001539&is=6afec3b9&hm=d7c520f6e4eeade73e194d04995a8644cd28d586c398f7a499d88b6b843a1879&",
+  "stats": {
+   "_PUBLIC": "NO"
+  },
+  "updated": 1795118263
+ },
+ "d|@pin|mwnz2nmde13f": {
+  "desc": "fff",
+  "stats": {
+   "_X": "39.23",
+   "_Y": "37.63",
+   "_LABEL": "Civ Storage",
+   "_ENTRY": "",
+   "_COLOR": "#ffd23f"
+  },
+  "updated": 1795118282
  },
  "t|bludgeon|garden gnome": {
   "comment": "I have no idea how this is utilized as anything, it's merely a decoration. Though, it's worth noting that some people really love this thing. So much so it got banned once, only for it to come back away. Some yellow dude and a dude who was popular for 'tutorials' were apart of that group. Examining it a little closer you can see specks of space dust.",
