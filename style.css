@@ -1217,3 +1217,7 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .maplist { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
 .maplist .mini-btn i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 .mapq { width: 180px; }
+
+.helpw.helpoff > summary { opacity: .55; }
+.helpw summary .mini-btn { margin-left: 8px; }
+.helpadmin .dform { padding: 8px; }
