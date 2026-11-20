@@ -1,5 +1,7 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-20", items: [
+    "LOADOUT tab removed; weight calculator now on CALCULATOR",
+    "DAMAGE renamed CALCULATOR",
     "Top bar looks like the game",
     "Picture hover text shows right away",
     "ADMIN: edit HELP WANTED",

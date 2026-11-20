@@ -464,12 +464,13 @@
   document.addEventListener("click", e => { if (e.target.closest("#installBtn, [data-install]")) doInstall(); });
 
   const TABS = ["profile", "cloud", "manual", "settings", "tools", "biography", "documents", "missing", "loadout", "damage", "community", "admin"];
-  const TAB_LABEL = { map: "MAP", missing: "CHECKLIST", community: "SUBMIT", damage: "DAMAGE", admin: "ADMIN" };
+  const TAB_LABEL = { map: "MAP", missing: "CHECKLIST", community: "SUBMIT", damage: "CALCULATOR", admin: "ADMIN" };
 
-  const TOP_TABS = ["tools", "biography", "documents", ...CUSTOM_TABS.map(t => "x:" + t.key), "missing", "loadout", "damage"];
+  const TOP_TABS = ["tools", "biography", "documents", ...CUSTOM_TABS.map(t => "x:" + t.key), "missing", "damage"];
   const tabOf = key => CUSTOM_TABS.find(t => t.key === key);
   CUSTOM_TABS.forEach(t => { TAB_LABEL["x:" + t.key] = t.name.toUpperCase(); });
   if (/^x:/.test(ui.tab) && !tabOf(ui.tab.slice(2))) ui.tab = "documents";
+  if (ui.tab === "loadout") ui.tab = "damage";
   const docTab = () => ui.tab === "documents" ? "" : /^x:/.test(ui.tab) ? ui.tab.slice(2) : null;
   const docGroups = tab => PDA_DATA.documents.map((g, i) => [g, i]).filter(([g]) => (g.tab || "") === tab);
   let BOTTOM_TABS = ["profile", "cloud", "manual", "settings", "community"];
@@ -713,7 +714,7 @@
     if (query) return renderSearch();
     if (sinceView) return renderSince();
     (({ profile: renderProfile, cloud: renderCloud, manual: renderManual, settings: renderSettings,
-       tools: renderTools, biography: renderBio, documents: () => renderDocs(""), missing: renderMissing, loadout: renderLoadout, damage: renderDamage, map: renderMap, community: renderCommunity, admin: renderAdmin })[ui.tab] || (() => renderDocs(ui.tab.slice(2))))();
+       tools: renderTools, biography: renderBio, documents: () => renderDocs(""), missing: renderMissing, damage: renderDamage, map: renderMap, community: renderCommunity, admin: renderAdmin })[ui.tab] || (() => renderDocs(ui.tab.slice(2))))();
   }
 
   function badges(e) {
@@ -1758,6 +1759,7 @@
         ${bestTable(A, "", `Loadout A: best ammo against ${esc(tgtLabel)}`)}${bestTable(B, "b.", `Loadout B: best ammo against ${esc(tgtLabel)}`)}`
       : `<div class="dgrid">${attackerBox(A, "", P ? "Then finish with" : "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
+      ${weightCalcHTML()}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
       <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits; against shotguns it blocks single pellets and the rest of the blast still hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a> by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord).</p>
@@ -1787,7 +1789,9 @@
     });
     return out;
   }
-  function renderLoadout() {
+  let wcOpen = false;
+  document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".wcalc")) wcOpen = e.target.open; }, true);
+  function weightCalcHTML() {
     const onlyFound = !!ui.loadFound;
     const pool = allTools().filter(e => !e.unknown && (!onlyFound || isFound(e.id)));
     const pickItems = PDA_DATA.tools.flatMap(c => sortEntries(pool.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id),
@@ -1811,10 +1815,10 @@
     }).join("");
     const sumHTML = LOAD_SUMS.filter(k => sums[k] != null).map(k =>
       `<div class="stat"><i style="color:${TOOL_STAT_COLORS[k] || "#ddd"}">TOTAL ${esc(k)}</i>: ${fmtN(sums[k])}${k.includes("DEFENSE") || k.includes("SHIELD") ? "%" : ""}</div>`).join("");
-    screen.innerHTML = `<div class="results loadout">
-      <div class="leftsum"><b>LOADOUT</b> · carry anything, as much as you like
+    return `<details class="helpw wcalc"${wcOpen ? " open" : ""}><summary>WEIGHT CALCULATOR <small>${items.length ? `${fmtN(used)}${cap != null ? " / " + fmtN(cap) : ""} wt` : "carry weight"}</small></summary><div class="loadout">
+      <div class="leftsum">Add anything to see if it fits.
         <span class="leftbtns"><label class="lfound"><input type="checkbox" data-lfound${onlyFound ? " checked" : ""}> ONLY WHAT I'VE FOUND</label><button class="mini-btn" data-lcopy>COPY AS TEXT</button><button class="mini-btn" data-lclear>CLEAR</button></span></div>
-      <div class="ladd">${pickerHTML("load", { items: pickItems, keepOpen: true, label: "Add to loadout", placeholder: "Type to add: ak74, plate carrier, fak…  (Enter adds, keeps open for more)", onPick: v => loadoutAdd(v) })}</div>
+      <div class="ladd">${pickerHTML("load", { items: pickItems, keepOpen: true, label: "Add to weight calculator", placeholder: "Type to add: ak74, plate carrier, fak…  (Enter adds, keeps open for more)", onPick: v => loadoutAdd(v) })}</div>
       <div class="dbox lspace${over ? " over" : ""}"><div class="dhead">Space</div><div class="stats">
         <label class="lbase">BASE CARRY WEIGHT <input type="number" step="any" min="0" data-lbase value="${esc(fmtN(baseCarry()))}" title="Everyone starts with ${BASE_CARRY}"></label>
         <div class="lbar"><div style="width:${pct}%"></div></div>
@@ -1824,7 +1828,7 @@
       </div></div>
       <div class="llist">${rows || '<p class="none">Nothing yet. Add something above.</p>'}</div>
       <p class="cat-note">Totals are the PDA's numbers added up. The game may stack some differently.</p>
-    </div>`;
+    </div></details>`;
   }
   function loadoutAdd(id) {
     if (!byId.has(id)) return;
@@ -1834,7 +1838,7 @@
   }
   function loadoutText() {
     const sums = loadoutSums(), cap = baseCarry() + (sums["CARRY WEIGHT INCREASE"] || 0);
-    return `PDA LOADOUT${user ? " — " + user : ""}\n` + loadItems().map(([e, n]) => `${n > 1 ? n + "x " : ""}${e.name} (Tier ${e.tier})`).join("\n") +
+    return `WEIGHT CALCULATOR${user ? " — " + user : ""}\n` + loadItems().map(([e, n]) => `${n > 1 ? n + "x " : ""}${e.name} (Tier ${e.tier})`).join("\n") +
       `\n\nWEIGHT: ${fmtN(sums.WEIGHT)}${cap != null ? " / " + fmtN(cap) : ""}` +
       LOAD_SUMS.filter(k => sums[k] != null).map(k => `\nTOTAL ${k}: ${fmtN(sums[k])}`).join("");
   }
@@ -2758,7 +2762,7 @@
     { h: "Search", tab: "tools", el: () => $("#search"), p: "Type a name and press <b>ENTER</b> to mark it found." },
     { h: "On a page", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>FOUND + NEXT</b> marks this and opens the next one you're missing." },
     { h: "Checklist", tab: "missing", el: near("[data-random]", "div"), p: "Everything you still need, in one list." },
-    { h: "Damage", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, ammo and target to see hits to kill." },
+    { h: "Calculator", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, ammo and target to see hits to kill." },
     { h: "Save your progress", tab: "cloud", el: near("#exp", "div"), p: "Progress is stored in this browser only. Download a backup, or use a transfer link to move it to another device." },
     { h: "Done", p: "<b>Ctrl+Z</b> undoes a mistake. Replay this tour in <b>SETTINGS</b>." }
   ];
@@ -3598,8 +3602,8 @@ Built with AI (Claude).`;
     { const b = t.closest("[data-admdel]"); if (b) { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "SURE?"; play("warn"); return; } api("DELETE", "/api/admin/submissions/" + b.dataset.admdel).then(() => { play("unmarked"); loadAdmin(); }); return; } }
     if (t.closest("[data-copyrun]")) { play("click"); const txt = sessionText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("This run's finds copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-newrun]")) { sessionStart = { f: countOf(entries)[0], t: Date.now(), ids: Object.keys(found) }; try { sessionStorage.setItem("pda-session-" + PROF.active, JSON.stringify(sessionStart)); } catch {} play("confirm"); toast("New run started."); keepScroll(render); return; }
-    if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("unmarked"); render(); toast("Loadout cleared."); } return; }
-    if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Loadout copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
+    if (t.closest("[data-lclear]")) { if (loadout.items.length) { loadout.items = []; saveLoad(); play("unmarked"); render(); toast("Cleared."); } return; }
+    if (t.closest("[data-lcopy]")) { play("click"); const txt = loadoutText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Copied.")).catch(() => toast(txt, { ms: 12000 })); return; }
     if (t.closest("[data-copylist]")) { play("click"); const txt = missingText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Missing list copied.")).catch(() => toast("Couldn't copy. Try PRINT instead.")); return; }
     if (t.closest("[data-printlist]")) { play("click"); printList(); return; }
     const cmpb = t.closest("[data-cmp]");
