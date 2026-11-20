@@ -398,12 +398,13 @@
     for (const o of objs) {
       if (!o) continue;
       const list = o.imgs || (o.img ? [o.img] : null);
-      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "" }));
+      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "", cred: o.picCred || null, tip: o.picTip || "" }));
     }
     return [];
   }
   const PIC_CREDITS = { wiki: { name: "Once A Normal City Wiki", short: "OANC WIKI", url: "https://once-a-normal-city-roblox.fandom.com/wiki/Guns" } };
-  const creditHTML = im => { const c = PIC_CREDITS[im.credit]; return c ? `<a class="imgcredit" href="${esc(c.url)}" target="_blank" rel="noopener" title="Picture from the ${esc(c.name)} (Fandom)">PIC: ${esc(c.short)}</a>` : ""; };
+  const creditHTML = im => { if (im.cred) return im.cred.url ? `<a class="imgcredit" href="${esc(im.cred.url)}" target="_blank" rel="noopener" title="Picture: ${esc(im.cred.text)}">PIC: ${esc(im.cred.text.toUpperCase())}</a>` : `<span class="imgcredit" title="Picture: ${esc(im.cred.text)}">PIC: ${esc(im.cred.text.toUpperCase())}</span>`;
+    const c = PIC_CREDITS[im.credit]; return c ? `<a class="imgcredit" href="${esc(c.url)}" target="_blank" rel="noopener" title="Picture from the ${esc(c.name)} (Fandom)">PIC: ${esc(c.short)}</a>` : ""; };
   let imgIndex = 0;
   let curImgs = [];
   function previewHTML(imgs, fallback) {
@@ -411,7 +412,7 @@
     if (!imgs.length) return fallback;
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
-    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" title="Click to enlarge" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
+    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" title="${esc(im.tip || "Click to enlarge")}" ${im.caption ? `data-tip="${esc(im.caption)}"` : ""}>` +
            (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "") + creditHTML(im);
   }
   function arrowsHTML(imgs) {
@@ -2258,14 +2259,18 @@
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow", "picCred", "picTip"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
       if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
+      origInfo.set(e, { picCred: e.picCred, picTip: e.picTip, hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = os.HIDDEN !== "NO"; delete os.HIDDEN; }
-      const sty = os._STYLE, glow = os._GLOW === "YES"; Object.keys(os).forEach(k => { if (k[0] === "_") delete os[k]; });
+      const sty = os._STYLE, glow = os._GLOW === "YES";
+      delete e.picCred; delete e.picTip;
+      if (os._PICCREDIT) e.picCred = { text: os._PICCREDIT, url: /^https?:\/\//i.test(os._PICLINK || "") ? os._PICLINK : "" };
+      if (os._PICTIP) e.picTip = os._PICTIP;
+      Object.keys(os).forEach(k => { if (k[0] === "_") delete os[k]; });
       if (sty) {
         delete e.special; delete e.gold; delete e.ecolor; delete e.eglow;
         const tool = e.section === "tools";
@@ -2568,6 +2573,9 @@
         ${(() => { const cur = e.special ? "red" : e.gold ? "gold" : e.ecolor === "#ff3a3a" && e.eglow ? "red" : e.ecolor === "#f0c060" && !e.eglow ? "gold" : e.ecolor ? "custom" : "";
           return `<label>COLOUR <small>how the tile looks once found</small></label><div class="colrow"><select id="admStyle">${[["", "Normal"], ["red", "Red, glowing"], ["gold", "Gold"], ["custom", "Custom"]].map(([v, n]) => `<option value="${v}"${v === cur ? " selected" : ""}>${n}</option>`).join("")}</select>
           <span id="admCustom"${cur === "custom" ? "" : " hidden"}><input type="color" id="admColor" value="${esc(e.ecolor || "#7ad7ff")}"> <label class="chk"><input type="checkbox" id="admGlow"${e.eglow ? " checked" : ""}> GLOW</label></span></div>`; })()}
+        <div class="frow"><label class="grow">PICTURE CREDIT <small>shows as PIC: … on the picture</small><input id="admPicCred" maxlength="60" value="${esc((e.picCred || {}).text || "")}" placeholder="${e.picCredit ? "OANC Wiki (default)" : "e.g. YourName"}"></label>
+          <label class="grow">CREDIT LINK <small>optional</small><input id="admPicLink" maxlength="120" value="${esc((e.picCred || {}).url || "")}" placeholder="https://"></label></div>
+        <label>PICTURE HOVER TEXT <small>shown when you hover the picture; blank = "Click to enlarge"</small><input id="admPicTip" maxlength="120" value="${esc(e.picTip || "")}"></label>
         <div class="btnrow"><button class="pbtn" id="admPublish">PUBLISH${ed.sub ? " + MARK DONE" : ""}</button>${pub ? '<button class="pbtn danger" id="admUnpub">REMOVE PUBLISHED INFO</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
@@ -2620,6 +2628,9 @@
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
+      { const c = $("#admPicCred").value.trim(), l = $("#admPicLink").value.trim(), tp = $("#admPicTip").value.trim();
+        if (l && !/^https?:\/\/\S+$/i.test(l)) { toast("The credit link needs to start with https://"); play("warn"); return; }
+        if (c || tp) data.stats = { ...(data.stats || {}), ...(c ? { _PICCREDIT: c, ...(l ? { _PICLINK: l } : {}) } : {}), ...(tp ? { _PICTIP: tp } : {}) }; }
       { const h0 = (origInfo.has(e) ? origInfo.get(e) : e).hidden, h = $("#admHidden").checked; if (h !== !!h0) data.stats = { ...(data.stats || {}), HIDDEN: h ? "YES" : "NO" }; }
       { const o0 = origInfo.has(e) ? origInfo.get(e) : e, base = o0.special ? "red" : o0.gold ? "gold" : "", v = $("#admStyle").value;
         if (v === "custom") data.stats = { ...(data.stats || {}), _STYLE: $("#admColor").value, ...($("#admGlow").checked ? { _GLOW: "YES" } : {}) };
@@ -3131,7 +3142,7 @@
   let formMsg = null;
   function contribHTML() {
     const names = [...new Set(entries.filter(e => !e.unknown).map(e => e.name))].sort(collator.compare);
-    const kinds = ["Description", "Stats", "Picture", "Missing entry", "Wrong info", "Site bug", "Idea"];
+    const kinds = ["Description", "Stats", "Picture", "Missing entry", "Wrong info", "Site bug", "Idea", "Other"];
     return `<form class="contrib" autocomplete="off" novalidate>
       <p>Send missing info or a better picture.${formLive() ? " No account needed." : " (Opens GitHub, which needs an account.)"}</p>
       <div class="frow"><label>WHAT IS IT?<select name="ckind">${kinds.map(k => `<option${k === draft.kind ? " selected" : ""}>${k}</option>`).join("")}</select></label>
@@ -3150,23 +3161,38 @@
     const bios = entries.filter(e => e.section === "bio" && !e.unknown);
     const mem = e => (e.card && e.card.members && e.card.members.length) ? e.card.members : [e];
     const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
-    const noPic = bios.filter(e => !mem(e).some(m => imagesOf(m).length) && !imagesOf(e, e.card).length);
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
     const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);
     const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !DOC_DESC[e.name] && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
-    return [["UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
-            ["WEAPONS MISSING THEIR WEIGHT", noWeight, "weight", "Stats"], ["PEOPLE WITH NO DESCRIPTION", noDesc, "description", "Description"],
-            ["PEOPLE WITH NO PICTURE", noPic, "picture", "Picture"], ["PEOPLE WITH NO STATS", noStats, "stats", "Stats"],
-            ["DOCUMENTS WITH NO PICTURE OR TEXT", docs, "picture or text", "Picture"]].filter(([, l]) => l.length);
+    const hc = helpCfg(), skip = new Set(hc.skip);
+    return [["unknown", "UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["tools", "WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
+            ["weight", "WEAPONS MISSING THEIR WEIGHT", noWeight, "weight", "Stats"], ["desc", "PEOPLE WITH NO DESCRIPTION", noDesc, "description", "Description"],
+            ["stats", "PEOPLE WITH NO STATS", noStats, "stats", "Stats"],
+            ["docs", "DOCUMENTS WITH NO PICTURE OR TEXT", docs, "picture or text", "Picture"]]
+      .map(([k, t, l, w, kind]) => [k, t, l.filter(e => !skip.has(e.id)), w, kind]).filter(([k, , l]) => l.length && (amAdmin() || !hc.off.includes(k)));
+  }
+  const HELP_ID = "d|@help|cfg";
+  const helpCfg = () => { try { const j = JSON.parse((overrides[HELP_ID] || {}).desc || "{}"); return { off: Array.isArray(j.off) ? j.off : [], skip: Array.isArray(j.skip) ? j.skip : [], extra: typeof j.extra === "string" ? j.extra : "" }; } catch { return { off: [], skip: [], extra: "" }; } };
+  async function saveHelpCfg(cfg, msg) {
+    const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(HELP_ID), { data: { desc: JSON.stringify(cfg) }, what: "help wanted" }).catch(() => [0, {}]);
+    if (st !== 200) { toast(r.error || "Couldn't save."); play("warn"); return false; }
+    overrides[HELP_ID] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); play("confirm"); if (msg) toast(msg); keepScroll(render); return true;
   }
   function helpHTML() {
-    const groups = helpWanted();
-    if (!groups.length) return "";
+    const groups = helpWanted(), hc = helpCfg(), admin = amAdmin();
+    const extra = hc.extra.split("\n").map(l => l.trim()).filter(Boolean);
+    if (!groups.length && !extra.length && !admin) return "";
     return `<h3>-=-=- HELP WANTED -=-=-</h3>
       <p class="cat-note">Missing info. Have it? Press SEND.</p>
-      ${groups.map(([title, list, what, kind]) => `<details class="helpw"><summary>${esc(title)} <small>${list.length}</small></summary><div class="helplist">${sortEntries(list).map(e =>
-        `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></div>`).join("")}</div></details>`).join("")}`;
+      ${extra.length ? `<details class="helpw" open><summary>REQUESTS <small>${extra.length}</small></summary><div class="helplist">${extra.map(l => `<div class="helprow"><span>${esc(l)}</span><span></span><button class="mini-btn" data-helpreq="${esc(l)}">SEND</button></div>`).join("")}</div></details>` : ""}
+      ${groups.map(([key, title, list, what, kind]) => { const off = hc.off.includes(key); return `<details class="helpw${off ? " helpoff" : ""}"><summary>${esc(title)} <small>${list.length}</small>${admin ? `<button class="mini-btn" data-helpgrp="${key}" title="${off ? "Show this list to everyone again" : "Hide this whole list from everyone"}">${off ? "HIDDEN · SHOW" : "HIDE LIST"}</button>` : ""}</summary><div class="helplist">${sortEntries(list).map(e =>
+        `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><span class="frbtns">${admin ? `<button class="mini-btn" data-helpskip="${esc(e.id)}" title="Not needed: take it off this list">✕</button>` : ""}<button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></span></div>`).join("")}</div></details>`; }).join("")}
+      ${admin ? `<details class="helpw helpadmin"><summary>EDIT HELP WANTED <small>admins</small></summary><div class="dform">
+        <label>EXTRA REQUESTS <small>one per line; shows at the top for everyone</small><textarea id="helpExtra" rows="4" maxlength="3000">${esc(hc.extra)}</textarea></label>
+        <div class="btnrow"><button class="pbtn" id="helpExtraGo">SAVE</button></div>
+        ${hc.skip.length ? `<label>TAKEN OFF THE LISTS</label><div class="maplist">${hc.skip.map(id => `<button class="mini-btn" data-helpunskip="${esc(id)}" title="Put it back">${esc((byId.get(id) || { name: id }).name)} ↺</button>`).join("")}</div>` : ""}
+      </div></details>` : ""}`;
   }
   function renderCommunity() {
     const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
@@ -3592,6 +3618,11 @@ Built with AI (Claude).`;
       (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this page copied.")).catch(() => toast(url, { ms: 12000 }));
       return;
     }
+    { const hg = t.closest("[data-helpgrp]"); if (hg && amAdmin()) { ev.preventDefault(); const c = helpCfg(), k = hg.dataset.helpgrp; c.off = c.off.includes(k) ? c.off.filter(x => x !== k) : [...c.off, k]; saveHelpCfg(c, c.off.includes(k) ? "List hidden from everyone." : "List shown again."); return; } }
+    { const hs = t.closest("[data-helpskip]"); if (hs && amAdmin()) { const c = helpCfg(); c.skip = [...new Set([...c.skip, hs.dataset.helpskip])]; saveHelpCfg(c, "Taken off the list."); return; } }
+    { const hu = t.closest("[data-helpunskip]"); if (hu && amAdmin()) { const c = helpCfg(); c.skip = c.skip.filter(x => x !== hu.dataset.helpunskip); saveHelpCfg(c, "Put back."); return; } }
+    if (t.closest("#helpExtraGo") && amAdmin()) { const c = helpCfg(); c.extra = $("#helpExtra").value.trim(); saveHelpCfg(c, "Requests saved."); return; }
+    { const hr = t.closest("[data-helpreq]"); if (hr) { play("click"); draft = Object.assign({}, draft, { entry: "", kind: "Other", text: hr.dataset.helpreq + "\n\n" }); formMsg = null; ui.tab = "community"; persistUI(); render(); const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus(); const f = screen.querySelector(".community"); if (f) f.scrollIntoView(); return; } }
     const sg = t.closest("[data-suggest]");
     if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest), sg.dataset.skind); return; }
     if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }
@@ -3794,7 +3825,8 @@ Built with AI (Claude).`;
   function drawLightbox() {
     const n = curImgs.length; if (!n) return closeLightbox();
     const i = ((imgIndex % n) + n) % n, im = curImgs[i];
-    lb.innerHTML = `<figure><img src="${esc(im.src)}" alt="">${im.caption || PIC_CREDITS[im.credit] ? `<figcaption>${im.caption ? esc(im.caption) : ""}${PIC_CREDITS[im.credit] ? `${im.caption ? " · " : ""}Picture: <a href="${esc(PIC_CREDITS[im.credit].url)}" target="_blank" rel="noopener">${esc(PIC_CREDITS[im.credit].name)}</a>` : ""}</figcaption>` : ""}</figure>
+    const credLine = im.cred ? `Picture: ${im.cred.url ? `<a href="${esc(im.cred.url)}" target="_blank" rel="noopener">${esc(im.cred.text)}</a>` : esc(im.cred.text)}` : PIC_CREDITS[im.credit] ? `Picture: <a href="${esc(PIC_CREDITS[im.credit].url)}" target="_blank" rel="noopener">${esc(PIC_CREDITS[im.credit].name)}</a>` : "";
+    lb.innerHTML = `<figure><img src="${esc(im.src)}" alt="">${im.caption || credLine ? `<figcaption>${im.caption ? esc(im.caption) : ""}${credLine ? `${im.caption ? " · " : ""}${credLine}` : ""}</figcaption>` : ""}</figure>
       ${n > 1 ? `<button class="lbnav prev" data-lb="-1">&#9664;</button><button class="lbnav next" data-lb="1">&#9654;</button><span class="lbcount">${i + 1} / ${n}</span>` : ""}
       <button class="lbclose" data-lb="x">×</button>`;
   }
