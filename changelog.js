@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-20", items: [
+    "Picture hover text shows right away",
     "ADMIN: edit HELP WANTED",
     "ADMIN: picture credit and hover text",
     "HELP WANTED: no more \"no picture\" list",
