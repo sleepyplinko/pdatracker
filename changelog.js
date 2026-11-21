@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-20", items: [
+    "Admins can remove all pictures",
     "Calculator: WC Rocket Launcher and MCX-SPEAR ammo",
     "LOADOUT tab removed; weight calculator now on CALCULATOR",
     "DAMAGE renamed CALCULATOR",
