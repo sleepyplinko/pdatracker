@@ -395,6 +395,7 @@
   });
 
   function imagesOf(...objs) {
+    if (objs[0] && objs[0].noPic) return [];
     const own = objs.find(o => o && (o.picCred || o.picTip)) || {};
     for (const o of objs) {
       if (!o) continue;
@@ -2264,15 +2265,16 @@
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow", "picCred", "picTip"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow", "picCred", "picTip", "noPic"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
       if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { picCred: e.picCred, picTip: e.picTip, hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
+      origInfo.set(e, { noPic: e.noPic, picCred: e.picCred, picTip: e.picTip, hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = os.HIDDEN !== "NO"; delete os.HIDDEN; }
       const sty = os._STYLE, glow = os._GLOW === "YES";
-      delete e.picCred; delete e.picTip;
+      delete e.picCred; delete e.picTip; delete e.noPic;
+      if (os._NOPIC === "YES") { e.noPic = true; delete e.img; delete e.imgs; if (e.isCard && e.card) e.card.img = ""; }
       if (os._PICCREDIT) e.picCred = { text: os._PICCREDIT, url: /^https?:\/\//i.test(os._PICLINK || "") ? os._PICLINK : "" };
       if (os._PICTIP) e.picTip = os._PICTIP;
       Object.keys(os).forEach(k => { if (k[0] === "_") delete os[k]; });
@@ -2631,6 +2633,7 @@
         if (ims.some(u => !/^(https?:\/\/|images\/)/.test(u))) { toast("Picture links have to start with https://"); play("warn"); return; }
         const orig = imagesOf(origInfo.has(e) ? { img: origInfo.get(e).img, imgs: origInfo.get(e).imgs } : e).map(x => x.src);
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
+        if (!ims.length && orig.length) data.stats = { ...(data.stats || {}), _NOPIC: "YES" };
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
       { const c = $("#admPicCred").value.trim(), l = $("#admPicLink").value.trim(), tp = $("#admPicTip").value.trim();
