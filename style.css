@@ -460,6 +460,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--cyan);
 .manual h4 { margin: 14px 0 4px; font-size: 22px; font-style: italic; font-weight: 500; }
 .manual p { margin: 0 auto 6px; max-width: 80ch; font-size: 14px; font-style: italic; }
 .manual .k { font-size: 18px; font-style: italic; margin: 6px 0; letter-spacing: .03em; }
+.manual a { color: #9ad0ff; text-decoration: underline; word-break: break-word; }
+.manual a:hover { color: #fff; }
 
 .settings { height: 100%; overflow-y: auto; border: 1px solid #555; }
 .settings h3 { margin: 0; padding: 5px 10px; font-size: 18px; font-weight: 700; background: rgba(40,40,40,.9); border-bottom: 1px solid #444; }

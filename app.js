@@ -3369,12 +3369,22 @@ SUBMIT, or FIX? on any page. No account needed.
 Fan-made. Not affiliated with the game. ??? means the name isn't known yet.
 Built with AI (Claude).`;
   const manualText = () => { const o = overrides[MANUAL_ID]; return o && typeof o.desc === "string" && o.desc.trim() ? o.desc : MANUAL_DEFAULT; };
+  const manLinks = s => {
+    const re = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"]+[^\s<>".,;:!?)])/g;
+    let out = "", i = 0, m;
+    while ((m = re.exec(s))) {
+      const url = m[2] || m[3];
+      out += esc(s.slice(i, m.index)) + `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(m[1] || url)}</a>`;
+      i = re.lastIndex;
+    }
+    return out + esc(s.slice(i));
+  };
   const manualHTML = t => t.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
     let m;
-    if ((m = l.match(/^==\s*(.+?)\s*==$/))) return `<h3>-=-=- ${esc(m[1])} -=-=-</h3>`;
-    if ((m = l.match(/^#\s*(.+)$/))) return `<h4>${esc(m[1])}</h4>`;
-    if ((m = l.match(/^-\s+(.+)$/))) return `<div class="k">${esc(m[1])}</div>`;
-    return `<p>${esc(l)}</p>`;
+    if ((m = l.match(/^==\s*(.+?)\s*==$/))) return `<h3>-=-=- ${manLinks(m[1])} -=-=-</h3>`;
+    if ((m = l.match(/^#\s*(.+)$/))) return `<h4>${manLinks(m[1])}</h4>`;
+    if ((m = l.match(/^-\s+(.+)$/))) return `<div class="k">${manLinks(m[1])}</div>`;
+    return `<p>${manLinks(l)}</p>`;
   }).join("");
   function renderManual() {
     screen.innerHTML = `<div class="manual">${manualHTML(manualText())}${amAdmin() ? '<div class="btnrow"><button class="mini-btn" data-admmanual>EDIT MANUAL</button></div>' : ""}</div>`;
@@ -3382,7 +3392,7 @@ Built with AI (Claude).`;
   function manualEditorHTML() {
     const t = adm.edit.text != null ? adm.edit.text : manualText();
     return `<div class="dbox admedit"><div class="dhead">Manual</div><div class="dform">
-      <p class="dim">== TITLE == makes a section. # Heading makes a heading. - TEXT makes a key line. Anything else is a paragraph.</p>
+      <p class="dim">== TITLE == makes a section. # Heading makes a heading. - TEXT makes a key line. Anything else is a paragraph. [words](https://link) makes a link.</p>
       <label>TEXT<textarea id="manText" rows="18" maxlength="8000">${esc(t)}</textarea></label>
       <div class="btnrow"><button class="pbtn" id="manGo">PUBLISH</button>${overrides[MANUAL_ID] ? '<button class="pbtn danger" id="manReset">BACK TO DEFAULT</button>' : ""}<button class="pbtn" id="admCancel">CANCEL</button></div>
       <h4 class="admh4">PREVIEW</h4><div class="manual manprev">${manualHTML(t)}</div>
