@@ -3164,6 +3164,8 @@
     </form>`;
   }
 
+  const NOT_ADDED = [["WORST COMPANY PEOPLE WE DON'T HAVE", ["Augustus Bartholomew", "WC Obliterator", "WC Elite Tank", "WC Golem", "WC Assassin"]]];
+  const notAdded = () => { const have = new Set(entries.concat(people).map(e => slug(e.name))); return NOT_ADDED.map(([t, l]) => [t, l.filter(n => !have.has(slug(n)))]).filter(([, l]) => l.length); };
   function helpWanted() {
     const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && !e.stats && e.comment === undefined);
     const bios = entries.filter(e => e.section === "bio" && !e.unknown);
@@ -3190,9 +3192,10 @@
   function helpHTML() {
     const groups = helpWanted(), hc = helpCfg(), admin = amAdmin();
     const extra = hc.extra.split("\n").map(l => l.trim()).filter(Boolean);
-    if (!groups.length && !extra.length && !admin) return "";
+    if (!groups.length && !extra.length && !notAdded().length && !admin) return "";
     return `<h3>-=-=- HELP WANTED -=-=-</h3>
       <p class="cat-note">Missing info. Have it? Press SEND.</p>
+      ${notAdded().map(([t, l]) => `<details class="helpw"><summary>${esc(t)} <small>${l.length}</small></summary><div class="helplist">${l.map(n => `<div class="helprow"><b>${esc(n)}</b><span class="dim">not on the site yet</span><button class="mini-btn" data-helpreq="${esc(n)}" data-hkind="Missing entry">SEND</button></div>`).join("")}</div></details>`).join("")}
       ${extra.length ? `<details class="helpw" open><summary>REQUESTS <small>${extra.length}</small></summary><div class="helplist">${extra.map(l => `<div class="helprow"><span>${esc(l)}</span><span></span><button class="mini-btn" data-helpreq="${esc(l)}">SEND</button></div>`).join("")}</div></details>` : ""}
       ${groups.map(([key, title, list, what, kind]) => { const off = hc.off.includes(key); return `<details class="helpw${off ? " helpoff" : ""}"><summary>${esc(title)} <small>${list.length}</small>${admin ? `<button class="mini-btn" data-helpgrp="${key}" title="${off ? "Show this list to everyone again" : "Hide this whole list from everyone"}">${off ? "HIDDEN · SHOW" : "HIDE LIST"}</button>` : ""}</summary><div class="helplist">${sortEntries(list).map(e =>
         `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><span class="frbtns">${admin ? `<button class="mini-btn" data-helpskip="${esc(e.id)}" title="Not needed: take it off this list">✕</button>` : ""}<button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></span></div>`).join("")}</div></details>`; }).join("")}
@@ -3640,7 +3643,7 @@ Built with AI (Claude).`;
     { const hs = t.closest("[data-helpskip]"); if (hs && amAdmin()) { const c = helpCfg(); c.skip = [...new Set([...c.skip, hs.dataset.helpskip])]; saveHelpCfg(c, "Taken off the list."); return; } }
     { const hu = t.closest("[data-helpunskip]"); if (hu && amAdmin()) { const c = helpCfg(); c.skip = c.skip.filter(x => x !== hu.dataset.helpunskip); saveHelpCfg(c, "Put back."); return; } }
     if (t.closest("#helpExtraGo") && amAdmin()) { const c = helpCfg(); c.extra = $("#helpExtra").value.trim(); saveHelpCfg(c, "Requests saved."); return; }
-    { const hr = t.closest("[data-helpreq]"); if (hr) { play("click"); draft = Object.assign({}, draft, { entry: "", kind: "Other", text: hr.dataset.helpreq + "\n\n" }); formMsg = null; ui.tab = "community"; persistUI(); render(); const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus(); const f = screen.querySelector(".community"); if (f) f.scrollIntoView(); return; } }
+    { const hr = t.closest("[data-helpreq]"); if (hr) { play("click"); draft = Object.assign({}, draft, { entry: "", kind: hr.dataset.hkind || "Other", text: hr.dataset.helpreq + "\n\n" }); formMsg = null; ui.tab = "community"; persistUI(); render(); const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus(); const f = screen.querySelector(".community"); if (f) f.scrollIntoView(); return; } }
     const sg = t.closest("[data-suggest]");
     if (sg) { play("click"); openSuggest(byId.get(sg.dataset.suggest), sg.dataset.skind); return; }
     if (t.closest("[data-tclear]")) { ui.tsort = ""; ui.cal = ""; ui.tierMin = ""; ui.tmin = ""; ui.tmax = ""; play("back"); persistUI(); render(); return; }

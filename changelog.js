@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-21", items: [
+    "Help wanted: missing WC people",
     "Links in the manual",
     "New name on the Discord card",
     "Tony removed from the Discord card",
