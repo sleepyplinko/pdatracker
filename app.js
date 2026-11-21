@@ -861,7 +861,7 @@
       });
     }
     if (hiddenDone) body += `<p class="cat-note">${hiddenDone} finished tier${hiddenDone > 1 ? "s" : ""} hidden (turn off HIDE DONE to see ${hiddenDone > 1 ? "them" : "it"}).</p>`;
-    screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap${body.includes('class="tierjump"') ? " hasjump" : ""}" id="grid">${body}</div></div>`;
+    screen.innerHTML = `<div class="tools"><div class="cats" role="tablist" aria-label="Categories">${catBtns}</div><div class="grid-wrap${body.includes('class="tierjump"') ? " hasjump" : ""}" id="grid">${tabBarHTML("tools", ui.cat, cat.items, cat.name)}${body}</div></div>`;
   }
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-tierjump]"); if (!b) return;
@@ -891,6 +891,7 @@
     return "";
   }
 
+  let lastCatClick = 0;
   function cancelTier() { pendingTier = null; clearTimeout(pendingTimer); }
   function askTier(key) {
     pendingTier = key; play("warn");
@@ -901,13 +902,13 @@
     let items;
     if (key.startsWith("tab:")) {
       const [, kind, idx] = key.split(":");
-      items = kind === "bio" && +idx === -1 ? PDA_DATA.biography.flatMap(x => x.items) : (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
+      items = kind === "tools" ? PDA_DATA.tools[+idx].items : kind === "bio" && +idx === -1 ? PDA_DATA.biography.flatMap(x => x.items) : (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
     } else {
       const [ci, tier] = key.split("|");
       items = PDA_DATA.tools[+ci].items.filter(e => e.tier === +tier);
     }
     const lockAll = items.every(e => isFound(e.id));
-    const what = key.startsWith("tab:") ? "a whole tab" : "a whole tier";
+    const what = key.startsWith("tab:tools:") ? "a whole category" : key.startsWith("tab:") ? "a whole tab" : "a whole tier";
     if (change(items.map(e => e.id), !lockAll, what)) play(lockAll ? "unmarked" : "confirm");
     cancelTier();
   }
@@ -3078,10 +3079,40 @@
     formMsg = null; detail = null; ui.tab = "community"; persistUI(); renderTabs(); render();
     const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus();
   }
+  const CL_ID = "d|@changelog|text";
+  const clBase = () => (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
+  const clHash = t => { let h = 5381; for (const c of String(t)) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return h.toString(36).slice(-5); };
+  const clText = log => log.map(b => `# ${b.date}\n${(b.items || []).join("\n")}`).join("\n\n");
+  const clParse = t => { const out = []; t.split("\n").map(l => l.trim()).filter(Boolean).forEach(l => { const m = l.match(/^#\s*(.+)$/); if (m) out.push({ date: m[1], items: [] }); else { if (!out.length) out.push({ date: "", items: [] }); out[out.length - 1].items.push(l.replace(/^[-*]\s+/, "")); } }); return out; };
+  const clCfg = () => { try { const j = JSON.parse((overrides[CL_ID] || {}).desc || "null"); return j && typeof j.text === "string" ? { text: j.text, seen: Array.isArray(j.seen) ? j.seen : [] } : null; } catch { return null; } };
+  function changelogData() {
+    const base = clBase(), cfg = clCfg();
+    if (!cfg) return base;
+    const log = clParse(cfg.text), seen = new Set(cfg.seen);
+    base.slice().reverse().forEach(b => { const fresh = (b.items || []).filter(i => !seen.has(clHash(i))); if (!fresh.length) return;
+      let blk = log.find(x => x.date === b.date); if (!blk) { blk = { date: b.date, items: [] }; const at = log.findIndex(x => x.date < b.date); log.splice(at < 0 ? log.length : at, 0, blk); }
+      blk.items.unshift(...fresh); });
+    return log;
+  }
   function changelogHTML() {
-    const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
-    if (!log.length) return "";
-    return `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    const log = changelogData(), admin = amAdmin() && !viewOnly;
+    if (!log.length && !admin) return "";
+    return `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${b.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>
+      ${admin ? `<details class="helpw helpadmin"><summary>EDIT CHANGELOG <small>admins</small></summary><div class="dform">
+        <label>CHANGELOG <small># date starts a day; one change per line; newest first</small><textarea id="clText" rows="14" maxlength="7000">${esc(clText(log))}</textarea></label>
+        <div class="btnrow"><button class="pbtn" id="clSave">SAVE</button>${clCfg() ? '<button class="pbtn danger" id="clReset">RESET TO DEFAULT</button>' : ""}</div>
+      </div></details>` : ""}`;
+  }
+  async function saveChangelog(text) {
+    const seen = clBase().flatMap(b => (b.items || []).map(clHash));
+    const [st, r] = await api("PUT", "/api/admin/overrides/" + encodeURIComponent(CL_ID), { data: { desc: JSON.stringify({ text, seen }) }, what: "changelog" }).catch(() => [0, {}]);
+    if (st !== 200) { toast(r.error || "Couldn't save."); play("warn"); return; }
+    overrides[CL_ID] = { ...r.data, updated: Math.floor(Date.now() / 1000) }; save("pda-overrides-v1", overrides); play("confirm"); toast("Changelog saved."); keepScroll(render);
+  }
+  async function resetChangelog() {
+    const [st] = await api("DELETE", "/api/admin/overrides/" + encodeURIComponent(CL_ID)).catch(() => [0]);
+    if (st !== 200) { toast("Couldn't reset."); play("warn"); return; }
+    delete overrides[CL_ID]; save("pda-overrides-v1", overrides); play("confirm"); toast("Changelog reset."); keepScroll(render);
   }
 
   const FORM = (typeof PDA_FORM === "object" && PDA_FORM) || {};
@@ -3206,13 +3237,12 @@
       </div></details>` : ""}`;
   }
   function renderCommunity() {
-    const log = (typeof PDA_CHANGELOG === "object" && PDA_CHANGELOG) || [];
     screen.innerHTML = `<div class="manual community">
       <h3>-=-=- SEND IN INFO -=-=-</h3>
       ${contribHTML()}
       ${mySubsHTML()}
       ${helpHTML()}
-      ${log.length ? `<h3>-=-=- CHANGELOG -=-=-</h3><div class="changelog">${log.map(b => `<div class="clb"><b>${esc(b.date)}</b><ul>${(b.items || []).map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
+      ${changelogHTML()}
     </div>`;
   }
   function readForm(f) {
@@ -3342,7 +3372,7 @@
 # Mark something found
 Press the star on it. Shift + star marks a range.
 # Mark a lot at once
-Click a TIER bar, or the tab you're on.
+Click a TIER bar or the tab you're on, or double-click a category.
 # Undo
 Ctrl+Z, or UNDO on the message at the bottom.
 # See what's missing
@@ -3544,7 +3574,7 @@ Built with AI (Claude).`;
   screen.addEventListener("click", ev => {
     const t = ev.target;
 
-    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs]")) { cancelTier(); }
+    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs],[data-cat]")) { cancelTier(); }
 
     const star = t.closest("[data-star]");
     if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
@@ -3642,6 +3672,8 @@ Built with AI (Claude).`;
     { const hg = t.closest("[data-helpgrp]"); if (hg && amAdmin()) { ev.preventDefault(); const c = helpCfg(), k = hg.dataset.helpgrp; c.off = c.off.includes(k) ? c.off.filter(x => x !== k) : [...c.off, k]; saveHelpCfg(c, c.off.includes(k) ? "List hidden from everyone." : "List shown again."); return; } }
     { const hs = t.closest("[data-helpskip]"); if (hs && amAdmin()) { const c = helpCfg(); c.skip = [...new Set([...c.skip, hs.dataset.helpskip])]; saveHelpCfg(c, "Taken off the list."); return; } }
     { const hu = t.closest("[data-helpunskip]"); if (hu && amAdmin()) { const c = helpCfg(); c.skip = c.skip.filter(x => x !== hu.dataset.helpunskip); saveHelpCfg(c, "Put back."); return; } }
+    if (t.closest("#clSave") && amAdmin()) { const v = $("#clText").value.trim(); if (!v) { toast("Write something first."); play("warn"); return; } saveChangelog(v); return; }
+    if (t.closest("#clReset") && amAdmin()) { resetChangelog(); return; }
     if (t.closest("#helpExtraGo") && amAdmin()) { const c = helpCfg(); c.extra = $("#helpExtra").value.trim(); saveHelpCfg(c, "Requests saved."); return; }
     { const hr = t.closest("[data-helpreq]"); if (hr) { play("click"); draft = Object.assign({}, draft, { entry: "", kind: hr.dataset.hkind || "Other", text: hr.dataset.helpreq + "\n\n" }); formMsg = null; ui.tab = "community"; persistUI(); render(); const ta = screen.querySelector("[name=ctext]"); if (ta) ta.focus(); const f = screen.querySelector(".community"); if (f) f.scrollIntoView(); return; } }
     const sg = t.closest("[data-suggest]");
@@ -3685,6 +3717,8 @@ Built with AI (Claude).`;
     const set = t.closest("[data-set]");
     if (set) { settings[set.dataset.set] = set.dataset.val === "1"; save(KEY_SET, settings); render(); play("click"); return; }
     const cat = t.closest("[data-cat]");
+    if (cat && +cat.dataset.cat >= 0 && +cat.dataset.cat === ui.cat && !viewOnly && Date.now() - lastCatClick < 450) { lastCatClick = 0; askTier(`tab:tools:${ui.cat}`); keepScroll(render); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
+    if (cat) { lastCatClick = Date.now(); if (pendingTier) cancelTier(); }
     if (cat) { play(+cat.dataset.cat === ui.cat ? "click" : "switch"); if (ui.cat !== +cat.dataset.cat) ui.cal = ""; ui.cat = +cat.dataset.cat;
       { const nc = PDA_DATA.tools[ui.cat]; if (nc && ui.tsort && !nc.items.some(e => statNum(e, ui.tsort) != null)) { ui.tsort = ""; ui.tmin = ""; ui.tmax = ""; } } persistUI(); render(); const g = $("#grid"); if (g) g.scrollTop = 0; return; }
 
