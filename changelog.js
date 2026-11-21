@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-21", items: [
+    "Tony removed from the Discord card",
+  ] },
   { date: "2026-11-20", items: [
     "Admins can remove all pictures",
     "Calculator: WC Rocket Launcher and MCX-SPEAR ammo",

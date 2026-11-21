@@ -146,7 +146,7 @@ const srv = http.createServer((q, r) => {
   <meta property="og:title" content="Once A Normal Calculator">
   <meta property="og:description" content="Hits and time to kill for any Once A Normal City weapon, ammo and enemy.">
   <meta property="og:url" content="${SITE}damage/">
-  <meta property="og:image" content="${SITE}images/og.jpg?v=2">
+  <meta property="og:image" content="${SITE}images/og.jpg?v=3">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -159,8 +159,8 @@ const srv = http.createServer((q, r) => {
   if (Object.keys(ov).length) fs.writeFileSync(path.join(OUT, "overrides.json"), JSON.stringify(ov, Object.keys(ov).sort(), 1).length ? JSON.stringify(Object.fromEntries(Object.keys(ov).sort().map(k => [k, ov[k]])), null, 1) + "\n" : "{}");
   const totals = await pg.evaluate(() => { const { entries } = window.__pda(); const n = sec => entries.filter(e => e.section === sec).length; return { tools: n("tools"), bio: n("bio"), docs: n("docs"), all: entries.length }; });
   const pics = list.filter(x => x.sec === "BIOGRAPHY" && x.img && !/^https?:/.test(x.img)).map(x => x.img);
-  const pick = ["security-bot-c", "tony", "robinson", "bonecrab", "factory-king", "goat"].map(k => pics.find(p => p.includes(k))).filter(Boolean);
-  for (const p of pics) if (pick.length < 6 && !pick.includes(p)) pick.push(p);
+  const pick = ["security-bot-c", "robinson", "bonecrab", "factory-king", "goat"].map(k => pics.find(p => p.includes(k))).filter(Boolean);
+  for (const p of pics) if (pick.length < 6 && !pick.includes(p) && !p.includes("tony")) pick.push(p);
   await pg.evaluate(({ t, pick }) => {
     let c = document.getElementById("ogcard");
     if (!c) { c = document.createElement("div"); c.id = "ogcard"; document.body.appendChild(c); }
