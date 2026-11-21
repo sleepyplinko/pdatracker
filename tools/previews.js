@@ -146,7 +146,7 @@ const srv = http.createServer((q, r) => {
   <meta property="og:title" content="Once A Normal Calculator">
   <meta property="og:description" content="Hits and time to kill for any Once A Normal City weapon, ammo and enemy.">
   <meta property="og:url" content="${SITE}damage/">
-  <meta property="og:image" content="${SITE}images/og.jpg?v=3">
+  <meta property="og:image" content="${SITE}images/og.jpg?v=4">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -167,7 +167,7 @@ const srv = http.createServer((q, r) => {
     c.innerHTML = `<div class="ogc-top"><b>ONCE A NORMAL TRACKER</b><span>ONCE A NORMAL CITY</span></div>
       <div class="ogs-body">
         <div class="ogs-left">
-          <div class="ogs-logo">PDA<span>.exe</span></div>
+          <div class="ogs-logo"><span>ONCE A NORMAL</span>TRACKER</div>
           <div class="ogs-tag">THE ONCE A NORMAL CITY<br>PDA CHECKLIST</div>
           <div class="ogs-nums"><div><b>${t.tools}</b>TOOLS</div><div><b>${t.bio}</b>PEOPLE</div><div><b>${t.docs}</b>DOCUMENTS</div></div>
           <div class="ogs-feat">&#9733;&#xFE0E; CHECK OFF &nbsp;·&nbsp; STATS &nbsp;·&nbsp; DAMAGE CALC</div>
@@ -184,7 +184,7 @@ const srv = http.createServer((q, r) => {
       .ogs-body { flex: 1; display: flex; gap: 28px; padding: 26px 28px 18px; min-height: 0; }
       .ogs-left { flex: 1; display: flex; flex-direction: column; justify-content: center; }
       .ogs-logo { font-size: 112px; font-weight: 900; line-height: .95; color: #fff; letter-spacing: 2px; text-shadow: 0 0 22px rgba(255,255,255,.18); }
-      .ogs-logo span { color: #8a8a8a; }
+      .ogs-logo span { display: block; font-size: 58px; color: #8a8a8a; letter-spacing: 3px; margin-bottom: 6px; }
       .ogs-tag { margin-top: 14px; font-size: 26px; font-weight: 700; letter-spacing: 3px; color: #f3ee30; line-height: 1.25; }
       .ogs-nums { display: flex; gap: 14px; margin-top: 26px; }
       .ogs-nums div { flex: 1; border: 2px solid #4a4a4a; background: #151515; padding: 10px 12px; font-size: 17px; letter-spacing: 2px; color: #9a9a9a; display: flex; flex-direction: column; }
