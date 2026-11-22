@@ -5222,9 +5222,9 @@ const PDA_DATA = {
       ]), { img: "images/people/velris-family.webp" })
     ]},
     { name: "WC", color: "#9ad7ff", bg: "#0e1820", hidden: true, entries: [
-      P("WC Emissary", { Health: 325, Speed: 1.6, Defense: 70, Shield: 400, Supershield: 2, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
+      Object.assign(P("WC Emissary", { Health: 325, Speed: 1.6, Defense: 70, Shield: 400, Supershield: 2, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 25, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
-        [W("GLOCK 17+"), A("9x19mm FXX2"), M("19rnd Glock Mag")]),
+        [W("GLOCK 17+"), A("9x19mm FXX2"), M("19rnd Glock Mag")]), { img: "images/people/wc-emissary.webp" }),
       P("WC Speedster", { Health: 340, Speed: 2.5, Defense: 50, Shield: 400, "Super Armour": 10, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 100, "Stun Resistance": 100 },
         { Suppressor: "true", "Pre-Aim": 15, Strength: "1x", "Aim Time Multiplier": "0.4x" },
         [W("P90"), A("5.7x28mm R37.F"), M("50rnd P90 Mag")]),
@@ -5240,9 +5240,9 @@ const PDA_DATA = {
       P("WC 'XT' Flame Unit", { Health: 575, Speed: 1.4, Defense: 55, Shield: 400, "Super Armour": 15, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 20, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
         [W("BCM JACK CARBINE"), A("5.56x45mm INC+"), M("30rnd AR15-FastMag")]),
-      P("WC Advanced Troop", { Health: 450, Speed: 1.3, Defense: 60, Shield: 400, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
+      Object.assign(P("WC Advanced Troop", { Health: 450, Speed: 1.3, Defense: 60, Shield: 400, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 20, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
-        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")]),
+        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")]), { img: "images/people/wc-advanced-troop.webp" }),
       P("WC Obliterator", { Health: 700, Speed: 0, Defense: 60, Shield: 600, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 100, "Stun Resistance": 100 },
         { Suppressor: "true", "Pre-Aim": 30, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "1.75x", "Aim Slowdown": "0.3x" },
         [W("M29 XT MK II"), A(".950 JDJ"), M("8rnd M29 Mag")]),
