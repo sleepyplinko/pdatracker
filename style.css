@@ -1223,3 +1223,6 @@ body.cb .tierjump .tj.done::after { content: "✓"; }
 .helpw.helpoff > summary { opacity: .55; }
 .helpw summary .mini-btn { margin-left: 8px; }
 .helpadmin .dform { padding: 8px; }
+.ammochk { color: #ffcf4a; border: 1px solid #6b5a1e; padding: 8px 10px; margin: 8px 0; }
+.ammochk summary { cursor: pointer; margin-top: 4px; }
+.ammochk .dim { margin-top: 6px; line-height: 1.5; }

@@ -2594,9 +2594,18 @@
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
   }
+  function ammoCheckHTML() {
+    const a = adm.ammoCheck;
+    if (!a) return "";
+    if (a.changed > 0) return `<div class="msg dwarn ammochk">&#x26A0;&#xFE0E; <b>The ammo chart changed</b> (${a.changed} cell${a.changed === 1 ? "" : "s"}${a.since ? ", since " + esc(a.since.slice(0, 10)) : ""}). Ask Claude to update the site.
+      <details><summary>SHOW CHANGES</summary><div class="dim">${(a.cells || []).map(c => `${esc(c.sheet)} · ${esc(c.row || c.cell)}: ${esc(c.old || "(empty)")} → ${esc(c.new || "(empty)")}`).join("<br>")}${a.changed > (a.cells || []).length ? "<br>…" : ""}</div></details></div>`;
+    if (!a.ok) return `<p class="dim">Couldn't check the ammo chart${a.failedSince ? " since " + esc(a.failedSince.slice(0, 10)) : ""}. The sheet may not be shared publicly.</p>`;
+    return "";
+  }
   function renderAdmin() {
     if (!API || !adminSess) { screen.innerHTML = '<div class="results"><p class="none">Sign in as an admin from SETTINGS.</p></div>'; return; }
     if (adm.rows === null) { adm.rows = []; loadAdmin(); }
+    if (adm.ammoCheck === undefined) { adm.ammoCheck = null; fetch("e/ammo-sheet.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => { adm.ammoCheck = j || false; if (ui.tab === "admin") keepScroll(render); }).catch(() => { adm.ammoCheck = false; }); }
     const st = ["new", "done", "rejected"];
     const list = (adm.rows || []).map(r => {
       const e = r.entry && entries.find(x => x.name.toLowerCase() === r.entry.toLowerCase());
@@ -2612,6 +2621,7 @@
       .sort((a, b) => collator.compare(a.name, b.name));
     screen.innerHTML = `<div class="results admin">
       <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admcats>CATEGORIES…</button><button class="mini-btn" data-admmanual>MANUAL…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
+      ${ammoCheckHTML()}
       ${adminEditorHTML()}
       ${setupHTML()}
       ${statsHTML()}
