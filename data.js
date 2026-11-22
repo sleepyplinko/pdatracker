@@ -5242,7 +5242,19 @@ const PDA_DATA = {
         [W("BCM JACK CARBINE"), A("5.56x45mm INC+"), M("30rnd AR15-FastMag")]),
       P("WC Advanced Troop", { Health: 450, Speed: 1.3, Defense: 60, Shield: 400, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 20, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
-        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")])
+        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")]),
+      P("WC Obliterator", { Health: 700, Speed: 0, Defense: 60, Shield: 600, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 100, "Stun Resistance": 100 },
+        { Suppressor: "true", "Pre-Aim": 30, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "1.75x", "Aim Slowdown": "0.3x" },
+        [W("M29 XT MK II"), A(".950 JDJ"), M("8rnd M29 Mag")]),
+      P("WC Elite Tank", { Health: 150, Speed: 0.6, Defense: 40, Supershield: 15, "Super Armour": 85, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 20, "Stun Resistance": 100, Obsidian: "true" },
+        { Suppressor: "true", "Pre-Aim": 17.5, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "1.75x", "Aim Slowdown": "0.3x" },
+        [W("CITORI 725"), A("12/70 RIP")]),
+      P("WC Golem", { Health: 750, Speed: 1.1, Defense: 100, Shield: 600, Supershield: 20, "Super Armour": 30, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 20, "Stun Resistance": 100 },
+        { Suppressor: "true", "Pre-Aim": 30, Strength: "1x", "Aim Time Multiplier": "0.4x" },
+        [W("MILITARY M249 SAW"), A("5.56x45mm M995")]),
+      P("Augustus Bartholomew", { Health: 10000, Speed: 1.9, Defense: 90, Shield: 18000, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 100, "Stun Resistance": 100, "Fracture Immunity": "true" },
+        { "Pre-Aim": 6, Strength: "1x", "Aim Time Multiplier": "0.4x" },
+        [W("WC BAZOOKA"), A("ANTI-PERSONNEL MISSILE")])
     ]},
     { name: "Miscellaneous", color: "#ffffff", bg: "#141414", entries: [
       P("Monolithic Guardian", { Health: 140, Speed: 0.9, Defense: 27, "Explosive Resistance": 50 },

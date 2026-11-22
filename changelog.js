@@ -1,5 +1,7 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-21", items: [
+    "Added WC Obliterator, WC Elite Tank, WC Golem and Augustus Bartholomew",
+    "Calculator: Obsidian blocks bullets; Mono Shield note for WC",
     "Double-click a weapon category to mark it all",
     "Help wanted: missing WC people",
     "Links in the manual",

@@ -366,6 +366,7 @@
     "Explosive Resistance": { c: "#ff5a3a", i: "blast",   u: "%",  tip: "Subtracts incoming explosive damage by resistance's percentage." },
     "Stun Resistance":      { c: "#ffd04a", i: "bolt",    u: "%",  tip: "Subtracts incoming stun by resistance's percentage." },
     "Fracture Immunity":    { c: "#ffe7b0", i: "bone",    u: "",   tip: "Can't have their bones fractured." },
+    "Obsidian":             { c: "#7a5cff", i: "shieldP", u: "",   tip: "Immune to bullets." },
 
     "Suppressor":           { c: "#33c9ff", i: "mute",    u: "",   tip: "Entity will not cancel aim regardless of their target going back to cover." },
     "Pre-Aim":              { c: "#38f0a0", i: "aim",     u: " Range", tip: "How close you need to be before the entity starts aiming early." },
@@ -1573,6 +1574,8 @@
     const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
+    const obsidian = !!(tb && String(tb.Obsidian).toLowerCase() === "true");
+    const isWC = !!(tgt && (tgt.group === "WC" || (tgt.card && tgt.card.entry && tgt.card.entry.group === "WC")));
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
     let st0 = { h: hp, sh: shield, ss };
     function runHits(st, sht, b, ig, max) {
@@ -1601,7 +1604,9 @@
       if (!ammo && pool.length && mode) ammo = pool[0];
       const strength = mode && !melee && s.str ? mode.strength : 1;
 
+      const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
       const shot = a => {
+        if (obsidian && !melee && (!a || !isExplosive(a))) return { per: 0, proj: 1, dmg: 0, obs: true, final: 0, afterSA: 0, effSA: 0, effDef: 0 };
         if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; }
         if (!a) { const dmg = xnum(s.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
         const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
@@ -1613,7 +1618,6 @@
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
 
       const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
-      const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket/i.test(a.caliber) || /rocket/i.test(a.name));
       const ignoresShield = a => isBludgeon || isExplosive(a);
       function run(sht, a) {
         if (!(hp > 0)) return null;
@@ -1706,6 +1710,8 @@
             ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${tip}
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
+            ${obsidian && r && r.obs ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; ${esc(tgtLabel)} has Obsidian: bullets do no damage. Use explosives or melee.</p>` : ""}
+            ${isWC ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count their Mono Shield.</p>` : ""}
             ${htk && tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Maria's second phase.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>`;
@@ -3195,7 +3201,7 @@
     </form>`;
   }
 
-  const NOT_ADDED = [["WORST COMPANY PEOPLE WE DON'T HAVE", ["Augustus Bartholomew", "WC Obliterator", "WC Elite Tank", "WC Golem", "WC Assassin"]]];
+  const NOT_ADDED = [["WORST COMPANY PEOPLE WE DON'T HAVE", ["Augustus Bartholomew", "WC Obliterator", "WC Elite Tank", "WC Golem"]]];
   const notAdded = () => { const have = new Set(entries.concat(people).map(e => slug(e.name))); return NOT_ADDED.map(([t, l]) => [t, l.filter(n => !have.has(slug(n)))]).filter(([, l]) => l.length); };
   function helpWanted() {
     const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && !e.stats && e.comment === undefined);
