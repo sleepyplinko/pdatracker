@@ -705,6 +705,7 @@
     document.body.classList.toggle("light", !!settings.light);
     document.body.classList.toggle("kbmode", !!settings.kbMode);
     document.body.classList.toggle("cb", !!settings.cbMode);
+    document.body.classList.toggle("admintab", ui.tab === "admin");
     syncToolbar(); renderBanner();
     if (detail && detail.type === "compare") return renderCompare();
     if (detail && byId.has(detail.id)) {
@@ -2434,7 +2435,7 @@
     if (!adm.blocks.length) return '<p class="dim">Nobody is blocked. Use BLOCK SENDER on a submission to stop someone spamming.</p>';
     return `<div class="frlist">${adm.blocks.map(x => `<div class="frrow"><b>${x.account ? esc(x.account) : "sender"}</b><span class="dim">${x.byip ? "blocked by connection" : ""}${x.byip && x.account ? " + " : ""}${x.account ? "account" : ""}${x.note ? " · " + esc(x.note) : ""}</span><span class="dim">by ${esc(x.by)} · ${esc(ago(x.created * 1000))}</span><span class="frbtns"><button class="mini-btn" data-admunblock="${x.id}">UNBLOCK</button></span></div>`).join("")}</div>`;
   }
-  function setupHTML() {
+  function setupHTML(full) {
     if (adm.setup === undefined) { adm.setup = null; api("GET", "/api/admin/setup").then(([st, r]) => { adm.setup = st === 200 ? r : { old: true }; if (ui.tab === "admin") keepScroll(render); }).catch(() => {}); }
     const s = adm.setup; if (!s) return "";
     if (s.old) return `<div class="setupbox bad"><b>SERVER SETUP:</b> the Worker is running older code than the site. Paste the newest <code>worker.js</code> into the Worker and Deploy.</div>`;
@@ -2442,8 +2443,8 @@
       ["New-submission pings (DISCORD_WEBHOOK)", s.ping ? "" : "off (optional)", false],
       ["Discord announcements (ANNOUNCE_WEBHOOK)", s.announce ? "" : "off (optional): README step 6.3", false]];
     const allOk = rows.every(r => !r[1]);
-    if (allOk && !adm.showSetup) return "";
-    return `<details class="setupbox${rows.some(r => r[1] && r[2]) ? " bad" : ""}"${rows.some(r => r[1] && r[2]) ? " open" : ""}><summary><b>SERVER SETUP</b> ${rows.filter(r => !r[1]).length}/${rows.length} on</summary>${rows.map(([n, msg]) => `<div>${msg ? "✗" : "✓"} ${esc(n)}${msg ? ` <span class="dim">· ${esc(msg)}</span>` : ""}</div>`).join("")}</details>`;
+    if (!full && !rows.some(r => r[1] && r[2])) return "";
+    return `<details class="setupbox${rows.some(r => r[1] && r[2]) ? " bad" : ""}" open><summary><b>SERVER SETUP</b> ${rows.filter(r => !r[1]).length}/${rows.length} on</summary>${rows.map(([n, msg]) => `<div>${msg ? "✗" : "✓"} ${esc(n)}${msg ? ` <span class="dim">· ${esc(msg)}</span>` : ""}</div>`).join("")}</details>`;
   }
   function announceHTML() {
     if (!adm.ann) return "";
@@ -2484,13 +2485,17 @@
   }
   let admStats = null;
   function testingHTML() {
-    return `<details class="setupbox" data-admtest${adm.testOpen ? " open" : ""}><summary><b>TESTING</b> </summary>
-      <div class="btnrow"><button class="mini-btn" data-admboot="0">PLAY BOOT-UP SCREEN</button><button class="mini-btn" data-admboot="3000">PLAY AS A SLOW LOAD (3 S)</button><button class="mini-btn" data-admboot="8000">PLAY AS A VERY SLOW LOAD (8 S)</button></div>
-      <p class="dim">Plays even if turned off in SETTINGS. Slow loads wait first, like a bad connection.</p>
+    return `<h4 class="admh4">BOOT-UP SCREEN</h4>
+      <div class="btnrow"><button class="mini-btn" data-admboot="0">PLAY</button><button class="mini-btn" data-admboot="3000">SLOW LOAD (3 S)</button><button class="mini-btn" data-admboot="8000">VERY SLOW LOAD (8 S)</button></div>
+      <p class="dim">Plays even if turned off in SETTINGS.</p>
+      <h4 class="admh4">AMMO CHART ALERT</h4>
+      ${ammoStatusHTML()}
+      <div class="btnrow"><button class="mini-btn" data-ammotest>SEND TEST ALERT</button></div>
+      <p class="dim">Posts a test message in the Discord channel. Real alerts ping everyone; the test doesn't.</p>
       <h4 class="admh4">DISCORD PREVIEW</h4>
       ${pickerHTML("admprev", { placeholder: adm.prev && adm.prev.label ? `${adm.prev.label}  (type to change)` : "Type an entry, or pick Main site…", onPick: v => loadPreview(v),
         items: [{ v: "", label: "Main site", group: "" }, ...entries.filter(x => !x.unknown).map(x => ({ v: x.id, label: x.name, group: { tools: x.group, bio: "BIOGRAPHY", docs: "DOCUMENTS" }[x.section] }))] })}
-      ${adm.prev ? discordPreviewHTML(adm.prev) : `<p class="dim">Shows what Discord will show, from the live preview files. New cards appear after the daily update.</p>`}</details>`;
+      ${adm.prev ? discordPreviewHTML(adm.prev) : `<p class="dim">Shows what Discord will show, from the live preview files. New cards appear after the daily update.</p>`}`;
   }
   document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches("[data-admtest]")) adm.testOpen = e.target.open; }, true);
   async function loadPreview(id) {
@@ -2524,10 +2529,10 @@
       const fmt = l => l.map(([e, r]) => `${esc(e.name)} <span class="dim">${Math.round(r * 100)}%</span>`).join(", ");
       rare = fmt(by.slice(0, 6)); common = fmt(by.slice(-6).reverse());
     }
-    return `<details class="setupbox statsbox"><summary><b>SITE STATS</b> ${s.players} players counted · ${s.active7} active this week · ${s.subsNew} submissions waiting</summary>
+    return `<details class="setupbox statsbox" open><summary><b>SITE STATS</b> ${s.players} players counted · ${s.active7} active this week · ${s.subsNew} submissions waiting</summary>
       <div>${s.active1} active today · about ${s.avgFound} finds each · ${s.subsWeek} submissions this week. "Players" means browsers sharing their finds anonymously.</div>
       ${rare ? `<div><b>Rarest:</b> ${rare}</div><div><b>Most found:</b> ${common}</div>` : ""}
-      <div class="btnrow"><button class="mini-btn" data-admbackup>DOWNLOAD BACKUP OF PUBLISHED INFO</button></div></details>`;
+</details>`;
   }
   function catsEditorHTML() {
     const c = adm.edit.cats, where = c.where || "t";
@@ -2594,14 +2599,19 @@
         <p class="dim">Published info shows on everyone's site within a minute. It's stored on your server, separate from data.js.</p>` : ""}
     </div></div>`;
   }
-  function ammoCheckHTML() {
+  function ammoAlertHTML() {
     const a = adm.ammoCheck;
-    const test = `<button class="mini-btn" data-ammotest>SEND TEST ALERT</button>`;
-    if (!a) return `<p class="dim">Ammo chart alerts on Discord: ${test}</p>`;
-    if (a.changed > 0) return `<div class="msg dwarn ammochk">${test} &#x26A0;&#xFE0E; <b>The ammo chart changed</b> (${a.changed} cell${a.changed === 1 ? "" : "s"}${a.since ? ", since " + esc(a.since.slice(0, 10)) : ""}). Ask Claude to update the site.
+    if (!a || !(a.changed > 0)) return "";
+    return `<div class="msg ammochk">&#x26A0;&#xFE0E; <b>The ammo chart changed</b> (${a.changed} cell${a.changed === 1 ? "" : "s"}${a.since ? ", since " + esc(a.since.slice(0, 10)) : ""}). Ask Claude to update the site.
       <details><summary>SHOW CHANGES</summary><div class="dim">${(a.cells || []).map(c => `${esc(c.sheet)} · ${esc(c.row || c.cell)}: ${esc(c.old || "(empty)")} → ${esc(c.new || "(empty)")}`).join("<br>")}${a.changed > (a.cells || []).length ? "<br>…" : ""}</div></details></div>`;
-    if (!a.ok) return `<p class="dim">Couldn't check the ammo chart${a.failedSince ? " since " + esc(a.failedSince.slice(0, 10)) : ""}. The sheet may not be shared publicly. ${test}</p>`;
-    return `<p class="dim">Ammo chart: up to date. Discord alerts: ${test}</p>`;
+  }
+  function ammoStatusHTML() {
+    const a = adm.ammoCheck;
+    if (a === null) return '<p class="dim">Checking…</p>';
+    if (!a) return '<p class="dim">No check has run yet.</p>';
+    if (a.changed > 0) return `<p class="dim">The chart changed (${a.changed} cells). See the yellow box at the top.</p>`;
+    if (!a.ok) return `<p class="dim">Couldn't read the chart${a.failedSince ? " since " + esc(a.failedSince.slice(0, 10)) : ""}. The sheet may not be shared publicly.</p>`;
+    return '<p class="dim">The chart matches the site. Checked every 6 hours.</p>';
   }
   function renderAdmin() {
     if (!API || !adminSess) { screen.innerHTML = '<div class="results"><p class="none">Sign in as an admin from SETTINGS.</p></div>'; return; }
@@ -2620,20 +2630,40 @@
       if (id.startsWith("a|")) { const a = ammoAll.find(x => x.id === id); return { id, name: a ? a.name : (o.ammoAdd ? o.ammoAdd.name : id), group: (a ? a.caliber : "") + " · AMMO" + (o.ammoAdd ? " · NEW" : ""), ok: !!a, special: "ammo" }; }
       const e = findEntry(id); return { id, name: e ? e.name : (o.add ? o.add.name : id), group: (e ? e.group : (o.add ? o.add.group : "")) + (o.stats && o.stats.HIDDEN ? " · HIDDEN" : ""), added: !!o.add, update: o.update, ok: !!e }; })
       .sort((a, b) => collator.compare(a.name, b.name));
-    screen.innerHTML = `<div class="results admin">
-      <div class="leftsum"><b>ADMIN</b> · submissions sent through SUBMIT <span class="leftbtns">${adm.announce ? `<button class="mini-btn" data-admann>ANNOUNCE ON DISCORD…</button>` : ""}<button class="mini-btn" data-admnotice>SITE NOTICE…</button><button class="mini-btn" data-admammo="">FIX AMMO…</button><button class="mini-btn" data-admammoadd>ADD AMMO…</button><button class="mini-btn" data-admaddnew="">ADD NEW ENTRY…</button><button class="mini-btn" data-admnew>EDIT ANY ENTRY…</button><button class="mini-btn" data-admcats>CATEGORIES…</button><button class="mini-btn" data-admmanual>MANUAL…</button><button class="mini-btn" data-admreload>REFRESH</button></span></div>
-      ${ammoCheckHTML()}
-      ${adminEditorHTML()}
-      ${setupHTML()}
+    const page = adm.page || "inbox";
+    const pages = [["inbox", `INBOX${adm.counts.new ? ` <span class="admbadge">${adm.counts.new}</span>` : ""}`], ["edit", "EDIT"], ["site", "SITE"], ["history", "HISTORY"], ["testing", "TESTING"]];
+    const btn = (attr, label, extra = "") => `<button class="admtool" ${attr}${extra}>${label}</button>`;
+    let body;
+    const back = `<div class="btnrow admback"><button class="mini-btn" data-admback>&lsaquo; BACK</button></div>`;
+    if (adm.edit) body = back + adminEditorHTML();
+    else if (adm.ann) body = back + announceHTML();
+    else if (page === "edit") body = `
+      <div class="admtools">
+        ${btn("data-admnew", "EDIT AN ENTRY")}${btn('data-admaddnew=""', "ADD A NEW ENTRY")}${btn('data-admammo=""', "FIX AMMO")}${btn("data-admammoadd", "ADD AMMO")}${btn("data-admcats", "CATEGORIES AND TABS")}${btn("data-admmanual", "EDIT MANUAL")}
+      </div>
+      <h3 class="ph3">PUBLISHED <small class="dim">${pubs.length}</small></h3>
+      ${pubs.length > 8 ? `<input class="admfilter" id="pubFilter" placeholder="Filter published…" value="${esc(adm.pubFilter || "")}">` : ""}
+      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow" data-pubname="${esc((e.name + " " + e.group).toLowerCase())}"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns">${e.special === "notice" ? `<button class="mini-btn" data-admnotice>EDIT</button>` : e.special === "ammo" ? `<button class="mini-btn" data-admammo="${esc(e.id)}">EDIT</button>` : `<button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button>`}</span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}`;
+    else if (page === "site") body = `
+      <div class="admtools">
+        ${btn("data-admnotice", "SITE NOTICE")}${adm.announce ? btn("data-admann", "ANNOUNCE ON DISCORD") : ""}${btn("data-admbackup", "DOWNLOAD BACKUP")}
+      </div>
       ${statsHTML()}
-      ${testingHTML()}
-      ${announceHTML()}
-      <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="history" aria-pressed="${adm.status === "history"}">CHANGE HISTORY</button><button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
-      ${adm.msg ? `<div class="msg" style="color:#ff8a7a">${esc(adm.msg)}</div>` : ""}
-      ${adm.status === "history" ? historyHTML() : adm.status === "blocked" ? blocksHTML() : (list || `<p class="dim">Nothing here.</p>`)}
-      <h3 class="ph3">PUBLISHED //</h3>
-      ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns">${e.special === "notice" ? `<button class="mini-btn" data-admnotice>EDIT</button>` : e.special === "ammo" ? `<button class="mini-btn" data-admammo="${esc(e.id)}">EDIT</button>` : `<button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button>`}</span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}
+      ${setupHTML(true)}`;
+    else if (page === "history") body = `${adm.msg ? `<div class="msg admerr">${esc(adm.msg)}</div>` : ""}${historyHTML()}`;
+    else if (page === "testing") body = testingHTML();
+    else body = `
+      <div class="chips">${st.map(x => `<button class="chip-btn" data-admtab="${x}" aria-pressed="${adm.status === x}">${x.toUpperCase()} ${adm.counts[x] || 0}</button>`).join("")}<button class="chip-btn" data-admtab="blocked" aria-pressed="${adm.status === "blocked"}">BLOCKED</button></div>
+      ${adm.msg ? `<div class="msg admerr">${esc(adm.msg)}</div>` : ""}
+      ${adm.status === "blocked" ? blocksHTML() : (list || `<p class="dim">Nothing here.</p>`)}`;
+    screen.innerHTML = `<div class="results admin">
+      <div class="admnav">${pages.map(([k, l]) => `<button class="admpage" data-admpage="${k}" aria-pressed="${!adm.edit && !adm.ann && page === k}">${l}</button>`).join("")}<button class="admpage admrefresh" data-admreload title="Reload everything">&#x21bb;&#xFE0E;</button></div>
+      ${setupHTML(false)}
+      ${ammoAlertHTML()}
+      <div class="admbody">${body}</div>
     </div>`;
+    if (adm.edit || adm.ann) { const k = adm.edit ? JSON.stringify(Object.keys(adm.edit)) + (adm.edit.entry || "") : "ann"; if (adm._open !== k) { adm._open = k; screen.scrollTop = 0; } } else adm._open = null;
+    { const f = $("#pubFilter"); if (f) { const run = () => { adm.pubFilter = f.value; const q = f.value.trim().toLowerCase(); screen.querySelectorAll("[data-pubname]").forEach(r => { r.hidden = !!q && !r.dataset.pubname.includes(q); }); }; f.oninput = run; run(); } }
     const on = (id, fn) => { const el = $("#" + id); if (el) el.onclick = fn; };
     on("admCancel", () => { adm.edit = null; play("back"); keepScroll(render); });
     on("admUnpub", async () => {
@@ -3630,8 +3660,10 @@ Built with AI (Claude).`;
     if (t.closest("[data-dmgshare]")) { const url = dmgLink(); play("click"); (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("Link to this calculation copied.")).catch(() => toast(url, { ms: 12000 })); return; }
     { const b = t.closest("[data-dmgcalc]"); if (b) { const d = ui.dmg = dmgState(); d.gun = b.dataset.dmgcalc; d.mode = 0; d.ammo = ""; d.hits = ""; detail = null; ui.tab = "damage"; persistUI(); play("click"); renderTabs(); render(); return; } }
     { const b = t.closest("[data-cnt]"); if (b) { const id = b.dataset.cntid; setCount(id, countOf1(id) + +b.dataset.cnt); play("click"); keepScroll(render); return; } }
+    if (t.closest("[data-admback]")) { adm.edit = null; adm.ann = null; play("back"); keepScroll(render); return; }
+    { const b = t.closest("[data-admpage]"); if (b) { adm.page = b.dataset.admpage; adm.edit = null; adm.ann = null; adm.status = adm.page === "history" ? "history" : (adm.status === "history" ? "new" : adm.status); adm.rows = null; adm.changes = null; adm.blocks = null; adm.msg = ""; play("click"); render(); screen.scrollTop = 0; return; } }
     { const b = t.closest("[data-admtab]"); if (b) { adm.status = b.dataset.admtab; adm.rows = null; adm.changes = null; adm.blocks = null; play("click"); render(); return; } }
-    if (t.closest("[data-admreload]")) { play("click"); loadAdmin(); loadOverrides(); return; }
+    if (t.closest("[data-admreload]")) { play("click"); admStats = null; adm.setup = undefined; adm.ammoCheck = undefined; adm.rows = null; adm.changes = null; adm.blocks = null; loadOverrides(); render(); toast("Reloaded."); return; }
     if (t.closest("[data-admnew]")) { adm.edit = { sub: null, entry: null }; play("click"); keepScroll(render); return; }
     { const b = t.closest("[data-admedit]"); if (b) { adm.edit = { sub: b.dataset.admedit ? +b.dataset.admedit : null, entry: b.dataset.admentry || null, img: b.dataset.admimg || "" }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; } }
     { const b = t.closest("[data-admaddnew]"); if (b) { const sub = b.dataset.admaddnew ? +b.dataset.admaddnew : null; const row = sub && (adm.rows || []).find(x => x.id === sub);

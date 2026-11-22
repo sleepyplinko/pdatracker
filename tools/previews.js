@@ -67,7 +67,7 @@ const srv = http.createServer((q, r) => {
   const SHELL = fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace(/  <!--SEO-->[\s\S]*?<!--\/SEO-->/, "<!--HEAD-->").replace(/\n  <meta name="theme-color"[^>]*>/, "");
   const imgHash = src => { try { return /^https?:/.test(src) ? src : crypto.createHash("sha1").update(fs.readFileSync(path.join(ROOT, src.split("?")[0]))).digest("hex"); } catch { return src; } };
   fs.mkdirSync(OUT, { recursive: true });
-  for (const d of fs.readdirSync(OUT)) if (d !== "manifest.json" && !seen.has(d)) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
+  for (const d of fs.readdirSync(OUT)) if (!d.endsWith(".json") && !seen.has(d)) fs.rmSync(path.join(OUT, d), { recursive: true, force: true });
 
   let drawn = 0;
   for (const x of list) {

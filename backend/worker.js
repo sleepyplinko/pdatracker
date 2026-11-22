@@ -330,7 +330,7 @@ const ammoHook = env => env.AMMO_WEBHOOK || env.ANNOUNCE_WEBHOOK;
 async function ammoAlert(env, test) {
   const hook = ammoHook(env); if (!hook) return { ok: false, error: "Set ANNOUNCE_WEBHOOK (or AMMO_WEBHOOK) on the Worker first." };
   const site = env.SITE_URL || "https://sleepyplinko.github.io/pdatracker/";
-  const send = embed => fetch(hook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowed_mentions: { parse: [] }, embeds: [embed] }) });
+  const send = (embed, ping) => fetch(hook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ping ? { content: "@everyone", allowed_mentions: { parse: ["everyone"] }, embeds: [embed] } : { allowed_mentions: { parse: [] }, embeds: [embed] }) });
   if (test) { const res = await send({ title: "Ammo chart alerts are working", url: site, description: "You'll get a message here when the OANC Ammo Chart changes.", color: 0xffcf4a }); return res.ok ? { ok: true } : { ok: false, error: "Discord didn't accept the message. Check the webhook." }; }
   const r = await fetch(site + "e/ammo-sheet.json?t=" + now(), { cf: { cacheTtl: 0 } }).catch(() => null);
   if (!r || !r.ok) return { ok: false };
@@ -341,7 +341,7 @@ async function ammoAlert(env, test) {
   if (row && row.v === String(j.since)) return { ok: true };
   const lines = (j.cells || []).slice(0, 15).map(c => `• ${c.sheet} · ${c.row || c.cell}: ${c.old || "(empty)"} → ${c.new || "(empty)"}`);
   const res = await send({ title: "The OANC Ammo Chart changed", url: site, color: 0xffcf4a,
-    description: (`${j.changed} cell${j.changed === 1 ? "" : "s"} changed. The site still has the old numbers until it's updated.\n\n` + lines.join("\n") + (j.changed > lines.length ? "\n…" : "")).slice(0, 3900) });
+    description: (`${j.changed} cell${j.changed === 1 ? "" : "s"} changed. The site still has the old numbers until it's updated.\n\n` + lines.join("\n") + (j.changed > lines.length ? "\n…" : "")).slice(0, 3900) }, true);
   if (res.ok) await env.DB.prepare("INSERT INTO meta (k, v) VALUES ('ammo_notified', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").bind(String(j.since)).run();
   return { ok: res.ok };
 }
