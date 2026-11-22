@@ -94,6 +94,10 @@ The site checks the OANC Ammo Chart every 6 hours. This makes the Worker post in
    `AMMO_WEBHOOK` with that channel's webhook URL.
 4. Test it: **ADMIN → SEND TEST ALERT**.
 
+## 10. Picture uploads (admins only)
+1. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**. Nothing else: the Worker makes its own `images` table.
+Uploaded pictures are stored in the D1 database (shrunk to WebP in the browser first, 1.5 MB max) and served from `/img/…` on the Worker.
+
 ## Notes
 - Blocking stores a one-way fingerprint of the sender's connection, never the
   address itself.

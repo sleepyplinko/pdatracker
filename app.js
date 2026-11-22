@@ -2403,7 +2403,44 @@
   const imgRowHTML = (u, fr) => { const k = "admImg" + (imgRowN++), f = fr || { x: 50, y: 0, z: 1 }; return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div>
     <div class="framewrap" data-framewrap="#${k}"${u ? "" : " hidden"}><div class="framer" data-framer data-orig="${esc(frameStr(fr))}" data-fx="${f.x}" data-fy="${f.y}" data-fz="${f.z}"><img data-imgprev="#${k}" src="${esc(u)}" alt="" draggable="false"${frameStyle(fr ? f : { x: 50, y: 0, z: 1 })}></div>
     <div class="framectl"><label>ZOOM <input type="range" min="1" max="4" step="0.05" value="${f.z}" data-framez></label><button type="button" class="mini-btn" data-framereset>RESET</button><span class="dim">Drag the picture to move it. This box is the size of the picture on the entry page.</span></div></div></div>`; };
-  const upBtn = () => "";
+  const upBtn = sel => `<button type="button" class="mini-btn" data-upload="${esc(sel)}" title="Upload a picture from this device">UPLOAD</button>`;
+  const IMG_MAX = 1572864;
+  async function shrinkImage(file) {
+    if (file.type === "image/gif") { if (file.size <= IMG_MAX) return file; throw new Error("That GIF is over 1.5 MB. Use a Giphy or Imgur link instead."); }
+    const bmp = await createImageBitmap(file).catch(() => { throw new Error("Couldn't read that picture."); });
+    let side = 1600;
+    for (let pass = 0; pass < 6; pass++) {
+      const k = Math.min(1, side / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+      const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(bmp, 0, 0, w, h);
+      for (const q of [0.86, 0.75, 0.6]) {
+        const b = await new Promise(res => c.toBlob(res, "image/webp", q));
+        const out = b && b.type === "image/webp" ? b : await new Promise(res => c.toBlob(res, "image/jpeg", q));
+        if (out && out.size <= IMG_MAX) return out;
+      }
+      side = Math.round(side * 0.75);
+    }
+    throw new Error("That picture is too big.");
+  }
+  async function uploadImage(file, target) {
+    if (!/^image\//.test(file.type)) { toast("Pick a picture file."); play("warn"); return; }
+    target.disabled = true; const was = target.placeholder; target.placeholder = "Uploading…"; target.value = "";
+    try {
+      const blob = await shrinkImage(file);
+      const r = await fetch(API + "/api/admin/images", { method: "POST", headers: { "Content-Type": blob.type, Authorization: "Bearer " + adminSess.token }, body: blob });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 404) throw new Error("Update the Worker first (paste the new worker.js and Deploy).");
+      if (!r.ok || !j.url) throw new Error(j.error || "Upload failed.");
+      target.value = j.url; target.dispatchEvent(new Event("change", { bubbles: true })); play("confirm"); toast("Uploaded.");
+    } catch (err) { toast(err.message || "Upload failed."); play("warn"); }
+    finally { target.disabled = false; target.placeholder = was; }
+  }
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest && ev.target.closest("[data-upload]"); if (!b || !amAdmin()) return;
+    const target = document.querySelector(b.dataset.upload); if (!target) return;
+    const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/png,image/jpeg,image/webp,image/gif";
+    inp.onchange = () => { if (inp.files && inp.files[0]) uploadImage(inp.files[0], target); };
+    inp.click();
+  });
 
   function gifLink(u) {
     u = String(u || "").trim(); let m;
@@ -2435,7 +2472,7 @@
       ${sec === "tools" ? `<label>STATS <small>one per line, e.g. STRENGTH: 1.2x (optional)</small><textarea data-admadd="stats" rows="6">${esc(a.stats || "")}</textarea>
         <label>COMMENT</label><textarea data-admadd="comment" rows="4">${esc(a.comment || "")}</textarea>`
       : `<label>DESCRIPTION</label><textarea data-admadd="desc" rows="5">${esc(a.desc || "")}</textarea>
-        <label>PICTURE <small>paste an https:// image link</small></label><div class="imgrow"><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">${upBtn('[data-admadd="img"]')}</div><img class="subimg" data-imgprev='[data-admadd="img"]' src="${esc(a.img || "")}" alt=""${a.img ? "" : " hidden"}>`}
+        <label>PICTURE <small>paste an https:// link or press UPLOAD</small></label><div class="imgrow"><input data-admadd="img" value="${esc(a.img || "")}" placeholder="https://">${upBtn('[data-admadd="img"]')}</div><img class="subimg" data-imgprev='[data-admadd="img"]' src="${esc(a.img || "")}" alt=""${a.img ? "" : " hidden"}>`}
       <label>ADDED IN UPDATE <small>optional</small><input data-admadd="update" list="admUpdList" maxlength="40" value="${esc(a.update || "")}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>
       <div class="btnrow"><button class="pbtn" id="admAddGo">ADD ENTRY${adm.edit.sub ? " + MARK DONE" : ""}</button><button class="pbtn" id="admCancel">CANCEL</button></div>
       <p class="dim">The page reloads after adding so the new entry shows up. It appears for everyone within a minute.</p>
@@ -2615,7 +2652,7 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || (e.section === "docs" ? DOC_DESC : DESC)[e.name] || "")}</textarea>
-          <label>PICTURES <small>the first one shows on the tile; paste https:// image links (Imgur and similar; Discord links can expire)</small></label>
+          <label>PICTURES <small>the first one shows on the tile; paste an https:// link or press UPLOAD (Discord links can expire)</small></label>
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); const fr = imagesOf(target, target && target.card); return (l.length ? l : [""]).map((u, k) => imgRowHTML(u, fr[k] && fr[k].src === u ? fr[k].frame : null)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}

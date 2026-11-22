@@ -93,6 +93,12 @@ async function route(req, env, ctx) {
   const M = req.method;
 
   if (M === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  const im = path.match(/^\/img\/([0-9a-f]{16})\.(webp|png|jpg|gif)$/);
+  if (im && (M === "GET" || M === "HEAD")) {
+    const row = await env.DB.prepare("SELECT type, data FROM images WHERE id = ?").bind(im[1]).first().catch(() => null);
+    if (!row) return new Response("Not found", { status: 404, headers: CORS });
+    return new Response(M === "HEAD" ? null : new Uint8Array(row.data), { headers: { ...CORS, "Content-Type": row.type, "Cache-Control": "public, max-age=31536000, immutable", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'", "Content-Disposition": "inline" } });
+  }
   if (path === "" || path === "/api") return json({ ok: true, service: "pda-tracker", admins: adminKeys(env).map(([n]) => n) });
 
   if (path === "/api/logout" && M === "POST") {
@@ -250,6 +256,15 @@ async function route(req, env, ctx) {
     const bm = path.match(/^\/api\/admin\/blocks\/(\d+)$/);
     if (bm && M === "DELETE") { await env.DB.prepare("DELETE FROM blocks WHERE id = ?").bind(+bm[1]).run(); return json({ ok: true }); }
 
+    if (path === "/api/admin/images" && M === "POST") {
+      const buf = new Uint8Array(await req.arrayBuffer());
+      if (!buf.length || buf.length > IMG_MAX) return err(413, "Pictures can be up to 1.5 MB.");
+      const kind = imgKind(buf); if (!kind) return err(415, "That isn't a WebP, PNG, JPEG or GIF picture.");
+      await env.DB.prepare("CREATE TABLE IF NOT EXISTS images (id TEXT PRIMARY KEY, type TEXT NOT NULL, data BLOB NOT NULL, size INTEGER NOT NULL, created INTEGER NOT NULL, by TEXT)").run();
+      const id = randomHex(8);
+      await env.DB.prepare("INSERT INTO images (id, type, data, size, created, by) VALUES (?, ?, ?, ?, ?, ?)").bind(id, kind.type, buf, buf.length, now(), name).run();
+      return json({ ok: true, url: `${url.origin}/img/${id}.${kind.ext}` }, 201);
+    }
     if (path === "/api/admin/ammo-test" && M === "POST") { const r = await ammoAlert(env, true); return r.ok ? json({ ok: true }) : err(502, r.error || "Couldn't send."); }
     if (path === "/api/admin/announce" && M === "POST") {
       if (!env.ANNOUNCE_WEBHOOK) return err(501, "Set ANNOUNCE_WEBHOOK on the Worker first (see the README).");
@@ -326,6 +341,15 @@ async function route(req, env, ctx) {
   return err(404, "Not found.");
 }
 
+const IMG_MAX = 1572864;
+function imgKind(b) {
+  const at = (i, ...v) => v.every((x, k) => b[i + k] === x);
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return { type: "image/webp", ext: "webp" };
+  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return { type: "image/png", ext: "png" };
+  if (at(0, 0xff, 0xd8, 0xff)) return { type: "image/jpeg", ext: "jpg" };
+  if (at(0, 0x47, 0x49, 0x46, 0x38)) return { type: "image/gif", ext: "gif" };
+  return null;
+}
 const ammoHook = env => env.AMMO_WEBHOOK || env.ANNOUNCE_WEBHOOK;
 async function ammoAlert(env, test) {
   const hook = ammoHook(env); if (!hook) return { ok: false, error: "Set ANNOUNCE_WEBHOOK (or AMMO_WEBHOOK) on the Worker first." };
