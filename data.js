@@ -5242,7 +5242,7 @@ const PDA_DATA = {
         [W("BCM JACK CARBINE"), A("5.56x45mm INC+"), M("30rnd AR15-FastMag")]),
       Object.assign(P("WC Advanced Troop", { Health: 450, Speed: 1.3, Defense: 60, Shield: 400, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
         { "Pre-Aim": 20, Strength: "0.55x", "Aim Time Multiplier": "1.3x", "Aim Slowdown": "0.8x", "Attack Slowdown": "1.2x" },
-        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")]), { img: "images/people/wc-advanced-troop.webp" }),
+        [W("H&K HK416A5"), A("5.56x45mm M856"), M("30rnd AR15 Mag")]), { img: "images/people/wc-advanced-troop.webp", frame: "50 85 1" }),
       P("WC Obliterator", { Health: 700, Speed: 0, Defense: 60, Shield: 600, Supershield: 5, "Super Armour": 20, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 100, "Stun Resistance": 100 },
         { Suppressor: "true", "Pre-Aim": 30, Strength: "0.5x", "Aim Time Multiplier": "1.25x", "Reload Speed Multiplier": "1.75x", "Aim Slowdown": "0.3x" },
         [W("M29 XT MK II"), A(".950 JDJ"), M("8rnd M29 Mag")]),

@@ -398,13 +398,23 @@
   function imagesOf(...objs) {
     if (objs[0] && objs[0].noPic) return [];
     const own = objs.find(o => o && (o.picCred || o.picTip)) || {};
+    const fo = objs.find(o => o && (o.picFrame || o.frame));
+    const frames = fo ? String(fo.picFrame || fo.frame).split("|") : [];
     for (const o of objs) {
       if (!o) continue;
       const list = o.imgs || (o.img ? [o.img] : null);
-      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map(x => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "", cred: own.picCred || null, tip: own.picTip || "" }));
+      if (list && list.length) return list.map(x => typeof x === "string" ? { src: x, caption: "" } : { src: x.src, caption: x.caption || "" }).map((x, k) => Object.assign(x, { credit: o.picCredit && x.src === o.img ? o.picCredit : "", cred: own.picCred || null, tip: own.picTip || "", frame: parseFrame(frames[k]) }));
     }
     return [];
   }
+  function parseFrame(t) {
+    const m = String(t || "").trim().split(/\s+/).map(Number);
+    if (m.length < 2 || m.some(n => !isFinite(n))) return null;
+    const f = { x: Math.max(0, Math.min(100, m[0])), y: Math.max(0, Math.min(100, m[1])), z: Math.max(1, Math.min(4, m[2] || 1)) };
+    return f.x === 50 && f.y === 50 && f.z === 1 ? null : f;
+  }
+  const frameStyle = f => f ? ` style="object-position:${f.x}% ${f.y}%;transform:scale(${f.z});transform-origin:${f.x}% ${f.y}%"` : "";
+  const frameStr = f => f ? [f.x, f.y, f.z].map(n => Math.round(n * 100) / 100).join(" ") : "";
   const PIC_CREDITS = { wiki: { name: "Once A Normal City Wiki", short: "OANC WIKI", url: "https://once-a-normal-city-roblox.fandom.com/wiki/Guns" } };
   const creditHTML = im => { if (im.cred) return im.cred.url ? `<a class="imgcredit" href="${esc(im.cred.url)}" target="_blank" rel="noopener" title="Picture: ${esc(im.cred.text)}">PIC: ${esc(im.cred.text.toUpperCase())}</a>` : `<span class="imgcredit" title="Picture: ${esc(im.cred.text)}">PIC: ${esc(im.cred.text.toUpperCase())}</span>`;
     const c = PIC_CREDITS[im.credit]; return c ? `<a class="imgcredit" href="${esc(c.url)}" target="_blank" rel="noopener" title="Picture from the ${esc(c.name)} (Fandom)">PIC: ${esc(c.short)}</a>` : ""; };
@@ -415,7 +425,7 @@
     if (!imgs.length) return fallback;
     const i = ((imgIndex % imgs.length) + imgs.length) % imgs.length;
     const im = imgs[i];
-    return `<img src="${esc(im.src)}" alt="" class="zoomable" loading="lazy" decoding="async" ${im.tip || im.caption ? `data-tip="${esc(im.tip || im.caption)}"` : `title="Click to enlarge"`}>` +
+    return `<img src="${esc(im.src)}" alt="" class="zoomable${im.frame ? " framed" : ""}" loading="lazy" decoding="async"${frameStyle(im.frame)} ${im.tip || im.caption ? `data-tip="${esc(im.tip || im.caption)}"` : `title="Click to enlarge"`}>` +
            (imgs.length > 1 ? `<span class="imgcount">${i + 1}/${imgs.length}</span>` : "") + creditHTML(im);
   }
   function arrowsHTML(imgs) {
@@ -1113,7 +1123,7 @@
     const l = isGroup ? c.name : label(first);
     const ci = imagesOf(c.entry, c, first);
     const showPic = got || (settings.missingPics && ci.length);
-    const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${got ? "" : ' class="dimpic"'}>` : (isGroup ? I.people : I.person)) : I.question;
+    const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${frameStyle(ci[0].frame)}${got ? "" : ' class="dimpic"'}>` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
     return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}${got ? ecls(c.entry) : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${(got && c.entry.ecolor) || g.color}" title="${esc(tip)}">
@@ -2273,15 +2283,16 @@
     return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
   }
   function applyOverrides(ov) {
-    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow", "picCred", "picTip", "noPic"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
+    origInfo.forEach((o, e) => { ["stats", "comment", "desc", "tier", "community", "update", "img", "imgs", "hidden", "special", "gold", "ecolor", "eglow", "picCred", "picTip", "noPic", "picFrame"].forEach(k => { if (o[k] === undefined) delete e[k]; else e[k] = o[k]; });
       if (e.isCard && e.card) e.card.img = o.cardImg; });
     origInfo.clear();
     Object.entries(ov || {}).forEach(([id, o]) => {
       const e = findEntry(id); if (!e) return;
-      origInfo.set(e, { noPic: e.noPic, picCred: e.picCred, picTip: e.picTip, hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
+      origInfo.set(e, { picFrame: e.picFrame, noPic: e.noPic, picCred: e.picCred, picTip: e.picTip, hidden: e.hidden, special: e.special, gold: e.gold, ecolor: e.ecolor, eglow: e.eglow, stats: e.stats, comment: e.comment, desc: e.desc, tier: e.tier, community: e.community, update: e.update, img: e.img, imgs: e.imgs, cardImg: e.card && e.card.img });
       const os = { ...(o.stats || {}) }; if (os.HIDDEN) { e.hidden = os.HIDDEN !== "NO"; delete os.HIDDEN; }
       const sty = os._STYLE, glow = os._GLOW === "YES";
-      delete e.picCred; delete e.picTip; delete e.noPic;
+      delete e.picCred; delete e.picTip; delete e.noPic; delete e.picFrame;
+      if (os._PICFRAME) e.picFrame = os._PICFRAME;
       if (os._NOPIC === "YES") { e.noPic = true; delete e.img; delete e.imgs; if (e.isCard && e.card) e.card.img = ""; }
       if (os._PICCREDIT) e.picCred = { text: os._PICCREDIT, url: /^https?:\/\//i.test(os._PICLINK || "") ? os._PICLINK : "" };
       if (os._PICTIP) e.picTip = os._PICTIP;
@@ -2371,7 +2382,27 @@
   const statsToText = st => Object.entries(st || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
   function textToStats(t) { const o = {}; String(t).split(/\n/).forEach(l => { const m = l.match(/^\s*([^:]{1,40}?)\s*:\s*(.+?)\s*$/); if (m) o[m[1].toUpperCase()] = m[2]; }); return o; }
   let imgRowN = 0;
-  const imgRowHTML = u => { const k = "admImg" + (imgRowN++); return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div><img class="subimg" data-imgprev="#${k}" src="${esc(u)}" alt=""${u ? "" : " hidden"}></div>`; };
+  function setFrame(fm, f) {
+    fm.dataset.touched = "1";
+    fm.dataset.fx = f.x = Math.max(0, Math.min(100, f.x)); fm.dataset.fy = f.y = Math.max(0, Math.min(100, f.y)); fm.dataset.fz = f.z = Math.max(1, Math.min(4, f.z));
+    const img = fm.querySelector("img"); if (img) { img.style.objectPosition = `${f.x}% ${f.y}%`; img.style.transform = `scale(${f.z})`; img.style.transformOrigin = `${f.x}% ${f.y}%`; }
+    const sl = fm.parentElement.querySelector("[data-framez]"); if (sl && +sl.value !== f.z) sl.value = f.z;
+  }
+  const getFrame = fm => ({ x: +fm.dataset.fx, y: +fm.dataset.fy, z: +fm.dataset.fz });
+  document.addEventListener("pointerdown", ev => {
+    const fm = ev.target.closest && ev.target.closest("[data-framer]"); if (!fm) return;
+    ev.preventDefault(); fm.setPointerCapture(ev.pointerId); fm.classList.add("dragging");
+    const r = fm.getBoundingClientRect(), st = getFrame(fm), x0 = ev.clientX, y0 = ev.clientY;
+    const move = e => setFrame(fm, { x: st.x - (e.clientX - x0) / r.width * 100 * 1.5 / st.z, y: st.y - (e.clientY - y0) / r.height * 100 * 1.5 / st.z, z: st.z });
+    const up = () => { fm.classList.remove("dragging"); fm.removeEventListener("pointermove", move); fm.removeEventListener("pointerup", up); fm.removeEventListener("pointercancel", up); };
+    fm.addEventListener("pointermove", move); fm.addEventListener("pointerup", up); fm.addEventListener("pointercancel", up);
+  });
+  document.addEventListener("wheel", ev => { const fm = ev.target.closest && ev.target.closest("[data-framer]"); if (!fm) return; ev.preventDefault(); const f = getFrame(fm); f.z = Math.round((f.z - ev.deltaY * 0.002) * 100) / 100; setFrame(fm, f); }, { passive: false });
+  document.addEventListener("input", ev => { const sl = ev.target.closest && ev.target.closest("[data-framez]"); if (!sl) return; const fm = sl.closest(".framewrap").querySelector("[data-framer]"); const f = getFrame(fm); f.z = +sl.value; setFrame(fm, f); });
+  document.addEventListener("click", ev => { const b = ev.target.closest && ev.target.closest("[data-framereset]"); if (!b) return; setFrame(b.closest(".framewrap").querySelector("[data-framer]"), { x: 50, y: 0, z: 1 }); });
+  const imgRowHTML = (u, fr) => { const k = "admImg" + (imgRowN++), f = fr || { x: 50, y: 0, z: 1 }; return `<div class="imgitem"><div class="imgrow"><input id="${k}" data-admimgi value="${esc(u)}" placeholder="https://">${upBtn("#" + k)}<button type="button" class="mini-btn" data-admimgdel title="Remove this picture">✕</button></div>
+    <div class="framewrap" data-framewrap="#${k}"${u ? "" : " hidden"}><div class="framer" data-framer data-orig="${esc(frameStr(fr))}" data-fx="${f.x}" data-fy="${f.y}" data-fz="${f.z}"><img data-imgprev="#${k}" src="${esc(u)}" alt="" draggable="false"${frameStyle(fr ? f : { x: 50, y: 0, z: 1 })}></div>
+    <div class="framectl"><label>ZOOM <input type="range" min="1" max="4" step="0.05" value="${f.z}" data-framez></label><button type="button" class="mini-btn" data-framereset>RESET</button><span class="dim">Drag the picture to move it. This box is the size of the picture on the entry page.</span></div></div></div>`; };
   const upBtn = () => "";
 
   function gifLink(u) {
@@ -2585,7 +2616,7 @@
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || (e.section === "docs" ? DOC_DESC : DESC)[e.name] || "")}</textarea>
           <label>PICTURES <small>the first one shows on the tile; paste https:// image links (Imgur and similar; Discord links can expire)</small></label>
-          <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); return (l.length ? l : [""]).map(u => imgRowHTML(u)).join(""); })()}</div>
+          <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); const fr = imagesOf(target, target && target.card); return (l.length ? l : [""]).map((u, k) => imgRowHTML(u, fr[k] && fr[k].src === u ? fr[k].frame : null)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
         <label class="chk"><input type="checkbox" id="admHidden"${e.hidden ? " checked" : ""}> HIDDEN <small>still shows, but doesn't count toward anyone's PDA</small></label>
@@ -2682,6 +2713,9 @@
         const orig = imagesOf(origInfo.has(e) ? { img: origInfo.get(e).img, imgs: origInfo.get(e).imgs } : e).map(x => x.src);
         if (ims.length && JSON.stringify(ims) !== JSON.stringify(orig)) data.imgs = ims;
         if (!ims.length && orig.length) data.stats = { ...(data.stats || {}), _NOPIC: "YES" };
+        { const fr = [...screen.querySelectorAll("[data-admimgi]")].filter(x => x.value.trim()).map(x => { const fm = screen.querySelector(`[data-framewrap='#${x.id}'] [data-framer]`); return !fm ? "" : fm.dataset.touched ? frameStr(parseFrame([fm.dataset.fx, fm.dataset.fy, fm.dataset.fz].join(" "))) : (fm.dataset.orig || ""); });
+          const t = fr.join("|").replace(/\|+$/, ""), cur = String(e.picFrame || e.frame || "");
+          if (t !== cur.replace(/\|+$/, "")) data.stats = { ...(data.stats || {}), _PICFRAME: t || "50 50 1" }; }
       }
       const up = $("#admUpdate").value.trim(); if (up) data.update = up;
       { const c = $("#admPicCred").value.trim(), l = $("#admPicLink").value.trim(), tp = $("#admPicTip").value.trim();
@@ -3800,7 +3834,7 @@ Built with AI (Claude).`;
     }
     else if (sel.matches('[data-admadd="section"], [data-admadd="group"]')) { readAddForm(); if (sel.dataset.admadd === "section") adm.edit.add.group = ""; play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-annupd]")) { adm.ann.update = sel.value; adm.ann.msg = ($("#annMsg") || {}).value || ""; keepScroll(render); return; }
-    else if (sel.matches("[data-admimgi]")) { fixGifInput(sel); const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); if (pv) { const u = sel.value.trim(); pv.hidden = !/^https?:\/\/\S+$|^images\//.test(u); if (!pv.hidden) pv.src = u; } return; }
+    else if (sel.matches("[data-admimgi]")) { fixGifInput(sel); const pv = screen.querySelector(`[data-imgprev='#${sel.id}']`); const wrap = screen.querySelector(`[data-framewrap='#${sel.id}']`); if (pv) { const u = sel.value.trim(), ok = /^https?:\/\/\S+$|^images\//.test(u); if (wrap) wrap.hidden = !ok; else pv.hidden = !ok; if (ok) pv.src = u; } return; }
     else if (sel.matches("[data-leftupd]")) { ui.leftUpd = sel.value; persistUI(); play("click"); render(); return; }
     else if (sel.matches("[data-lpick]")) { if (sel.value) loadoutAdd(sel.value); return; }
     else if (sel.matches("[data-lbase]")) { loadout.base = sel.value.trim(); saveLoad(); play("click"); keepScroll(render); return; }
