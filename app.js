@@ -1575,7 +1575,7 @@
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
     const obsidian = !!(tb && String(tb.Obsidian).toLowerCase() === "true");
-    const isWC = !!(tgt && (tgt.group === "WC" || (tgt.card && tgt.card.entry && tgt.card.entry.group === "WC")));
+    const isWC = !!(tgt && ["WC Elite Tank", "WC Golem", "Augustus Bartholomew"].includes(tgt.name));
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
     let st0 = { h: hp, sh: shield, ss };
     function runHits(st, sht, b, ig, max) {
