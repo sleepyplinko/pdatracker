@@ -2596,11 +2596,12 @@
   }
   function ammoCheckHTML() {
     const a = adm.ammoCheck;
-    if (!a) return "";
-    if (a.changed > 0) return `<div class="msg dwarn ammochk">&#x26A0;&#xFE0E; <b>The ammo chart changed</b> (${a.changed} cell${a.changed === 1 ? "" : "s"}${a.since ? ", since " + esc(a.since.slice(0, 10)) : ""}). Ask Claude to update the site.
+    const test = `<button class="mini-btn" data-ammotest>SEND TEST ALERT</button>`;
+    if (!a) return `<p class="dim">Ammo chart alerts on Discord: ${test}</p>`;
+    if (a.changed > 0) return `<div class="msg dwarn ammochk">${test} &#x26A0;&#xFE0E; <b>The ammo chart changed</b> (${a.changed} cell${a.changed === 1 ? "" : "s"}${a.since ? ", since " + esc(a.since.slice(0, 10)) : ""}). Ask Claude to update the site.
       <details><summary>SHOW CHANGES</summary><div class="dim">${(a.cells || []).map(c => `${esc(c.sheet)} · ${esc(c.row || c.cell)}: ${esc(c.old || "(empty)")} → ${esc(c.new || "(empty)")}`).join("<br>")}${a.changed > (a.cells || []).length ? "<br>…" : ""}</div></details></div>`;
-    if (!a.ok) return `<p class="dim">Couldn't check the ammo chart${a.failedSince ? " since " + esc(a.failedSince.slice(0, 10)) : ""}. The sheet may not be shared publicly.</p>`;
-    return "";
+    if (!a.ok) return `<p class="dim">Couldn't check the ammo chart${a.failedSince ? " since " + esc(a.failedSince.slice(0, 10)) : ""}. The sheet may not be shared publicly. ${test}</p>`;
+    return `<p class="dim">Ammo chart: up to date. Discord alerts: ${test}</p>`;
   }
   function renderAdmin() {
     if (!API || !adminSess) { screen.innerHTML = '<div class="results"><p class="none">Sign in as an admin from SETTINGS.</p></div>'; return; }
@@ -3688,6 +3689,10 @@ Built with AI (Claude).`;
     { const hg = t.closest("[data-helpgrp]"); if (hg && amAdmin()) { ev.preventDefault(); const c = helpCfg(), k = hg.dataset.helpgrp; c.off = c.off.includes(k) ? c.off.filter(x => x !== k) : [...c.off, k]; saveHelpCfg(c, c.off.includes(k) ? "List hidden from everyone." : "List shown again."); return; } }
     { const hs = t.closest("[data-helpskip]"); if (hs && amAdmin()) { const c = helpCfg(); c.skip = [...new Set([...c.skip, hs.dataset.helpskip])]; saveHelpCfg(c, "Taken off the list."); return; } }
     { const hu = t.closest("[data-helpunskip]"); if (hu && amAdmin()) { const c = helpCfg(); c.skip = c.skip.filter(x => x !== hu.dataset.helpunskip); saveHelpCfg(c, "Put back."); return; } }
+    if (t.closest("[data-ammotest]") && amAdmin()) {
+      api("POST", "/api/admin/ammo-test", {}).then(([st, r]) => { if (st === 200) { toast("Sent. Check Discord."); play("confirm"); } else { toast(st === 404 ? "Update the Worker first (backend README step 9)." : (r && r.error) || "Couldn't send."); play("warn"); } }).catch(() => { toast("Couldn't send."); play("warn"); });
+      return;
+    }
     if (t.closest("#clSave") && amAdmin()) { const v = $("#clText").value.trim(); if (!v) { toast("Write something first."); play("warn"); return; } saveChangelog(v); return; }
     if (t.closest("#clReset") && amAdmin()) { resetChangelog(); return; }
     if (t.closest("#helpExtraGo") && amAdmin()) { const c = helpCfg(); c.extra = $("#helpExtra").value.trim(); saveHelpCfg(c, "Requests saved."); return; }

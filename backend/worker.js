@@ -250,6 +250,7 @@ async function route(req, env, ctx) {
     const bm = path.match(/^\/api\/admin\/blocks\/(\d+)$/);
     if (bm && M === "DELETE") { await env.DB.prepare("DELETE FROM blocks WHERE id = ?").bind(+bm[1]).run(); return json({ ok: true }); }
 
+    if (path === "/api/admin/ammo-test" && M === "POST") { const r = await ammoAlert(env, true); return r.ok ? json({ ok: true }) : err(502, r.error || "Couldn't send."); }
     if (path === "/api/admin/announce" && M === "POST") {
       if (!env.ANNOUNCE_WEBHOOK) return err(501, "Set ANNOUNCE_WEBHOOK on the Worker first (see the README).");
       const b = await body(req); const upd = clip(b && b.update, 40).trim(); if (!upd) return err(400, "Pick an update.");
@@ -325,9 +326,32 @@ async function route(req, env, ctx) {
   return err(404, "Not found.");
 }
 
+const ammoHook = env => env.AMMO_WEBHOOK || env.ANNOUNCE_WEBHOOK;
+async function ammoAlert(env, test) {
+  const hook = ammoHook(env); if (!hook) return { ok: false, error: "Set ANNOUNCE_WEBHOOK (or AMMO_WEBHOOK) on the Worker first." };
+  const site = env.SITE_URL || "https://sleepyplinko.github.io/pdatracker/";
+  const send = embed => fetch(hook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowed_mentions: { parse: [] }, embeds: [embed] }) });
+  if (test) { const res = await send({ title: "Ammo chart alerts are working", url: site, description: "You'll get a message here when the OANC Ammo Chart changes.", color: 0xffcf4a }); return res.ok ? { ok: true } : { ok: false, error: "Discord didn't accept the message. Check the webhook." }; }
+  const r = await fetch(site + "e/ammo-sheet.json?t=" + now(), { cf: { cacheTtl: 0 } }).catch(() => null);
+  if (!r || !r.ok) return { ok: false };
+  const j = await r.json().catch(() => null); if (!j || !j.ok) return { ok: false };
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)").run();
+  const row = await env.DB.prepare("SELECT v FROM meta WHERE k = 'ammo_notified'").first();
+  if (!(j.changed > 0)) { if (row) await env.DB.prepare("DELETE FROM meta WHERE k = 'ammo_notified'").run(); return { ok: true }; }
+  if (row && row.v === String(j.since)) return { ok: true };
+  const lines = (j.cells || []).slice(0, 15).map(c => `• ${c.sheet} · ${c.row || c.cell}: ${c.old || "(empty)"} → ${c.new || "(empty)"}`);
+  const res = await send({ title: "The OANC Ammo Chart changed", url: site, color: 0xffcf4a,
+    description: (`${j.changed} cell${j.changed === 1 ? "" : "s"} changed. The site still has the old numbers until it's updated.\n\n` + lines.join("\n") + (j.changed > lines.length ? "\n…" : "")).slice(0, 3900) });
+  if (res.ok) await env.DB.prepare("INSERT INTO meta (k, v) VALUES ('ammo_notified', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").bind(String(j.since)).run();
+  return { ok: res.ok };
+}
+
 export default {
   async fetch(req, env, ctx) {
     try { return await route(req, env, ctx); }
     catch (e) { return err(500, /no such (table|column)/.test(String(e && e.message)) ? "Database needs updating: run the newest schema-update SQL file in the D1 console." : "Server error."); }
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(ammoAlert(env, false).catch(() => {}));
   }
 };

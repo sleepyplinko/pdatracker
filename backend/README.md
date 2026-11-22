@@ -86,6 +86,14 @@ Admins sign in with a password instead.
 D1 database `pda` → **Console**: paste [`schema-update-6.sql`](schema-update-6.sql), **Execute**,
 and paste the newest [`worker.js`](worker.js). Transfer codes are kept for 24 hours.
 
+## 9. Ammo chart alerts on Discord
+The site checks the OANC Ammo Chart every 6 hours. This makes the Worker post in Discord when it changed.
+1. Worker → **Edit code**: paste the new [`worker.js`](worker.js), **Deploy**.
+2. Worker → **Settings → Triggers → Cron Triggers → Add**: `15 * * * *` (every hour). Save.
+3. It posts to the `ANNOUNCE_WEBHOOK` channel without pinging anyone. For another channel, add a Secret
+   `AMMO_WEBHOOK` with that channel's webhook URL.
+4. Test it: **ADMIN → SEND TEST ALERT**.
+
 ## Notes
 - Blocking stores a one-way fingerprint of the sender's connection, never the
   address itself.
