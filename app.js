@@ -1123,7 +1123,7 @@
     const l = isGroup ? c.name : label(first);
     const ci = imagesOf(c.entry, c, first);
     const showPic = got || (settings.missingPics && ci.length);
-    const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${frameStyle(ci[0].frame)}${got ? "" : ' class="dimpic"'}>` : (isGroup ? I.people : I.person)) : I.question;
+    const pic = showPic ? (ci.length ? `<img src="${esc(ci[0].src)}" alt="" loading="lazy"${frameStyle(ci[0].frame)} class="${ci[0].frame ? "framed" : ""}${got ? "" : " dimpic"}">` : (isGroup ? I.people : I.person)) : I.question;
     const [f, t] = countOf(c.members);
     const tip = `${l}: ${got ? "found" : "not found"}${isGroup ? ` (${t} variants)` : ""}`;
     return `<button class="card${got ? "" : " missing"}${isGroup ? " group" : ""}${got ? ecls(c.entry) : ""}" data-open="${esc(first.id)}" data-entry="${esc(first.id)}" style="--c:${(got && c.entry.ecolor) || g.color}" title="${esc(tip)}">
