@@ -1611,13 +1611,10 @@
         const g = fk(k);
         if (!ig && sh > 1e-9) {
           nsh++;
-          if (!sht.gun || sht.pierce) { const took = Math.min(sh, g / 2); sh -= took; h -= g - took; }
-          else {
-            const units = sht.one ? 1 : k, q = g / units;
-            for (let u = 0; u < units; u++) {
-              if (sh > 1e-9) { const took = Math.min(sh, q / 2); sh -= took; h -= took < q / 2 - 1e-12 ? took : q - took; }
-              else h -= q;
-            }
+          const carry = !sht.gun || sht.pierce, units = sht.gun && !sht.one ? k : 1, q = g / units;
+          for (let u = 0; u < units; u++) {
+            if (sh > 1e-9) { if (q <= 2 * sh) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; } }
+            else h -= q;
           }
         }
         else h -= g;
