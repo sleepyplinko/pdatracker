@@ -1590,12 +1590,13 @@
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
     let st0 = { h: hp, sh: shield, ss, p2: false };
     const maria = !!(tgt && /^Maria Hatty Kirsten/i.test(tgt.name));
+    const flowerT = !!(tgt && tgt.name === "Flower Woman");
     function runHits(st, sht0, b, ig, max) {
       const P2 = 400;
       let two = !!st.p2, sht = two && sht0.p2 ? sht0.p2 : sht0;
       const prep = x => { const p = Math.max(1, Math.round(x.proj || 1)), f = x.final; return { p, f, fk: k => k >= p ? f : x.fk ? x.fk(k) : f * k / p }; };
       let { p, f, fk } = prep(sht);
-      let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0;
+      let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0, fw = !!st.fw;
       const flip = () => { if (!two && sht0.p2 && h > 1e-9 && h <= P2) { two = true; sh += 200; sht = sht0.p2; ({ p, f, fk } = prep(sht)); } };
       while (h > 1e-9 && n < max) {
         if (!(f > 0)) break;
@@ -1613,14 +1614,14 @@
           nsh++;
           const carry = !sht.gun || sht.pierce, units = sht.gun && !sht.one ? k : 1, q = g / units;
           for (let u = 0; u < units; u++) {
-            if (sh > 1e-9) { if (q <= 2 * sh) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; } }
+            if (sh > 1e-9) { if (q < 2 * sh - 1e-9) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; if (flowerT && !fw) { fw = true; s2 += 10; } } }
             else h -= q;
           }
         }
         else h -= g;
         flip();
       }
-      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2, p2: two } };
+      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2, p2: two, fw } };
     }
 
     function attack(s) {
@@ -1737,12 +1738,13 @@
       return `<div class="dbox dres${win ? " dwin" : ""}"><div class="dhead">${title}${win ? '<span class="hright"><span class="chip status-found">BETTER</span></span>' : ""}</div><div class="stats">
           ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}${preLine}
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${ss && nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${tip}
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
             ${obsidian && r && r.obs ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; ${esc(tgtLabel)} has Obsidian: bullets do no damage. Use explosives or melee.</p>` : ""}
             ${isWC ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count their Mono Shield.</p>` : ""}
             ${tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Counts Maria's second phase (at 400 health: 43% super armour, +200 shield), but not her regen in it.</p>` : ""}
+            ${tgt && tgt.name === "Flower Woman" ? `<p class="cat-note">ⓘ Counts the 10 supershield she gets when her shield breaks.</p>` : ""}
             ${htk && tgt && tgt.name === "Tony" ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Tony's second phase.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>`;
