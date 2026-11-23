@@ -1609,7 +1609,17 @@
         while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
         if (!k) { nb++; continue; }
         const g = fk(k);
-        if (!ig && sh > 1e-9) { const took = Math.min(sh, g / 2); sh -= took; h -= g - took; nsh++; }
+        if (!ig && sh > 1e-9) {
+          nsh++;
+          if (!sht.gun || sht.pierce) { const took = Math.min(sh, g / 2); sh -= took; h -= g - took; }
+          else {
+            const units = sht.one ? 1 : k, q = g / units;
+            for (let u = 0; u < units; u++) {
+              if (sh > 1e-9) { const took = Math.min(sh, q / 2); sh -= took; h -= took < q / 2 - 1e-12 ? took : q - took; }
+              else h -= q;
+            }
+          }
+        }
         else h -= g;
         flip();
       }
@@ -1635,7 +1645,7 @@
         const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
         const proj = xnum(s.hits) != null && a.proj > 1 ? Math.max(0, Math.min(a.proj, xnum(s.hits))) : a.proj;
         const dmg = per * proj, hit = d => calcHit({ dmg: d, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct });
-        return { per, proj, dmg, fk: k => hit(per * k).final, ...hit(dmg) };
+        return { per, proj, dmg, fk: k => hit(per * k).final, gun: true, pierce: /^true$/i.test(String((a.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(a.name), ...hit(dmg) };
       };
 
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
