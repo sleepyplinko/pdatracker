@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-23", items: [
+    "Calculator: Maria's second phase counted",
+  ] },
   { date: "2026-11-22", items: [
     "Calculator: note for Tony's second phase",
     "WC Advanced Troop picture moved down (tile too)",

@@ -1588,12 +1588,22 @@
     const obsidian = !!(tb && String(tb.Obsidian).toLowerCase() === "true");
     const isWC = !!(tgt && ["WC Elite Tank", "WC Golem", "Augustus Bartholomew"].includes(tgt.name));
     const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
-    let st0 = { h: hp, sh: shield, ss };
-    function runHits(st, sht, b, ig, max) {
-      const p = Math.max(1, Math.round(sht.proj || 1)), f = sht.final, fk = k => k >= p ? f : sht.fk ? sht.fk(k) : f * k / p;
+    let st0 = { h: hp, sh: shield, ss, p2: false };
+    const maria = !!(tgt && /^Maria Hatty Kirsten/i.test(tgt.name));
+    function runHits(st, sht0, b, ig, max) {
+      const P2 = 400;
+      let two = !!st.p2, sht = two && sht0.p2 ? sht0.p2 : sht0;
+      const prep = x => { const p = Math.max(1, Math.round(x.proj || 1)), f = x.final; return { p, f, fk: k => k >= p ? f : x.fk ? x.fk(k) : f * k / p }; };
+      let { p, f, fk } = prep(sht);
       let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0;
+      const flip = () => { if (!two && sht0.p2 && h > 1e-9 && h <= P2) { two = true; sh += 200; sht = sht0.p2; ({ p, f, fk } = prep(sht)); } };
       while (h > 1e-9 && n < max) {
-        if (s2 <= b && (ig || sh <= 1e-9)) { const k = Math.min(max - n, Math.ceil(h / f - 1e-9)); n += k; h -= k * f; break; }
+        if (!(f > 0)) break;
+        if (s2 <= b && (ig || sh <= 1e-9)) {
+          let k = Math.min(max - n, Math.ceil(h / f - 1e-9));
+          if (!two && sht0.p2 && h > P2) k = Math.min(k, Math.max(1, Math.ceil((h - P2) / f - 1e-9)));
+          n += k; h -= k * f; flip(); continue;
+        }
         n++;
         let k = p;
         while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
@@ -1601,8 +1611,9 @@
         const g = fk(k);
         if (!ig && sh > 1e-9) { const took = Math.min(sh, g / 2); sh -= took; h -= g - took; nsh++; }
         else h -= g;
+        flip();
       }
-      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2 } };
+      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2, p2: two } };
     }
 
     function attack(s) {
@@ -1616,7 +1627,8 @@
       const strength = mode && !melee && s.str ? mode.strength : 1;
 
       const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
-      const shot = a => {
+      const shot = a => { const o = shotAt(a, sa); if (maria && o) o.p2 = shotAt(a, 43); return o; };
+      const shotAt = (a, sa) => {
         if (obsidian && !melee && (!a || !isExplosive(a))) return { per: 0, proj: 1, dmg: 0, obs: true, final: 0, afterSA: 0, effSA: 0, effDef: 0 };
         if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; }
         if (!a) { const dmg = xnum(s.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
@@ -1723,7 +1735,7 @@
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
             ${obsidian && r && r.obs ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; ${esc(tgtLabel)} has Obsidian: bullets do no damage. Use explosives or melee.</p>` : ""}
             ${isWC ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count their Mono Shield.</p>` : ""}
-            ${htk && tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Maria's second phase.</p>` : ""}
+            ${tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Counts Maria's second phase (at 400 health: 43% super armour, +200 shield), but not her regen in it.</p>` : ""}
             ${htk && tgt && tgt.name === "Tony" ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Tony's second phase.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>`;
