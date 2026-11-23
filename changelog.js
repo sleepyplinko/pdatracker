@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-22", items: [
+    "Calculator: note for Tony's second phase",
     "WC Advanced Troop picture moved down (tile too)",
     "Pictures for WC Emissary and WC Advanced Troop",
   ] },

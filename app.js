@@ -1723,7 +1723,8 @@
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
             ${obsidian && r && r.obs ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; ${esc(tgtLabel)} has Obsidian: bullets do no damage. Use explosives or melee.</p>` : ""}
             ${isWC ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count their Mono Shield.</p>` : ""}
-            ${htk && tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Maria's second phase.</p>` : ""}`
+            ${htk && tgt && /^Maria Hatty Kirsten/i.test(tgt.name) ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Maria's second phase.</p>` : ""}
+            ${htk && tgt && tgt.name === "Tony" ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; Doesn't count Tony's second phase.</p>` : ""}`
           : '<p class="none">Pick a weapon or ammo.</p>'}
         </div></div>`;
     }
