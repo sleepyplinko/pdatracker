@@ -7,6 +7,83 @@
   },
   "updated": 1795235992
  },
+ "b|wc|augustus bartholomew": {
+  "desc": "I'M PROUD YOU'VE GOTTEN THIS FAR.\n\nBUT IT IS MEANINGLESS.\n\nTHIS WILL ALL BE FOR NOTHING. BECAUSE THIS ISN'T MEANT TO EVER BE DONE.\n\nIT WILL ALL CHANGE. AND YOU WILL NEVER SEE IT THE SAME.\n\nI WAS JUST HERE TO ENTERTAIN YOU. NOW, I MAY MAKE MY EXIT.\n\nBUT YOU WILL STILL BE HERE.\n\nEVEN IF IN GROUPS... IT WAS NOT WORTH IT.\n\nBELIEVE ME WHEN I SAY THAT ANYTHING I'VE SAID SHOULD BE TAKEN FOR GRANTED. BECAUSE I'M JUST MESSING WITH YOU. REALLY.",
+  "stats": {
+   "_PICCREDIT": "From the OANC wiki"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/05b8b3dfd0a1b114.webp"
+  ],
+  "updated": 1795380425
+ },
+ "b|wc|wc 'xt' flame unit": {
+  "desc": "AN ALTERNATIVE TO WC ADVANCED SOLDIER. BUILT TO RESIST MORE AND PROVIDE SUPPRESSIVE FIRE, IN A LITERAL WAY.\n\nUSES 'XT' TECHNOLOGY TO LOAD ITS FIREARM WITH EXPENSIVE AMMUNITION AND HAVE IMMUNITY TO ITS FLAMES. THE SAME IS APPLIED TO THE REST OF THE TROOPS, AS OTHERWISE EVERYONE WOULD BURN TO DEATH.\n\n... WHAT ELSE DO YOU WANT? THIS IS RIDICULOUS. I'M JUST LYING TO ENTERTAIN YOU.",
+  "stats": {
+   "_PICFRAME": "100 83.11 1.3",
+   "_PICTIP": "little cry baby"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/94ce7c644f40199a.webp"
+  ],
+  "updated": 1795383041
+ },
+ "b|wc|wc advanced troop": {
+  "desc": "THE IMPROVED VARIANT OF THE ORIGINAL. QUICKLY MADE AFTER ALL OF YOU KEPT KILLING THEM ALL WITHOUT MERCY. AND EASILY.\n\nWHAT? I'M NOT TELLING YOU ANYTHING ELSE. THIS ISN'T WORTH THE TROUBLE.",
+  "stats": {
+   "_PICFRAME": "23.3 86.06 1",
+   "_PICTIP": "LOL"
+  },
+  "updated": 1795379312
+ },
+ "b|wc|wc elite tank": {
+  "desc": "WHEN RAW FIREPOWER ISN'T ENOUGH, OPT FOR DEFENSIVE MEASURES. BUILT WITH SPECIAL ARMOR THAT IS IMMUNE TO BULLETS, THEY RUSH IN WITH A STRONG SHOTGUN, DECIMATING OPPONENTS.\n\nTHEY USE AN EXPENSIVE ROUND. YOU WILL DIE.\n\nTELL ME THIS... IS IT WORTH IT?",
+  "stats": {
+   "_PICFRAME": "31.53 58.7 1.2"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/7f86248befe8e3e2.webp"
+  ],
+  "updated": 1795384130
+ },
+ "b|wc|wc gobloing": {
+  "desc": "ARE WE SERIOUS?\n\n... HOW?\n\nWHATEVER.",
+  "stats": {
+   "_PICFRAME": "0.74 57.85 1"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/a3ba8641c8bc6c63.webp"
+  ],
+  "updated": 1795380115
+ },
+ "b|wc|wc golem": {
+  "desc": "... THE DOCUMENTS OF THIS BEING HAVE, MOSTLY, BEEN REDACTED. HOWEVER, SCRAPS OF IT HAVE REMAINED DEEP WITHIN THE CORNERS OF THE          .\n\nTHE WORST COMPANY GOLEM IS A TECHNOLOGICAL ADVANCEMENT OF A BEING, EMBEDDED TO THE BRIM WITH BALLISTIC DEFENSES THAT CANNOT BE PENETRATED. ALONGSIDE THAT, IT IS GIVEN HEAVY FIREPOWER, MAINTAINING SUPPRESSIVE FIRE ON OPPONENTS.\n\nWHAT? YOU EXPECTED MORE? ... THIS IS ONE OF THEIR STRONGEST OFFENSES, CAPABLE OF WITHSTANDING HEAVY PRESSURE AND DEFEATING POWERFUL OPPONENTS. BARTHOLOMEW HAD NO REASON TO CREATE THIS TROOP, YET HE DID ANYWAY. EVERYTHING'S LIKE THAT.\n\nSTILL BELIEVING ME? WRONG DECISION...",
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/4c7431bec54d0c11.webp"
+  ],
+  "updated": 1795383880
+ },
+ "b|wc|wc speedster": {
+  "desc": "HAHA... GET IT? THE NAME? HILARIOUS, RIGHT?\n\nONE OF THE FASTEST ENEMIES THAT YOU COULD MEET. DON'T LET THEM SEE YOU.",
+  "stats": {
+   "_PICFRAME": "100 35.67 1.15",
+   "_PICTIP": "GG EZ!"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/2461c57f3ddd2555.webp"
+  ],
+  "updated": 1795382927
+ },
+ "b|wc|wc troop": {
+  "desc": "I'LL TAKE PRIDE IN WATCHING YOU ATTEMPT THIS. WHAT A SPECTACLE...\n\nI AM MERELY GIVING YOU SOMETHING TO READ, AS A CERTAIN SOMEBODY DIDN'T WISH TO GIVE YOU ACTUAL INFORMATION. THOUGH, WHY'D YOU OPEN THE DOOR?\n\nDON'T MISTAKE ME FOR A FRAUD, I SHOULDN'T EVEN BE HERE. AND NONE OF THIS IS REAL.\n\nTHESE TROOPS ARE THE FIRST ITERATION OF COMBATANTS FOR WORST COMPANY. GIVEN HIGH TIER SHOTGUNS, ALONGSIDE POWERFUL AMMUNITION TO CHEW THROUGH ANY OPPONENT.\n\nSEE YOU AGAIN SOON.",
+  "stats": {
+   "_PICFRAME": "61.36 0 1"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/40f48534ffd424e9.webp"
+  ],
+  "updated": 1795380039
+ },
  "d|@changelog|text": {
   "desc": "{\"text\":\"# 2026-11-21\\nDouble-click a weapon category to mark it all\\nHelp wanted: missing WC people\\nLinks in the manual\\nNew name on the Discord card\\nTony removed from the Discord card, sorry.\\n\\n# 2026-11-20\\nCalculator: WC Rocket Launcher and MCX-SPEAR ammo\\nLOADOUT tab removed; weight calculator now on CALCULATOR\\nDAMAGE renamed CALCULATOR\\nTop bar looks somewhat better\\nPicture hover text shows\\nHELP WANTED: no more \\\"no picture\\\" list\\n\\n# 2026-11-19\\nWHAT'S LEFT is now CHECKLIST\\nTitle shows the tab you're on\\nNew name: Once A Normal Tracker\\nDAMAGE: supershield vs shotguns fixed\\nDAMAGE: hit first with another weapon\\nMost red items hidden from the count\\nCategory list keeps its place\\nTidier empty category message\\nWC people hidden from the count\\nAmmo chart updated (3 new ammo, fixes)\\n\\n# 2026-11-13\\nIcon says OANC\\nDAMAGE: regen and Maria notes\\nDAMAGE: its own page for search\\nEasier to find on Google\\nAdded Garden Gnome (BLUDGEON tier 7)\\nDocuments look like the game\\nFiona's Diary copied from the game\\nEvery location now has its text\\nResume #451 and Restaurant texts\\nHover sound works right away\\nNotes open as the real note\\nGreen Tape plays its song\\nAdded Evacuation Day and Restaurant\\n\\n# 2026-11-10\\nRemoved 200rnd M134 Mag (Why was this on the wiki?)\\nAll found ammo: stats and pictures\\nScavengers and Hellbender descriptions\\n18 document texts (from the OANC Wiki)\\n9 more people descriptions (from the OANC Wiki)\\nDAMAGE: burst delay in time to kill\\nCitizen Charger description\\nEvery weapon now has stats\\n\\n# 2026-11-09\\nMANUAL: AI note\\nSearch matches words in any order\\nAdded SCR 5.56 Raider\\nPictures for 145 weapons (from the OANC Wiki)\\nSkorpion picture\\nNew Discord card for the site\\nAddress bar links open the page you're on\\nNicer Discord previews\\nBoot-up screen (turn off in SETTINGS)\\nNew tour\\nFaster loading\\nSecurity Bot C: new animated portrait\\nDAMAGE: compare two loadouts\\nDAMAGE: best ammo for your target\\nDAMAGE: share link\\nNew sounds from the game\\nEvery weapon now has stats\\nPages slide like the game\\nCLOUD: move your PDA to another device\\nNo more accounts\\nPlain symbols instead of emojis\\n\\n# 2026-11-08\\nStats for all Security Bots, VLTS Attendant and Fabricated Dummy\\nAdded Bonecrab\\nVelris Family split into 4\\nHover works like the game\\nTony's picture\\n\\n# 2026-11-07\\nAnimated pictures\\nSwipe to mark on phones\\nWhat's new since your last visit\\nSearch forgives typos\\nInstall as an app\\nText size and colour-blind marks\\nNew background\\nTab colours like the game\\nSounds from the game\\nWC tab in BIOGRAPHY\\nIcons from the game\\nDamage calculator\\nScreenshot import\\nLight theme and keyboard mode\\nInconsolata font, like the game\\nBackup reminder\\n\\n# 2026-11-06\\nMark a person's gear\\nHelp wanted list\\nBetter on phones\\nENTER in search marks found\\nPaste a list to mark\\nAll ammo and magazines\\nNew weapons and items\\nLOADOUT tab\\nStats for every weapon category\\nFOUND + NEXT, HIDE DONE\\nSUBMIT tab\\nPictures for 40 people\\nCompare weapons, sort by stats\\nSave profiles, links, undo, favourites, notes\\n\\n# 2026-11-05\\nFirst version\",\"seen\":[\"tgj5e\",\"hhuts\",\"k5t02\",\"xtpp2\",\"j3djo\",\"4ytma\",\"apw6s\",\"kmmyu\",\"4ogrb\",\"sal2k\",\"9szzs\",\"81mbs\",\"6pxl5\",\"cl5ux\",\"fm4s6\",\"6c2j4\",\"y0237\",\"4tmbu\",\"xpeks\",\"svyno\",\"abw7z\",\"whi51\",\"gt901\",\"enkru\",\"c2twa\",\"te9w0\",\"lcpqa\",\"l8nl8\",\"6142i\",\"gqexz\",\"syeqk\",\"es0vn\",\"esn6a\",\"tberq\",\"qnod5\",\"uezpv\",\"qs8qr\",\"httoc\",\"iih8u\",\"8qamg\",\"lek99\",\"waeif\",\"dlvb1\",\"2gah8\",\"vnigm\",\"ubewh\",\"dpjzo\",\"n4khs\",\"fyl31\",\"ahkqz\",\"ra5mu\",\"augyt\",\"0esno\",\"w9btz\",\"2iv6s\",\"hp4f5\",\"yhkqh\",\"fb408\",\"waeif\",\"ta6tq\",\"eglub\",\"21ts3\",\"p165w\",\"0v12k\",\"5i7ht\",\"hw6hq\",\"ygmz1\",\"0msc1\",\"4ue3p\",\"gna1p\",\"z591b\",\"5n527\",\"mtzqw\",\"jt7ug\",\"ror3r\",\"2wkmt\",\"zsjck\",\"tlf4g\",\"jz1lo\",\"oehsi\",\"qpp90\",\"vbj67\",\"nos2v\",\"q9o11\",\"tp0o1\",\"606yj\",\"ur5wb\",\"y6ob8\",\"opr97\",\"f8xz4\",\"m81mt\",\"c89wa\",\"ewzao\",\"k3v77\",\"40vom\",\"9t1ja\",\"ib4wv\",\"wleni\",\"64ipx\"]}",
   "updated": 1795276105
