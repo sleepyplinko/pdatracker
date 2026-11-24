@@ -1,6 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-24", items: [
-    "Hover text for 8 more person stats",
+    "Hover text for 9 more person stats",
     "Help wanted: better picture note",
     "Help wanted: people with no picture",
   ] },

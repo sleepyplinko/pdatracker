@@ -1,6 +1,6 @@
 const PDA_TIPS = {
   person: {
-    "Health":               "",
+    "Health":               "Describes the enemy's endurance",
     "Speed":                "Describes the enemie's speed. (Formula is their walk speed divided by 16)",
     "Defense":              "Subtracts the damage dealt with the enemy's defense percentage. May be subtract with some bludgeons or ammo types. Mostly bypassed with explosives.",
     "Shield":               "Subtracts the damage dealt by 50% and directs it to the shield as a secondary health. Will no longer work once runs out. Bypassed by explosives and bludgeons",
@@ -11,6 +11,7 @@ const PDA_TIPS = {
     "Explosive Resistance": "Subtracts incoming sharpnel damage by resistance's percentage.",
     "Stun Resistance":      "Subtracts stun length proportionate to resistance's percentage. If percentage is equal or more than a hundred, entity will not be stunned at all.",
     "Fracture Immunity":    "Immune to obtaining fracture.",
+    "Obsidian":             "Immune to bullets.",
     "Suppressor":           "Entity will not cancel aim regardless of their target going back to cover.",
     "Pre-Aim":              "Entity will prematurely aim after reaching close proximity of their target regardless of line of sight.",
     "Strength":             "The damage multiplier for the entity's weapon.",
