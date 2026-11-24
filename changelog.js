@@ -1,5 +1,7 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-24", items: [
+    "Melee and gear pictures (OANC Wiki)",
+    "Added hidden admin, rare and event entries",
     "Hover text for 9 more person stats",
     "Help wanted: better picture note",
     "Help wanted: people with no picture",

@@ -444,7 +444,25 @@ There was in fact something outside his tent, but it was not recognizable to be 
 
 The video would go viral from this footage, alongside Josh even managing to talk about his story on a TV Show. It was such a wild discovery that many other brave hikers have decided to set their foot onto the swamp_fever in hopes of finding this never-before-seen animal as well. It was nicknamed as "Wyrmlings" or simply referred to as "Dragons" by internet users around the globe.
 
-Despite many explorations taking place afterwards, no one was able to capture a footage that shows the Wyrmling in its full glory as Josh did, and while some people actually managed to record a footage of the noises in the surrounding area, those noises don't seem to match the one that could be heard in Josh's video, which makes a lot of people question afterwards.. was Josh's original video even real? or was it just a really fantastic work of 3D rendering?..`
+Despite many explorations taking place afterwards, no one was able to capture a footage that shows the Wyrmling in its full glory as Josh did, and while some people actually managed to record a footage of the noises in the surrounding area, those noises don't seem to match the one that could be heard in Josh's video, which makes a lot of people question afterwards.. was Josh's original video even real? or was it just a really fantastic work of 3D rendering?..`,
+
+"OMEGA Rogue": `The rogue melees.. known for being weak and a push over for many people of the city.
+
+Seriously, how can bunch of people wielding melees beat anyone with a gun?..
+
+How?
+
+How.. STUPID!
+
+HOW STUPID OF YOU! FOR UNDERESTIMATING US. FOR LOOKING DOWN AT US. BUT SOON, THE WORLD WILL PAY, THE WRETCHED PRESIDENT OF THIS CITY TOO, SHALL BE TAKEN DOWN.`,
+
+"gobloing": `This ancient deity has aged for thousands and thousands of years, strolling through lands to tell his wisdoms. Some humans ignore his intellect and knowledges, however some were able to grasp onto the sophisticated language of gobloings.
+
+Notably pyramids of egypt were infact designed by the gobloing. This was shown by old scriptures in the structures, with lanky, long necked creatures. Alot of people had no idea what it was beforehand.. until now.
+
+Whatever its intentions are, It seems to love humans and likes to travel together with a friend. The gobloing will spew its knowledge out here and there unprompted in random orders, some people find this sickening and had attacked the gobloing.. but no damage was done.
+
+In a dark and twisted turn, most friends of gobloings were driven by madness and passed early on. Which by that point, the gobloing would move onto the next until it finds a new human it could call a friend.`
 };
 
 const PDA_DOC_DESC = {
@@ -588,6 +606,6 @@ they are the best things ever i bet those high and mighty scientist living in bi
 };
 
 const PDA_TEXT_WIKI = {
-  bio: {"Citizen Rogue": "Citizen Rogue", "Citizen Scout": "Citizen Scout", "Doe": "Doe", "Flower Woman": "Flower Woman", "Loner": "Loner", "Plant Man": "Plant Man", "Ratman": "Ratman", "Witch": "Witch", "Wyrmling": "Wyrmling"},
+  bio: {"Citizen Rogue": "Citizen Rogue", "Citizen Scout": "Citizen Scout", "Doe": "Doe", "Flower Woman": "Flower Woman", "Loner": "Loner", "Plant Man": "Plant Man", "Ratman": "Ratman", "Witch": "Witch", "Wyrmling": "Wyrmling", "OMEGA Rogue": "OMEGA Rogue", "gobloing": "Gobloing"},
   docs: {"Watchtower": "Watchtower", "Doe's House": "Doe's House", "Metrostation": "Metrostation", "Swamp": "Swamp", "E3K Mall": "E3K Brand Store", "Suburban?": "Suburban?", "Awesome Apartments": "Awesome Apartments", "The Lake": "Lake", "The City": "Freiden", "Civilian Outpost #4": "Civilian Outpost", "Mill": "Mill", "Sons Apartment": "Son's Apartment", "Library": "Library", "FunkTown": "FunkTown", "Sewers": "Sewers", "William's Warehouse": "William's Warehouse", "John M4 House": "John M4 House"}
 };

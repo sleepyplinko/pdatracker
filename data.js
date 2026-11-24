@@ -3154,7 +3154,7 @@ const PDA_DATA = {
       name: "BLUDGEON",
       tiers: {
         1: [
-        ["Frying Pan", { stats: {
+        ["Frying Pan", { img: "images/tools/frying-pan.webp", picCredit: "wiki", stats: {
           "DAMAGE": "65",
           "DEFENSE BYPASS": "20",
           "AUTO": "NO",
@@ -3168,7 +3168,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.35s",
           "WEIGHT": "0.5"
         }, comment: "Abandoning its purpose of serving delicious food to others, it now is utilized to deliver the opposite feeling. Despite seeming heavy to wield as a weapon and possessing minimal potential, it surprisingly functions pretty well as one. But alas, this shouldn't be heavily relied on, as not everyone will falter to the cold, metallic side of a frying pan." }],
-        ["Pipe", { stats: {
+        ["Pipe", { img: "images/tools/pipe.webp", picCredit: "wiki", stats: {
           "DAMAGE": "50",
           "DEFENSE BYPASS": "25",
           "AUTO": "NO",
@@ -3182,7 +3182,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "Due to the raid hosted by many scavengers and rogues, the sewers have been taken over and used as base for them. How selfish. Many pipes were destroyed in the process, pieces of them scattering everywhere, as some decided to take them home. The metal composition it has gives it a strong and tough shell, which can be dangerous for the body, permitting it to possibly fracture a bone or two under the right conditions." }],
-        ["Chaos hammer", { hidden: true, special: true, stats: {
+        ["Chaos hammer", { img: "images/tools/chaos-hammer.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "60",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3195,7 +3195,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "1"
         }, comment: "" }],
-        ["Hammer", { stats: {
+        ["Hammer", { img: "images/tools/hammer.webp", picCredit: "wiki", stats: {
           "DAMAGE": "110",
           "DEFENSE BYPASS": "35",
           "AUTO": "NO",
@@ -3210,7 +3210,7 @@ const PDA_DATA = {
         }, comment: "Widely recognized for its usage in construction work, the Hammer was liked by all workers. However, after the rebellion, it quickly became a common self defense option, as it worked well as one. But don't be mistaken, for its size, it is a heavy tool that can deliver a powerful blow, displacing someone's head entirely. This instrument, much like other cheap gear, is commonly used by the Box Clan for how easy it is to find and use. It works out for them, as their massive numbers make it difficult to arm everyone, so these frequently discovered items help out." }]
         ],
         2: [
-        ["Crowbar", { stats: {
+        ["Crowbar", { img: "images/tools/crowbar.webp", picCredit: "wiki", stats: {
           "DAMAGE": "80",
           "DEFENSE BYPASS": "30",
           "AUTO": "YES",
@@ -3223,7 +3223,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "0.75"
         }, comment: "The crowbar's design can be strange at first, but you can get the hang of using it as a weapon. Popularized by one free man, who was at liberty once having escaped all the chaos, some Box Clan members believe this weapon brings good luck. So, many of them use it, wanting to follow in his footsteps and possibly exit the anarchy for their own. Hey, isn't it strange all of these crowbars are red, and only red?" }],
-        ["Shovel", { stats: {
+        ["Shovel", { img: "images/tools/shovel.webp", picCredit: "wiki", stats: {
           "DAMAGE": "100",
           "DEFENSE BYPASS": "60",
           "AUTO": "NO",
@@ -3236,7 +3236,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.4s",
           "WEIGHT": "0.75"
         }, comment: "The shovel is another tool that has gone missing, like the pickaxe, befalling the fate of being bought out by many construction teams in order to get to work on the unrevealed project. Some still lie around, unused as they don't seem as favorable as a weapon over other instruments. Despite that, its blow can still deliver a stunning hit, even if it's not too lethal." }],
-        ["Electric Guitar", { stats: {
+        ["Electric Guitar", { img: "images/tools/electric-guitar.webp", picCredit: "wiki", stats: {
           "DAMAGE": "150",
           "DEFENSE BYPASS": "60",
           "AUTO": "NO",
@@ -3250,7 +3250,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "1.25"
         }, comment: "Do you think you can play this instrument? A heavy, electric guitar used for playing a variety of tunes, due to their versatile range of tones. It became well recognized after the fame of the rockstar Frank Sebastian, prior to the rebellion. Unfortunately, instead of being this cool in the present as well, it's just another, ordinary weapon for self defense. However, it can be loud at times, still trying to play the same songs it once did. Even if it's not plugged in. Hey... wait... how does that work?" }],
-        ["Baseball Bat", { stats: {
+        ["Baseball Bat", { img: "images/tools/baseball-bat.webp", picCredit: "wiki", stats: {
           "DAMAGE": "150",
           "DEFENSE BYPASS": "55",
           "AUTO": "NO",
@@ -3263,7 +3263,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.9s",
           "WEIGHT": "1"
         }, comment: "Many weapons' reliability can differ depending on their conditions. Some can be rare to find, some can be weaker in strength or too heavy to carry around. But, the Baseball Bat (specifically, the wooden variant, as the metal ones have been kept inside of facilities, encased as of 2018, due to the rebellion encouraging stealing) is best to use as a weapon. It can do well in almost every situation, so you best be happy if you're armed with it. Just swing carefully, as it is still weighty." }],
-        ["Nightstick", { stats: {
+        ["Nightstick", { img: "images/tools/nightstick.webp", picCredit: "wiki", stats: {
           "DAMAGE": "100",
           "DEFENSE BYPASS": "35",
           "AUTO": "NO",
@@ -3278,7 +3278,7 @@ const PDA_DATA = {
         }, comment: "The customary weapon used against riots by the authorities to stop them in their tracks or to prevent the masses from overwhelming them. Their ability to be agile and deliver hard hitting swings quickly served of great use to them. It worked for the time being, putting injust and loud civilians in their place. However, eventually, the people became stronger, leading to this tool quickly being abandoned since it wasn't keeping up. The Harnicia Police Department and some forces of the government still use it, but their users are designed with the weapon in mind, instead of it being a secondary option." }]
         ],
         3: [
-        ["S-Ampule's Injector", { hidden: true, special: true, stats: {
+        ["S-Ampule's Injector", { img: "images/tools/s-ampule-s-injector.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3292,7 +3292,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Bloodiron Forge", { special: true, stats: {
+        ["Bloodiron Forge", { img: "images/tools/bloodiron-forge.webp", picCredit: "wiki", special: true, stats: {
           "DAMAGE": "222",
           "DEFENSE BYPASS": "66",
           "AUTO": "NO",
@@ -3305,7 +3305,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Sledgehammer", { stats: {
+        ["Sledgehammer", { img: "images/tools/sledgehammer.webp", picCredit: "wiki", stats: {
           "DAMAGE": "400",
           "DEFENSE BYPASS": "100",
           "AUTO": "NO",
@@ -3318,7 +3318,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1.25s",
           "WEIGHT": "2"
         }, comment: "If the strength of previous weapons wasn't enough, the Sledgehammer has possibly the most vigorous potential out of all of them. Despite the fact that its heaviness can make it unappealing, you're compensated by its ability to break skulls in an instant. Armor can do little to stop it, as one blow makes the target jelly. If in the right hands, swinging at the right time, it can be very dangerous. This weapon is very liked by the more advanced members of the Box Clan, as its power makes it a preferable option." }],
-        ["Golf Club", { stats: {
+        ["Golf Club", { img: "images/tools/golf-club.webp", picCredit: "wiki", stats: {
           "DAMAGE": "70",
           "DEFENSE BYPASS": "30",
           "AUTO": "NO",
@@ -3331,7 +3331,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "Despite the idea that a golf club would seem very unappealing as a weapon in combat, it actually can, surprisingly, prove of use. You can apply the same practice you already do in golf to fighting; Its light weight makes it easy to carry around and fast to swing, so you can be very agile with this without issue. Golf was never a significant matter here, but a small community still exists. Assumably, it's long gone, considering recent events." }],
-        ["Brass Knuckle", { stats: {
+        ["Brass Knuckle", { img: "images/tools/brass-knuckle.webp", picCredit: "wiki", stats: {
           "DAMAGE": "50",
           "DEFENSE BYPASS": "40",
           "AUTO": "YES",
@@ -3346,7 +3346,7 @@ const PDA_DATA = {
         }, comment: "You don't always have to resort to some sort of tool to fight against people, your fists work just fine. But, one punch won't be enough for a kill, and many won't go down after one either. So, it's best to use something that reinforces your knuckles and strengthens your attacks. It's very light, so you can be agile as much as you wish. People who properly know how to fight with these aren't a joke, but you won't see any of them, as guns are always the better play." }]
         ],
         4: [
-        ["Knuckle Dusters", { stats: {
+        ["Knuckle Dusters", { img: "images/tools/knuckle-dusters.webp", picCredit: "wiki", stats: {
           "DAMAGE": "90",
           "DEFENSE BYPASS": "60",
           "AUTO": "YES",
@@ -3381,7 +3381,7 @@ const PDA_DATA = {
       name: "SHARP",
       tiers: {
         1: [
-        ["Kitchen Knife", { stats: {
+        ["Kitchen Knife", { img: "images/tools/kitchen-knife.webp", picCredit: "wiki", stats: {
           "DAMAGE": "45",
           "DEFENSE BYPASS": "0",
           "AUTO": "YES",
@@ -3394,7 +3394,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "The kitchen knife is another example of a household item being turned into a deadly weapon all in the name of self defense. Not many abide by that 'self defense' part, rather choosing to rob and impale others out of their own volition. There is no exception to this rule, as you can even look at a pair of scissors and, with the right mindset, use it to attack. The rebellion has really changed everything for the worst, yet it still hasn't changed Tofuu's mind." }],
-        ["Balisong", { stats: {
+        ["Balisong", { img: "images/tools/balisong.webp", picCredit: "wiki", stats: {
           "DAMAGE": "35",
           "DEFENSE BYPASS": "0",
           "AUTO": "YES",
@@ -3406,7 +3406,7 @@ const PDA_DATA = {
           "RANGE": "3",
           "EQUIP TIME": "0.1s"
         }, comment: "The Balisong is a well known self defense weapon, its lightness fitting into anyone's pockets whilst still delivering blows that could scare off attackers. However, as more and more people got their hands on dangerous firearms and improved tools in terms of close quarter combat, this tiny knife became out of date quick. Due to this, it can be a rare sight to see, so maybe take it for yourself if you ever spot it, because it's really cool flipping it around in your hands!" }],
-        ["Dagger", { hidden: true, special: true, stats: {
+        ["Dagger", { img: "images/tools/dagger.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "65",
           "DEFENSE BYPASS": "30",
           "AUTO": "YES",
@@ -3419,7 +3419,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "A small and sharp dagger. The shape is mostly stylish, but it is also usable in the arts of cooking and assassinations!" }],
-        ["Cleaver", { stats: {
+        ["Cleaver", { img: "images/tools/cleaver.webp", picCredit: "wiki", stats: {
           "DAMAGE": "35",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3435,7 +3435,7 @@ const PDA_DATA = {
         }, comment: "A classic Cleaver, utilized for chopping large stacks of meat into little pieces that can be sold almost anywhere. Within Cahem, these are sold out at many appliance shops, as they are necessary for the vast amount of butcher shops that can be found there. The people there are pure blooded carnivores, boasting a huge love for meat. On top of this, this tool was also popularized by the story of The Peric Butcher where an old timed butcher strangely went berserk. Due to this tale, some fear this instrument, believing that it is possibly cursed. It isn't." }]
         ],
         2: [
-        ["Combat Knife", { stats: {
+        ["Combat Knife", { img: "images/tools/combat-knife.webp", picCredit: "wiki", stats: {
           "DAMAGE": "60",
           "DEFENSE BYPASS": "0",
           "AUTO": "YES",
@@ -3448,7 +3448,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.15s",
           "WEIGHT": "0.25"
         }, comment: "The military needed a light, yet dangerous weapon that their troops could use when needing to resort to close quarters combat. Eventually, and quickly, it was decided that they would utilize a military combat knife, designed to be the best for them. However, after popular request of many civilians, this weapon became available to the public, being sold by entrusted shops. Of course, trust doesn't matter when all can be raided and stolen, so many of them were forcefully taken." }],
-        ["Machete", { stats: {
+        ["Machete", { img: "images/tools/machete.webp", picCredit: "wiki", stats: {
           "DAMAGE": "170",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3461,7 +3461,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.4s",
           "WEIGHT": "0.75"
         }, comment: "Commonly found as a weapon of Bayak gangs, it made its way into Frieden after countless smugglers with contraband got caught with them. They were confiscated until further notice, but that notice never came, as the rebellion happened before it. Many scavengers got their hands on them, using them due to their simplicity and light weighted swings." }],
-        ["Bearded Axe", { special: true, stats: {
+        ["Bearded Axe", { img: "images/tools/bearded-axe.webp", picCredit: "wiki", special: true, stats: {
           "DAMAGE": "120",
           "DEFENSE BYPASS": "50",
           "AUTO": "NO",
@@ -3474,7 +3474,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "1"
         }, comment: "This axe was used across Europe in Medieval times, both as a tool and weapon. The lower portion of the axe bit is sharp and provides a wide cutting surface for the weapon while keeping its mass relatively low. Due to its mass, some people have used this axe as a dual-wielding weapon too or as a throwable axe, Either way.. people will use whatever technique they can think of if it means you get the successful kill." }],
-        ["Atuned Skewer", { hidden: true, special: true, stats: {
+        ["Atuned Skewer", { img: "images/tools/atuned-skewer.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "90",
           "DEFENSE BYPASS": "80",
           "AUTO": "NO",
@@ -3488,7 +3488,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.75s",
           "WEIGHT": "1.25"
         }, comment: "A type of spears that was made for an unnamed king, with many parts of the history seemingly lost to time. What's left of this king's legacy.. are old paintings that shows his prowness and this weapon's lasting existence today." }],
-        ["Pickaxe", { stats: {
+        ["Pickaxe", { img: "images/tools/pickaxe.webp", picCredit: "wiki", stats: {
           "DAMAGE": "100",
           "DEFENSE BYPASS": "40",
           "AUTO": "NO",
@@ -3502,7 +3502,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.65s",
           "WEIGHT": "1"
         }, comment: "A pickaxe, these are rare nowadays. Many of them were bought out days prior to the rebellion for the mines in order to start work on a project. This project was never exactly revealed to the public, so it was left as a mystery. Tons were disappointed when finding that they were unable to purchase a utility that is recognized due to D.H because of his background. It is very strong as a weapon though, its sharp edge is more than enough to tear through a limb, which makes up for its heaviness." }],
-        ["Claymore", { hidden: true, special: true, stats: {
+        ["Claymore", { img: "images/tools/claymore.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "180",
           "DEFENSE BYPASS": "50",
           "AUTO": "NO",
@@ -3515,7 +3515,7 @@ const PDA_DATA = {
           "EQUIP TIME": "1s",
           "WEIGHT": "1.25"
         }, comment: "A double edged blade that was used in the late Medieval and early modern periods, It is relatively heavy and meant to be wielded two-handed, characterized by cross hilt with forward-sloping quillons with quatrefoil terminations." }],
-        ["Ice Pick", { stats: {
+        ["Ice Pick", { img: "images/tools/ice-pick.webp", picCredit: "wiki", stats: {
           "DAMAGE": "90",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3531,7 +3531,7 @@ const PDA_DATA = {
         }, comment: "Despite the fact that they would seem fairly uncommon in Frieden, since this place isn't particularly cold as Fior for you to be hiking anywhere, they still make frequent appearances. And it's great that they do, as their purpose, being able to concentrate all of their force into one point, works well in a fight. On top of that, they can even help you climb any sloped terrain, so it still serves its original purpose in a way." }]
         ],
         3: [
-        ["Power Drill", { stats: {
+        ["Power Drill", { img: "images/tools/power-drill.webp", picCredit: "wiki", stats: {
           "DAMAGE": "25",
           "DEFENSE BYPASS": "25",
           "AUTO": "YES",
@@ -3544,7 +3544,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.5"
         }, comment: "One of the most important tools in construction work, creating space by boring holes in which can be put bolts that help keep things in place or bring stability to structures. Many scavengers are in search of one, as its special ability of just being able to hold the trigger as the drill spins deeper into the target has a simplicity that many desire. However, it can also penetrate armor, as it slowly creates a hole through it and reaching the vulnerable skin." }],
-        ["P-Ampule's Injector", { hidden: true, special: true, stats: {
+        ["P-Ampule's Injector", { img: "images/tools/p-ampule-s-injector.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3558,7 +3558,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.25s",
           "WEIGHT": "0.25"
         }, comment: "" }],
-        ["Fire Axe", { stats: {
+        ["Fire Axe", { img: "images/tools/fire-axe.webp", picCredit: "wiki", stats: {
           "DAMAGE": "275",
           "DEFENSE BYPASS": "40",
           "AUTO": "NO",
@@ -3571,7 +3571,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.9s",
           "WEIGHT": "1.25"
         }, comment: "Fire axes have been kept around, despite their original purpose of chopping down trees being entirely scrapped, being another strong, yet rare, weapon. Many scavengers wish to find one, as they believe their power is very, very appealing. Its sharp edge make its swings deadly, as it can easily pierce through flesh, making you bleed heavily in the case that you survived. Due to this, any facility that held them were instructed to make sure these don't get out. However, their count has significantly decreased as many were mysteriously taken, alongside sledgehammers, during the period of a few days." }],
-        ["Spinal-lance", { hidden: true, special: true, stats: {
+        ["Spinal-lance", { img: "images/tools/spinal-lance.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "150",
           "DEFENSE BYPASS": "60",
           "AUTO": "NO",
@@ -3584,7 +3584,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.5s",
           "WEIGHT": "1"
         }, comment: "Sharp and strong lance made from the mudskipper's remains. Commonly used in the maw by survivors around the tunnels of this place. Sometimes, people even elicit a hunt for these creatures in order to sustain themselves. Their strange exposed branches are also used for culinary dishes. When put into boiling water, they will eventually soften down and create delicious strands of meat.. people have described the taste to be similarly to chickens.\n\nWhile their meats are mostly used for day-to-day meals, its tongue seems to have some unique properties.. like being able to penetrate humans with powerful force or to dig deep burrows in the underground. It's quite good as a really durable weapon." }],
-        ["W-Ampule's Injector", { hidden: true, special: true, stats: {
+        ["W-Ampule's Injector", { img: "images/tools/w-ampule-s-injector.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "30",
           "DEFENSE BYPASS": "0",
           "AUTO": "NO",
@@ -3600,7 +3600,21 @@ const PDA_DATA = {
         }, comment: "" }]
         ],
         4: [
-        ["Runes Saber", { hidden: true, special: true, stats: {
+        ["Katana", { img: "images/tools/katana.webp", picCredit: "wiki", hidden: true, stats: {
+          "DAMAGE": "200",
+          "DEFENSE BYPASS": "0",
+          "AUTO": "NO",
+          "BURST": "YES",
+          "BURST AMOUNT": "2",
+          "AIM TIME": "0.75",
+          "SWITCH TIME": "0.5s",
+          "SWING TIME": "0.5s",
+          "ALERT RADIUS": "25",
+          "RANGE": "6",
+          "EQUIP TIME": "0.65s",
+          "WEIGHT": "1"
+        } }],
+        ["Runes Saber", { img: "images/tools/runes-saber.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "300",
           "DEFENSE BYPASS": "75",
           "AUTO": "NO",
@@ -3613,7 +3627,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0.3s",
           "WEIGHT": "1.25"
         }, comment: "" }],
-        ["Chainsaw", { stats: {
+        ["Chainsaw", { img: "images/tools/chainsaw.webp", picCredit: "wiki", stats: {
           "DAMAGE": "40",
           "DEFENSE BYPASS": "65",
           "AUTO": "YES",
@@ -3626,7 +3640,7 @@ const PDA_DATA = {
           "EQUIP TIME": "0s",
           "WEIGHT": "1.25"
         }, comment: "The cutter teeth are sharpened to perfection, giving it an aspect akin to a razor blade that can trivially pierce through any type of flesh, able to reach the bone without issue. Any body armor only delays the inevitable, as the it continues driving deeper until it reaches past any sort of protection, ripping you to shreds within seconds. Chainsaws are a delicacy after the rebellion, as their lethality and brutality are loved by many, making it a high demand weapon. Fortunately (or unfortunately, depending on your view), most of them have already been taken by others. However, it doesn't make for a good sneak attack, as the revving on it can easily alert anyone nearby. On top of this, it also consumes gasoline, which is a limited resource in these times.\nMost commonly wanted by the Arctic Faction in Fior, as their preference for such an efficient tool of destruction, or the strength of it, pique their interest, making this an excellent option for their strongest members." }],
-        ["Halberd", { stats: {
+        ["Halberd", { img: "images/tools/halberd.webp", picCredit: "wiki", stats: {
           "DAMAGE": "300",
           "DEFENSE BYPASS": "50",
           "AUTO": "YES",
@@ -3641,7 +3655,7 @@ const PDA_DATA = {
         }, comment: "Typically used for medieval times, this weapon still serves large use today (of course, if you find one). The combined power of a spike and an axe can do wonders, run creative with your attacks." }]
         ],
         8: [
-        ["Excalibur?", { hidden: true, special: true, stats: {
+        ["Excalibur?", { img: "images/tools/excalibur.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "DAMAGE": "600",
           "DEFENSE BYPASS": "100",
           "AUTO": "NO",
@@ -3653,7 +3667,18 @@ const PDA_DATA = {
           "RANGE": "6",
           "EQUIP TIME": "1s",
           "WEIGHT": "3"
-        }, comment: "" }]
+        }, comment: "" }],
+        ["Calderae", { img: "images/tools/calderae.webp", picCredit: "wiki", hidden: true, special: true, stats: {
+          "DAMAGE": "130",
+          "DEFENSE BYPASS": "50",
+          "AUTO": "NO",
+          "BURST": "NO",
+          "AIM TIME": "1.2",
+          "ALERT RADIUS": "25",
+          "RANGE": "7",
+          "EQUIP TIME": "0.8s",
+          "WEIGHT": "1.25"
+        } }]
         ]
       }
     },
@@ -3794,212 +3819,223 @@ const PDA_DATA = {
       name: "GEARS",
       tiers: {
         1: [
-        ["Slim Vest", { stats: {
+        ["Slim Vest", { img: "images/tools/slim-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "10%"
         }, comment: "A slim vest, nearly comparable to a jacket. It's not much but it'll probably help. Yeah, sorry, it doesn't have pockets." }],
-        ["Skull", { special: true, stats: {
+        ["Skull", { img: "images/tools/skull.webp", picCredit: "wiki", special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "6%"
         }, comment: "A human skull. Not very strong.. but quite durable as a basic armor for what it is. our anatomy are truly fascinating, huh?" }],
-        ["Leather Boots", { hidden: true, special: true, stats: {
+        ["Leather Boots", { img: "images/tools/leather-boots.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "GEAR TYPE": "LEG WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "Old and worn down leather boots, It is somewhat comfy to wear.." }],
-        ["Worker Vest", { stats: {
+        ["Worker Vest", { img: "images/tools/worker-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "15%"
         }, comment: "Another piece of protection utilized for construction sites, it's tougher than most clothing so it could be some help. I wouldn't fully rely on it though. Also it looks ugly." }],
-        ["Dark Sunglasses", { stats: {
+        ["Dark Sunglasses", { img: "images/tools/dark-sunglasses.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "1%"
         }, comment: "Glasses of Sun" }],
-        ["Wicked Skull", { hidden: true, special: true, stats: {
+        ["Wicked Skull", { img: "images/tools/wicked-skull.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET"
         }, comment: "Fleshy skull. Just looking at it makes me feel uneasy." }],
-        ["Skull Balaclava", { stats: {
+        ["Skull Balaclava", { img: "images/tools/skull-balaclava.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "1%"
         }, comment: "" }],
-        ["Orange Hard Hat", { stats: {
+        ["Orange Hard Hat", { img: "images/tools/orange-hard-hat.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "A construction hat, used for protection against any accidents that could harm people. However, it's no accident being shot at by someone or swung at with a weapon." }]
         ],
         2: [
-        ["Crossbody Bag", { stats: {
+        ["Crossbody Bag", { img: "images/tools/crossbody-bag.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "CARRY WEIGHT INCREASE": "2",
           "QUICK SLOT INCREASE": "1"
         }, comment: "You must be a real hoarder if you're wearing this. A lot of extra storage, extremely useful if you love having so many items that you may as well be a collector. Despite this upside, it serves no use in defending you against attacks. Deserved...?" }],
-        ["Green Mask", { stats: {
+        ["Green Mask", { img: "images/tools/green-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "1%"
         }, comment: "A strange accessory that made its appearance in The City out of nowhere. In a small store, it was sold by a Ken Earth. The customer was not aware of its peculiar existence, thinking it was just a cute accessory. Same person started having headaches, stomach aches and several other unlikable bodily experiences. When reported, Ken Earth did not know this. A whole lawsuit battle happened over this, eventually ending up in the hands of scientists. Experimented on, near nothing was discovered about it. On the last day of it being with them, the person who was wearing it got teleported somewhere unknown, alongside the mask. It's a miracle you found this. Or a curse." }],
-        ["Ballistic Skull Mask", { stats: {
+        ["Ballistic Skull Mask", { img: "images/tools/ballistic-skull-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "8%"
         }, comment: "" }],
-        ["Designer Bag", { stats: {
+        ["Designer Bag", { img: "images/tools/designer-bag.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "BACKPACK",
           "CARRY WEIGHT INCREASE": "1.5"
         }, comment: "A small but handy handbag for your trinkets or vanity! It's design allows for comfort and convenience for taking items out the handbag!" }],
-        ["Beige Vest", { stats: {
+        ["Beige Vest", { img: "images/tools/beige-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "15%",
           "CARRY WEIGHT INCREASE": "1"
         }, comment: "The most commonly utilized vest by civilians out there. It's not very rare and is a good starting equipment for anyone wandering this warzone. Gives some extra storage and some good protection. You will most likely throw this vest away quick though, it's not comfortable to wear sometimes and neither is it that good." }],
-        ["Civilian Vest", { stats: {
+        ["Civilian Vest", { img: "images/tools/civilian-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "20%"
         }, comment: "The most common vest for proper protection, mostly used by Citizens due to its rarity and usefulness. It's not the best but it'll do in most situations." }],
-        ["Hockey Mask", { stats: {
+        ["Hockey Mask", { img: "images/tools/hockey-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "8%"
         }, comment: "" }],
-        ["Balaclava Goggles", { stats: {
+        ["Balaclava Goggles", { img: "images/tools/balaclava-goggles.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "Wearing this makes you look like you're apart of some sort of gang. Especially if you have a sharp weapon. It's not something very protective, but any extra layer helps to even slightly weaken the impact of damage." }],
-        ["Comedy Mask", { special: true, stats: {
+        ["Comedy Mask", { img: "images/tools/comedy-mask.webp", picCredit: "wiki", special: true, stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "5%"
         }, comment: "A comedy mask, usually worn in theatre plays to represent joy and humor. It was often seen used in traditions of the Helens in the middle ages, where the townspeople will have a masquerade parties in many special occasions, ranging from festivals, birthday, coronation and funeral." }],
-        ["Horned Skull", { special: true, stats: {
+        ["Horned Skull", { img: "images/tools/horned-skull.webp", picCredit: "wiki", special: true, stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "Pristine and durable skull with horns. It's noticeably human in appearance, but we obviously do not have these.." }]
         ],
         3: [
-        ["Night Vision Goggles", { stats: {
+        ["Night Vision Goggles", { img: "images/tools/night-vision-goggles.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "1%"
         }, comment: "Night vision. I think it's self-explanatory. Sorry, you can't get rid of the ugly green tint." }],
-        ["Tactical Pouch Vest", { stats: {
+        ["Tactical Pouch Vest", { img: "images/tools/tactical-pouch-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "25%",
           "DEFENSE INCREASE": "20%",
           "CARRY WEIGHT INCREASE": "1.5"
         }, comment: "Some call this a jack of all trades vest, giving you both extra storage for anything you've got and is better than a Civilian Vest. It's like a backpack and a vest in one! Strangely, some people prefer this over more defensive vests, I don't understand this. Perhaps they are just really good at dodging... bullets." }],
-        ["Mining Helmet", { stats: {
+        ["Mining Helmet", { img: "images/tools/mining-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "10%"
         }, comment: "Mining Helmet, this is a Mining Helmet. yeah this is a Mining Helmet" }],
-        ["Knight Armour", { hidden: true, special: true, stats: {
+        ["Knight Armour", { img: "images/tools/knight-armour.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "30%",
           "DEFENSE INCREASE": "20%"
         }, comment: "" }],
-        ["Backpack", { stats: {
+        ["Backpack", { img: "images/tools/backpack.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "BACKPACK",
           "CARRY WEIGHT INCREASE": "2",
           "QUICK SLOT INCREASE": "1"
         }, comment: "A simple backpack to help you store more items when your pockets are full. It's very useful, I would never skip out on it." }],
-        ["Assault Chest Rig", { stats: {
+        ["Assault Chest Rig", { img: "images/tools/assault-chest-rig.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "DEFENSE INCREASE": "6%",
           "CARRY WEIGHT INCREASE": "2"
         }, comment: "100% Rigged" }],
-        ["BB Backpack", { stats: {
+        ["BB Backpack", { img: "images/tools/bb-backpack.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "BACKPACK",
           "CARRY WEIGHT INCREASE": "4",
           "QUICK SLOT INCREASE": "2"
         }, comment: "During Benevolent Backpacks' terrible finanical situation, they decided to make a new backpack design. They were very known for being optimal and smart with their designs, so this had potential. Even if the idea was rather exaggerated, it did work. Many bought it this new variant, utilizing it for hiking purposes most of the time. This saved the company, after it had to sell many stores to save itself. Unfortunately, and logically, due to its size, it does slow you down. Not very easy walking with a big cabinet on your back is it? Although this was a common complaint, the design was never improved upon." }],
-        ["Neo Steel Helmet", { stats: {
+        ["Neo Steel Helmet", { img: "images/tools/neo-steel-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "15%",
           "DEFENSE INCREASE": "15%"
         }, comment: "Visor specialized for protection of the head, much better than some old military helmet. Not many good defensive headwear exist nowadays, so this is very useful." }],
-        ["Leg Holster", { stats: {
+        ["Leg Holster", { img: "images/tools/leg-holster.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "LEG WEAR",
           "CARRY WEIGHT INCREASE": "0.5"
         }, comment: "A convenient garb equipped with a small bag on your leg. Alot of people uses it to carry their coins and small trinkets in Medieval times, however it was later developed into a gun holster in the Wild west." }],
-        ["Knight Helmet", { hidden: true, special: true, stats: {
+        ["Knight Helmet", { img: "images/tools/knight-helmet.webp", picCredit: "wiki", hidden: true, special: true, stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "10%",
           "DEFENSE INCREASE": "15%"
         }, comment: "Old helmet of a loyal knight. Really durable, made to withstand the force of many Medieval weaponries." }],
-        ["Plate Carrier Vest", { stats: {
+        ["Plate Carrier Vest", { img: "images/tools/plate-carrier-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "40%",
           "DEFENSE INCREASE": "30%",
           "CARRY WEIGHT INCREASE": "0.75"
         }, comment: "Good" }],
-        ["Ballistic Vest", { stats: {
+        ["Ballistic Vest", { img: "images/tools/ballistic-vest.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "55%",
           "DEFENSE INCREASE": "35%"
         }, comment: "When enough plates of armor aren't enough to defend you, add more plates of armor. The Ballistic Vest is the strongest vest that was made available to the public, meant to fully protect you with all its power. Fortunately, it has proved, in many public experiments, accidental or not, that it fulfills this vision well. But it can only do so much..." }],
-        ["Combat Visor", { stats: {
+        ["Combat Visor", { img: "images/tools/combat-visor.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "20%"
         }, comment: "Visor specialized for protection of the head, much better than some old military helmet. Not many good defensive headwear exist nowadays, so this is very useful." }],
-        ["Welding Mask", { stats: {
+        ["Welding Mask", { img: "images/tools/welding-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "SHIELD DURABILITY": "35%",
           "DEFENSE INCREASE": "20%"
         }, comment: "" }],
-        ["M40 Gas Mask", { stats: {
+        ["M40 Gas Mask", { img: "images/tools/m40-gas-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "12%"
         }, comment: "A gas mask, good for protecting you from any toxic smokes... if there were any. Not like the government is gonna start throwing smoke grenades or light up fires." }],
-        ["CQCM Ballistic Mask", { stats: {
+        ["CQCM Ballistic Mask", { img: "images/tools/cqcm-ballistic-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "SHIELD DURABILITY": "10%",
           "DEFENSE INCREASE": "9%"
         }, comment: "" }],
-        ["Blue Mask", { stats: {
+        ["Blue Mask", { img: "images/tools/blue-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR"
         }, comment: "" }]
         ],
         4: [
-        ["Zone Special Mask", { stats: {
+        ["Zone Special Mask", { img: "images/tools/zone-special-mask.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "FACE WEAR",
           "DEFENSE INCREASE": "10%"
         }, comment: "Hard to breath with this mask, but it's the strongest out there." }],
-        ["Altyn Helmet", { stats: {
+        ["Altyn Helmet", { img: "images/tools/altyn-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "25%",
           "DEFENSE INCREASE": "15%"
         }, comment: "" }],
-        ["Maska Helmet", { stats: {
+        ["Maska Helmet", { img: "images/tools/maska-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "25%",
           "DEFENSE INCREASE": "20%",
           "SUPER SHIELD INCREASE": "1%"
         }, comment: "Maska helmet that provides heavy protection for your head." }],
-        ["Anomalous Backpack", { stats: {
+        ["Anomalous Backpack", { img: "images/tools/anomalous-backpack.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "BACKPACK",
           "DEFENSE INCREASE": "2%",
           "CARRY WEIGHT INCREASE": "4",
           "QUICK SLOT INCREASE": "2"
         }, comment: "This backpack has so much extra space, it's actually insane. You could store so many products for a business, man. I wish I had this." }],
-        ["Ballistic Helmet", { stats: {
+        ["Ballistic Helmet", { img: "images/tools/ballistic-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "SHIELD DURABILITY": "35%",
           "DEFENSE INCREASE": "30%"
         }, comment: "Ballistic Vest If It Was A Helmet" }],
-        ["Korund-VM Body Armor", { stats: {
+        ["Korund-VM Body Armor", { img: "images/tools/korund-vm-body-armor.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "TORSO WEAR",
           "SHIELD DURABILITY": "80%",
           "DEFENSE INCREASE": "50%"
-        }, comment: "" }]
+        }, comment: "" }],
+        ["Ballistic-PRO Vest", { hidden: true }]
         ],
         5: [
-        ["Bloodiron Amulet", { special: true, stats: {
+        ["Bloodiron Amulet", { img: "images/tools/bloodiron-amulet.webp", picCredit: "wiki", special: true, stats: {
           "GEAR TYPE": "NeckGear",
           "SHIELD DURABILITY": "60%"
         }, comment: "Uh oh! Seems like this lacks an entry. Want to help? Feel free to write an entry for this item at AllTheBestInfo centre!" }],
-        ["Lapis Amulet", { stats: {
+        ["Lapis Amulet", { img: "images/tools/lapis-amulet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "NeckGear"
         }, comment: "Uh oh! Seems like this lacks an entry. Want to help? Feel free to write an entry for this item at AllTheBestInfo centre!" }],
-        ["MCVE Helmet", { stats: {
+        ["MCVE Helmet", { img: "images/tools/mcve-helmet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "HELMET",
           "DEFENSE INCREASE": "25%"
         }, comment: "Very experimental helmet, not meant to be utilized as of now but it's functional enough. Taking both enough space for a helmet and a mask, it gives some absurd advantages to the user. A lot of budget was put into its development, enhanced into perfecting its first power: ESP. Through newly discovered technology, the user can detect other people through walls. Think of it like a cheater in video games." }],
-        ["Amethyst Amulet", { stats: {
+        ["Amethyst Amulet", { img: "images/tools/amethyst-amulet.webp", picCredit: "wiki", stats: {
           "GEAR TYPE": "NeckGear"
         }, comment: "Uh oh! Seems like this lacks an entry. Want to help? Feel free to write an entry for this item at AllTheBestInfo centre!" }]
+        ],
+        8: [
+        ["OMEGA Suit", { img: "images/tools/omega-suit.webp", picCredit: "wiki", hidden: true, special: true, stats: {
+          "GEAR TYPE": "TORSO WEAR",
+          "SHIELD DURABILITY": "75%",
+          "DEFENSE INCREASE": "100%",
+          "SUPER ARMOUR INCREASE": "25%",
+          "CARRY WEIGHT INCREASE": "3",
+          "QUICK SLOT INCREASE": "3"
+        }, comment: "The legendary suit forged from all the 7 roguemelees. The compact suit is soft in fabric, but otherworldly strong somehow by a strange empowering forcefield." }]
         ]
       }
     },
@@ -5124,7 +5160,10 @@ const PDA_DATA = {
         WR(".44 AUTO MAG PISTOL", "SAIGA-12", "STEN MK II", "GLOCK 19 ROLAND SPECIAL")), { img: "images/people/trash-gang.webp" }),
       Object.assign(P("G.O.A.T", { Health: 100, Speed: 0.8, Shield: 85, Supershield: 20, "Super Armour": 30 },
         { Suppressor: "true", "Pre-Aim": 35, Strength: "0.5x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "1.4x", "Attack Slowdown": "0.3x" },
-        [W("MARE'S LEG"), A(".44 JSP")]), { img: "images/people/g-o-a-t.webp" })
+        [W("MARE'S LEG"), A(".44 JSP")]), { img: "images/people/g-o-a-t.webp" }),
+      Object.assign(P("OMEGA Rogue", { Health: 100000, Speed: 1.2, Defense: 30, "Super Armour": 2 },
+        {},
+        []), { img: "images/people/omega-rogue.webp", picCredit: "wiki", hidden: true })
     ]},
     { name: "Civilian", color: "#a6e38f", bg: "#132611", entries: [
       Object.assign(P("Maria Hatty Kirsten", { Health: 1000, Speed: 1.4, Defense: 75, Supershield: 30, "Super Armour": 35, "Explosive Resistance": 70, "Fracture Immunity": "true" },
@@ -5192,7 +5231,8 @@ const PDA_DATA = {
         [W("InfectedRapidBite")]), { img: "images/people/rat.webp" }),
       Object.assign(P("Ratman", { Health: 600, Speed: 1.2, Shield: 50, "Super Armour": 20 },
         { Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
-        [W("Baseball Bat")]), { img: "images/people/ratman.webp" })
+        [W("Baseball Bat")]), { img: "images/people/ratman.webp" }),
+      Object.assign(P("Chicken"), { img: "images/people/chicken.webp", picCredit: "wiki", hidden: true })
     ]},
     { name: "Hellion", color: "#ff3030", bg: "#2a0808", entries: [
       Object.assign(P("Wyrmling", { Health: 200, Speed: 2.8, Defense: 30, "Burn Resistance": -100, "Bleed Resistance": 100 },
@@ -5220,6 +5260,21 @@ const PDA_DATA = {
           { "Pre-Aim": 40, Strength: "0.4x", "Aim Time Multiplier": "1.5x", "Reload Speed Multiplier": "1.5x", "Attack Slowdown": "0.8x" },
           [W("Dagger")])
       ]), { img: "images/people/velris-family.webp" })
+    ]},
+    { name: "Helen", color: "#c9a0ff", bg: "#1a1024", hidden: true, entries: [
+      Object.assign(P("Kekou The Jester", { Health: 222, Speed: 1.2 },
+        { Strength: "0.2x", "Aim Time Multiplier": "2.35x", "Reload Speed Multiplier": "2x", "Aim Slowdown": "0.3x" },
+        []), { img: "images/people/kekou-the-jester.webp", picCredit: "wiki" })
+    ]},
+    { name: "Military", color: "#a8b878", bg: "#161a0c", hidden: true, entries: [
+      P("Tyrant"),
+      P("Elite Military Scout"),
+      P("Elite Military Support"),
+      P("Elite Military Demolitionist"),
+      P("Military Soldier"),
+      P("Military Medic"),
+      P("Military Operator"),
+      P("Military Cadet")
     ]},
     { name: "WC", color: "#9ad7ff", bg: "#0e1820", hidden: true, entries: [
       Object.assign(P("WC Emissary", { Health: 325, Speed: 1.6, Defense: 70, Shield: 400, Supershield: 2, "Super Armour": 40, "Burn Resistance": 100, "Bleed Resistance": 100, "Explosive Resistance": 60, "Stun Resistance": 100 },
@@ -5271,7 +5326,10 @@ const PDA_DATA = {
         []), { img: "images/people/doe.webp" }),
       P("Monolithic Soldier", { Health: 140, Speed: 0.9, Defense: 12, "Explosive Resistance": 50 },
         { "Aim Time Multiplier": "1.25x" },
-        [W("Sledgehammer")])
+        [W("Sledgehammer")]),
+      Object.assign(P("gobloing", { Health: "inf", Speed: 2.5, "Super Armour": 100, "Bleed Resistance": 1000, "Explosive Resistance": 1000 },
+        { Strength: "0.5x", "Aim Time Multiplier": "0.5x" },
+        []), { img: "images/people/gobloing.webp", picCredit: "wiki", hidden: true })
     ]}
   ],
 
