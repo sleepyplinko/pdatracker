@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-24", items: [
+    "Help wanted: people with no picture",
+  ] },
   { date: "2026-11-23", items: [
     "Ammo: 6.8x51mm SIG names updated",
     "Calculator: shows supershield hits for shotguns too",

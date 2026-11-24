@@ -3363,10 +3363,11 @@
     const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);
     const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !DOC_DESC[e.name] && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
+    const noPic = bios.filter(e => !e.hidden && !(e.card && e.card.kind === "group" && !e.isCard) && !imagesOf(e, e.card && e.card.entry, e.card).length);
     const hc = helpCfg(), skip = new Set(hc.skip);
     return [["unknown", "UNKNOWN ENTRIES (???)", unknown, "name and info", "Missing entry"], ["tools", "WEAPONS & ITEMS WITH NO STATS OR COMMENT", tools, "stats and comment", "Stats"],
             ["weight", "WEAPONS MISSING THEIR WEIGHT", noWeight, "weight", "Stats"], ["desc", "PEOPLE WITH NO DESCRIPTION", noDesc, "description", "Description"],
-            ["stats", "PEOPLE WITH NO STATS", noStats, "stats", "Stats"],
+            ["stats", "PEOPLE WITH NO STATS", noStats, "stats", "Stats"], ["pics", "PEOPLE WITH NO PICTURE", noPic, "picture", "Picture"],
             ["docs", "DOCUMENTS WITH NO PICTURE OR TEXT", docs, "picture or text", "Picture"]]
       .map(([k, t, l, w, kind]) => [k, t, l.filter(e => !skip.has(e.id)), w, kind]).filter(([k, , l]) => l.length && (amAdmin() || !hc.off.includes(k)));
   }
@@ -3385,7 +3386,7 @@
       <p class="cat-note">Missing info. Have it? Press SEND.</p>
       ${notAdded().map(([t, l]) => `<details class="helpw"><summary>${esc(t)} <small>${l.length}</small></summary><div class="helplist">${l.map(n => `<div class="helprow"><b>${esc(n)}</b><span class="dim">not on the site yet</span><button class="mini-btn" data-helpreq="${esc(n)}" data-hkind="Missing entry">SEND</button></div>`).join("")}</div></details>`).join("")}
       ${extra.length ? `<details class="helpw" open><summary>REQUESTS <small>${extra.length}</small></summary><div class="helplist">${extra.map(l => `<div class="helprow"><span>${esc(l)}</span><span></span><button class="mini-btn" data-helpreq="${esc(l)}">SEND</button></div>`).join("")}</div></details>` : ""}
-      ${groups.map(([key, title, list, what, kind]) => { const off = hc.off.includes(key); return `<details class="helpw${off ? " helpoff" : ""}"><summary>${esc(title)} <small>${list.length}</small>${admin ? `<button class="mini-btn" data-helpgrp="${key}" title="${off ? "Show this list to everyone again" : "Hide this whole list from everyone"}">${off ? "HIDDEN · SHOW" : "HIDE LIST"}</button>` : ""}</summary><div class="helplist">${sortEntries(list).map(e =>
+      ${groups.map(([key, title, list, what, kind]) => { const off = hc.off.includes(key); return `<details class="helpw${off ? " helpoff" : ""}"><summary>${esc(title)} <small>${list.length}</small>${admin ? `<button class="mini-btn" data-helpgrp="${key}" title="${off ? "Show this list to everyone again" : "Hide this whole list from everyone"}">${off ? "HIDDEN · SHOW" : "HIDE LIST"}</button>` : ""}</summary>${key === "pics" ? (() => { const ex = entries.find(x => x.name === "WC gobloing"); return `<p class="cat-note">A screenshot of them in game would work, here's an ${ex ? `<button class="linkish" data-open="${esc(ex.id)}">example</button>` : "example"}.</p>`; })() : ""}<div class="helplist">${sortEntries(list).map(e =>
         `<div class="helprow">${e.unknown ? `<b>???</b>` : `<button class="linkish" data-${{ tools: "open-tool", bio: "open", docs: "open-doc" }[e.section]}="${esc(e.id)}">${esc(e.name)}</button>`}<span class="dim">${esc(e.group)}${e.tier ? " · T" + e.tier : ""}</span><span class="frbtns">${admin ? `<button class="mini-btn" data-helpskip="${esc(e.id)}" title="Not needed: take it off this list">✕</button>` : ""}<button class="mini-btn" data-suggest="${esc(e.id)}" data-skind="${esc(kind)}" title="Send the ${esc(what)} for ${esc(label(e))}">SEND</button></span></div>`).join("")}</div></details>`; }).join("")}
       ${admin ? `<details class="helpw helpadmin"><summary>EDIT HELP WANTED <small>admins</small></summary><div class="dform">
         <label>EXTRA REQUESTS <small>one per line; shows at the top for everyone</small><textarea id="helpExtra" rows="4" maxlength="3000">${esc(hc.extra)}</textarea></label>
