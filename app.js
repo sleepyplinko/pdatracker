@@ -143,7 +143,7 @@
                     : typeof raw === "string" ? { name: raw } : { ...raw };
 
   const OV_CACHE = (typeof PDA_CLOUD === "object" && PDA_CLOUD && PDA_CLOUD.api) ? load("pda-overrides-v1", {}) : {};
-  const isStructId = id => /^[tbd]\|@(cat|tab)\|/.test(id);
+  const isStructId = id => /^[tbd]\|@(cat|tab|ren)\|/.test(id);
   const addedSig = ov => JSON.stringify(Object.entries(ov || {}).filter(([id, o]) => o && (o.add || isStructId(id))).map(([id, o]) => [id, o.add || o.stats]).sort());
   const okColor = c => /^#[0-9a-f]{6}$/i.test(c || "") ? c.toLowerCase() : "";
   const mixHex = (c, k) => "#" + [1, 3, 5].map(i => Math.round(parseInt(c.slice(i, i + 2), 16) * k).toString(16).padStart(2, "0")).join("");
@@ -230,6 +230,15 @@
     });
   });
 
+  entries.concat(people).forEach(e => { e.gkey = e.group; });
+  [["t", PDA_DATA.tools], ["b", PDA_DATA.biography], ["d", PDA_DATA.documents]].forEach(([L, list]) => list.forEach(g => {
+    g.key = g.name; g.origColor = g.color; g.origBg = g.bg;
+    const o = OV_CACHE[`${L}|@ren|${slug(g.name)}`], st = (o && o.stats) || {};
+    const col = okColor(st._COLOR);
+    if (col && L !== "t") { g.color = col; if (L === "b") g.bg = mixHex(col, 0.12); }
+    const nm = (st._NAME || "").trim();
+    if (nm && nm !== g.name) { const old = g.name, sec = { t: "tools", b: "bio", d: "docs" }[L]; g.name = nm; entries.concat(people).forEach(e => { if (e.section === sec && e.group === old) e.group = nm; }); }
+  }));
   const trackOf   = id => { const e = byId.get(id); return (e && e.trackId) || id; };
   const isFound   = id => !!(viewOnly ? viewOnly.set : found)[trackOf(id)];
   const cardFound = c => isFound(c.entry.id);
@@ -1649,7 +1658,7 @@
 
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
 
-      const isBludgeon = !!(melee && gun && gun.group === "BLUDGEON");
+      const isBludgeon = !!(melee && gun && gun.gkey === "BLUDGEON");
       const ignoresShield = a => isBludgeon || isExplosive(a);
       function run(sht, a) {
         if (!(hp > 0)) return null;
@@ -2645,7 +2654,7 @@
     const c = adm.edit.cats, where = c.where || "t";
     const isDoc = where === "d" || where.startsWith("x:");
     const sec = { t: "TOOLS", b: "BIOGRAPHY", d: "DOCUMENTS" };
-    const mine = Object.entries(overrides).filter(([id]) => isStructId(id)).map(([id, o]) => {
+    const mine = Object.entries(overrides).filter(([id]) => isStructId(id) && !/^.\|@ren\|/.test(id)).map(([id, o]) => {
       const st = o.stats || {}, tab = id.startsWith("d|@tab|");
       const g = !tab && SEC_DATA[{ t: "tools", b: "bio", d: "docs" }[id[0]]]().find(x => x.custom === id);
       const n = tab ? PDA_DATA.documents.filter(x => x.tab === id.slice(7)).length : g ? (g.items || []).filter(e => !e.unknown).length : 0;
@@ -2654,6 +2663,7 @@
     }).join("");
     return `<div class="dbox admedit"><div class="dhead">Categories and tabs</div><div class="dform">
       ${mine ? `<div class="frlist">${mine}</div>` : '<p class="dim">No custom categories or tabs yet.</p>'}
+      ${catEditHTML()}
       <h3 class="ph3">NEW CATEGORY //</h3>
       <div class="frow"><label>IN <select id="catWhere">${[["t", "TOOLS"], ["b", "BIOGRAPHY"], ["d", "DOCUMENTS"], ...CUSTOM_TABS.map(t => ["x:" + t.key, t.name.toUpperCase()])].map(([v, n]) => `<option value="${esc(v)}"${v === where ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
         <label>NAME <input id="catName" maxlength="40"></label>
@@ -2665,6 +2675,73 @@
       <div class="btnrow"><button class="pbtn" id="tabGo">ADD TAB</button><button class="pbtn" id="admCancel">CLOSE</button></div>
       <p class="dim">A new tab sits next to DOCUMENTS. Add categories to it above, then entries with ADD NEW ENTRY (section DOCUMENTS). The page reloads after each change.</p>
     </div></div>`;
+  }
+  function catEditHTML() {
+    const c = adm.edit.cats;
+    const all = [["t", "TOOLS", PDA_DATA.tools], ["b", "BIOGRAPHY", PDA_DATA.biography], ["d", "DOCUMENTS", PDA_DATA.documents]].flatMap(([L, sn, list]) => list.map(g => ({ v: `${L}|${slug(g.key || g.name)}`, L, g, label: `${g.tab && tabOf(g.tab) ? tabOf(g.tab).name.toUpperCase() : sn} › ${g.name}` })));
+    const tabs = CUSTOM_TABS.map(t => ({ v: "tab|" + t.key, t, label: `TAB › ${t.name.toUpperCase()}` }));
+    const pick = all.concat(tabs).find(x => x.v === c.pick) || all[0];
+    c.pick = pick.v;
+    const edited = pick.g && overrides[`${pick.L}|@ren|${slug(pick.g.key)}`];
+    const col = pick.t ? pick.t.color : pick.g.color;
+    const showCol = pick.t || pick.L !== "t";
+    return `<h3 class="ph3">EDIT A CATEGORY OR TAB //</h3>
+      <div class="frow"><label>WHICH <select id="catPick">${all.concat(tabs).map(x => `<option value="${esc(x.v)}"${x.v === pick.v ? " selected" : ""}>${esc(x.label)}</option>`).join("")}</select></label></div>
+      <div class="frow"><label>NAME <input id="catEdName" maxlength="40" value="${esc(pick.t ? pick.t.name : pick.g.name)}"></label>
+        ${showCol ? `<label>COLOUR <input type="color" id="catEdColor" value="${esc(okColor(col) || (pick.L === "d" ? "#f2e86b" : "#dddddd"))}"></label>` : ""}</div>
+      <div class="btnrow"><button class="pbtn" id="catEdGo">SAVE</button>${edited ? '<button class="pbtn" id="catEdReset">UNDO MY CHANGES</button>' : ""}</div>
+      ${pick.g && pick.g.key !== pick.g.name ? `<p class="dim">Original name: ${esc(pick.g.key)}</p>` : ""}
+      <p class="dim">Changes the name and colour only. Entries and everyone's progress stay the same.</p>`;
+  }
+  const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+    const d = new Date(), dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)), dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate());
+    files.forEach(([name, data]) => {
+      const nb = enc.encode(name), b = typeof data === "string" ? enc.encode(data) : data;
+      let c = 0xffffffff; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8); c = (c ^ 0xffffffff) >>> 0;
+      const h = new DataView(new ArrayBuffer(30));
+      [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x800, 2], [8, 0, 2], [10, dt, 2], [12, dd, 2], [14, c, 4], [18, b.length, 4], [22, b.length, 4], [26, nb.length, 2], [28, 0, 2]].forEach(([o, v, n]) => n === 4 ? h.setUint32(o, v, true) : h.setUint16(o, v, true));
+      const ch = new DataView(new ArrayBuffer(46));
+      [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x800, 2], [10, 0, 2], [12, dt, 2], [14, dd, 2], [16, c, 4], [20, b.length, 4], [24, b.length, 4], [28, nb.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, off, 4]].forEach(([o, v, n]) => n === 4 ? ch.setUint32(o, v, true) : ch.setUint16(o, v, true));
+      parts.push(h, nb, b); cen.push(ch, nb); off += 30 + nb.length + b.length;
+    });
+    const size = cen.reduce((a, x) => a + x.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+    [[0, 0x06054b50, 4], [8, files.length, 2], [10, files.length, 2], [12, size, 4], [16, off, 4]].forEach(([o, v, n]) => n === 4 ? e.setUint32(o, v, true) : e.setUint16(o, v, true));
+    return new Blob([...parts, ...cen, e], { type: "application/zip" });
+  }
+  let zipping = false;
+  async function siteZip(btn) {
+    if (zipping) return; zipping = true;
+    const say = t => { btn.textContent = t; };
+    try {
+      say("GETTING THE FILE LIST…");
+      const m = location.hostname.match(/^([^.]+)\.github\.io$/), owner = m ? m[1] : "sleepyplinko";
+      const repo = (new URL(document.baseURI).pathname.split("/").filter(Boolean)[0]) || "pdatracker";
+      const tr = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`, { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null);
+      if (!tr || !Array.isArray(tr.tree)) throw new Error("Couldn't get the file list from GitHub. Try again in a bit.");
+      const paths = tr.tree.filter(x => x.type === "blob" && !/^e\/.+\//.test(x.path) && !/^damage\//.test(x.path)).map(x => x.path);
+      const files = [], miss = [];
+      let done = 0, i = 0;
+      const work = async () => { while (i < paths.length) { const p = paths[i++]; const r = await fetch(new URL(p, document.baseURI), { cache: "no-store" }).catch(() => null); if (r && r.ok) files.push(["site/" + p, new Uint8Array(await r.arrayBuffer())]); else miss.push(p); say(`ZIPPING ${++done}/${paths.length}…`); } };
+      await Promise.all(Array.from({ length: 8 }, work));
+      const ov = API ? await api("GET", "/api/overrides").then(([st, r]) => st === 200 ? r : null).catch(() => null) : null;
+      files.push(["published-info.json", JSON.stringify({ app: "onc-pda-tracker", kind: "published-info", at: new Date().toISOString(), overrides: ov || overrides }, null, 1)]);
+      say("GETTING UPLOADED PICTURES…");
+      const imgs = [...new Set((JSON.stringify(ov || overrides).match(/https?:\/\/[^"\s]+\/img\/[0-9a-f]{16}\.(?:webp|png|jpg|gif)/g) || []))];
+      for (const u of imgs) { const r = await fetch(u).catch(() => null); if (r && r.ok) files.push(["uploads/" + u.split("/").pop(), new Uint8Array(await r.arrayBuffer())]); else miss.push(u); }
+      if (API) {
+        say("GETTING SUBMISSIONS…");
+        const subs = {}; for (const x of ["new", "done", "rejected"]) { const [st, r] = await api("GET", "/api/admin/submissions?status=" + x).catch(() => [0]); if (st === 200) subs[x] = r.rows; }
+        files.push(["submissions.json", JSON.stringify(subs, null, 1)]);
+        const [hs, h] = await api("GET", "/api/admin/changes").catch(() => [0]); if (hs === 200) files.push(["history.json", JSON.stringify(h, null, 1)]);
+      }
+      files.push(["README.txt", `Once A Normal Tracker backup, ${new Date().toISOString()}\n\nsite/ = every site file\npublished-info.json = what admins published (same as DOWNLOAD BACKUP)\nuploads/ = pictures uploaded through ADMIN\nsubmissions.json = player submissions (latest 200 per status)\nhistory.json = recent admin changes\n${miss.length ? "\nCouldn't get:\n" + miss.join("\n") + "\n" : ""}`]);
+      say("SAVING…");
+      const a = document.createElement("a"); a.href = URL.createObjectURL(makeZip(files)); a.download = `once-a-normal-tracker-${today()}.zip`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      play("confirm"); toast(miss.length ? `Saved. ${miss.length} file${miss.length === 1 ? "" : "s"} couldn't be fetched (listed in README.txt).` : "Saved.", { ms: 6000 });
+    } catch (e) { toast(e.message || "Couldn't make the backup.", { ms: 7000 }); play("warn"); }
+    zipping = false; say("DOWNLOAD THE WHOLE SITE");
   }
   async function catDelete(id, n) {
     if (n) { toast(id.startsWith("d|@tab|") ? "Delete the categories in this tab first." : `Remove its ${n} ${n === 1 ? "entry" : "entries"} first (EDIT → REMOVE PUBLISHED INFO).`, { ms: 7000 }); play("warn"); return; }
@@ -2753,8 +2830,9 @@
       ${pubs.length ? `<div class="frlist">${pubs.map(e => `<div class="frrow" data-pubname="${esc((e.name + " " + e.group).toLowerCase())}"><b>${esc(e.name)}</b><span class="dim">${esc(e.group)}${e.added ? " · NEW ENTRY" : ""}${e.update ? " · " + esc(e.update) : ""}${e.ok ? "" : " · not showing (category not found)"}</span><span></span><span class="frbtns">${e.special === "notice" ? `<button class="mini-btn" data-admnotice>EDIT</button>` : e.special === "ammo" ? `<button class="mini-btn" data-admammo="${esc(e.id)}">EDIT</button>` : `<button class="mini-btn" data-admedit="" data-admentry="${esc(e.id)}">EDIT</button>`}</span></div>`).join("")}</div>` : '<p class="dim">Nothing published yet.</p>'}`;
     else if (page === "site") body = `
       <div class="admtools">
-        ${btn("data-admnotice", "SITE NOTICE")}${adm.announce ? btn("data-admann", "ANNOUNCE ON DISCORD") : ""}${btn("data-admbackup", "DOWNLOAD BACKUP")}
+        ${btn("data-admnotice", "SITE NOTICE")}${adm.announce ? btn("data-admann", "ANNOUNCE ON DISCORD") : ""}${btn("data-admbackup", "DOWNLOAD BACKUP")}${btn("data-admsitezip", "DOWNLOAD THE WHOLE SITE")}
       </div>
+      <p class="dim">BACKUP = only what admins published. WHOLE SITE = a .zip with every site file, published info, uploaded pictures, submissions and history.</p>
       ${statsHTML()}
       ${setupHTML(true)}`;
     else if (page === "history") body = `${adm.msg ? `<div class="msg admerr">${esc(adm.msg)}</div>` : ""}${historyHTML()}`;
@@ -2870,11 +2948,32 @@
       play("confirm"); toast(msg + " Reloading…"); setTimeout(() => location.reload(), 600);
     };
     const sSel = $("#admStyle"); if (sSel) sSel.onchange = () => { $("#admCustom").hidden = sSel.value !== "custom"; };
+    const pSel = $("#catPick"); if (pSel) pSel.onchange = () => { adm.edit.cats.pick = pSel.value; play("click"); keepScroll(render); };
+    on("catEdGo", async () => {
+      const v = adm.edit.cats.pick || "", name = $("#catEdName").value.trim(), colEl = $("#catEdColor");
+      if (!name) { toast("Type a name."); play("warn"); return; }
+      if (v.startsWith("tab|")) {
+        const t = CUSTOM_TABS.find(x => "tab|" + x.key === v); if (!t) return;
+        await putStruct(t.id, { ...((overrides[t.id] || {}).stats || {}), _NAME: name, _COLOR: colEl ? colEl.value : t.color }, "Saved.");
+        return;
+      }
+      const [L, key] = [v[0], v.slice(2)];
+      const list = { t: PDA_DATA.tools, b: PDA_DATA.biography, d: PDA_DATA.documents }[L];
+      const g = list.find(x => slug(x.key || x.name) === key); if (!g) return;
+      if (list.some(x => x !== g && (slug(x.name) === slug(name) || slug(x.key || x.name) === slug(name)))) { toast("There's already a category with that name."); play("warn"); return; }
+      const stats = {};
+      if (name !== g.key) stats._NAME = name;
+      if (colEl && L !== "t" && colEl.value !== okColor(g.origColor)) stats._COLOR = colEl.value;
+      const id = `${L}|@ren|${key}`;
+      if (!Object.keys(stats).length) { if (overrides[id]) await catDelete(id, 0); else { toast("Nothing changed."); play("warn"); } return; }
+      await putStruct(id, stats, "Saved.");
+    });
+    on("catEdReset", async () => { const v = adm.edit.cats.pick || ""; await catDelete(`${v[0]}|@ren|${v.slice(2)}`, 0); });
     const wSel = $("#catWhere"); if (wSel) wSel.onchange = () => { adm.edit.cats.where = wSel.value; play("click"); keepScroll(render); };
     on("catGo", async () => {
       const where = $("#catWhere").value, name = $("#catName").value.trim(); if (!name) { toast("Type a name."); play("warn"); return; }
       const L = where.startsWith("x:") ? "d" : where, list = { t: PDA_DATA.tools, b: PDA_DATA.biography, d: PDA_DATA.documents }[L];
-      if (list.some(g => slug(g.name) === slug(name))) { toast("There's already a category with that name."); play("warn"); return; }
+      if (list.some(g => slug(g.name) === slug(name) || slug(g.key || g.name) === slug(name))) { toast("There's already a category with that name."); play("warn"); return; }
       const stats = { _NAME: name };
       if ($("#catColor")) stats._COLOR = $("#catColor").value;
       if (L === "d") stats._KIND = $("#catKind").value;
@@ -2892,10 +2991,10 @@
       if (!name || name === "???") { toast("Type the entry's name."); play("warn"); return; }
       if (sec === "tools" && !(tier >= 1 && tier <= 9) && !a.replace) { toast("Pick a tier from 1 to 9."); play("warn"); return; }
       const g = SEC_DATA[sec]().find(x => x.name === a.group);
-      const id = `${SEC_LETTER[sec]}|${slug(g.name)}|${slug(name)}`;
+      const id = `${SEC_LETTER[sec]}|${slug(g.key || g.name)}|${slug(name)}`;
       if (findEntry(id)) { toast(`${name} is already in ${g.name}. Use EDIT ANY ENTRY to change it.`); play("warn"); return; }
       const slot = a.replace && findEntry(a.replace);
-      const data = { add: { section: sec, group: g.name, name, tier: sec === "tools" ? (slot ? slot.tier : tier) : undefined, replace: a.replace || undefined } };
+      const data = { add: { section: sec, group: g.key || g.name, name, tier: sec === "tools" ? (slot ? slot.tier : tier) : undefined, replace: a.replace || undefined } };
       if (sec === "tools") { const st = textToStats(a.stats || ""); if (Object.keys(st).length) data.stats = st; if ((a.comment || "").trim()) data.comment = a.comment; }
       else { if ((a.img || "").trim()) { const g = gifLink(a.img); if (g.hint) { toast(g.hint, { ms: 10000 }); play("warn"); return; } a.img = g.url; }
         if ((a.desc || "").trim()) data.desc = a.desc; if ((a.img || "").trim()) { if (!/^https?:\/\//.test(a.img.trim())) { toast("The picture link has to start with https://"); play("warn"); return; } data.imgs = [a.img.trim()]; } }
@@ -3355,12 +3454,12 @@
   const NOT_ADDED = [["WORST COMPANY PEOPLE WE DON'T HAVE", ["Augustus Bartholomew", "WC Obliterator", "WC Elite Tank", "WC Golem"]]];
   const notAdded = () => { const have = new Set(entries.concat(people).map(e => slug(e.name))); return NOT_ADDED.map(([t, l]) => [t, l.filter(n => !have.has(slug(n)))]).filter(([, l]) => l.length); };
   function helpWanted() {
-    const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.group !== "AMMO" && !e.stats && e.comment === undefined);
+    const tools = entries.filter(e => e.section === "tools" && !e.unknown && e.gkey !== "AMMO" && !e.stats && e.comment === undefined);
     const bios = entries.filter(e => e.section === "bio" && !e.unknown);
     const mem = e => (e.card && e.card.members && e.card.members.length) ? e.card.members : [e];
     const noDesc = bios.filter(e => !mem(e).some(m => m.desc || DESC[m.name]) && !DESC[e.name] && !(e.card && e.card.desc));
     const noStats = bios.filter(e => !mem(e).some(m => Object.keys(m.base || {}).length || Object.keys(m.skills || {}).length || (m.loadout || []).length));
-    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.group) && e.stats && e.stats.WEIGHT == null);
+    const noWeight = entries.filter(e => e.section === "tools" && !e.unknown && !["AMMO", "GEARS"].includes(e.gkey) && e.stats && e.stats.WEIGHT == null);
     const docs = entries.filter(e => e.section === "docs" && !e.unknown && !e.desc && !DOC_DESC[e.name] && !imagesOf(e).length);
     const unknown = entries.filter(e => e.unknown);
     const noPic = bios.filter(e => !e.hidden && !(e.card && e.card.kind === "group" && !e.isCard) && !imagesOf(e, e.card && e.card.entry, e.card).length);
@@ -3788,6 +3887,7 @@ Built with AI (Claude).`;
     if (t.closest("[data-admcats]")) { adm.edit = { cats: {} }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
     { const b = t.closest("[data-admcatdel]"); if (b) { if (!+b.dataset.admcatn && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "SURE?"; play("warn"); return; } catDelete(b.dataset.admcatdel, +b.dataset.admcatn); return; } }
     if (t.closest("[data-admnotice]")) { adm.edit = { notice: true }; play("click"); render(); const sc = screen.querySelector(".results"); if (sc) sc.scrollTop = 0; return; }
+    { const z = t.closest("[data-admsitezip]"); if (z) { play("click"); siteZip(z); return; } }
     if (t.closest("[data-admbackup]")) { play("click"); const blob = new Blob([JSON.stringify({ app: "onc-pda-tracker", kind: "published-info", at: new Date().toISOString(), overrides }, null, 1)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pda-published-info-${today()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); return; }
     if (t.closest("[data-admann]")) { adm.ann = { update: "", msg: "" }; play("click"); keepScroll(render); return; }
     if (t.closest("[data-admimgadd]")) { const box = $("#admImgs"); if (box) { box.insertAdjacentHTML("beforeend", imgRowHTML("")); play("click"); } return; }
