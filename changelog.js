@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-23", items: [
+    "Calculator: says when supershield stops a pellet",
     "Calculator: Flower Woman gets 10 supershield when her shield breaks",
     "Calculator: shield fixed (blocks half, health takes none)",
     "Calculator: Maria's second phase counted",
