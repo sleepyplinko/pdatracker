@@ -1,6 +1,21 @@
 {
  "ok": true,
- "changed": 0,
- "since": null,
- "cells": []
+ "changed": 2,
+ "since": "2026-11-24T00:21Z",
+ "cells": [
+  {
+   "sheet": "SIG 6.8x51mm Ammo Types",
+   "cell": "A2",
+   "row": "6.8x51mm SIG FMJ",
+   "old": "6.8x51 SIG FMJ",
+   "new": "6.8x51mm SIG FMJ"
+  },
+  {
+   "sheet": "SIG 6.8x51mm Ammo Types",
+   "cell": "A3",
+   "row": "6.8x51mmm SIG HYBRID",
+   "old": "6.8x51 SIG HYBRID",
+   "new": "6.8x51mmm SIG HYBRID"
+  }
+ ]
 }
