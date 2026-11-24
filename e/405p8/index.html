@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script>document.write('<base href="' + location.pathname.replace(/(e\/[0-9a-z]{5}|damage)\/?$/, "").replace(/[^/]*$/, "") + '">')</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elite Military Demolitionist (OANC person) · Once A Normal Tracker</title>
+  <meta name="description" content="Elite Military Demolitionist (Military) in Once A Normal City (OANC).">
+  <link rel="canonical" href="https://sleepyplinko.github.io/pdatracker/e/405p8/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Once A Normal Tracker">
+  <meta property="og:title" content="Elite Military Demolitionist">
+  <meta property="og:description" content="Military">
+  <meta property="og:url" content="https://sleepyplinko.github.io/pdatracker/e/405p8/">
+  <meta property="og:image" content="https://sleepyplinko.github.io/pdatracker/e/405p8/card.jpg?v=1aa47f83">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Elite Military Demolitionist in Once A Normal Tracker">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0a0a0a">
+  <script>if (!/^#e=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search + "#e=405p8")</script>
+  <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png?v=2">
+  <link rel="apple-touch-icon" href="icons/icon-192.png?v=2">
+</head>
+<body>
+  <div class="sky" aria-hidden="true"><div class="bgimg"></div></div>
+
+  <main class="pda" id="pda">
+    <header class="titlebar">
+      <span class="title" id="siteTitle">Once A Normal Tracker</span>
+      <span class="hint">&lt; SCROLL TABS FOR MORE OPTIONS &gt;</span>
+      <span class="count"><button class="installbtn" id="installBtn" hidden title="Install Once A Normal Tracker as an app">INSTALL APP</button><span class="netbadge" id="netBadge" hidden></span><span id="titleCount"></span></span>
+    </header>
+
+    <div class="banner" id="banner" hidden></div>
+    <div class="backupbar" id="backupbar" hidden></div>
+    <div class="noticebar" id="noticebar" hidden></div>
+    <div class="sincebar" id="sincebar" hidden></div>
+    <div class="updbar" id="updbar" hidden>Once A Normal Tracker was updated. <button onclick="location.reload()">RELOAD</button></div>
+    <div class="window">
+    <div class="bootscr" id="bootscr" aria-hidden="true"><div class="bt-in"><div class="bt-logo">ONCE A NORMAL<span> TRACKER</span></div><div class="bt-sub">ONCE A NORMAL CITY // PDA</div><pre class="bt-log" id="btLog"><span class="bt-cur">_</span></pre><div class="bt-bar"><i id="btBar"></i></div><div class="bt-skip">CLICK, TAP OR PRESS ANY KEY TO SKIP</div></div></div>
+    <nav class="tabs" id="tabs" aria-label="Checklist sections"></nav>
+
+    <div class="searchbar">
+      <span class="sicon" id="searchIcon" aria-hidden="true"></span>
+      <input id="search" type="search" placeholder="SEARCH · ENTER = MARK FOUND" title="Type to search. ENTER marks the top match as found, SHIFT+ENTER opens it. Press / to jump here." autocomplete="off" spellcheck="false" aria-label="Search the PDA">
+      <button class="clear-search" id="clearSearch" hidden aria-label="Clear search">CLEAR</button>
+      <div class="viewtools" role="toolbar" aria-label="View options">
+        <button data-view="grid" title="Grid view (like the game)">&#9638;</button>
+        <button data-view="list" title="Checklist view">&#9776;</button>
+        <button data-compact title="Compact grid (fit more on screen)">&#9641;</button>
+        <button data-hidedone title="Hide finished tiers, tabs and categories">HIDE DONE</button>
+        <select id="sortSel" title="Sort order" aria-label="Sort order">
+          <option value="found">FOUND FIRST</option>
+          <option value="az">A&ndash;Z</option>
+          <option value="recent">RECENTLY FOUND</option>
+        </select>
+        <span class="vsep"></span>
+        <button data-filter="all" title="Show everything">ALL</button>
+        <button data-filter="missing" title="Show only what you haven't found">MISSING</button>
+        <button data-filter="found" title="Show only what you've found">FOUND</button>
+      </div>
+    </div>
+
+    <section class="screen" id="screen" aria-live="polite"></section>
+    <nav class="tabs bottom" id="tabs2" aria-label="Profile and options"></nav>
+    </div>
+  </main>
+
+  <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
+
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script src="sounds.js"></script>
+  <script src="data.js"></script>
+  <script src="descriptions.js"></script>
+  <script src="tooltips.js"></script>
+  <script src="ammo-links.js"></script>
+  <script src="ammo.js"></script>
+  <script src="changelog.js"></script>
+  <script src="contribute.js"></script>
+  <script src="cloud-config.js"></script>
+  <script src="screenshot-import.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol === "https:") {
+      const had = !!navigator.serviceWorker.controller, t0 = Date.now();
+      let touched = false;
+      ["pointerdown", "keydown"].forEach(t => addEventListener(t, () => { touched = true; }, { once: true, capture: true }));
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!had) return;
+        if (!touched && Date.now() - t0 < 15000) { location.reload(); return; }
+        const b = document.getElementById("updbar"); if (b) b.hidden = false;
+      });
+      navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {});
+    }
+  </script>
+</body>
+</html>
