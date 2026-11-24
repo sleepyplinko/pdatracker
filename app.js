@@ -2341,8 +2341,23 @@
       if (oi && oi.length && e.section !== "tools") { delete e.img; e.imgs = oi.slice(); if (e.isCard && e.card) e.card.img = oi[0]; }
       if (Object.keys(o).some(k => !["update", "updated", "add", "stats"].includes(k)) || Object.keys(os).length) e.community = o.updated || 1;
     });
+    shareGroupPics(ov || {});
     latestUpdate = updateTags()[0] || "";
     applyAmmoOv(ov); noticeBar(); updateCount();
+  }
+  const PIC_KEYS = ["img", "imgs", "picFrame", "picCred", "picTip", "noPic"];
+  function shareGroupPics(ov) {
+    const snap = x => { if (!origInfo.has(x)) origInfo.set(x, { picFrame: x.picFrame, noPic: x.noPic, picCred: x.picCred, picTip: x.picTip, hidden: x.hidden, special: x.special, gold: x.gold, ecolor: x.ecolor, eglow: x.eglow, stats: x.stats, comment: x.comment, desc: x.desc, tier: x.tier, community: x.community, update: x.update, img: x.img, imgs: x.imgs, cardImg: x.card && x.card.img }); };
+    const hasPic = o => !!o && ((Array.isArray(o.imgs) && o.imgs.length) || o.img || (o.stats && ["_PICFRAME", "_NOPIC", "_PICCREDIT", "_PICTIP", "_PICLINK"].some(k => o.stats[k])));
+    entries.filter(x => x.isCard && x.card && x.card.kind === "group").forEach(ce => {
+      const c = ce.card, all = [ce, ...c.members];
+      const src = all.filter(x => hasPic(ov[x.id])).sort((a, b) => (ov[b.id].updated || 0) - (ov[a.id].updated || 0))[0];
+      if (!src) return;
+      all.forEach(x => { if (x === src) return; snap(x); PIC_KEYS.forEach(k => { if (src[k] === undefined) delete x[k]; else x[k] = Array.isArray(src[k]) ? src[k].slice() : src[k]; }); });
+      snap(ce);
+      const first = src.noPic ? "" : (src.imgs && src.imgs[0]) || src.img;
+      if (first !== undefined) c.img = first;
+    });
   }
   async function loadOverrides() {
     if (!API) return;
@@ -2676,7 +2691,7 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || (e.section === "docs" ? DOC_DESC : DESC)[e.name] || "")}</textarea>
-          <label>PICTURES <small>the first one shows on the tile; paste an https:// link or press UPLOAD (Discord links can expire)</small></label>
+          <label>PICTURES <small>${target && target.card && target.card.kind === "group" && target.card.members.length > 1 ? `shared by everyone in ${esc(target.card.name)}; ` : ""}the first one shows on the tile; paste an https:// link or press UPLOAD (Discord links can expire)</small></label>
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); const fr = imagesOf(target, target && target.card); return (l.length ? l : [""]).map((u, k) => imgRowHTML(u, fr[k] && fr[k].src === u ? fr[k].frame : null)).join(""); })()}</div>
           <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
         ${updateFieldHTML(pub && pub.update || e.update || "")}
