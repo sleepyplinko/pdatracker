@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-23", items: [
+    "Ammo: 6.8x51mm SIG names updated",
     "Calculator: shows supershield hits for shotguns too",
     "Calculator: Flower Woman gets 10 supershield when her shield breaks",
     "Calculator: shield fixed (blocks half, health takes none)",

@@ -3801,7 +3801,7 @@ const PDA_AMMO = {
    "sheet": "SIG 6.8x51mm Ammo Types",
    "items": [
     {
-     "name": "6.8x51 SIG FMJ",
+     "name": "6.8x51mm SIG FMJ",
      "raw": {
       "base": "250",
       "mult": "1x",
@@ -3825,7 +3825,7 @@ const PDA_AMMO = {
      "trueOnDirect": false
     },
     {
-     "name": "6.8x51 SIG HYBRID",
+     "name": "6.8x51mm SIG HYBRID",
      "raw": {
       "base": "250",
       "mult": "0.9x",
