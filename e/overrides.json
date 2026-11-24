@@ -83,12 +83,14 @@
  "b|wc|wc gobloing": {
   "desc": "ARE WE SERIOUS?\n\n... HOW?\n\nWHATEVER.",
   "stats": {
-   "_PICFRAME": "0.74 57.85 1"
+   "_PICFRAME": "14.38 15.15 1.2",
+   "_PICCREDIT": "From the OANC wiki"
   },
   "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/08bc666361170468.webp",
    "https://pda-tracker.gabewantsthewant.workers.dev/img/a3ba8641c8bc6c63.webp"
   ],
-  "updated": 1795380115
+  "updated": 1795546421
  },
  "b|wc|wc golem": {
   "desc": "... THE DOCUMENTS OF THIS BEING HAVE, MOSTLY, BEEN REDACTED. HOWEVER, SCRAPS OF IT HAVE REMAINED DEEP WITHIN THE CORNERS OF THE          .\n\nTHE WORST COMPANY GOLEM IS A TECHNOLOGICAL ADVANCEMENT OF A BEING, EMBEDDED TO THE BRIM WITH BALLISTIC DEFENSES THAT CANNOT BE PENETRATED. ALONGSIDE THAT, IT IS GIVEN HEAVY FIREPOWER, MAINTAINING SUPPRESSIVE FIRE ON OPPONENTS.\n\nWHAT? YOU EXPECTED MORE? ... THIS IS ONE OF THEIR STRONGEST OFFENSES, CAPABLE OF WITHSTANDING HEAVY PRESSURE AND DEFEATING POWERFUL OPPONENTS. BARTHOLOMEW HAD NO REASON TO CREATE THIS TROOP, YET HE DID ANYWAY. EVERYTHING'S LIKE THAT.\n\nSTILL BELIEVING ME? WRONG DECISION...",
@@ -156,11 +158,11 @@
  },
  "site|notice": {
   "notice": {
-   "text": "Apologies for the Tony PDA photo, it's been fixed.",
-   "level": "info",
-   "id": "b4a7d59a"
+   "text": "Added some new stuff to the site, including admin and event stuff.",
+   "level": "update",
+   "id": "0e83ca0e"
   },
-  "updated": 1795275763
+  "updated": 1795546325
  },
  "t|bludgeon|garden gnome": {
   "comment": "I have no idea how this is utilized as anything, it's merely a decoration. Though, it's worth noting that some people really love this thing. So much so it got banned once, only for it to come back away. Some yellow dude and a dude who was popular for 'tutorials' were apart of that group. Examining it a little closer you can see specks of space dust.",
