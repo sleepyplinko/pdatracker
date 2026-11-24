@@ -1596,7 +1596,7 @@
       let two = !!st.p2, sht = two && sht0.p2 ? sht0.p2 : sht0;
       const prep = x => { const p = Math.max(1, Math.round(x.proj || 1)), f = x.final; return { p, f, fk: k => k >= p ? f : x.fk ? x.fk(k) : f * k / p }; };
       let { p, f, fk } = prep(sht);
-      let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nsh = 0, fw = !!st.fw;
+      let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0, nss = 0, nsh = 0, fw = !!st.fw;
       const flip = () => { if (!two && sht0.p2 && h > 1e-9 && h <= P2) { two = true; sh += 200; sht = sht0.p2; ({ p, f, fk } = prep(sht)); } };
       while (h > 1e-9 && n < max) {
         if (!(f > 0)) break;
@@ -1608,6 +1608,7 @@
         n++;
         let k = p;
         while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
+        if (k < p) nss++;
         if (!k) { nb++; continue; }
         const g = fk(k);
         if (!ig && sh > 1e-9) {
@@ -1621,7 +1622,7 @@
         else h -= g;
         flip();
       }
-      return { n, nb, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2, p2: two, fw } };
+      return { n, nb, nss, nsh, dead: h <= 1e-9, st: { h: Math.max(0, h), sh, ss: s2, p2: two, fw } };
     }
 
     function attack(s) {
@@ -1675,11 +1676,11 @@
       const r = (mode || !gun) ? shot(ammo) : null;
       const htk = r ? toKill(r, ammo) : null;
 
-      const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), rr = run(sh, a), k = rr ? rr.n : null; return { a, s: sh, k, kb: rr ? rr.nb : 0 }; })
+      const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), rr = run(sh, a), k = rr ? rr.n : null; return { a, s: sh, k, kb: rr ? rr.nss : 0 }; })
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
       return { s, gun, modes, mode, melee, pool, hasBurst, hasAuto, useBurst, bAmt, bDelay, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
-        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r, ammo) ? run(r, ammo).nb : 0, shInfo: r ? healthHits(r, ammo) : null, ranked, bestK };
+        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r, ammo) ? run(r, ammo).nss : 0, shInfo: r ? healthHits(r, ammo) : null, ranked, bestK };
     }
     const P = d.pre ? attack(d.p) : null, pn = Math.max(0, Math.min(999, Math.floor(xnum(d.pn) || 0)));
     let preRes = null;
