@@ -2347,7 +2347,7 @@
       if (o.tier && e.section === "tools") e.tier = o.tier;
       if (o.update) e.update = o.update;
       const oi = Array.isArray(o.imgs) ? o.imgs : o.img ? [o.img] : null;
-      if (oi && oi.length && e.section !== "tools") { delete e.img; e.imgs = oi.slice(); if (e.isCard && e.card) e.card.img = oi[0]; }
+      if (oi && oi.length) { delete e.img; e.imgs = oi.slice(); if (e.isCard && e.card) e.card.img = oi[0]; }
       if (Object.keys(o).some(k => !["update", "updated", "add", "stats"].includes(k)) || Object.keys(os).length) e.community = o.updated || 1;
     });
     shareGroupPics(ov || {});
@@ -2768,9 +2768,11 @@
           <label>COMMENT</label><textarea id="admComment" rows="5">${esc(e.comment || "")}</textarea>
           <label>TIER <input type="number" id="admTier" min="1" max="9" value="${esc(e.tier)}"></label>`
         : `<label>DESCRIPTION</label><textarea id="admDesc" rows="7">${esc((target && (target.desc || DESC[target.name])) || (e.section === "docs" ? DOC_DESC : DESC)[e.name] || "")}</textarea>
+`}
+
           <label>PICTURES <small>${target && target.card && target.card.kind === "group" && target.card.members.length > 1 ? `shared by everyone in ${esc(target.card.name)}; ` : ""}the first one shows on the tile; paste an https:// link or press UPLOAD (Discord links can expire)</small></label>
           <div id="admImgs">${(() => { const cur = imagesOf(target, target && target.card).map(x => x.src); const l = [...cur]; if (ed.img && !l.includes(ed.img)) l.push(ed.img); const fr = imagesOf(target, target && target.card); return (l.length ? l : [""]).map((u, k) => imgRowHTML(u, fr[k] && fr[k].src === u ? fr[k].frame : null)).join(""); })()}</div>
-          <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>`}
+          <button type="button" class="mini-btn" data-admimgadd>+ ANOTHER PICTURE</button>
         ${updateFieldHTML(pub && pub.update || e.update || "")}
         <label class="chk"><input type="checkbox" id="admHidden"${e.hidden ? " checked" : ""}> HIDDEN <small>still shows, but doesn't count toward anyone's PDA</small></label>
         ${(() => { const cur = e.special ? "red" : e.gold ? "gold" : e.ecolor === "#ff3a3a" && e.eglow ? "red" : e.ecolor === "#f0c060" && !e.eglow ? "gold" : e.ecolor ? "custom" : "";
@@ -2859,8 +2861,8 @@
       const e = findEntry(adm.edit.entry); if (!e) return;
       const data = {};
       if (e.section === "tools") { data.stats = textToStats($("#admStats").value); data.comment = $("#admComment").value; const t = +$("#admTier").value; if (t && t !== e.tier) data.tier = t; }
-      else {
-        data.desc = $("#admDesc").value;
+      else data.desc = $("#admDesc").value;
+      {
         if (![...screen.querySelectorAll("[data-admimgi]")].every(fixGifInput)) return;
         const ims = [...screen.querySelectorAll("[data-admimgi]")].map(x => x.value.trim()).filter(Boolean);
         if (ims.some(u => !/^(https?:\/\/|images\/)/.test(u))) { toast("Picture links have to start with https://"); play("warn"); return; }
