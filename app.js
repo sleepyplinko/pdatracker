@@ -1450,7 +1450,7 @@
       const searching = !!inp.value.trim();
       if (!searching && it.group && it.group !== last && !st.chip) { html += `<div class="pk-grp">${esc(it.group)}</div>`; last = it.group; }
       const sub = [searching && !st.chip ? it.group : "", it.sub].filter(Boolean).join(" · ");
-      html += `<div class="pk-opt${i === st.hi ? " hi" : ""}" data-pkv="${esc(it.v)}" data-pki="${i}">${it.star ? '<span class="pk-star">★</span>' : ""}<span class="pk-l">${esc(it.label)}</span>${sub ? `<span class="pk-sub">${esc(sub)}</span>` : ""}</div>`;
+      html += `<div class="pk-opt${i === st.hi ? " hi" : ""}${it.hot ? " hot" : ""}"${it.hot ? ' title="One hit kills them with some ammo"' : ""} data-pkv="${esc(it.v)}" data-pki="${i}">${it.star ? '<span class="pk-star">★</span>' : ""}<span class="pk-l">${esc(it.label)}</span>${sub ? `<span class="pk-sub">${esc(sub)}</span>` : ""}</div>`;
     });
     pop.innerHTML = chips + `<div class="pk-scroll">${html || '<div class="pk-none">Nothing matches.</div>'}${list.length > 150 ? `<div class="pk-none">${list.length - 150} more: keep typing…</div>` : ""}</div>`;
     pop.hidden = false;
@@ -1683,13 +1683,13 @@
         return swing ? (n - 1) * swing : null;
       };
       const r = (mode || !gun) ? shot(ammo) : null;
-      const htk = r ? toKill(r, ammo) : null;
+      const htk = r && !s.quick ? toKill(r, ammo) : null;
 
-      const ranked = !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), rr = run(sh, a), k = rr ? rr.n : null; return { a, s: sh, k, kb: rr ? rr.nss : 0 }; })
+      const ranked = !s.quick && !melee && pool.length > 1 ? pool.map(a => { const sh = shot(a), rr = run(sh, a), k = rr ? rr.n : null; return { a, s: sh, k, kb: rr ? rr.nss : 0 }; })
         .sort((x, y) => (x.k == null) - (y.k == null) || (x.k || 0) - (y.k || 0) || y.s.final - x.s.final) : [];
       const bestK = ranked.length && ranked[0].k != null ? ranked[0].k : null;
       return { s, gun, modes, mode, melee, pool, hasBurst, hasAuto, useBurst, bAmt, bDelay, ammo, strength, shot, ssByp, ignoresShield, isBludgeon, healthHits, toKill, rpm, swing, burstN, ttkOf,
-        r, htk, ttk: ttkOf(htk), nBlocked: r && run(r, ammo) ? run(r, ammo).nss : 0, shInfo: r ? healthHits(r, ammo) : null, ranked, bestK };
+        r, htk, ttk: ttkOf(htk), nBlocked: !s.quick && r && run(r, ammo) ? run(r, ammo).nss : 0, shInfo: r && !s.quick ? healthHits(r, ammo) : null, ranked, bestK };
     }
     const P = d.pre ? attack(d.p) : null, pn = Math.max(0, Math.min(999, Math.floor(xnum(d.pn) || 0)));
     let preRes = null;
@@ -1699,6 +1699,19 @@
     }
     const A = attack(d), B = vs ? attack(d.b) : null;
 
+    const tapMemo = new Map();
+    const oneTap = id => {
+      if (!tgt || !(hp > 0) || st0.h <= 1e-9) return false;
+      if (tapMemo.has(id)) return tapMemo.get(id);
+      let yes = false;
+      const n = Math.max(1, fireModes(byId.get(id)).length);
+      for (let m = 0; m < n && !yes; m++) {
+        const X = attack({ ...d, gun: id, mode: m, ammo: "", hits: "", custom: "", quick: true });
+        if (!X.mode) continue;
+        for (const a of X.melee ? [null] : X.pool) { const sh = X.shot(a); if (sh && sh.final > 0 && runHits(st0, sh, X.ssByp(a), X.ignoresShield(a), 1).dead) { yes = true; break; } }
+      }
+      tapMemo.set(id, yes); return yes;
+    };
     const opt = (v, cur, label) => `<option value="${esc(v)}"${String(cur) === String(v) ? " selected" : ""}>${esc(label)}</option>`;
     const step = (k, v, note = "") => `<div class="stat"><i style="color:#c8a0ff">${k}</i>: ${v}${note ? ` <span class="dim">${note}</span>` : ""}</div>`;
     const aName = X => X.gun ? X.gun.name + (X.modes.length > 1 && X.mode ? ` (${X.mode.label})` : "") : X.ammo ? X.ammo.name : "Custom damage";
@@ -1707,7 +1720,7 @@
       const s = X.s, kB = pfx === "b." ? "B" : pfx === "p." ? "P" : "";
       return `<div class="dbox"><div class="dhead">${title}${pfx === "b." ? `<span class="hright"><button class="hbtn" data-dmgswap title="Swap loadout A and B">SWAP A ⇄ B</button></span>` : ""}</div><div class="dform">
           <label>WEAPON</label>${pickerHTML("dmggun" + kB, { label: "Weapon", placeholder: X.gun ? `${X.gun.name}  (type to change)` : "Type a weapon name…", onPick: v => setDmg(pfx + "gun", v),
-            items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier })))] })}
+            items: [{ v: "", label: "No weapon (pick ammo directly)", group: "" }, ...PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, star: isFound(e.id), sub: "T" + e.tier, hot: oneTap(e.id) })))] })}
           ${X.gun ? `<button class="mini-btn" data-open-tool="${esc(X.gun.id)}">OPEN ${esc(X.gun.name.toUpperCase())}</button>` : ""}
           ${X.modes.length > 1 ? `<label>MODE <select data-dmg="${pfx}mode">${X.modes.map(m => opt(m.i, X.mode.i, m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))).join("")}</select></label>` : ""}
           ${X.melee ? `<p class="cat-note">Melee: uses the weapon's DAMAGE, with its DEFENSE BYPASS as defense penetration.</p>`

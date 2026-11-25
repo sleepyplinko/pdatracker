@@ -940,6 +940,8 @@ details.more[open] > summary { background: #fff; }
 .pk-grp { position: sticky; top: 0; padding: 3px 10px; background: #2a2a2a; color: #f3ee30; font-size: 11px; font-weight: 800; letter-spacing: .05em; }
 .pk-opt { display: flex; gap: 8px; align-items: baseline; padding: 6px 10px; cursor: pointer; font-size: 14px; color: #eee; }
 .pk-opt.hi, .pk-opt:hover { background: #2c3a55; }
+.pk-opt.hot { background: #4a1c1c; }
+.pk-opt.hot.hi, .pk-opt.hot:hover { background: #6e2626; }
 .pk-l { flex: 1; } .pk-sub { color: #999; font-size: 12px; white-space: nowrap; } .pk-star { color: #f3c400; }
 .pk-none { padding: 8px 10px; color: #999; font-size: 13px; }
 .dform .picker { width: 100%; }
