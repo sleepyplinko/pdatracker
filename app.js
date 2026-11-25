@@ -1581,8 +1581,7 @@
     return true;
   }
 
-  const BEST_AUTO = 10, bestOpen = {};
-  document.addEventListener("click", e => { const sm = e.target.closest && e.target.closest(".bestbox > summary"); if (sm) bestOpen[sm.parentElement.dataset.bestk] = !sm.parentElement.open; }, true);
+  const BEST_AUTO = 10;
   function renderDamage() {
     const d = dmgState();
     const weapons = dmgWeapons();
@@ -1784,8 +1783,7 @@
         const t = X.ttkOf(k);
         return `<tr class="${X.ammo && a.key === X.ammo.key ? "on" : ""}${isBest ? " best" : ""}" data-dmgammo="${pfx}${esc(a.key)}"><td>${isBest ? '<span class="bestchip">BEST</span> ' : ""}${esc(a.name)}${a.edited ? ` <span class="aed" title="${esc(a.note ? "Corrected by the site's admins: " + a.note : "Corrected by the site's admins")}">✎</span>` : ""}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${kk}</td><td>${t != null ? fmt2(t) + "s" : "—"}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
       }).join("");
-      const bk = pfx || "a", open = bestOpen[bk] != null ? bestOpen[bk] : X.ranked.length <= BEST_AUTO;
-      return `<details class="dbox bestbox" data-bestk="${bk}"${open ? " open" : ""}><summary class="dhead">${title} <small class="dim">(${X.ranked.length} ammo)</small><span class="hright dim">best first · click a row to use it</span></summary><div class="dtable"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>TIME TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
+      return `<div class="dbox bestbox"><div class="dhead">${title} <small class="dim">(${X.ranked.length} ammo)</small><span class="hright dim">best first · click a row to use it${X.ranked.length > BEST_AUTO ? " · scroll for more" : ""}</span></div><div class="dtable${X.ranked.length > BEST_AUTO ? " bestscroll" : ""}"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>TIME TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
     }
 
     let winA = false, winB = false, verdict = "";
