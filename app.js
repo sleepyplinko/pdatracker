@@ -1464,12 +1464,12 @@
   }
   screen.addEventListener("focusin", e => { const r = e.target.closest && e.target.closest(".picker"); if (r && e.target.matches(".pk-in")) pkDraw(r); });
   screen.addEventListener("input", e => { if (!e.target.matches || !e.target.matches(".pk-in")) return; const r = e.target.closest(".picker"); pkState[r.dataset.pk].hi = 0; pkDraw(r); });
-  screen.addEventListener("focusout", e => { const r = e.target.closest && e.target.closest(".picker"); if (r) setTimeout(() => { if (!r.contains(document.activeElement)) { const p = r.querySelector(".pk-pop"); if (p) p.hidden = true; } }, 120); });
+  screen.addEventListener("focusout", e => { const r = e.target.closest && e.target.closest(".picker"); if (r && e.target.matches(".pk-in")) { const cfg = PICKERS[r.dataset.pk], v = e.target.value.trim(); if (cfg && cfg.onFree && /^[\d.,]+\s*x?$/i.test(v)) { setTimeout(() => cfg.onFree(v), 130); return; } } if (r) setTimeout(() => { if (!r.contains(document.activeElement)) { const p = r.querySelector(".pk-pop"); if (p) p.hidden = true; } }, 120); });
   screen.addEventListener("keydown", e => {
     if (!e.target.matches || !e.target.matches(".pk-in")) return;
     const r = e.target.closest(".picker"), st = pkState[r.dataset.pk], n = pkFilter(r.dataset.pk, e.target.value).length;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); e.stopPropagation(); st.hi = (st.hi + (e.key === "ArrowDown" ? 1 : -1) + n) % Math.max(1, n); pkDraw(r); }
-    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const it = pkFilter(r.dataset.pk, e.target.value)[st.hi]; if (it) pkPick(r, it.v); }
+    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); const cfg = PICKERS[r.dataset.pk], v = e.target.value.trim(); if (cfg && cfg.onFree && /^[\d.,]+\s*x?$/i.test(v)) { cfg.onFree(v); return; } const it = pkFilter(r.dataset.pk, e.target.value)[st.hi]; if (it) pkPick(r, it.v); }
     else if (e.key === "Escape") { e.stopPropagation(); r.querySelector(".pk-pop").hidden = true; e.target.blur(); }
   }, true);
   screen.addEventListener("mousedown", e => {
@@ -1824,6 +1824,7 @@
         ${bestTable(A, "", `Loadout A: best ammo against ${esc(tgtLabel)}`)}${bestTable(B, "b.", `Loadout B: best ammo against ${esc(tgtLabel)}`)}`
       : `<div class="dgrid">${attackerBox(A, "", P ? "Then finish with" : "Attacker")}${targetBox}${resultHTML(A, "", "Result", false)}</div>
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
+      ${incomingHTML()}
       ${weightCalcHTML()}
       <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
       <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits; against shotguns it blocks single pellets and the rest of the blast still hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
@@ -1894,6 +1895,121 @@
       <div class="llist">${rows || '<p class="none">Nothing yet. Add something above.</p>'}</div>
       <p class="cat-note">Totals are the PDA's numbers added up. The game may stack some differently.</p>
     </div></details>`;
+  }
+  const KEY_ARMOR = pk("pda-armor-sets-v1");
+  let armorSets = load(KEY_ARMOR, []);
+  if (!Array.isArray(armorSets)) armorSets = [];
+  const INC_DEF = { gun: "", mode: 0, ammo: "", wstr: true, hits: "", str: "1", npc: "", hp: "100", def: "0", sa: "0", sh: "0", ss: "0", gear: [] };
+  const incState = () => { const o = Object.assign({ ...INC_DEF }, ui.inc || {}); if (!Array.isArray(o.gear)) o.gear = []; return ui.inc = o; };
+  const GEAR_ADD = [["DEFENSE INCREASE", "def"], ["SUPER ARMOUR INCREASE", "sa"], ["SHIELD DURABILITY", "sh"], ["SUPER SHIELD INCREASE", "ss"]];
+  let icOpen = false;
+  document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".icalc")) icOpen = e.target.open; }, true);
+  function incSet(k, v) {
+    const s = incState(); s[k] = v;
+    if (k === "gun") { s.mode = 0; s.ammo = ""; s.hits = ""; }
+    if (k === "mode") { s.mode = +v || 0; s.ammo = ""; s.hits = ""; }
+    if (k === "ammo") s.hits = "";
+    persistUI();
+  }
+  const npcWeapons = p => (p && p.loadout || []).filter(([k]) => k === "Weapon").map(([, x]) => entries.find(e => e.section === "tools" && !e.unknown && slug(e.name) === loadName(x))).filter((e, i, a) => e && a.indexOf(e) === i && fireModes(e).length);
+  const npcAmmoNames = p => (p && p.loadout || []).filter(([k]) => k === "Ammo Loaded").map(([, x]) => String(x));
+  function incPickNpc(id) {
+    const s = incState(), p = people.find(x => x.id === id); if (!p) return;
+    s.npc = id; s.str = String(xnum((p.skills || {}).Strength) || 1);
+    const ws = npcWeapons(p);
+    if (ws.length) { s.gun = ws[0].id; s.mode = 0; s.ammo = ""; s.hits = "";
+      const mode = fireModes(ws[0])[0], pool = mode && !mode.melee ? mode.cals.flatMap(ammoFor) : [];
+      const a = npcAmmoNames(p).map(n => pool.find(x => slug(x.name) === slug(n))).find(Boolean); if (a) s.ammo = a.key; }
+    persistUI(); play("marked"); keepScroll(render);
+  }
+  function incHits(st, sh0, b, ig) {
+    const p = Math.max(1, Math.round(sh0.proj || 1)), f = sh0.final, fk = k => k >= p ? f : sh0.fk ? sh0.fk(k) : f * k / p;
+    if (!(f > 0)) return null;
+    let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0;
+    while (h > 1e-9 && n < 1e6) {
+      if (s2 <= b && (ig || sh <= 1e-9)) { n += Math.ceil(h / f - 1e-9); h = 0; break; }
+      n++;
+      let k = p; while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
+      if (!k) { nb++; continue; }
+      const g = fk(k);
+      if (!ig && sh > 1e-9) {
+        const carry = !sh0.gun || sh0.pierce, units = sh0.gun && !sh0.one ? k : 1, q = g / units;
+        for (let u = 0; u < units; u++) { if (sh > 1e-9) { if (q < 2 * sh - 1e-9) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; } } else h -= q; }
+      } else h -= g;
+    }
+    return { n, nb };
+  }
+  function incomingHTML() {
+    const s = incState();
+    const npc = s.npc && people.find(p => p.id === s.npc);
+    const gun = s.gun && byId.get(s.gun);
+    const modes = fireModes(gun), mode = modes[Math.min(s.mode, modes.length - 1)] || null, melee = !!(mode && mode.melee);
+    const pool = mode && !melee ? mode.cals.flatMap(ammoFor) : [];
+    const ammo = pool.find(a => a.key === s.ammo) || pool[0] || null;
+    const str = Math.max(0, xnum(s.str) == null ? 1 : xnum(s.str));
+    const wstr = mode && !melee && s.wstr ? mode.strength : 1;
+    const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
+    const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + num(e.stats && e.stats[k]), 0); });
+    const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
+    const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
+    let shot = null, b = 0, ig = false;
+    if (mode && melee) { const dmg = (xnum(mode.s.DAMAGE) || 0) * str; shot = { proj: 1, dmg, ...calcHit({ dmg, sa: you.sa, saBypass: 0, def: you.def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; ig = gun.gkey === "BLUDGEON"; }
+    else if (ammo) {
+      const per = ammo.base * (ammo.mult == null ? 1 : ammo.mult) * wstr * str;
+      const proj = xnum(s.hits) != null && ammo.proj > 1 ? Math.max(0, Math.min(ammo.proj, xnum(s.hits))) : ammo.proj;
+      const hit = d => calcHit({ dmg: d, sa: you.sa, saBypass: ammo.saBypass || 0, def: you.def, pen: ammo.pen || 0, trueDmg: false });
+      shot = { per, proj, dmg: per * proj, fk: k => hit(per * k).final, gun: true, pierce: /^true$/i.test(String((ammo.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(ammo.name), ...hit(per * proj) };
+      b = Math.max(0, xnum(ammo.raw.ssBypass) || 0); ig = isExp(ammo);
+    }
+    const res = shot && you.hp > 0 ? incHits({ h: you.hp, sh: ig ? 0 : you.sh, ss: you.ss }, shot, b, ig) : null;
+    const rpm = mode && mode.rpm, swing = melee ? xnum(mode.s["SWING TIME"]) : null;
+    const bAmt = Math.max(1, Math.round(xnum(mode && mode.s["BURST AMOUNT"]) || 1)), bDelay = Math.max(0, xnum(mode && mode.s["BURST DELAY"]) || 0), burst = !!(mode && !melee && mode.s.BURST === "YES");
+    const ttk = res && res.n ? rpm ? (() => { const n = res.n, bb = burst ? Math.floor((n - 1) / bAmt) : 0; return (n - 1 - bb) * 60 / rpm + bb * bDelay; })() : swing ? (res.n - 1) * swing : null : null;
+
+    const weapons = dmgWeapons();
+    const gunItems = PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, sub: "T" + e.tier })));
+    const npcItems = people.filter(p => (p.skills && p.skills.Strength != null) || npcWeapons(p).length).map(p => ({ v: p.id, label: tgtName(p), group: p.group, sub: (p.skills && p.skills.Strength) ? String(p.skills.Strength) : "" }));
+    const gearItems = sortEntries(allTools().filter(e => e.gkey === "GEARS" && GEAR_ADD.some(([k]) => e.stats && e.stats[k] != null))).map(e => ({ v: e.id, label: e.name, group: "", sub: GEAR_ADD.filter(([k]) => e.stats[k] != null).map(([k]) => `${k.replace(" INCREASE", "").replace(" DURABILITY", "").toLowerCase()} ${e.stats[k]}`).join(" · ") }));
+    const ws = npcWeapons(npc), an = npcAmmoNames(npc);
+    const theirAmmo = an.map(n => pool.find(x => slug(x.name) === slug(n))).filter(Boolean);
+    const field = (k, label, v) => `<label>${label}<input type="number" step="any" data-inc="${k}" value="${esc(v)}"></label>`;
+    const plus = f => add[f] ? ` <small class="dim">+${fmtN(add[f])} from armor = ${fmtN(you[f])}</small>` : "";
+    const sumLine = (l, v, c) => `<div class="stat"><i style="color:${c}">${l}</i>: ${v}</div>`;
+    return `<details class="helpw wcalc icalc"${icOpen ? " open" : ""}><summary>INCOMING DAMAGE <small>${res && res.n ? `${res.n} hit${res.n === 1 ? "" : "s"} to kill you` : "how fast an NPC kills you"}</small></summary>
+      <div class="dgrid">
+        <div class="dbox"><div class="dhead">Attacker</div><div class="dform">
+          <label>WEAPON</label>${pickerHTML("incgun", { label: "Weapon", placeholder: gun ? `${gun.name}  (type to change)` : "Type a weapon name…", items: gunItems, onPick: v => { incSet("gun", v); play("marked"); keepScroll(render); } })}
+          ${npc && ws.length ? `<div class="incpick"><span class="dim">${esc(npc.name)}'s weapon${ws.length === 1 ? "" : "s"}:</span> ${ws.map(e => `<button class="mini-btn${gun === e ? " on" : ""}" data-incgun="${esc(e.id)}">${esc(e.name)}</button>`).join(" ")}</div>` : npc ? `<div class="incpick dim">No weapon listed for ${esc(npc.name)}.</div>` : ""}
+          ${modes.length > 1 ? `<label>MODE <select data-inc="mode">${modes.map(m => `<option value="${m.i}"${m.i === mode.i ? " selected" : ""}>${esc(m.label + (m.cals.length ? " (" + m.cals.join(" | ") + ")" : ""))}</option>`).join("")}</select></label>` : ""}
+          <div class="incrow">
+            <div><label>${melee ? "DAMAGE" : "AMMO"}</label>${melee ? `<div class="stat">${esc(mode.s.DAMAGE)}</div>` : pool.length ? pickerHTML("incammo", { label: "Ammo", placeholder: ammo ? `${ammo.name}  (type to change)` : "Type an ammo name…", items: pool.map(a => ({ v: a.key, label: a.name, group: a.caliber })), onPick: v => { incSet("ammo", v); play("marked"); keepScroll(render); } }) : `<div class="dim">${gun ? "No ammo in the chart for this." : "Pick a weapon."}</div>`}</div>
+            <div><label>STRENGTH <small>number or NPC</small></label>${pickerHTML("incstr", { label: "Strength", chips: false, placeholder: `${fmtN(str)}x${npc ? " · " + npc.name : ""}`, items: npcItems, onPick: v => incPickNpc(v), onFree: v => { const st = incState(); st.str = String(xnum(v)); st.npc = ""; persistUI(); play("click"); keepScroll(render); } })}</div>
+          </div>
+          ${npc && theirAmmo.length ? `<div class="incpick"><span class="dim">${esc(npc.name)}'s ammo:</span> ${theirAmmo.map(a => `<button class="mini-btn${ammo === a ? " on" : ""}" data-incammo="${esc(a.key)}">${esc(a.name)}</button>`).join(" ")}</div>` : npc && an.length && !melee ? `<div class="incpick dim">${esc(npc.name)} uses ${esc(an.join(", "))} (not for this weapon).</div>` : ""}
+          ${mode && !melee ? `<label class="chk"><input type="checkbox" data-inc="wstr"${s.wstr ? " checked" : ""}> multiply by the weapon's STRENGTH (${fmtN(mode.strength)}x)</label>` : ""}
+          ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" data-inc="hits" value="${esc(s.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
+        </div></div>
+        <div class="dbox"><div class="dhead">You</div><div class="dform">
+          ${field("hp", "HEALTH", s.hp)}
+          ${field("def", "DEFENSE %", s.def)}${plus("def")}
+          ${field("sa", "SUPER ARMOUR %", s.sa)}${plus("sa")}
+          ${field("sh", "SHIELD", s.sh)}${plus("sh")}
+          ${field("ss", "SUPERSHIELD", s.ss)}${plus("ss")}
+          <label>ARMOR</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
+          ${gear.length ? `<div class="incgear">${gear.map((e, i) => `<span class="chip">${esc(e.name)} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`).join(" ")}</div>` : ""}
+          <div class="incsets"><span class="dim">SETS:</span> ${armorSets.map((x, i) => `<span class="chip"><button class="linkish" data-incsetload="${i}" title="Use this set">${esc(x.name)}</button> <button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></span>`).join(" ") || '<span class="dim">none saved</span>'}
+</div><div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name this set…"><button class="mini-btn" data-incsetsave>SAVE SET</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.sh !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR</button>' : ""}</div>
+        </div></div>
+        <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
+          ${shot ? `${melee ? sumLine("DAMAGE", `${esc(mode.s.DAMAGE)} × ${fmtN(str)} strength = ${fmt2(shot.dmg)}`, "#c8a0ff") : sumLine("PER PROJECTILE", `${fmt2(shot.per)} <small class="dim">${fmt2(ammo.base)} base × ${fmtN(ammo.mult == null ? 1 : ammo.mult)}${wstr !== 1 ? ` × ${fmtN(wstr)} weapon` : ""} × ${fmtN(str)} strength</small>`, "#c8a0ff")}
+            ${sumLine("YOUR SUPER ARMOUR", `${fmt2(shot.effSA)}%`, "#7fd4ff")}${sumLine("YOUR DEFENSE", `${fmt2(shot.effDef)}%`, "#ff9a5a")}
+            <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
+            ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
+            <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing.</p>
+            ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Shield durability and super shield are % in the PDA; here they're added as points.</p>` : ""}`
+          : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
+        </div></div>
+      </div></details>`;
   }
   function loadoutAdd(id) {
     if (!byId.has(id)) return;
@@ -3880,6 +3996,13 @@ Built with AI (Claude).`;
         keepScroll(render); return; } }
     { const bb = t.closest("[data-admboot]"); if (bb && amAdmin()) { runBoot({ force: true, hold: +bb.dataset.admboot }); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const v = row.dataset.dmgammo, isB = v.startsWith("b."); dmgSet(isB ? "b.ammo" : "ammo", isB ? v.slice(2) : v); persistUI(); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incgun]"); if (b) { incSet("gun", b.dataset.incgun); const st = incState(), p = people.find(x => x.id === st.npc), m = fireModes(byId.get(st.gun))[0], pool = m && !m.melee ? m.cals.flatMap(ammoFor) : []; const a = npcAmmoNames(p).map(n => pool.find(x => slug(x.name) === slug(n))).find(Boolean); if (a) st.ammo = a.key; persistUI(); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incammo]"); if (b) { incSet("ammo", b.dataset.incammo); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incgeardel]"); if (b) { const st = incState(); st.gear = st.gear.filter((_, i) => i !== +b.dataset.incgeardel); persistUI(); play("unmarked"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incsetload]"); if (b) { const x = armorSets[+b.dataset.incsetload]; if (x) { const st = incState(); ["hp", "def", "sa", "sh", "ss"].forEach(k => { st[k] = String(x[k] == null ? INC_DEF[k] : x[k]); }); st.gear = (x.gear || []).filter(id => byId.has(id)); persistUI(); play("click"); keepScroll(render); } return; } }
+    { const b = t.closest("[data-incsetdel]"); if (b) { const i = +b.dataset.incsetdel; if (armorSets[i]) { toast(`Deleted "${armorSets[i].name}".`); armorSets.splice(i, 1); save(KEY_ARMOR, armorSets); play("unmarked"); keepScroll(render); } return; } }
+    if (t.closest("[data-incsetsave]")) { const st = incState(); const name = (($("#incSetName") || {}).value || "").trim().slice(0, 30); if (!name) { toast("Type a name for the set first."); play("warn"); return; } const x = { name, hp: st.hp, def: st.def, sa: st.sa, sh: st.sh, ss: st.ss, gear: st.gear.slice() }; const i = armorSets.findIndex(y => y.name.toLowerCase() === name.toLowerCase()); if (i >= 0) armorSets[i] = x; else armorSets.push(x); save(KEY_ARMOR, armorSets); play("confirm"); toast("Saved."); keepScroll(render); return; }
+    if (t.closest("[data-incclear]")) { const st = incState(); Object.assign(st, { def: "0", sa: "0", sh: "0", ss: "0", gear: [] }); persistUI(); play("back"); keepScroll(render); return; }
     if (t.closest("[data-dmgpre]")) { const d = ui.dmg = dmgState(); d.pre = !d.pre; persistUI(); play(d.pre ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgvs]")) { const d = ui.dmg = dmgState(); d.vs = !d.vs; if (d.vs && !d.b.gun && !d.b.ammo) d.b = { ...d.b, gun: d.gun, mode: d.mode, str: d.str }; persistUI(); play(d.vs ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgswap]")) { const d = ui.dmg = dmgState(); const keys = Object.keys(ATK_DEF), a = {}; keys.forEach(k => { a[k] = d[k]; d[k] = d.b[k]; }); d.b = a; persistUI(); play("switch"); keepScroll(render); return; }
@@ -4021,6 +4144,7 @@ Built with AI (Claude).`;
     else if (sel.matches("[data-tmin]")) ui.tmin = sel.value.trim();
     else if (sel.matches("[data-tmax]")) ui.tmax = sel.value.trim();
     else if (sel.matches("[data-cal]")) ui.cal = sel.value;
+    else if (sel.matches("[data-inc]")) { incSet(sel.dataset.inc, sel.type === "checkbox" ? sel.checked : sel.value); play("click"); keepScroll(render); return; }
     else if (sel.matches("[data-dmg]")) {
       dmgSet(sel.dataset.dmg, sel.type === "checkbox" ? sel.checked : sel.value);
       persistUI(); play("click"); keepScroll(render); return;

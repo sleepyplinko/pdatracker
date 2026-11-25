@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-24", items: [
+    "Calculator: incoming damage (NPC vs you)",
     "Calculator: red = one-hit kill",
     "Melee and gear pictures (OANC Wiki)",
     "Added hidden admin, rare and event entries",
