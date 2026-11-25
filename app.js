@@ -2008,7 +2008,6 @@
             <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
             <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing or armor shield.</p>
-            ${gear.some(e => gearExtra(e).sa) ? `<p class="cat-note">ⓘ Counts super armour the PDA doesn't list: ${gear.filter(e => gearExtra(e).sa).map(e => `${esc(e.name)} ${gearExtra(e).sa}%`).join(", ")}.</p>` : ""}
             ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Super shield is % in the PDA; here it's added as points.</p>` : ""}`
           : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
         </div></div>
