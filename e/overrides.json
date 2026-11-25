@@ -267,5 +267,26 @@
    "WEIGHT": "0"
   },
   "updated": 1794261169
+ },
+ "t|sharp|excalibur?": {
+  "comment": "",
+  "stats": {
+   "DAMAGE": "600",
+   "DEFENSE BYPASS": "100",
+   "AUTO": "NO",
+   "BURST": "NO",
+   "AIM TIME": "2",
+   "SWITCH TIME": "1.25s",
+   "SWING TIME": "1.25s",
+   "ALERT RADIUS": "25",
+   "RANGE": "6",
+   "EQUIP TIME": "1s",
+   "WEIGHT": "3",
+   "_PICFRAME": "33.15 19.76 1.15"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/2ddeb9165e83de7e.webp"
+  ],
+  "updated": 1795584271
  }
 }
