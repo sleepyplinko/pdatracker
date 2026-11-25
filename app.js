@@ -1936,8 +1936,8 @@
       if (!k) { nb++; continue; }
       const g = fk(k);
       if (!ig && sh > 1e-9) {
-        const carry = !sh0.gun || sh0.pierce, units = sh0.gun && !sh0.one ? k : 1, q = g / units;
-        for (let u = 0; u < units; u++) { if (sh > 1e-9) { if (q < 2 * sh - 1e-9) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; } } else h -= q; }
+        const units = sh0.gun && !sh0.one ? k : 1, q = g / units;
+        for (let u = 0; u < units; u++) { if (sh > 1e-9) { if (q < 2 * sh - 1e-9) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; h -= left; } } else h -= q; }
       } else h -= g;
     }
     return { n, nb };
@@ -2009,7 +2009,7 @@
             <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
             <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing.</p>
-            ${gear.length ? `<p class="cat-note">Shield: 1% durability = 1 shield = 2 damage blocked (25% blocks 50). Click a shield to turn it off if it's broken.${gear.some(e => e.stats && e.stats["SUPER SHIELD INCREASE"] != null) ? " Super shield % is added as points (a guess)." : ""}</p>` : ""}`
+            ${gear.length ? `<p class="cat-note">Shield: 1% durability = 1 shield = 2 damage blocked (25% blocks 50). Click a shield to turn it off if it's broken.</p>` : ""}`
           : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
         </div></div>
       </div></details>`;
