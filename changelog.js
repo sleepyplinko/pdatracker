@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-25", items: [
+    "Incoming damage: armor shield counted",
     "Incoming damage: clearer YOU box"
   ]},
   { date: "2026-11-24", items: [
