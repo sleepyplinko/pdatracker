@@ -1901,6 +1901,8 @@
   if (!Array.isArray(armorSets)) armorSets = [];
   const INC_DEF = { gun: "", mode: 0, ammo: "", wstr: true, hits: "", str: "1", npc: "", hp: "100", def: "0", sa: "0", sh: "0", ss: "0", gear: [] };
   const incState = () => { const o = Object.assign({ ...INC_DEF }, ui.inc || {}); if (!Array.isArray(o.gear)) o.gear = []; return ui.inc = o; };
+  const GEAR_UNLISTED = { "korund-vm body armor": { sa: 5 } };
+  const gearExtra = e => GEAR_UNLISTED[String(e.name).toLowerCase()] || {};
   const GEAR_ADD = [["DEFENSE INCREASE", "def"], ["SUPER ARMOUR INCREASE", "sa"], ["SHIELD DURABILITY", "sh"], ["SUPER SHIELD INCREASE", "ss"]];
   let icOpen = false;
   document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".icalc")) icOpen = e.target.open; }, true);
@@ -1949,7 +1951,7 @@
     const str = Math.max(0, xnum(s.str) == null ? 1 : xnum(s.str));
     const wstr = mode && !melee && s.wstr ? mode.strength : 1;
     const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
-    const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + num(e.stats && e.stats[k]), 0); });
+    const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0), 0); });
     const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
@@ -1969,7 +1971,7 @@
     const weapons = dmgWeapons();
     const gunItems = PDA_DATA.tools.flatMap(c => sortEntries(weapons.filter(e => e.group === c.name)).map(e => ({ v: e.id, label: e.name, group: c.name, sub: "T" + e.tier })));
     const npcItems = people.filter(p => (p.skills && p.skills.Strength != null) || npcWeapons(p).length).map(p => ({ v: p.id, label: tgtName(p), group: p.group, sub: (p.skills && p.skills.Strength) ? String(p.skills.Strength) : "" }));
-    const gearItems = sortEntries(allTools().filter(e => e.gkey === "GEARS" && GEAR_ADD.some(([k]) => e.stats && e.stats[k] != null))).map(e => ({ v: e.id, label: e.name, group: "", sub: GEAR_ADD.filter(([k]) => e.stats[k] != null).map(([k]) => `${k.replace(" INCREASE", "").replace(" DURABILITY", "").toLowerCase()} ${e.stats[k]}`).join(" · ") }));
+    const gearItems = sortEntries(allTools().filter(e => e.gkey === "GEARS" && GEAR_ADD.some(([k]) => e.stats && e.stats[k] != null))).map(e => ({ v: e.id, label: e.name, group: "", sub: GEAR_ADD.filter(([k]) => e.stats[k] != null).map(([k]) => `${k.replace(" INCREASE", "").replace(" DURABILITY", "").toLowerCase()} ${e.stats[k]}`).concat(gearExtra(e).sa ? [`super armour ${gearExtra(e).sa}% (not listed)`] : []).join(" · ") }));
     const ws = npcWeapons(npc), an = npcAmmoNames(npc);
     const theirAmmo = an.map(n => pool.find(x => slug(x.name) === slug(n))).filter(Boolean);
     const field = (k, label, v) => `<label>${label}<input type="number" step="any" data-inc="${k}" value="${esc(v)}"></label>`;
@@ -2006,6 +2008,7 @@
             <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
             <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing.</p>
+            ${gear.some(e => gearExtra(e).sa) ? `<p class="cat-note">ⓘ Korund-VM Body Armor also gives 5% super armour; the PDA doesn't list it.</p>` : ""}
             ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Shield durability and super shield are % in the PDA; here they're added as points.</p>` : ""}`
           : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
         </div></div>
