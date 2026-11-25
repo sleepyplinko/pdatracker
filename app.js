@@ -1952,7 +1952,7 @@
     const wstr = mode && !melee && s.wstr ? mode.strength : 1;
     const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
     const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + (f === "sh" && s.noSh.includes(e.id) ? 0 : num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0)), 0); });
-    const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
+    const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: 0, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
     if (mode && melee) { const dmg = (xnum(mode.s.DAMAGE) || 0) * str; shot = { proj: 1, dmg, ...calcHit({ dmg, sa: you.sa, saBypass: 0, def: you.def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; ig = gun.gkey === "BLUDGEON"; }
@@ -1995,10 +1995,9 @@
           ${field("hp", "HEALTH", s.hp)}
           ${field("def", "DEFENSE %", s.def)}${plus("def")}
           ${field("sa", "SUPER ARMOUR %", s.sa)}${plus("sa")}
-          ${field("sh", "SHIELD", s.sh)}${plus("sh")}
           ${field("ss", "SUPERSHIELD", s.ss)}${plus("ss")}
           <label>ARMOR</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
-          ${gear.length ? `<div class="incgear">${gear.map((e, i) => { const hs = e.stats && e.stats["SHIELD DURABILITY"] != null, off = s.noSh.includes(e.id); return `<span class="chip">${esc(e.name)}${hs ? ` <button class="mini-btn incsh${off ? " off" : ""}" data-incnosh="${esc(e.id)}" title="${off ? "Shield not counted (broken). Click to count it." : "Click if its shield is broken"}">SHIELD ${off ? "OFF" : "ON"}</button>` : ""} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`; }).join(" ")}</div>` : ""}
+          ${gear.length ? `<div class="incgear">${gear.map((e, i) => { const hs = e.stats && e.stats["SHIELD DURABILITY"] != null, off = s.noSh.includes(e.id); return `<span class="chip">${esc(e.name)}${hs && false ? ` <button class="mini-btn incsh${off ? " off" : ""}" data-incnosh="${esc(e.id)}" title="${off ? "Shield not counted (broken). Click to count it." : "Click if its shield is broken"}">SHIELD ${off ? "OFF" : "ON"}</button>` : ""} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`; }).join(" ")}</div>` : ""}
           <div class="incsets"><span class="dim">SETS:</span> ${armorSets.map((x, i) => `<span class="chip"><button class="linkish" data-incsetload="${i}" title="Use this set">${esc(x.name)}</button> <button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></span>`).join(" ") || '<span class="dim">none saved</span>'}
 </div><div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name this set…"><button class="mini-btn" data-incsetsave>SAVE SET</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.sh !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR</button>' : ""}</div>
         </div></div>
@@ -2007,9 +2006,9 @@
             ${sumLine("YOUR SUPER ARMOUR", `${fmt2(shot.effSA)}%`, "#7fd4ff")}${sumLine("YOUR DEFENSE", `${fmt2(shot.effDef)}%`, "#ff9a5a")}
             <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
-            <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing.</p>
+            <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing or armor shield.</p>
             ${gear.some(e => gearExtra(e).sa) ? `<p class="cat-note">ⓘ Counts super armour the PDA doesn't list: ${gear.filter(e => gearExtra(e).sa).map(e => `${esc(e.name)} ${gearExtra(e).sa}%`).join(", ")}.</p>` : ""}
-            ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Shield durability and super shield are % in the PDA; here they're added as points.</p>` : ""}`
+            ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Super shield is % in the PDA; here it's added as points.</p>` : ""}`
           : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
         </div></div>
       </div></details>`;
