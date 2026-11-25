@@ -1643,7 +1643,7 @@
       const pool = mode && !melee ? mode.cals.flatMap(ammoFor) : (gun ? [] : ammoAll);
       let ammo = pool.find(a => a.key === s.ammo) || null;
       if (!ammo && pool.length && mode) ammo = pool[0];
-      const strength = mode && !melee && s.str ? mode.strength : 1;
+      const strength = mode && !melee ? mode.strength : 1;
 
       const isExplosive = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
       const shot = a => { const o = shotAt(a, sa); if (maria && o) o.p2 = shotAt(a, 43); return o; };
@@ -1728,7 +1728,6 @@
             : X.pool.length ? `<label>AMMO</label>${pickerHTML("dmgammo" + kB, { label: "Ammo", placeholder: X.ammo ? `${X.ammo.name}  (type to change)` : "Type an ammo name…", onPick: v => setDmg(pfx + "ammo", v), chips: true,
                 items: X.pool.map(a => ({ v: a.key, label: a.name, group: a.caliber, star: !!(X.ammo && a.key === X.ammo.key), sub: `${fmt2(a.base * (a.mult == null ? 1 : a.mult))} dmg${a.proj > 1 ? " ×" + a.proj : ""}${a.pen ? " · " + fmt2(a.pen * 100) + "% pen" : ""}` })) })}`
             : X.gun ? `<p class="cat-note">The ammo chart has nothing for ${esc(X.mode ? X.mode.cals.join(" | ") : "this weapon")}. Type a damage number instead:</p><label>DAMAGE PER HIT <input type="number" step="any" data-dmg="${pfx}custom" value="${esc(s.custom)}"></label>` : ""}
-          ${!X.melee && X.mode && X.mode.strength !== 1 ? `<label class="chk"><input type="checkbox" data-dmg="${pfx}str"${s.str ? " checked" : ""}> multiply by the weapon's STRENGTH (${X.mode.strength}x)</label>` : ""}
           ${X.ammo && X.ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${X.ammo.proj}" step="1" data-dmg="${pfx}hits" value="${esc(s.hits)}" placeholder="all ${X.ammo.proj}"></label>` : ""}
           ${X.ammo && X.ammo.trueOnDirect ? `<label class="chk"><input type="checkbox" data-dmg="${pfx}direct"${s.direct ? " checked" : ""}> direct hit (true damage)</label>` : ""}
           ${pfx === "p." ? `<label>HOW MANY HITS FIRST <input type="number" min="0" max="999" step="1" data-dmg="pn" value="${esc(d.pn)}"></label>` : !vs ? ammoCard(X.ammo) : ""}
@@ -1950,7 +1949,7 @@
     const pool = mode && !melee ? mode.cals.flatMap(ammoFor) : [];
     const ammo = pool.find(a => a.key === s.ammo) || pool[0] || null;
     const str = Math.max(0, xnum(s.str) == null ? 1 : xnum(s.str));
-    const wstr = mode && !melee && s.wstr ? mode.strength : 1;
+    const wstr = mode && !melee ? mode.strength : 1;
     const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
     const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + (f === "sh" && s.noSh.includes(e.id) ? 0 : num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0)), 0); });
     const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
@@ -1989,7 +1988,6 @@
             <div><label>STRENGTH <small>type a number, or an NPC's name</small></label>${pickerHTML("incstr", { label: "Strength", chips: false, placeholder: `${fmtN(str)}x${npc ? " · " + npc.name : ""}`, items: npcItems, onPick: v => incPickNpc(v), onFree: v => { const st = incState(); st.str = String(xnum(v)); st.npc = ""; persistUI(); play("click"); keepScroll(render); } })}</div>
           </div>
           ${npc && theirAmmo.length ? `<div class="incpick"><span class="dim">${esc(npc.name)}'s ammo:</span> ${theirAmmo.map(a => `<button class="mini-btn${ammo === a ? " on" : ""}" data-incammo="${esc(a.key)}">${esc(a.name)}</button>`).join(" ")}</div>` : npc && an.length && !melee ? `<div class="incpick dim">${esc(npc.name)} uses ${esc(an.join(", "))} (not for this weapon).</div>` : ""}
-          ${mode && !melee ? `<label class="chk"><input type="checkbox" data-inc="wstr"${s.wstr ? " checked" : ""}> multiply by the weapon's STRENGTH (${fmtN(mode.strength)}x)</label>` : ""}
           ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" data-inc="hits" value="${esc(s.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
         </div></div>
         <div class="dbox"><div class="dhead">You</div><div class="dform">
