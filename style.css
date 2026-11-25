@@ -1276,3 +1276,12 @@ body.light .admin .dform input:not([type=checkbox]):not([type=color]):not([type=
 .bestbox > .dhead .hright { margin-left: auto; }
 .bestscroll { max-height: 246px; overflow-y: auto; }
 .bestscroll thead th { position: sticky; top: 0; z-index: 1; background: #1b1b1b; }
+.inclist, .incstats { width: 100%; border-collapse: collapse; font-size: 12px; margin: 4px 0 10px; }
+.inclist td { padding: 4px 6px; border-bottom: 1px solid #2a2a2a; }
+.inclist td:last-child, .inclist td:nth-last-child(2):has(.mini-btn) { width: 1%; white-space: nowrap; text-align: right; }
+.incstats th { font-size: 10px; color: #888; text-align: left; padding: 2px 4px; font-weight: normal; }
+.incstats td { padding: 2px 4px; }
+.incstats td:first-child { color: #f2e86b; font-weight: bold; white-space: nowrap; }
+.incstats input { width: 100%; min-width: 50px; }
+.incstats td:nth-child(3), .incstats td:nth-child(4) { white-space: nowrap; }
+.incempty { font-size: 12px; margin: 4px 0 10px; }

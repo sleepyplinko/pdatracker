@@ -1993,14 +1993,15 @@
           ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" data-inc="hits" value="${esc(s.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
         </div></div>
         <div class="dbox"><div class="dhead">You</div><div class="dform">
-          ${field("hp", "HEALTH", s.hp)}
-          ${field("def", "DEFENSE %", s.def)}${plus("def")}
-          ${field("sa", "SUPER ARMOUR %", s.sa)}${plus("sa")}
-          ${field("ss", "SUPERSHIELD", s.ss)}${plus("ss")}
-          <label>ARMOR</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
-          ${gear.length ? `<div class="incgear">${gear.map((e, i) => { const hs = e.stats && e.stats["SHIELD DURABILITY"] != null, off = s.noSh.includes(e.id); return `<span class="chip">${esc(e.name)}${hs && false ? ` <button class="mini-btn incsh${off ? " off" : ""}" data-incnosh="${esc(e.id)}" title="${off ? "Shield not counted (broken). Click to count it." : "Click if its shield is broken"}">SHIELD ${off ? "OFF" : "ON"}</button>` : ""} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`; }).join(" ")}</div>` : ""}
-          <div class="incsets"><span class="dim">SETS:</span> ${armorSets.map((x, i) => `<span class="chip"><button class="linkish" data-incsetload="${i}" title="Use this set">${esc(x.name)}</button> <button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></span>`).join(" ") || '<span class="dim">none saved</span>'}
-</div><div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name this set…"><button class="mini-btn" data-incsetsave>SAVE SET</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.sh !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR</button>' : ""}</div>
+          <label>ARMOR YOU'RE WEARING</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
+          ${gear.length ? `<table class="inclist">${gear.map((e, i) => { const bits = [["DEFENSE INCREASE", "def"], ["SUPER ARMOUR INCREASE", "sa"], ["SUPER SHIELD INCREASE", "ss"]].map(([k, f]) => { const v = num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0); return v ? `+${fmtN(v)}${f === "ss" ? " SS" : f === "sa" ? "% SA" : "% DEF"}` : ""; }).filter(Boolean).join(" · "); return `<tr><td>${esc(e.name)}</td><td class="dim">${bits || "nothing counted"}</td><td><button class="linkish" data-incgeardel="${i}" title="Take it off">✕</button></td></tr>`; }).join("")}</table>` : `<p class="dim incempty">No armor. Add some above, or just type your stats below.</p>`}
+          <label>YOUR STATS</label>
+          <table class="incstats"><thead><tr><th></th><th>EXTRA</th><th>ARMOR</th><th>TOTAL</th></tr></thead><tbody>
+            ${[["hp", "HEALTH", ""], ["def", "DEFENSE", "%"], ["sa", "SUPER ARMOUR", "%"], ["ss", "SUPERSHIELD", ""]].map(([k, l, u]) => `<tr><td>${l}</td><td><input type="number" step="any" data-inc="${k}" value="${esc(s[k])}" placeholder="0"></td><td class="dim">${k === "hp" ? "" : add[k] ? "+" + fmtN(add[k]) + u : "–"}</td><td><b>${fmtN(you[k])}${u}</b></td></tr>`).join("")}
+          </tbody></table>
+          <label>SAVED SETS</label>
+          ${armorSets.length ? `<table class="inclist">${armorSets.map((x, i) => `<tr><td>${esc(x.name)}</td><td><button class="mini-btn" data-incsetload="${i}">USE</button></td><td><button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></td></tr>`).join("")}</table>` : ""}
+          <div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name for this armor + stats…"><button class="mini-btn" data-incsetsave>SAVE</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR ALL</button>' : ""}</div>
         </div></div>
         <div class="dbox dres"><div class="dhead">Result</div><div class="stats">
           ${shot ? `${melee ? sumLine("DAMAGE", `${esc(mode.s.DAMAGE)} × ${fmtN(str)} strength = ${fmt2(shot.dmg)}`, "#c8a0ff") : sumLine("PER PROJECTILE", `${fmt2(shot.per)} <small class="dim">${fmt2(ammo.base)} base × ${fmtN(ammo.mult == null ? 1 : ammo.mult)}${wstr !== 1 ? ` × ${fmtN(wstr)} weapon` : ""} × ${fmtN(str)} strength</small>`, "#c8a0ff")}
