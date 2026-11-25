@@ -1899,9 +1899,9 @@
   const KEY_ARMOR = pk("pda-armor-sets-v1");
   let armorSets = load(KEY_ARMOR, []);
   if (!Array.isArray(armorSets)) armorSets = [];
-  const INC_DEF = { gun: "", mode: 0, ammo: "", wstr: true, hits: "", str: "1", npc: "", hp: "100", def: "0", sa: "0", sh: "0", ss: "0", gear: [] };
-  const incState = () => { const o = Object.assign({ ...INC_DEF }, ui.inc || {}); if (!Array.isArray(o.gear)) o.gear = []; return ui.inc = o; };
-  const GEAR_UNLISTED = { "korund-vm body armor": { sa: 5 } };
+  const INC_DEF = { gun: "", mode: 0, ammo: "", wstr: true, hits: "", str: "1", npc: "", hp: "100", def: "0", sa: "0", sh: "0", ss: "0", gear: [], noSh: [] };
+  const incState = () => { const o = Object.assign({ ...INC_DEF }, ui.inc || {}); if (!Array.isArray(o.gear)) o.gear = []; if (!Array.isArray(o.noSh)) o.noSh = []; return ui.inc = o; };
+  const GEAR_UNLISTED = { "korund-vm body armor": { sa: 5 }, "altyn helmet": { sa: 2 }, "maska helmet": { sa: 3 } };
   const gearExtra = e => GEAR_UNLISTED[String(e.name).toLowerCase()] || {};
   const GEAR_ADD = [["DEFENSE INCREASE", "def"], ["SUPER ARMOUR INCREASE", "sa"], ["SHIELD DURABILITY", "sh"], ["SUPER SHIELD INCREASE", "ss"]];
   let icOpen = false;
@@ -1951,7 +1951,7 @@
     const str = Math.max(0, xnum(s.str) == null ? 1 : xnum(s.str));
     const wstr = mode && !melee && s.wstr ? mode.strength : 1;
     const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
-    const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0), 0); });
+    const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + (f === "sh" && s.noSh.includes(e.id) ? 0 : num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0)), 0); });
     const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
@@ -1998,7 +1998,7 @@
           ${field("sh", "SHIELD", s.sh)}${plus("sh")}
           ${field("ss", "SUPERSHIELD", s.ss)}${plus("ss")}
           <label>ARMOR</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
-          ${gear.length ? `<div class="incgear">${gear.map((e, i) => `<span class="chip">${esc(e.name)} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`).join(" ")}</div>` : ""}
+          ${gear.length ? `<div class="incgear">${gear.map((e, i) => { const hs = e.stats && e.stats["SHIELD DURABILITY"] != null, off = s.noSh.includes(e.id); return `<span class="chip">${esc(e.name)}${hs ? ` <button class="mini-btn incsh${off ? " off" : ""}" data-incnosh="${esc(e.id)}" title="${off ? "Shield not counted (broken). Click to count it." : "Click if its shield is broken"}">SHIELD ${off ? "OFF" : "ON"}</button>` : ""} <button class="linkish" data-incgeardel="${i}" title="Remove">✕</button></span>`; }).join(" ")}</div>` : ""}
           <div class="incsets"><span class="dim">SETS:</span> ${armorSets.map((x, i) => `<span class="chip"><button class="linkish" data-incsetload="${i}" title="Use this set">${esc(x.name)}</button> <button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></span>`).join(" ") || '<span class="dim">none saved</span>'}
 </div><div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name this set…"><button class="mini-btn" data-incsetsave>SAVE SET</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.sh !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR</button>' : ""}</div>
         </div></div>
@@ -2008,7 +2008,7 @@
             <div class="dbig">${fmt2(shot.final)} <small>damage to you per ${melee ? "hit" : ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${res ? `<div class="dbig2">${res.nb ? `<span class="sscalc">${res.nb} supershield +</span> ` : ""}${res.n} hit${res.n === 1 ? "" : "s"} to kill you${ttk != null ? ` · ${fmt2(ttk)}s${rpm ? ` at ${rpm} RPM` : ""}` : ""}</div>` : `<p class="none">${you.hp > 0 ? "Can't kill you with this." : "Set your health."}</p>`}
             <p class="cat-note">Assumes every ${melee ? "swing" : "shot"} hits, no reloading or aim time. Doesn't count your healing.</p>
-            ${gear.some(e => gearExtra(e).sa) ? `<p class="cat-note">ⓘ Korund-VM Body Armor also gives 5% super armour; the PDA doesn't list it.</p>` : ""}
+            ${gear.some(e => gearExtra(e).sa) ? `<p class="cat-note">ⓘ Counts super armour the PDA doesn't list: ${gear.filter(e => gearExtra(e).sa).map(e => `${esc(e.name)} ${gearExtra(e).sa}%`).join(", ")}.</p>` : ""}
             ${gear.length ? `<p class="cat-note">Armor numbers are added straight on. Shield durability and super shield are % in the PDA; here they're added as points.</p>` : ""}`
           : '<p class="none">Pick a weapon, or an NPC under STRENGTH.</p>'}
         </div></div>
@@ -4001,11 +4001,12 @@ Built with AI (Claude).`;
     { const row = t.closest("[data-dmgammo]"); if (row) { const v = row.dataset.dmgammo, isB = v.startsWith("b."); dmgSet(isB ? "b.ammo" : "ammo", isB ? v.slice(2) : v); persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incgun]"); if (b) { incSet("gun", b.dataset.incgun); const st = incState(), p = people.find(x => x.id === st.npc), m = fireModes(byId.get(st.gun))[0], pool = m && !m.melee ? m.cals.flatMap(ammoFor) : []; const a = npcAmmoNames(p).map(n => pool.find(x => slug(x.name) === slug(n))).find(Boolean); if (a) st.ammo = a.key; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incammo]"); if (b) { incSet("ammo", b.dataset.incammo); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incnosh]"); if (b) { const st = incState(), id = b.dataset.incnosh; st.noSh = st.noSh.includes(id) ? st.noSh.filter(x => x !== id) : [...st.noSh, id]; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incgeardel]"); if (b) { const st = incState(); st.gear = st.gear.filter((_, i) => i !== +b.dataset.incgeardel); persistUI(); play("unmarked"); keepScroll(render); return; } }
-    { const b = t.closest("[data-incsetload]"); if (b) { const x = armorSets[+b.dataset.incsetload]; if (x) { const st = incState(); ["hp", "def", "sa", "sh", "ss"].forEach(k => { st[k] = String(x[k] == null ? INC_DEF[k] : x[k]); }); st.gear = (x.gear || []).filter(id => byId.has(id)); persistUI(); play("click"); keepScroll(render); } return; } }
+    { const b = t.closest("[data-incsetload]"); if (b) { const x = armorSets[+b.dataset.incsetload]; if (x) { const st = incState(); ["hp", "def", "sa", "sh", "ss"].forEach(k => { st[k] = String(x[k] == null ? INC_DEF[k] : x[k]); }); st.gear = (x.gear || []).filter(id => byId.has(id)); st.noSh = (x.noSh || []).slice(); persistUI(); play("click"); keepScroll(render); } return; } }
     { const b = t.closest("[data-incsetdel]"); if (b) { const i = +b.dataset.incsetdel; if (armorSets[i]) { toast(`Deleted "${armorSets[i].name}".`); armorSets.splice(i, 1); save(KEY_ARMOR, armorSets); play("unmarked"); keepScroll(render); } return; } }
-    if (t.closest("[data-incsetsave]")) { const st = incState(); const name = (($("#incSetName") || {}).value || "").trim().slice(0, 30); if (!name) { toast("Type a name for the set first."); play("warn"); return; } const x = { name, hp: st.hp, def: st.def, sa: st.sa, sh: st.sh, ss: st.ss, gear: st.gear.slice() }; const i = armorSets.findIndex(y => y.name.toLowerCase() === name.toLowerCase()); if (i >= 0) armorSets[i] = x; else armorSets.push(x); save(KEY_ARMOR, armorSets); play("confirm"); toast("Saved."); keepScroll(render); return; }
-    if (t.closest("[data-incclear]")) { const st = incState(); Object.assign(st, { def: "0", sa: "0", sh: "0", ss: "0", gear: [] }); persistUI(); play("back"); keepScroll(render); return; }
+    if (t.closest("[data-incsetsave]")) { const st = incState(); const name = (($("#incSetName") || {}).value || "").trim().slice(0, 30); if (!name) { toast("Type a name for the set first."); play("warn"); return; } const x = { name, hp: st.hp, def: st.def, sa: st.sa, sh: st.sh, ss: st.ss, gear: st.gear.slice(), noSh: st.noSh.slice() }; const i = armorSets.findIndex(y => y.name.toLowerCase() === name.toLowerCase()); if (i >= 0) armorSets[i] = x; else armorSets.push(x); save(KEY_ARMOR, armorSets); play("confirm"); toast("Saved."); keepScroll(render); return; }
+    if (t.closest("[data-incclear]")) { const st = incState(); Object.assign(st, { def: "0", sa: "0", sh: "0", ss: "0", gear: [], noSh: [] }); persistUI(); play("back"); keepScroll(render); return; }
     if (t.closest("[data-dmgpre]")) { const d = ui.dmg = dmgState(); d.pre = !d.pre; persistUI(); play(d.pre ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgvs]")) { const d = ui.dmg = dmgState(); d.vs = !d.vs; if (d.vs && !d.b.gun && !d.b.ammo) d.b = { ...d.b, gun: d.gun, mode: d.mode, str: d.str }; persistUI(); play(d.vs ? "click" : "back"); keepScroll(render); return; }
     if (t.closest("[data-dmgswap]")) { const d = ui.dmg = dmgState(); const keys = Object.keys(ATK_DEF), a = {}; keys.forEach(k => { a[k] = d[k]; d[k] = d.b[k]; }); d.b = a; persistUI(); play("switch"); keepScroll(render); return; }

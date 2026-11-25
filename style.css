@@ -1270,3 +1270,5 @@ body.light .admin .dform input:not([type=checkbox]):not([type=color]):not([type=
 .incpick .mini-btn.on, .incsets .mini-btn.on { outline: 2px solid #f2e86b; }
 .incgear, .incsets { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0 8px; font-size: 12px; }
 .icalc .dgrid { margin: 8px; }
+.incsh { font-size: 10px; padding: 1px 5px; }
+.incsh.off { opacity: .55; text-decoration: line-through; }
