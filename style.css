@@ -1272,3 +1272,9 @@ body.light .admin .dform input:not([type=checkbox]):not([type=color]):not([type=
 .icalc .dgrid { margin: 8px; }
 .incsh { font-size: 10px; padding: 1px 5px; }
 .incsh.off { opacity: .55; text-decoration: line-through; }
+.bestbox > summary { cursor: pointer; list-style: none; }
+.bestbox > summary::-webkit-details-marker { display: none; }
+.bestbox > summary::before { content: "\25B8\FE0E  "; }
+.bestbox[open] > summary::before { content: "\25BE\FE0E  "; }
+.bestbox > summary.dhead { display: flex; align-items: baseline; gap: 6px; justify-content: flex-start; }
+.bestbox > summary .hright { margin-left: auto; }

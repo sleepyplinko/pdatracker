@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-24", items: [
+    "Best ammo list can be hidden",
     "Incoming damage: Altyn + Maska super armour",
     "Korund-VM counts its 5% super armour",
     "Calculator: incoming damage (NPC vs you)",
