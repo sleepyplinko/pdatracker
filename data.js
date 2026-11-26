@@ -5232,7 +5232,9 @@ const PDA_DATA = {
       Object.assign(P("Ratman", { Health: 600, Speed: 1.2, Shield: 50, "Super Armour": 20 },
         { Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
         [W("Baseball Bat")]), { img: "images/people/ratman.webp" }),
-      Object.assign(P("Chicken"), { img: "images/people/chicken.webp", picCredit: "wiki", hidden: true })
+      Object.assign(P("Chicken", { Health: 25, Speed: 2.2, Defense: 25 },
+        { Strength: "0.3x", "Aim Time Multiplier": "2x", "Reload Speed Multiplier": "1.4x" },
+        [W("CHICKENATTACK")]), { img: "images/people/chicken.webp", picCredit: "wiki", picTip: "First image that come up when you search chicken.", hidden: true })
     ]},
     { name: "Hellion", color: "#ff3030", bg: "#2a0808", entries: [
       Object.assign(P("Wyrmling", { Health: 200, Speed: 2.8, Defense: 30, "Burn Resistance": -100, "Bleed Resistance": 100 },

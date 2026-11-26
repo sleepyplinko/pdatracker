@@ -456,6 +456,8 @@ How.. STUPID!
 
 HOW STUPID OF YOU! FOR UNDERESTIMATING US. FOR LOOKING DOWN AT US. BUT SOON, THE WORLD WILL PAY, THE WRETCHED PRESIDENT OF THIS CITY TOO, SHALL BE TAKEN DOWN.`,
 
+"Chicken": `Chickens are domesticated birds descended from wild junglefowl, known for being major source of eggs and meat worldwide. They are relatively small, ground-dwelling birds with heavy bodies, short wings and fleshy combs/wattles. They're typically raised on farms and serves as a pretty niche household pets, with the viral sensation in 1996 of Chicken's paint board competition making them a more popular option as they're adored by people world-wide.`,
+
 "gobloing": `This ancient deity has aged for thousands and thousands of years, strolling through lands to tell his wisdoms. Some humans ignore his intellect and knowledges, however some were able to grasp onto the sophisticated language of gobloings.
 
 Notably pyramids of egypt were infact designed by the gobloing. This was shown by old scriptures in the structures, with lanky, long necked creatures. Alot of people had no idea what it was beforehand.. until now.
