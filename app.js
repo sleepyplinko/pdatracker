@@ -1631,11 +1631,13 @@
         const g = fk(k);
         if (!ig && sh > 1e-9) {
           nsh++;
-          const carry = !sht.gun || sht.pierce, units = sht.gun && !sht.one ? k : 1, q = g / units;
+          const carry = !sht.gun || sht.pierce, units = sht.gun && !sht.one ? k : 1, raw = sht.rawk ? sht.rawk(k) : g, q = raw / units, frac = sht.pierce ? 1 : 0.5;
+          let toHealth = 0;
           for (let u = 0; u < units; u++) {
-            if (sh > 1e-9) { if (q < 2 * sh - 1e-9) sh -= q / 2; else { const left = q - 2 * sh; sh = 0; if (carry) h -= left; if (flowerT && !fw) { fw = true; s2 += 10; } } }
-            else h -= q;
+            if (sh > 1e-9) { if (q * frac < sh - 1e-9) sh -= q * frac; else { const left = q - sh / frac; sh = 0; if (carry) toHealth += left; if (flowerT && !fw) { fw = true; s2 += 10; } } }
+            else toHealth += q;
           }
+          if (toHealth > 1e-9) h -= sht.red ? sht.red(toHealth) : toHealth * (g / raw || 0);
         }
         else h -= g;
         flip();
@@ -1657,12 +1659,12 @@
       const shot = a => { const o = shotAt(a, sa); if (maria && o) o.p2 = shotAt(a, 43); return o; };
       const shotAt = (a, sa) => {
         if (obsidian && !melee && (!a || !isExplosive(a))) return { per: 0, proj: 1, dmg: 0, obs: true, final: 0, afterSA: 0, effSA: 0, effDef: 0 };
-        if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; }
-        if (!a) { const dmg = xnum(s.custom) || 0; return { per: dmg, proj: 1, dmg, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
+        if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0, pen = (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen, trueDmg: false }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen, trueDmg: false }) }; }
+        if (!a) { const dmg = xnum(s.custom) || 0, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen: 0, trueDmg: false }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
         const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
         const proj = xnum(s.hits) != null && a.proj > 1 ? Math.max(0, Math.min(a.proj, xnum(s.hits))) : a.proj;
         const dmg = per * proj, hit = d => calcHit({ dmg: d, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct });
-        return { per, proj, dmg, fk: k => hit(per * k).final, gun: true, pierce: /^true$/i.test(String((a.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(a.name), ...hit(dmg) };
+        return { per, proj, dmg, fk: k => hit(per * k).final, rawk: k => per * k, red: d => hit(d).final, gun: true, pierce: /^true$/i.test(String((a.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(a.name), ...hit(dmg) };
       };
 
       const ssByp = a => melee || !a ? 0 : (a.trueOnDirect && !s.direct && /\*/.test(a.raw.ssBypass || "") ? 0 : Math.max(0, xnum(a.raw.ssBypass) || 0));
@@ -1769,7 +1771,7 @@
       return `<div class="dbox dres${win ? " dwin" : ""}"><div class="dhead">${title}${win ? '<span class="hright"><span class="chip status-found">BETTER</span></span>' : ""}</div><div class="stats">
           ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}${preLine}
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
-            ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) soaks half of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} before it breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
+            ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) takes ${r && r.pierce ? "all" : "half"} of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} (before armour) and breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
             ${(() => { if (melee || !r || !ammo || !(r.proj > 1) || !(st0.ss > 0) || !r.fk) return ""; const b = X.ssByp(ammo); let s2 = st0.ss, k = Math.round(r.proj), blk = 0; while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; blk++; } return blk ? `<p class="cat-note">&#x24D8;&#xFE0E; Supershield stops ${blk} pellet${blk === 1 ? "" : "s"} of the first blast, so it only does ${fmt2(k ? r.fk(k) : 0)} damage.</p>` : ""; })()}
             ${tip}
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
