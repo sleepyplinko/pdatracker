@@ -921,6 +921,11 @@
   }
   function applyTier(key) {
     let items;
+    if (key === "all") {
+      items = entries.filter(e => !e.hidden && !e.unknown);
+      if (change(items.filter(e => !isFound(e.id)).map(e => e.id), true, "everything")) play("confirm");
+      cancelTier(); return;
+    }
     if (key.startsWith("tab:")) {
       const [, kind, idx] = key.split(":");
       items = kind === "tools" ? PDA_DATA.tools[+idx].items : kind === "bio" && +idx === -1 ? PDA_DATA.biography.flatMap(x => x.items) : (kind === "bio" ? PDA_DATA.biography : PDA_DATA.documents)[+idx].items;
@@ -2054,9 +2059,11 @@
       if (!left.length) return "";
       return `<div class="sgroup"><div class="tier-head">${esc(name)}<small>${left.length} left</small>${pbar(items.length - left.length, items.length)}</div>${left.map(e => resultHTML(e)).join("")}</div>`;
     }).join("");
-    screen.innerHTML = `<div class="results">
+    const [fa, ta] = countOf(entries);
+    const allBar = pendingTier === "all" ? `<div class="tabbar confirm"><span><b>// ARE YOU SURE?</b> UNLOCK ALL ${ta - fa} REMAINING (EVERYTHING)</span><span class="tier-actions"><button class="tier-yes" data-tier-yes="all">YES</button><button class="tier-no" data-tier-no>NO</button></span></div>` : "";
+    screen.innerHTML = `<div class="results">${allBar}
       <div class="leftsum"><b>${t - f}</b> left to find · ${f} / ${t} found (${t ? Math.round(f / t * 100) : 0}%)${pbar(f, t)}
-        ${updSel}<span class="leftbtns"><button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#9860;&#xFE0E; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
+        ${updSel}<span class="leftbtns">${fa < ta ? '<button class="mini-btn" data-unlockall title="Already found everything in game? Mark it all found">UNLOCK ALL</button>' : ""}<button class="mini-btn" data-random title="Open a random entry you haven't found (R)">&#9860;&#xFE0E; RANDOM</button><button class="mini-btn" data-copylist>COPY AS TEXT</button><button class="mini-btn" data-printlist>PRINT</button></span></div>
       ${ui.leftUpd ? "" : closestHTML()}
       ${body || `<div class="empty-cat"><b>${ui.leftUpd ? "ALL OF " + esc(ui.leftUpd.toUpperCase()) + " FOUND" : "EVERYTHING FOUND"}</b>Nice work.</div>`}</div>`;
   }
@@ -3153,7 +3160,7 @@
     { h: "Whole tier", tab: "tools", el: near(".tier-head.clickable"), p: "Click a <b>TIER</b> bar to mark everything in it." },
     { h: "Search", tab: "tools", el: () => $("#search"), p: "Type a name and press <b>ENTER</b> to mark it found." },
     { h: "On a page", detail: true, el: near("[data-marknext]", ".hright, span"), p: "<b>FOUND + NEXT</b> marks this and opens the next one you're missing." },
-    { h: "Checklist", tab: "missing", el: near("[data-random]", "div"), p: "Everything you still need, in one list." },
+    { h: "Checklist", tab: "missing", el: near("[data-unlockall]", "div"), p: "Everything you still need, in one list. Already found it all in game? Press <b>UNLOCK ALL</b>." },
     { h: "Calculator", tab: "damage", el: near("[data-pk='dmggun']", ".dbox"), p: "Pick a weapon, ammo and target to see hits to kill." },
     { h: "Save your progress", tab: "cloud", el: near("#exp", "div"), p: "Progress is stored in this browser only. Download a backup, or use a transfer link to move it to another device." },
     { h: "Done", p: "<b>Ctrl+Z</b> undoes a mistake. Replay this tour in <b>SETTINGS</b>." }
@@ -3964,7 +3971,7 @@ Built with AI (Claude).`;
   screen.addEventListener("click", ev => {
     const t = ev.target;
 
-    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs],[data-cat]")) { cancelTier(); }
+    if (pendingTier && !t.closest("[data-tier-yes],[data-tier-no],[data-tier],[data-bio],[data-docs],[data-cat],[data-unlockall]")) { cancelTier(); }
 
     const star = t.closest("[data-star]");
     if (star) { ev.preventDefault(); ev.stopPropagation(); handleStar(star, ev.shiftKey); return; }
@@ -4103,6 +4110,7 @@ Built with AI (Claude).`;
     const arrow = t.closest("[data-img]");
     if (arrow) { play("click"); imgIndex += +arrow.dataset.img; render(); return; }
 
+    if (t.closest("[data-unlockall]")) { askTier("all"); keepScroll(render); return; }
     const yes = t.closest("[data-tier-yes]");
     if (yes) { applyTier(yes.dataset.tierYes); keepScroll(render); return; }
     if (t.closest("[data-tier-no]")) { play("back"); cancelTier(); keepScroll(render); return; }

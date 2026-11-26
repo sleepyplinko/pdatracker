@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-26", items: [
+    "Checklist: UNLOCK ALL button"
+  ]},
   { date: "2026-11-25", items: [
     "Calculator: weapon STRENGTH always counted",
     "Incoming damage: shield-breaking shots hit you too",
