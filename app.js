@@ -1632,10 +1632,10 @@
         const g = fk(k);
         if (!ig && sh > 1e-9) {
           nsh++;
-          const carry = !sht.gun || sht.pierce, units = sht.gun && !sht.one ? k : 1, raw = sht.rawk ? sht.rawk(k) : g, q = raw / units, frac = sht.pierce ? 1 : 0.5;
+          const units = sht.gun && !sht.one ? k : 1, raw = sht.rawk ? sht.rawk(k) : g, q = raw / units, frac = sht.pierce ? 1 : 0.5;
           let toHealth = 0;
           for (let u = 0; u < units; u++) {
-            if (sh > 1e-9) { if (q * frac < sh - 1e-9) sh -= q * frac; else { const left = q - sh / frac; sh = 0; if (carry) toHealth += left; if (flowerT && !fw) { fw = true; s2 += 10; } } }
+            if (sh > 1e-9) { if (q * frac < sh - 1e-9) sh -= q * frac; else { const left = q - sh / frac; sh = 0; toHealth += left; if (flowerT && !fw) { fw = true; s2 += 10; } } }
             else toHealth += q;
           }
           if (toHealth > 1e-9) h -= sht.red ? sht.red(toHealth) : toHealth * (g / raw || 0);

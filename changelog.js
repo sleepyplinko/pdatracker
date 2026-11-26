@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-26", items: [
+    "Calculator: hit that breaks a shield carries on to health (tested in game)",
     "Chicken: stats and description",
     "Calculator: debuffs can go below 0, new supershield bypass",
     "Calculator: NPC shield takes raw damage; shield piercing hits it fully",
