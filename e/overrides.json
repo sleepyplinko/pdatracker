@@ -1,4 +1,35 @@
 {
+ "b|miscellaneous|monolithic guardian": {
+  "desc": "[INFORMATION MISSING]",
+  "stats": {
+   "_PICFRAME": "39.38 5.83 1",
+   "_PICTIP": "aura"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/9d9a0f3e2caf4847.webp"
+  ],
+  "updated": 1795641341
+ },
+ "b|miscellaneous|monolithic psycho": {
+  "desc": "[INFORMATION MISSING]",
+  "stats": {
+   "_PICFRAME": "36.46 76.91 1.4"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/1be06bee2d869abe.webp"
+  ],
+  "updated": 1795673448
+ },
+ "b|miscellaneous|monolithic soldier": {
+  "desc": "[INFORMATION MISSING]",
+  "stats": {
+   "_PICFRAME": "61.46 58.74 1.2"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/82d91b5731bd4c38.webp"
+  ],
+  "updated": 1795673465
+ },
  "b|robot|fabricated dummy": {
   "desc": "The number of dummies has significantly decreased ever since the rebellion. Their valiant efforts, fortunately, had almost led to success of it, but at the cost of dwindling their kind. The ones who were left alive have retreated into rural zones or have taken shelter in hidden areas; places other people wouldn't know about.\n\nBecause of this, what you are seeing now is merely a recreation of a Dummy. They aren't an actual being, just circuitry and code put together that mimic them. It's truly interesting how robotics can usher a revival of a whole race even if it may be considered unorthodox.",
   "stats": {
@@ -98,6 +129,16 @@
    "https://pda-tracker.gabewantsthewant.workers.dev/img/4c7431bec54d0c11.webp"
   ],
   "updated": 1795383880
+ },
+ "b|wc|wc obliterator": {
+  "desc": "REMEMBER WHEN THE GUN THEY USED WAS MERELY FOR ONES ABOVE? THAT IDEA WAS ABANDONED, AS THESE GUYS USE IT THEMSELVES.\n\nOF COURSE, THEY AREN'T MEANT TO BE DEFEATED. THIS ISN'T MEANT TO BE DEFEATED... WHY ARE YOU STILL GOING?\n\nI'M JUST ANOTHER VESSEL THAT IS USED FOR COMMUNICATION. ANYTHING I SAY IS FAKE.\n\nLYING IS ALL I DO.",
+  "stats": {
+   "_PICFRAME": "86.04 98.45 1"
+  },
+  "imgs": [
+   "https://pda-tracker.gabewantsthewant.workers.dev/img/9b9bc1905034293d.webp"
+  ],
+  "updated": 1795673379
  },
  "b|wc|wc speedster": {
   "desc": "HAHA... GET IT? THE NAME? HILARIOUS, RIGHT?\n\nONE OF THE FASTEST ENEMIES THAT YOU COULD MEET. DON'T LET THEM SEE YOU.",
