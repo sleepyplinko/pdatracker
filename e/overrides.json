@@ -199,11 +199,11 @@
  },
  "site|notice": {
   "notice": {
-   "text": "Added some new stuff to the site, including admin and event stuff.",
-   "level": "update",
-   "id": "0e83ca0e"
+   "text": "Apparently we were calculating shield wrong, should be accurate now.",
+   "level": "info",
+   "id": "f0a6be80"
   },
-  "updated": 1795546325
+  "updated": 1795729343
  },
  "t|bludgeon|garden gnome": {
   "comment": "I have no idea how this is utilized as anything, it's merely a decoration. Though, it's worth noting that some people really love this thing. So much so it got banned once, only for it to come back away. Some yellow dude and a dude who was popular for 'tutorials' were apart of that group. Examining it a little closer you can see specks of space dust.",
