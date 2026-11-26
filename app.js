@@ -1568,6 +1568,7 @@
     if (d.target) o.t = d.target; else o.n = [d.hp, d.def, d.sa, d.ss, d.sh];
     if (d.vs) o.B = atk(d.b);
     if (d.pre) { o.P = atk(d.p); o.pn = d.pn; }
+    if (d.weak) o.wk = 1; if (d.enerv) o.en = 1;
     return `${ROOT}#dmg=${b64u(JSON.stringify(o))}`;
   }
   function readDmgLink(hash) {
@@ -1581,12 +1582,14 @@
     const n = Array.isArray(o.n) ? o.n : [];
     ["hp", "def", "sa", "ss", "sh"].forEach((k, i) => { d[k] = n[i] != null && isFinite(+n[i]) ? String(n[i]) : { hp: "100" }[k] || "0"; });
     d.vs = !!o.B; d.b = atk(o.B);
+    d.weak = !!o.wk; d.enerv = !!o.en;
     d.pre = !!o.P; d.p = atk(o.P); d.pn = o.pn != null && isFinite(+o.pn) ? String(Math.max(0, Math.floor(+o.pn))) : "1";
     ui.dmg = d; ui.tab = "damage"; detail = null;
     return true;
   }
 
-  const BEST_AUTO = 10;
+  const BEST_AUTO = 10, WEAK_DEF = 15, ENERV_SA = 14;
+  const debuffHTML = (o, attr) => `<div class="incfx debuffs"><label class="chk"><input type="checkbox" ${attr}="weak"${o.weak ? " checked" : ""}> <b>Weakness</b> <span class="dim">−${WEAK_DEF}% defense</span></label><label class="chk"><input type="checkbox" ${attr}="enerv"${o.enerv ? " checked" : ""}> <b>Enervated</b> <span class="dim">−${ENERV_SA}% super armour</span></label></div>`;
   function renderDamage() {
     const d = dmgState();
     const weapons = dmgWeapons();
@@ -1595,8 +1598,8 @@
     const tgt = d.target && people.find(p => p.id === d.target);
     const tb = tgt ? tgt.base : null;
     const hp = tb ? +tb.Health : xnum(d.hp) || 0;
-    const def = tb ? +(tb.Defense || 0) : xnum(d.def) || 0;
-    const sa = tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0;
+    const def = Math.max(0, (tb ? +(tb.Defense || 0) : xnum(d.def) || 0) - (d.weak ? WEAK_DEF : 0));
+    const sa = Math.max(0, (tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0) - (d.enerv ? ENERV_SA : 0));
     const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
@@ -1815,6 +1818,8 @@
              <label>SUPERARMOR % <input type="number" step="any" data-dmg="sa" value="${esc(d.sa)}"></label>
              <label>SUPERSHIELD <input type="number" step="1" min="0" data-dmg="ss" value="${esc(d.ss)}"></label>
              <label>SHIELD <input type="number" step="any" min="0" data-dmg="sh" value="${esc(d.sh)}"></label>`}
+          <label>DEBUFFS ON THEM</label>${debuffHTML(d, "data-dmg")}
+          ${d.weak || d.enerv ? `<p class="dim dnote">Now: ${fmt2(def)}% defense, ${fmt2(sa)}% super armour.</p>` : ""}
         </div></div>`;
 
     const tools = `<div class="dtools"><button class="mini-btn${d.pre ? " on" : ""}" data-dmgpre title="Hit the target with another weapon first, then finish with yours">${d.pre ? "✕ NO HITS FIRST" : "HIT FIRST WITH ANOTHER WEAPON"}</button><button class="mini-btn${vs ? " on" : ""}" data-dmgvs title="Put a second weapon and ammo next to this one, against the same target">${vs ? "✕ STOP COMPARING" : "COMPARE TWO LOADOUTS"}</button><button class="mini-btn" data-dmgshare title="Copy a link that opens the calculator set up exactly like this">COPY LINK TO THIS</button></div>`;
@@ -1959,7 +1964,9 @@
     const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + (f === "sh" && s.noSh.includes(e.id) ? 0 : num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0)), 0); });
     if (s.fxDef) add.def += 15;
     if (s.fxSkin) add.sa += 20;
-    const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
+    if (s.weak) add.def -= WEAK_DEF;
+    if (s.enerv) add.sa -= ENERV_SA;
+    const you = { hp: xnum(s.hp) || 0, def: Math.max(0, (xnum(s.def) || 0) + add.def), sa: Math.max(0, (xnum(s.sa) || 0) + add.sa), sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
     if (mode && melee) { const dmg = (xnum(mode.s.DAMAGE) || 0) * str; shot = { proj: 1, dmg, ...calcHit({ dmg, sa: you.sa, saBypass: 0, def: you.def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; ig = gun.gkey === "BLUDGEON"; }
@@ -2005,9 +2012,10 @@
             <label class="chk"><input type="checkbox" data-inc="fxDef"${s.fxDef ? " checked" : ""}> <b>Defense Percentage Boost</b> <span class="dim">(AFAK / SFAK syringe) +15% defense</span></label>
             <label class="chk"><input type="checkbox" data-inc="fxSkin"${s.fxSkin ? " checked" : ""}> <b>Superskin</b> <span class="dim">(VLTS Cola) +20% super armour</span></label>
           </div>
+          <label>DEBUFFS ON YOU</label>${debuffHTML(s, "data-inc")}
           <label>YOUR STATS</label>
           <table class="incstats"><thead><tr><th></th><th>EXTRA</th><th>ARMOR + EFFECTS</th><th>TOTAL</th></tr></thead><tbody>
-            ${[["hp", "HEALTH", ""], ["def", "DEFENSE", "%"], ["sa", "SUPER ARMOUR", "%"], ["sh", "SHIELD", ""], ["ss", "SUPERSHIELD", ""]].map(([k, l, u]) => `<tr><td>${l}</td><td><input type="number" step="any" data-inc="${k}" value="${esc(s[k])}" placeholder="0"></td><td class="dim">${k === "hp" ? "" : add[k] ? "+" + fmtN(add[k]) + u : "–"}</td><td><b>${fmtN(you[k])}${u}</b>${k === "sh" && you.sh > 0 ? ` <small class="dim">(blocks ${fmtN(you.sh * 2)})</small>` : ""}</td></tr>`).join("")}
+            ${[["hp", "HEALTH", ""], ["def", "DEFENSE", "%"], ["sa", "SUPER ARMOUR", "%"], ["sh", "SHIELD", ""], ["ss", "SUPERSHIELD", ""]].map(([k, l, u]) => `<tr><td>${l}</td><td><input type="number" step="any" data-inc="${k}" value="${esc(s[k])}" placeholder="0"></td><td class="dim">${k === "hp" ? "" : add[k] ? (add[k] > 0 ? "+" : "") + fmtN(add[k]) + u : "–"}</td><td><b>${fmtN(you[k])}${u}</b>${k === "sh" && you.sh > 0 ? ` <small class="dim">(blocks ${fmtN(you.sh * 2)})</small>` : ""}</td></tr>`).join("")}
           </tbody></table>
           <label>SAVED SETS</label>
           ${armorSets.length ? `<table class="inclist">${armorSets.map((x, i) => `<tr><td>${esc(x.name)}</td><td><button class="mini-btn" data-incsetload="${i}">USE</button></td><td><button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></td></tr>`).join("")}</table>` : ""}
