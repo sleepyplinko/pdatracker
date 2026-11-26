@@ -1958,7 +1958,7 @@
     const gear = s.gear.map(id => byId.get(id)).filter(Boolean);
     const add = {}; GEAR_ADD.forEach(([k, f]) => { add[f] = gear.reduce((t, e) => t + (f === "sh" && s.noSh.includes(e.id) ? 0 : num(e.stats && e.stats[k]) + (gearExtra(e)[f] || 0)), 0); });
     if (s.fxDef) add.def += 15;
-    if (s.fxSkin) add.sa += xnum(s.skinAmt) || 0;
+    if (s.fxSkin) add.sa += 20;
     const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
@@ -2003,8 +2003,7 @@
           <label>STATUS EFFECTS</label>
           <div class="incfx">
             <label class="chk"><input type="checkbox" data-inc="fxDef"${s.fxDef ? " checked" : ""}> <b>Defense Percentage Boost</b> <span class="dim">(AFAK / SFAK syringe) +15% defense</span></label>
-            <label class="chk"><input type="checkbox" data-inc="fxSkin"${s.fxSkin ? " checked" : ""}> <b>Superskin</b> <span class="dim">(VLTS Cola) +</span><input type="number" step="any" class="fxamt" data-inc="skinAmt" value="${esc(s.skinAmt)}" placeholder="?"><span class="dim">% super armour</span></label>
-            ${s.fxSkin && xnum(s.skinAmt) == null ? '<p class="dim">Superskin\'s amount isn\'t known yet. Type it in if you know it.</p>' : ""}
+            <label class="chk"><input type="checkbox" data-inc="fxSkin"${s.fxSkin ? " checked" : ""}> <b>Superskin</b> <span class="dim">(VLTS Cola) +20% super armour</span></label>
           </div>
           <label>YOUR STATS</label>
           <table class="incstats"><thead><tr><th></th><th>EXTRA</th><th>ARMOR + EFFECTS</th><th>TOTAL</th></tr></thead><tbody>
