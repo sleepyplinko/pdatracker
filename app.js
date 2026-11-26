@@ -1531,10 +1531,10 @@
   const tgtName = p => { const c = p.card; return c && c.kind === "group" && c.members && c.members.length > 1 && c.name && c.name !== p.name ? `${c.name} (${p.name})` : p.name; };
   const dmgTargets = () => people.filter(p => p.base && p.base.Health != null && isFinite(+p.base.Health));
 
-  function calcHit({ dmg, sa, saBypass, def, pen, trueDmg }) {
-    const effSA = trueDmg ? 0 : Math.max(0, sa - saBypass * 100);
+  function calcHit({ dmg, sa, saBypass, def, pen, trueDmg, ensa = 0 }) {
+    const effSA = trueDmg ? 0 : Math.max(0, sa - saBypass * 100) - ensa;
     const afterSA = dmg > 0 ? dmg / Math.pow(dmg, effSA / 100) : 0;
-    const effDef = trueDmg ? 0 : Math.min(100, Math.max(0, def * (1 - Math.min(1, pen))));
+    const effDef = trueDmg ? 0 : Math.min(100, def * (1 - Math.min(1, pen)));
     return { effSA, afterSA, effDef, final: afterSA * (1 - effDef / 100) };
   }
 
@@ -1598,14 +1598,15 @@
     const tgt = d.target && people.find(p => p.id === d.target);
     const tb = tgt ? tgt.base : null;
     const hp = tb ? +tb.Health : xnum(d.hp) || 0;
-    const def = Math.max(0, (tb ? +(tb.Defense || 0) : xnum(d.def) || 0) - (d.weak ? WEAK_DEF : 0));
-    const sa = Math.max(0, (tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0) - (d.enerv ? ENERV_SA : 0));
+    const def = (tb ? +(tb.Defense || 0) : xnum(d.def) || 0) - (d.weak ? WEAK_DEF : 0);
+    const sa = tb ? +(tb["Super Armour"] || 0) : xnum(d.sa) || 0;
+    const ENS = d.enerv ? ENERV_SA : 0;
     const ss = Math.max(0, Math.floor(tb ? +(tb.Supershield || 0) : xnum(d.ss) || 0));
     const shield = Math.max(0, tb ? +(tb.Shield || 0) : xnum(d.sh) || 0);
     const tgtLabel = tgt ? tgtName(tgt) : "these numbers";
     const obsidian = !!(tb && String(tb.Obsidian).toLowerCase() === "true");
     const isWC = !!(tgt && ["WC Elite Tank", "WC Golem", "Augustus Bartholomew"].includes(tgt.name));
-    const blocked = B => ss > B ? Math.ceil((ss - B) / Math.max(1, B)) : 0;
+    const blocked = B => ss > 0 ? Math.floor(ss / (1 + B)) : 0;
     let st0 = { h: hp, sh: shield, ss, p2: false };
     const maria = !!(tgt && /^Maria Hatty Kirsten/i.test(tgt.name));
     const flowerT = !!(tgt && tgt.name === "Flower Woman");
@@ -1618,14 +1619,14 @@
       const flip = () => { if (!two && sht0.p2 && h > 1e-9 && h <= P2) { two = true; sh += 200; sht = sht0.p2; ({ p, f, fk } = prep(sht)); } };
       while (h > 1e-9 && n < max) {
         if (!(f > 0)) break;
-        if (s2 <= b && (ig || sh <= 1e-9)) {
+        if (s2 <= 1e-9 && (ig || sh <= 1e-9)) {
           let k = Math.min(max - n, Math.ceil(h / f - 1e-9));
           if (!two && sht0.p2 && h > P2) k = Math.min(k, Math.max(1, Math.ceil((h - P2) / f - 1e-9)));
           n += k; h -= k * f; flip(); continue;
         }
         n++;
         let k = p;
-        while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
+        while (k > 0 && s2 > 1e-9) { s2 -= 1 + b; if (s2 < -1e-9) { s2 = 0; break; } k--; }
         if (k < p) nss++;
         if (!k) { nb++; continue; }
         const g = fk(k);
@@ -1659,11 +1660,11 @@
       const shot = a => { const o = shotAt(a, sa); if (maria && o) o.p2 = shotAt(a, 43); return o; };
       const shotAt = (a, sa) => {
         if (obsidian && !melee && (!a || !isExplosive(a))) return { per: 0, proj: 1, dmg: 0, obs: true, final: 0, afterSA: 0, effSA: 0, effDef: 0 };
-        if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0, pen = (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen, trueDmg: false }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen, trueDmg: false }) }; }
-        if (!a) { const dmg = xnum(s.custom) || 0, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen: 0, trueDmg: false }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false }) }; }
+        if (melee) { const dmg = xnum(mode.s.DAMAGE) || 0, pen = (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen, trueDmg: false, ensa: ENS }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen, trueDmg: false, ensa: ENS }) }; }
+        if (!a) { const dmg = xnum(s.custom) || 0, red = d => calcHit({ dmg: d, sa, saBypass: 0, def, pen: 0, trueDmg: false, ensa: ENS }).final; return { per: dmg, proj: 1, dmg, rawk: () => dmg, red, ...calcHit({ dmg, sa, saBypass: 0, def, pen: 0, trueDmg: false, ensa: ENS }) }; }
         const per = a.base * (a.mult == null ? 1 : a.mult) * strength;
         const proj = xnum(s.hits) != null && a.proj > 1 ? Math.max(0, Math.min(a.proj, xnum(s.hits))) : a.proj;
-        const dmg = per * proj, hit = d => calcHit({ dmg: d, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct });
+        const dmg = per * proj, hit = d => calcHit({ dmg: d, sa, saBypass: a.saBypass || 0, def, pen: a.pen || 0, trueDmg: a.trueOnDirect && s.direct, ensa: ENS });
         return { per, proj, dmg, fk: k => hit(per * k).final, rawk: k => per * k, red: d => hit(d).final, gun: true, pierce: /^true$/i.test(String((a.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(a.name), ...hit(dmg) };
       };
 
@@ -1772,7 +1773,7 @@
           ${vs ? `<div class="dim">${esc(aName(X))}${X.ammo && X.gun && !melee ? " · " + esc(X.ammo.name) : ""}</div>` : ""}${preLine}
           ${r ? `${steps}<div class="dbig">${fmt2(r.final)} <small>damage per ${melee ? "hit" : ammo && ammo.proj > 1 ? "blast" : "shot"}</small></div>
             ${preRes && preRes.dead ? "" : htk ? `<div class="dbig2">${nBlocked ? `<span class="sscalc">${nBlocked} supershield + ${htk - nBlocked} health =</span> ` : ""}${htk} hit${htk === 1 ? "" : "s"} to kill${ttk != null ? ` · ${fmt2(ttk)}s ${rpm ? `at ${rpm} RPM${X.useBurst ? ` in bursts of ${X.bAmt}` : ""}` : `at ${fmt2(swing)}s per swing`}` : ""}</div>${melee && burstN > 1 ? `<div class="dim">${Math.ceil(htk / burstN)} attack${Math.ceil(htk / burstN) === 1 ? "" : "s"}: each one is a burst of ${burstN} swings.</div>` : ""}${shield ? `<div class="dim">${X.ignoresShield(ammo) ? `Ignores the shield (${fmt2(shield)}): ${X.isBludgeon ? "bludgeons" : "explosives"} go straight through it.` : shInfo && shInfo.sh ? `Shield (${fmt2(shield)}) takes ${r && r.pierce ? "all" : "half"} of the first ${shInfo.sh} hit${shInfo.sh === 1 ? "" : "s"} (before armour) and breaks.` : ""}</div>` : ""}` : '<div class="dbig2">Can\'t kill with this.</div>'}
-            ${(() => { if (melee || !r || !ammo || !(r.proj > 1) || !(st0.ss > 0) || !r.fk) return ""; const b = X.ssByp(ammo); let s2 = st0.ss, k = Math.round(r.proj), blk = 0; while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; blk++; } return blk ? `<p class="cat-note">&#x24D8;&#xFE0E; Supershield stops ${blk} pellet${blk === 1 ? "" : "s"} of the first blast, so it only does ${fmt2(k ? r.fk(k) : 0)} damage.</p>` : ""; })()}
+            ${(() => { if (melee || !r || !ammo || !(r.proj > 1) || !(st0.ss > 0) || !r.fk) return ""; const b = X.ssByp(ammo); let s2 = st0.ss, k = Math.round(r.proj), blk = 0; while (k > 0 && s2 > 1e-9) { s2 -= 1 + b; if (s2 < -1e-9) { s2 = 0; break; } k--; blk++; } return blk ? `<p class="cat-note">&#x24D8;&#xFE0E; Supershield stops ${blk} pellet${blk === 1 ? "" : "s"} of the first blast, so it only does ${fmt2(k ? r.fk(k) : 0)} damage.</p>` : ""; })()}
             ${tip}
             ${htk ? `<p class="cat-note">${ttk != null ? `Assumes every ${melee ? "swing" : "shot"} lands${melee ? "" : X.useBurst ? `, no reloading, ${fmt2(X.bDelay)}s between bursts` : ", no reloading"}. ` : ""}Doesn't count health regen.</p>` : ""}
             ${obsidian && r && r.obs ? `<p class="cat-note dwarn">&#x26A0;&#xFE0E; ${esc(tgtLabel)} has Obsidian: bullets do no damage. Use explosives or melee.</p>` : ""}
@@ -1821,7 +1822,7 @@
              <label>SUPERSHIELD <input type="number" step="1" min="0" data-dmg="ss" value="${esc(d.ss)}"></label>
              <label>SHIELD <input type="number" step="any" min="0" data-dmg="sh" value="${esc(d.sh)}"></label>`}
           <label>DEBUFFS ON THEM</label>${debuffHTML(d, "data-dmg")}
-          ${d.weak || d.enerv ? `<p class="dim dnote">Now: ${fmt2(def)}% defense, ${fmt2(sa)}% super armour.</p>` : ""}
+          ${d.weak || d.enerv ? `<p class="dim dnote">Now: ${fmt2(def)}% defense, ${fmt2(sa - ENS)}% super armour.</p>` : ""}
         </div></div>`;
 
     const tools = `<div class="dtools"><button class="mini-btn${d.pre ? " on" : ""}" data-dmgpre title="Hit the target with another weapon first, then finish with yours">${d.pre ? "✕ NO HITS FIRST" : "HIT FIRST WITH ANOTHER WEAPON"}</button><button class="mini-btn${vs ? " on" : ""}" data-dmgvs title="Put a second weapon and ammo next to this one, against the same target">${vs ? "✕ STOP COMPARING" : "COMPARE TWO LOADOUTS"}</button><button class="mini-btn" data-dmgshare title="Copy a link that opens the calculator set up exactly like this">COPY LINK TO THIS</button></div>`;
@@ -1942,9 +1943,9 @@
     if (!(f > 0)) return null;
     let h = st.h, sh = st.sh, s2 = st.ss, n = 0, nb = 0;
     while (h > 1e-9 && n < 1e6) {
-      if (s2 <= b && (ig || sh <= 1e-9)) { n += Math.ceil(h / f - 1e-9); h = 0; break; }
+      if (s2 <= 1e-9 && (ig || sh <= 1e-9)) { n += Math.ceil(h / f - 1e-9); h = 0; break; }
       n++;
-      let k = p; while (k > 0 && s2 > b) { s2 -= Math.max(1, b); k--; }
+      let k = p; while (k > 0 && s2 > 1e-9) { s2 -= 1 + b; if (s2 < -1e-9) { s2 = 0; break; } k--; }
       if (!k) { nb++; continue; }
       const g = fk(k);
       if (!ig && sh > 1e-9) {
@@ -1969,14 +1970,15 @@
     if (s.fxSkin) add.sa += 20;
     if (s.weak) add.def -= WEAK_DEF;
     if (s.enerv) add.sa -= ENERV_SA;
-    const you = { hp: xnum(s.hp) || 0, def: Math.max(0, (xnum(s.def) || 0) + add.def), sa: Math.max(0, (xnum(s.sa) || 0) + add.sa), sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
+    const ENSi = s.enerv ? ENERV_SA : 0;
+    const you = { hp: xnum(s.hp) || 0, def: (xnum(s.def) || 0) + add.def, sa: (xnum(s.sa) || 0) + add.sa, sh: (xnum(s.sh) || 0) + add.sh, ss: Math.floor((xnum(s.ss) || 0) + add.ss) };
     const isExp = a => !!a && (/\(HE\)/.test(a.name) || /rocket|missile/i.test(a.caliber) || /rocket|missile/i.test(a.name));
     let shot = null, b = 0, ig = false;
-    if (mode && melee) { const dmg = (xnum(mode.s.DAMAGE) || 0) * str; shot = { proj: 1, dmg, ...calcHit({ dmg, sa: you.sa, saBypass: 0, def: you.def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; ig = gun.gkey === "BLUDGEON"; }
+    if (mode && melee) { const dmg = (xnum(mode.s.DAMAGE) || 0) * str; shot = { proj: 1, dmg, ...calcHit({ dmg, sa: you.sa + ENSi, ensa: ENSi, saBypass: 0, def: you.def, pen: (xnum(mode.s["DEFENSE BYPASS"]) || 0) / 100, trueDmg: false }) }; ig = gun.gkey === "BLUDGEON"; }
     else if (ammo) {
       const per = ammo.base * (ammo.mult == null ? 1 : ammo.mult) * wstr * str;
       const proj = xnum(s.hits) != null && ammo.proj > 1 ? Math.max(0, Math.min(ammo.proj, xnum(s.hits))) : ammo.proj;
-      const hit = d => calcHit({ dmg: d, sa: you.sa, saBypass: ammo.saBypass || 0, def: you.def, pen: ammo.pen || 0, trueDmg: false });
+      const hit = d => calcHit({ dmg: d, sa: you.sa + ENSi, ensa: ENSi, saBypass: ammo.saBypass || 0, def: you.def, pen: ammo.pen || 0, trueDmg: false });
       shot = { per, proj, dmg: per * proj, fk: k => hit(per * k).final, gun: true, pierce: /^true$/i.test(String((ammo.raw || {}).shieldPierce || "")), one: /dual sabot/i.test(ammo.name), ...hit(per * proj) };
       b = Math.max(0, xnum(ammo.raw.ssBypass) || 0); ig = isExp(ammo);
     }
