@@ -1,5 +1,6 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-26", items: [
+    "Incoming damage: status effects",
     "Checklist: UNLOCK ALL button"
   ]},
   { date: "2026-11-25", items: [
