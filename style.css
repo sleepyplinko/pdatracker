@@ -1293,3 +1293,8 @@ body.light .admin .dform input:not([type=checkbox]):not([type=color]):not([type=
 .dform .incfx input.fxamt { width: 52px !important; min-width: 0; flex: 0 0 52px; margin: 0; }
 .dform .incfx input[type=checkbox] { width: auto; flex: none; margin: 0; }
 .incfx p { margin: 0; font-size: 11px; }
+.inctot { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin: 4px 0 6px; }
+.inctot span { white-space: nowrap; color: #aaa; }
+.inctot b { color: #fff; }
+.incown { margin: 0 0 10px; font-size: 12px; }
+.incown > summary { cursor: pointer; color: #f2e86b; font-weight: bold; font-size: 11px; padding: 2px 0; }

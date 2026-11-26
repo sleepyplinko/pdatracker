@@ -1914,7 +1914,8 @@
   const GEAR_UNLISTED = { "korund-vm body armor": { sa: 5 }, "altyn helmet": { sa: 2 }, "maska helmet": { sa: 3 } };
   const gearExtra = e => GEAR_UNLISTED[String(e.name).toLowerCase()] || {};
   const GEAR_ADD = [["DEFENSE INCREASE", "def"], ["SUPER ARMOUR INCREASE", "sa"], ["SHIELD DURABILITY", "sh"], ["SUPER SHIELD INCREASE", "ss"]];
-  let icOpen = false;
+  let icOpen = false, ownOpen = false;
+  document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".incown")) ownOpen = e.target.open; }, true);
   document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".icalc")) icOpen = e.target.open; }, true);
   function incSet(k, v) {
     const s = incState(); s[k] = v;
@@ -2003,6 +2004,7 @@
           </div>
           ${npc && theirAmmo.length ? `<div class="incpick"><span class="dim">${esc(npc.name)}'s ammo:</span> ${theirAmmo.map(a => `<button class="mini-btn${ammo === a ? " on" : ""}" data-incammo="${esc(a.key)}">${esc(a.name)}</button>`).join(" ")}</div>` : npc && an.length && !melee ? `<div class="incpick dim">${esc(npc.name)} uses ${esc(an.join(", "))} (not for this weapon).</div>` : ""}
           ${ammo && ammo.proj > 1 ? `<label>PELLETS THAT HIT <input type="number" min="0" max="${ammo.proj}" data-inc="hits" value="${esc(s.hits)}" placeholder="all ${ammo.proj}"></label>` : ""}
+          <label>DEBUFFS ON YOU</label>${debuffHTML(s, "data-inc")}
         </div></div>
         <div class="dbox"><div class="dhead">You</div><div class="dform">
           <label>ARMOR YOU'RE WEARING</label>${pickerHTML("incgear", { label: "Armor", keepOpen: true, chips: false, placeholder: "Type to add armor: korund, maska…", items: gearItems, onPick: v => { const st = incState(); if (!st.gear.includes(v)) st.gear = [...st.gear, v]; persistUI(); play("marked"); keepScroll(render); } })}
@@ -2012,11 +2014,12 @@
             <label class="chk"><input type="checkbox" data-inc="fxDef"${s.fxDef ? " checked" : ""}> <b>Defense Percentage Boost</b> <span class="dim">(AFAK / SFAK syringe) +15% defense</span></label>
             <label class="chk"><input type="checkbox" data-inc="fxSkin"${s.fxSkin ? " checked" : ""}> <b>Superskin</b> <span class="dim">(VLTS Cola) +20% super armour</span></label>
           </div>
-          <label>DEBUFFS ON YOU</label>${debuffHTML(s, "data-inc")}
           <label>YOUR STATS</label>
+          <div class="inctot">${[["hp", "HP", ""], ["def", "DEF", "%"], ["sa", "SA", "%"], ["sh", "SHIELD", ""], ["ss", "SS", ""]].map(([k, l, u]) => `<span><b>${fmtN(you[k])}${u}</b> ${l}</span>`).join("")}</div>
+          <details class="incown"${ownOpen ? " open" : ""}><summary>YOUR OWN NUMBERS <small class="dim">health, extra defense…</small></summary>
           <table class="incstats"><thead><tr><th></th><th>EXTRA</th><th>ARMOR + EFFECTS</th><th>TOTAL</th></tr></thead><tbody>
             ${[["hp", "HEALTH", ""], ["def", "DEFENSE", "%"], ["sa", "SUPER ARMOUR", "%"], ["sh", "SHIELD", ""], ["ss", "SUPERSHIELD", ""]].map(([k, l, u]) => `<tr><td>${l}</td><td><input type="number" step="any" data-inc="${k}" value="${esc(s[k])}" placeholder="0"></td><td class="dim">${k === "hp" ? "" : add[k] ? (add[k] > 0 ? "+" : "") + fmtN(add[k]) + u : "–"}</td><td><b>${fmtN(you[k])}${u}</b>${k === "sh" && you.sh > 0 ? ` <small class="dim">(blocks ${fmtN(you.sh * 2)})</small>` : ""}</td></tr>`).join("")}
-          </tbody></table>
+          </tbody></table></details>
           <label>SAVED SETS</label>
           ${armorSets.length ? `<table class="inclist">${armorSets.map((x, i) => `<tr><td>${esc(x.name)}</td><td><button class="mini-btn" data-incsetload="${i}">USE</button></td><td><button class="linkish" data-incsetdel="${i}" title="Delete">✕</button></td></tr>`).join("")}</table>` : ""}
           <div class="incsets"><input id="incSetName" maxlength="30" placeholder="Name for this armor + stats…"><button class="mini-btn" data-incsetsave>SAVE</button>${gear.length || s.def !== "0" || s.sa !== "0" || s.ss !== "0" ? '<button class="mini-btn" data-incclear>CLEAR ALL</button>' : ""}</div>
