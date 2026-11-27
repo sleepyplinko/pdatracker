@@ -1929,13 +1929,15 @@
   }
   const npcWeapons = p => (p && p.loadout || []).filter(([k]) => k === "Weapon").map(([, x]) => entries.find(e => e.section === "tools" && !e.unknown && slug(e.name) === loadName(x))).filter((e, i, a) => e && a.indexOf(e) === i && fireModes(e).length);
   const npcAmmoNames = p => (p && p.loadout || []).filter(([k]) => k === "Ammo Loaded").map(([, x]) => String(x));
+  const ammoKey = s => String(s).toLowerCase().replace(/\(random\)/g, "").replace(/green tracer/g, "gt").replace(/blackout/g, "blk").replace(/(\d)mm/g, "$1").replace(/\bslug\b/g, "").replace(/[^a-z0-9.\/+]/g, "");
+  const findAmmo = (pool, n) => { const k = ammoKey(n); return pool.find(x => ammoKey(x.name) === k) || pool.filter(x => k.startsWith(ammoKey(x.name))).sort((a, b) => ammoKey(b.name).length - ammoKey(a.name).length)[0]; };
   function incPickNpc(id) {
     const s = incState(), p = people.find(x => x.id === id); if (!p) return;
     s.npc = id; s.str = String(xnum((p.skills || {}).Strength) || 1);
     const ws = npcWeapons(p);
     if (ws.length) { s.gun = ws[0].id; s.mode = 0; s.ammo = ""; s.hits = "";
       const mode = fireModes(ws[0])[0], pool = mode && !mode.melee ? mode.cals.flatMap(ammoFor) : [];
-      const a = npcAmmoNames(p).map(n => pool.find(x => slug(x.name) === slug(n))).find(Boolean); if (a) s.ammo = a.key; }
+      const a = npcAmmoNames(p).map(n => findAmmo(pool, n)).find(Boolean); if (a) s.ammo = a.key; }
     persistUI(); play("marked"); keepScroll(render);
   }
   function incHits(st, sh0, b, ig) {
@@ -1992,7 +1994,7 @@
     const npcItems = people.filter(p => (p.skills && p.skills.Strength != null) || npcWeapons(p).length).map(p => ({ v: p.id, label: tgtName(p), group: p.group, sub: (p.skills && p.skills.Strength) ? String(p.skills.Strength) : "" }));
     const gearItems = sortEntries(allTools().filter(e => e.gkey === "GEARS" && GEAR_ADD.some(([k]) => e.stats && e.stats[k] != null))).map(e => ({ v: e.id, label: e.name, group: "", sub: GEAR_ADD.filter(([k]) => e.stats[k] != null).map(([k]) => `${k.replace(" INCREASE", "").replace(" DURABILITY", "").toLowerCase()} ${e.stats[k]}`).concat(gearExtra(e).sa ? [`super armour ${gearExtra(e).sa}% (not listed)`] : []).join(" · ") }));
     const ws = npcWeapons(npc), an = npcAmmoNames(npc);
-    const theirAmmo = an.map(n => pool.find(x => slug(x.name) === slug(n))).filter(Boolean);
+    const theirAmmo = an.map(n => findAmmo(pool, n)).filter(Boolean);
     const field = (k, label, v) => `<label>${label}<input type="number" step="any" data-inc="${k}" value="${esc(v)}"></label>`;
     const plus = f => add[f] ? ` <small class="dim">+${fmtN(add[f])} from armor = ${fmtN(you[f])}</small>` : "";
     const sumLine = (l, v, c) => `<div class="stat"><i style="color:${c}">${l}</i>: ${v}</div>`;
@@ -4026,7 +4028,7 @@ Built with AI (Claude).`;
         keepScroll(render); return; } }
     { const bb = t.closest("[data-admboot]"); if (bb && amAdmin()) { runBoot({ force: true, hold: +bb.dataset.admboot }); return; } }
     { const row = t.closest("[data-dmgammo]"); if (row) { const v = row.dataset.dmgammo, isB = v.startsWith("b."); dmgSet(isB ? "b.ammo" : "ammo", isB ? v.slice(2) : v); persistUI(); play("click"); keepScroll(render); return; } }
-    { const b = t.closest("[data-incgun]"); if (b) { incSet("gun", b.dataset.incgun); const st = incState(), p = people.find(x => x.id === st.npc), m = fireModes(byId.get(st.gun))[0], pool = m && !m.melee ? m.cals.flatMap(ammoFor) : []; const a = npcAmmoNames(p).map(n => pool.find(x => slug(x.name) === slug(n))).find(Boolean); if (a) st.ammo = a.key; persistUI(); play("click"); keepScroll(render); return; } }
+    { const b = t.closest("[data-incgun]"); if (b) { incSet("gun", b.dataset.incgun); const st = incState(), p = people.find(x => x.id === st.npc), m = fireModes(byId.get(st.gun))[0], pool = m && !m.melee ? m.cals.flatMap(ammoFor) : []; const a = npcAmmoNames(p).map(n => findAmmo(pool, n)).find(Boolean); if (a) st.ammo = a.key; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incammo]"); if (b) { incSet("ammo", b.dataset.incammo); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incnosh]"); if (b) { const st = incState(), id = b.dataset.incnosh; st.noSh = st.noSh.includes(id) ? st.noSh.filter(x => x !== id) : [...st.noSh, id]; persistUI(); play("click"); keepScroll(render); return; } }
     { const b = t.closest("[data-incgeardel]"); if (b) { const st = incState(); st.gear = st.gear.filter((_, i) => i !== +b.dataset.incgeardel); persistUI(); play("unmarked"); keepScroll(render); return; } }
