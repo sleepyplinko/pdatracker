@@ -21,7 +21,7 @@ CALIBER TYPE: 12/70 · STRENGTH: 1.1x · RPM: 60">
   <meta name="theme-color" content="#0a0a0a">
   <script>if (!/^#e=/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search + "#e=m4ex0")</script>
   <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png?v=2">
@@ -75,16 +75,20 @@ CALIBER TYPE: 12/70 · STRENGTH: 1.1x · RPM: 60">
   <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script>function bootLoad(n, k) { var l = document.getElementById("btLog"), b = document.getElementById("btBar"); if (!l || !b) return; n = Math.round(n); b.style.width = n + "%"; l.innerHTML = '<span class="bt-k">&gt; LOADING</span> ' + ".".repeat(7) + " <b>" + n + "%</b>" + (k ? ' <span class="bt-k">' + k + "</span>" : "") + '\n<span class="bt-cur">_</span>'; } bootLoad(0, "DATA");</script>
   <script src="sounds.js"></script>
   <script src="data.js"></script>
+  <script>bootLoad(32, "TEXT")</script>
   <script src="descriptions.js"></script>
   <script src="tooltips.js"></script>
   <script src="ammo-links.js"></script>
+  <script>bootLoad(45, "AMMO")</script>
   <script src="ammo.js"></script>
   <script src="changelog.js"></script>
   <script src="contribute.js"></script>
   <script src="cloud-config.js"></script>
   <script src="screenshot-import.js"></script>
+  <script>bootLoad(58, "SYSTEM")</script>
   <script src="app.js"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol === "https:") {
