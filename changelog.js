@@ -1,4 +1,7 @@
 const PDA_CHANGELOG = [
+  { date: "2026-11-28", items: [
+    "Loading screen shows how much has loaded"
+  ]},
   { date: "2026-11-27", items: [
     "Incoming damage: category buttons on the NPC and armor search"
   ]},

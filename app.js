@@ -3224,7 +3224,7 @@
       ["pointerdown", "keydown"].forEach(t => addEventListener(t, skip, true));
       const tick = () => { i++; draw(); timer = setTimeout(i < rows.length ? tick : finish, i < rows.length ? 115 : 380); };
       const start = () => { if (ended) return; el.classList.add("bt-run"); if (o.force) play("pdaOpen"); timer = setTimeout(tick, 180); };
-      if (o.hold) timer = setTimeout(start, o.hold); else start();
+      if (o.hold) { const t0 = Date.now(), fake = () => { if (ended) return; const f = Math.min(1, (Date.now() - t0) / o.hold); if (window.bootLoad) bootLoad(100 * (1 - Math.pow(1 - f, 2)), ["DATA", "TEXT", "AMMO", "SYSTEM"][Math.min(3, Math.floor(f * 4))]); if (f < 1) timer = setTimeout(fake, 60); else start(); }; fake(); } else start();
     });
   }
   function startTour(i = 0) {

@@ -19,7 +19,7 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Once A Normal Tracker","alternateName":["Once A Normal Calculator","PDA.exe","OANC PDA Tracker","Once A Normal City PDA Tracker","OANC Damage Calculator","Once A Normal City Damage Calculator"],"url":"https://sleepyplinko.github.io/pdatracker/","description":"Fan-made PDA tracker for the Roblox game Once A Normal City (OANC): weapons, people, documents, stats and a damage calculator."}</script>
   <!--/SEO-->
   <link rel="preload" href="fonts/inconsolata-500.woff?v=3" as="font" type="font/woff" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0a0a0a">
@@ -74,16 +74,20 @@
   <p class="footer">Fan-made tracker, not affiliated with edwardd studios yeah. Progress is saved in this browser.</p>
 
   <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <script>function bootLoad(n, k) { var l = document.getElementById("btLog"), b = document.getElementById("btBar"); if (!l || !b) return; n = Math.round(n); b.style.width = n + "%"; l.innerHTML = '<span class="bt-k">&gt; LOADING</span> ' + ".".repeat(7) + " <b>" + n + "%</b>" + (k ? ' <span class="bt-k">' + k + "</span>" : "") + '\n<span class="bt-cur">_</span>'; } bootLoad(0, "DATA");</script>
   <script src="sounds.js"></script>
   <script src="data.js"></script>
+  <script>bootLoad(32, "TEXT")</script>
   <script src="descriptions.js"></script>
   <script src="tooltips.js"></script>
   <script src="ammo-links.js"></script>
+  <script>bootLoad(45, "AMMO")</script>
   <script src="ammo.js"></script>
   <script src="changelog.js"></script>
   <script src="contribute.js"></script>
   <script src="cloud-config.js"></script>
   <script src="screenshot-import.js"></script>
+  <script>bootLoad(58, "SYSTEM")</script>
   <script src="app.js"></script>
   <script>
     if ("serviceWorker" in navigator && location.protocol === "https:") {
