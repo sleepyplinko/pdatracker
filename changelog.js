@@ -1,5 +1,8 @@
 const PDA_CHANGELOG = [
   { date: "2026-11-28", items: [
+    "Faster: pictures stay saved after updates",
+    "Faster Calculator tab",
+    "Security Bot C animation 6x smaller",
     "Loading screen shows how much has loaded"
   ]},
   { date: "2026-11-27", items: [

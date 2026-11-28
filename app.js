@@ -1787,13 +1787,15 @@
 
     function bestTable(X, pfx, title) {
       if (!X.ranked.length) return "";
-      const rows = X.ranked.map(({ a, s, k, kb }) => {
+      const all = X.ranked.map(({ a, s, k, kb }) => {
         const isBest = k != null && k === X.bestK;
         const kk = k ? (kb ? `${k} <small class="dim">(${kb}+${k - kb})</small>` : k) : "—";
         const t = X.ttkOf(k);
         return `<tr class="${X.ammo && a.key === X.ammo.key ? "on" : ""}${isBest ? " best" : ""}" data-dmgammo="${pfx}${esc(a.key)}"><td>${isBest ? '<span class="bestchip">BEST</span> ' : ""}${esc(a.name)}${a.edited ? ` <span class="aed" title="${esc(a.note ? "Corrected by the site's admins: " + a.note : "Corrected by the site's admins")}">✎</span>` : ""}</td><td>${fmt2(s.dmg)}</td><td><b>${fmt2(s.final)}</b></td><td>${kk}</td><td>${t != null ? fmt2(t) + "s" : "—"}</td><td>${a.pen != null ? fmt2(a.pen * 100) + "%" + (a.trueOnDirect ? "*" : "") : esc(a.raw.pen || "")}</td><td>${a.saBypass ? fmt2(a.saBypass * 100) + "%" : ""}</td><td>${esc(xnum(a.raw.ssBypass) ? a.raw.ssBypass : "")}</td><td>${esc([a.raw.bleed && a.raw.bleed !== "NO" ? "Bleed " + a.raw.bleed : "", a.raw.fracture === "True" ? "Fracture" : "", a.raw.weakness === "True" ? "Weakness" : "", a.raw.statuses && !/^(N\/A|)$/.test(a.raw.statuses) ? a.raw.statuses : ""].filter(Boolean).join(", "))}</td></tr>`;
-      }).join("");
-      return `<div class="dbox bestbox"><div class="dhead">${title} <small class="dim">(${X.ranked.length} ammo)</small><span class="hright dim">best first · click a row to use it${X.ranked.length > BEST_AUTO ? " · scroll for more" : ""}</span></div><div class="dtable${X.ranked.length > BEST_AUTO ? " bestscroll" : ""}"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>TIME TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      });
+      const rows = all.slice(0, BEST_FIRST).join(""), rest = all.length > BEST_FIRST ? all.slice(BEST_FIRST).join("") : "";
+      if (rest) { const id = "br" + (++bestSeq); bestRest.push([id, rest]); if (bestRest.length === 1) requestAnimationFrame(() => setTimeout(flushBest, 0)); }
+      return `<div class="dbox bestbox"><div class="dhead">${title} <small class="dim">(${X.ranked.length} ammo)</small><span class="hright dim">best first · click a row to use it${X.ranked.length > BEST_AUTO ? " · scroll for more" : ""}</span></div><div class="dtable${X.ranked.length > BEST_AUTO ? " bestscroll" : ""}"><table class="ammotab"><thead><tr><th>AMMO</th><th>PER SHOT</th><th>AFTER ARMOR</th><th>HITS TO KILL</th><th>TIME TO KILL</th><th>ARMOR PEN</th><th>SA BYPASS</th><th>SS BYPASS</th><th>EFFECTS</th></tr></thead><tbody${rest ? ` data-bestrest="br${bestSeq}"` : ""}>${rows}</tbody></table></div></div>`;
     }
 
     let winA = false, winB = false, verdict = "";
@@ -1839,7 +1841,7 @@
         ${bestTable(A, "", `Best ammo against ${esc(tgtLabel)}`)}`}
       ${incomingHTML()}
       ${weightCalcHTML()}
-      <details class="helpw"><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary>${ammoChartHTML()}</details>
+      <details class="helpw achart"${acOpen ? " open" : ""}><summary>FULL AMMO CHART <small>${ammoAll.length} ammo types</small></summary><div class="achart-in">${acOpen ? ammoChartHTML() : ""}</div></details>
       <p class="cat-note">Order: superarmor bypass, superarmor, armor pen, defense. Supershield blocks whole hits; against shotguns it blocks single pellets and the rest of the blast still hits. Shield takes half of each hit until it breaks; explosives and bludgeons skip it.</p>
       <p class="cat-note">Ammo data: <a href="${esc(AMMO.url || "#")}" target="_blank" rel="noopener">${esc(AMMO.title || "OANC Ammo Chart")}</a> by <b>gluehesthar</b> (@iaminyourwallsiaminyourwalls on Discord).</p>
     </div>`;
@@ -1870,6 +1872,11 @@
   }
   let wcOpen = false;
   document.addEventListener("toggle", e => { if (e.target.matches && e.target.matches(".wcalc")) wcOpen = e.target.open; }, true);
+const BEST_FIRST = 30;
+  let bestSeq = 0, bestRest = [];
+  function flushBest() { const list = bestRest; bestRest = []; list.forEach(([id, html]) => { const tb = screen.querySelector(`[data-bestrest="${id}"]`); if (tb) { tb.insertAdjacentHTML("beforeend", html); tb.removeAttribute("data-bestrest"); } }); }
+  let acOpen = false;
+  document.addEventListener("toggle", e => { if (!e.target.matches || !e.target.matches(".achart")) return; acOpen = e.target.open; const box = e.target.querySelector(".achart-in"); if (acOpen && box && !box.firstChild) box.innerHTML = ammoChartHTML(); }, true);
   function weightCalcHTML() {
     const onlyFound = !!ui.loadFound;
     const pool = allTools().filter(e => !e.unknown && (!onlyFound || isFound(e.id)));
@@ -2664,7 +2671,7 @@
     if (r.url !== el.value.trim()) { el.value = r.url; toast("Changed that to the GIF's direct link."); }
     return true;
   }
-  const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif))(\?\S*)?$/i.test(u || "") || /^https?:\/\/(media\d*\.giphy\.com|media\.tenor\.com|c\.tenor\.com)\//i.test(u || "");
+  const isImgLink = u => /^https?:\/\/\S+(\/img\/\S+|\.(png|jpe?g|webp|gif|avif))(\?\S*)?$/i.test(u || "") || /^https?:\/\/(media\d*\.giphy\.com|media\.tenor\.com|c\.tenor\.com)\//i.test(u || "");
   const updateFieldHTML = v => `<label>ADDED IN UPDATE <small>optional, e.g. "Winter 2026": tagged entries get a NEW badge and a filter on CHECKLIST</small><input id="admUpdate" list="admUpdList" maxlength="40" value="${esc(v)}"><datalist id="admUpdList">${updateTags().map(x => `<option value="${esc(x)}">`).join("")}</datalist></label>`;
   function addEditorHTML() {
     const a = adm.edit.add, sec = a.section || "tools";
